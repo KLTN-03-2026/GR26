@@ -80,8 +80,7 @@ src/
 - `modules/auth/stores/authStore.ts` - Zustand auth store with persistence
 
 **Config:**
-- `tailwind.config.js` - Tailwind configuration
-- `postcss.config.js` - PostCSS configuration
+
 - `src/index.css` - Updated with Tailwind directives
 
 ## 🚀 Next Steps

@@ -11,9 +11,9 @@ export function getRoleHomePage(role: Role): string {
     case ROLES.ADMIN:
       return ROUTES.ADMIN_DASHBOARD;
     case ROLES.OWNER:
-      return ROUTES.DASHBOARD;
+      return ROUTES.OWNER.DASHBOARD;
     case ROLES.STAFF:
-      return ROUTES.POS_SELECT_BRANCH;
+      return ROUTES.STAFF.DASHBOARD;
     default:
       return ROUTES.LOGIN;
   }

@@ -1,47 +1,48 @@
+/* Import Google Fonts - DM Sans & Inter */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
 /* ============================================
    TAILWIND V4 - BASE STYLES
    ============================================ */
 @import "tailwindcss";
-
-/* Import Google Fonts - DM Sans & Inter */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 /* ============================================
    CUSTOM THEME CONFIGURATION
    ============================================ */
 @theme {
   /* Colors - Warm minimal palette */
-  --color-cream: #FAF7F2;
-  --color-hover-light: #FFF8F4;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #7A7A7A;
-  --color-border: #F0EBE3;
-  --color-hover-gray: #F3F4F6;
+  --color-cream: #faf7f2;
+  --color-hover-light: #fff8f4;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #7a7a7a;
+  --color-border: #f0ebe3;
+  --color-hover-gray: #f3f4f6;
 
   /* Primary Orange */
-  --color-primary: #E8692A;
-  --color-primary-hover: #D1551F;
-  --color-primary-light: #FFF0E8;
+  --color-primary: #e8692a;
+  --color-primary-hover: #d1551f;
+  --color-primary-light: #fff0e8;
 
   /* Status Colors */
-  --color-status-processing-bg: #FFF0E8;
-  --color-status-processing-text: #E8692A;
-  --color-status-completed-bg: #DCFCE7;
-  --color-status-completed-text: #16A34A;
-  --color-status-cancelled-bg: #FEE2E2;
-  --color-status-cancelled-text: #DC2626;
+  --color-status-processing-bg: #fff0e8;
+  --color-status-processing-text: #e8692a;
+  --color-status-completed-bg: #dcfce7;
+  --color-status-completed-text: #16a34a;
+  --color-status-cancelled-bg: #fee2e2;
+  --color-status-cancelled-text: #dc2626;
 
   /* Success/Warning/Danger */
-  --color-success-light: #DCFCE7;
-  --color-success-text: #16A34A;
-  --color-warning-light: #FEF3C7;
-  --color-warning: #F59E0B;
-  --color-danger-light: #FEE2E2;
-  --color-danger-text: #DC2626;
+  --color-success-light: #dcfce7;
+  --color-success-text: #16a34a;
+  --color-warning-light: #fef3c7;
+  --color-warning: #f59e0b;
+  --color-danger-light: #fee2e2;
+  --color-danger-text: #dc2626;
 
   /* Card/Surface */
-  --color-card: #FFFFFF;
-  --color-sidebar: #FFFFFF;
+  --color-card: #ffffff;
+  --color-sidebar: #ffffff;
+  --color-textTitle: #886f63;
 
   /* Border radius */
   --radius-card: 16px;
@@ -90,7 +91,12 @@
   }
 
   /* Typography defaults */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     font-weight: 600;
     color: var(--color-text-primary);
@@ -136,6 +142,9 @@
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .card-lg {
@@ -256,7 +265,7 @@
   }
 
   .btn-secondary:hover {
-    background-color: #F9FAFB;
+    background-color: #f9fafb;
   }
 
   /* Button - Ghost */
@@ -269,7 +278,7 @@
   }
 
   .btn-ghost:hover {
-    background-color: #F3F4F6;
+    background-color: #f3f4f6;
   }
 
   /* Table Row */
@@ -285,7 +294,7 @@
 
   /* Branch Selector Dropdown */
   .branch-selector {
-    background-color: #F3F4F6;
+    background-color: #f3f4f6;
     color: var(--color-text-primary);
     padding: 8px 16px;
     border-radius: var(--radius-pill);
@@ -300,13 +309,13 @@
   }
 
   .branch-selector:hover {
-    background-color: #E5E7EB;
+    background-color: #e5e7eb;
   }
 
   /* Avatar */
   .avatar {
     border-radius: 9999px;
-    background-color: #E5E7EB;
+    background-color: #e5e7eb;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -408,10 +417,13 @@
   /* Input */
   .input {
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 24px;
     padding: 8px 12px;
     width: 100%;
-    transition: outline 0.2s, box-shadow 0.2s, border-color 0.2s;
+    transition:
+      outline 0.2s,
+      box-shadow 0.2s,
+      border-color 0.2s;
   }
 
   .input:focus {
@@ -425,7 +437,7 @@
   }
 
   .input {
-    background-color: white;
+    background-color: var(--color-cream);
   }
 
   .input-error {
@@ -521,7 +533,7 @@
   }
 
   .data-table thead {
-    background-color: #F9FAFB;
+    background-color: #f9fafb;
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -569,7 +581,7 @@
   .spinner {
     animation: spin 1s linear infinite;
     border-radius: 9999px;
-    border: 2px solid #D1D5DB;
+    border: 2px solid #d1d5db;
     border-top-color: var(--color-primary);
   }
 
@@ -612,12 +624,22 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #E5E7EB;
+    background: #e5e7eb;
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #D1D5DB;
+    background: #d1d5db;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }
 
