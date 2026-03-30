@@ -1,0 +1,96 @@
+package com.smartfnb.order.web.controller;
+
+import com.smartfnb.order.application.command.*;
+import com.smartfnb.order.application.dto.*;
+import com.smartfnb.shared.TenantContext;
+import com.smartfnb.shared.web.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * REST Controller quản lý đơn hàng.
+ *
+ * @author SmartF&B Team
+ */
+@RestController
+@RequestMapping("/api/v1/orders")
+@RequiredArgsConstructor
+@Slf4j
+public class OrderController {
+
+    private final PlaceOrderCommandHandler placeOrderCommandHandler;
+    private final UpdateOrderStatusCommandHandler updateOrderStatusCommandHandler;
+    private final CancelOrderCommandHandler cancelOrderCommandHandler;
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('ORDER_CREATE') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(@Valid @RequestBody PlaceOrderRequest request) {
+        
+        List<PlaceOrderCommand.OrderItemCommand> itemCommands = request.items().stream()
+            .map(item -> new PlaceOrderCommand.OrderItemCommand(
+                item.itemId(), item.itemName(), item.quantity(), 
+                item.unitPrice(), item.addons(), item.notes()
+            )).collect(Collectors.toList());
+
+        PlaceOrderCommand command = new PlaceOrderCommand(
+            TenantContext.getCurrentTenantId(),
+            TenantContext.getCurrentBranchId(),
+            null, // posSessionId
+            TenantContext.getCurrentUserId(),
+            request.tableId(),
+            request.source(),
+            request.notes(),
+            itemCommands
+        );
+
+        var result = placeOrderCommandHandler.handle(command);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.ok(OrderResponse.from(result)));
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('ORDER_UPDATE') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
+            @PathVariable UUID id, 
+            @Valid @RequestBody UpdateOrderStatusRequest request) {
+        
+        UpdateOrderStatusCommand command = new UpdateOrderStatusCommand(
+            id,
+            TenantContext.getCurrentTenantId(),
+            TenantContext.getCurrentBranchId(),
+            TenantContext.getCurrentUserId(),
+            request.newStatus(),
+            request.reason()
+        );
+
+        var result = updateOrderStatusCommandHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok(OrderResponse.from(result)));
+    }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAuthority('ORDER_CANCEL') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
+            @PathVariable UUID id, 
+            @Valid @RequestBody CancelOrderRequest request) {
+        
+        CancelOrderCommand command = new CancelOrderCommand(
+            id,
+            TenantContext.getCurrentTenantId(),
+            TenantContext.getCurrentBranchId(),
+            TenantContext.getCurrentUserId(),
+            request.reason()
+        );
+
+        var result = cancelOrderCommandHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok(OrderResponse.from(result)));
+    }
+}

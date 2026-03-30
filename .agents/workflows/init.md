@@ -44,3 +44,5 @@ Xác nhận với user:
 | User yêu cầu "phân tích tính năng X" hoặc "viết use case" | `e:\SmartF&B\prompts\agent\skills\write-usecase.md` |
 | Có vấn đề kỹ thuật phức tạp cần so sánh giải pháp | `e:\SmartF&B\prompts\docs\templates\ENGINEERING_KB.md` |
 | Cần tra cứu yêu cầu nghiệp vụ chi tiết | `e:\SmartF&B\smartfb_user_story_analysis.md` |
+
+## Mỗi lần viết xong 1 api thì phải viết lại mô tả cho FE hiểu vào trong file @frontend_api_integration.md
