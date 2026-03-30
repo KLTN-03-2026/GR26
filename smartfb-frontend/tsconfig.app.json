@@ -23,6 +23,7 @@
       "@assets/*": ["./src/assets/*"],
       "@layouts/*": ["./src/layouts/*"],
       "@lib/*": ["./src/lib/*"],
+      "@data/*": ["./src/data/*"],
       "@modules/*": ["./src/modules/*"],
       "@pages/*": ["./src/pages/*"],
       "@providers/*": ["./src/providers/*"],
