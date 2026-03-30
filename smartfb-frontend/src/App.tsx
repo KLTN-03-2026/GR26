@@ -7,13 +7,13 @@ import { mockBranches } from '@/data';
 import BranchesPage from '@pages/owner/BranchesPage';
 import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
+import MenuPage from '@pages/owner/MenuPage';
 
 // Placeholder pages - will be created later
 const DashboardPage = () => <div className="p-4">Dashboard Page</div>;
 const TablesPage = () => <div className="p-4">Tables Page</div>;
 const OrdersPage = () => <div className="p-4">Orders Page</div>;
 const RevenuePage = () => <div className="p-4">Revenue Page</div>;
-const MenuPage = () => <div className="p-4">Menu Page</div>;
 const InventoryPage = () => <div className="p-4">Inventory Page</div>;
 const RecipesPage = () => <div className="p-4">Recipes Page</div>;
 const StaffPage = () => <div className="p-4">Staff Management Page</div>;

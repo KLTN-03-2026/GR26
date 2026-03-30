@@ -30,25 +30,25 @@ export const DeleteBranchDialog = ({
   onSuccess,
 }: DeleteBranchDialogProps) => {
   const { mutate: deleteBranch, isPending } = useDeleteBranch();
-  const [isConfirming, setIsConfirming] = useState(false);
+  // const [isConfirming, setIsConfirming] = useState(false);
 
   const handleDelete = () => {
-    setIsConfirming(true);
+    // setIsConfirming(true);
     deleteBranch(branchId, {
       onSuccess: () => {
-        setIsConfirming(false);
+        // setIsConfirming(false);
         onOpenChange(false);
         onSuccess?.();
       },
       onError: () => {
-        setIsConfirming(false);
+        // setIsConfirming(false);
       },
     });
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setIsConfirming(false);
+      // setIsConfirming(false);
     }
     onOpenChange(newOpen);
   };
