@@ -1,78 +1,67 @@
-// import { api } from '@lib/axios';
-import type { BranchDetailFull } from '../data/branchDetailMock';
-import type { EditBranchFormData } from '../types/branch.types';
+import { axiosInstance as api } from '@lib/axios';
+import type {
+  Branch,
+  CreateBranchPayload,
+  UpdateBranchPayload,
+  AssignUserToBranchPayload,
+} from '../types/branch.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
 /**
  * Branch service - gọi API cho các thao tác chi nhánh
+ * Base URL: /api/v1/branches
  */
 export const branchService = {
   /**
-   * Lấy danh sách chi nhánh
+   * Lấy danh sách toàn bộ chi nhánh của tenant hiện tại
+   * GET /api/v1/branches
    */
-  getList: async () => {
-    // TODO: Replace với real API
-    const { mockBranchDetails } = await import('../data/branchDetails');
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return mockBranchDetails;
+  getList: async (): Promise<ApiResponse<Branch[]>> => {
+    return api.get<ApiResponse<Branch[]>>('/branches').then(r => r.data);
   },
 
   /**
    * Lấy chi tiết một chi nhánh
+   * GET /api/v1/branches/:id
    */
-  getById: async (id: string): Promise<ApiResponse<BranchDetailFull>> => {
-    // TODO: Replace với real API
-    const { branchDetailMock } = await import('../data/branchDetailMock');
-    await new Promise(resolve => setTimeout(resolve, 300));
+  getById: async (id: string): Promise<ApiResponse<Branch>> => {
+    return api.get<ApiResponse<Branch>>(`/branches/${id}`).then(r => r.data);
+  },
 
-    if (id === branchDetailMock.id) {
-      return { success: true, data: branchDetailMock };
-    }
-
-    throw new Error('Không tìm thấy chi nhánh');
+  /**
+   * Tạo mới một chi nhánh
+   * POST /api/v1/branches
+   * @param payload - thông tin chi nhánh cần tạo
+   */
+  create: async (payload: CreateBranchPayload): Promise<ApiResponse<Branch>> => {
+    return api.post<ApiResponse<Branch>>('/branches', payload).then(r => r.data);
   },
 
   /**
    * Cập nhật thông tin chi nhánh
+   * PUT /api/v1/branches/:id
+   * @param id - ID chi nhánh cần cập nhật
+   * @param payload - thông tin cập nhật
    */
-  update: async (id: string, payload: EditBranchFormData): Promise<ApiResponse<BranchDetailFull>> => {
-    // TODO: Replace với real API call
-    const { branchDetailMock } = await import('../data/branchDetailMock');
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Mock response - merge payload vào data hiện có
-    const updatedBranch: BranchDetailFull = {
-      ...branchDetailMock,
-      id,
-      ...payload,
-    };
-
-    return { success: true, data: updatedBranch };
-  },
-
-  /**
-   * Toggle status chi nhánh
-   */
-  toggle: async (id: string): Promise<ApiResponse<BranchDetailFull>> => {
-    // TODO: Replace với real API
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    return {
-      success: true,
-      data: {
-        id,
-        status: 'active', // Mock - sẽ toggle từ active ↔ inactive
-      } as BranchDetailFull
-    };
+  update: async (id: string, payload: UpdateBranchPayload): Promise<ApiResponse<Branch>> => {
+    return api.put<ApiResponse<Branch>>(`/branches/${id}`, payload).then(r => r.data);
   },
 
   /**
    * Xóa chi nhánh
+   * DELETE /api/v1/branches/:id
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    // TODO: Replace với real API
-    await new Promise(resolve => setTimeout(resolve, 300));
+    return api.delete<ApiResponse<void>>(`/branches/${id}`).then(r => r.data);
+  },
 
-    return { success: true, data: undefined };
+  /**
+   * Gán nhân viên vào chi nhánh
+   * POST /api/v1/branches/:id/users
+   * @param id - ID chi nhánh
+   * @param payload - userId cần gán
+   */
+  assignUserToBranch: async (id: string, payload: AssignUserToBranchPayload): Promise<ApiResponse<void>> => {
+    return api.post<ApiResponse<void>>(`/branches/${id}/users`, payload).then(r => r.data);
   },
 };

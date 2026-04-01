@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Building2, CircleCheckBig, CircleDollarSign } from "lucide-react";
-import { mockBranchDetails } from "@modules/branch/data/branchDetails";
+import { useBranches } from "@modules/branch/hooks/useBranches";
 import { useBranchFilters } from "@modules/branch/hooks/useBranchFilters";
 import { BranchFilterBar } from '@modules/branch/components/BranchFilterBar';
 import { BranchTable } from '@modules/branch/components/BranchTable';
 import { ROUTES } from "@shared/constants/routes";
+import { Button } from '@shared/components/ui/button';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -31,6 +32,20 @@ const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: 
  */
 export default function BranchesPage() {
   const navigate = useNavigate();
+  const { data, isLoading, isError } = useBranches();
+
+  // Convert từ Branch API response sang BranchDetail format
+  const branchesData = data?.map(branch => ({
+    id: branch.id,
+    name: branch.name,
+    code: branch.code,
+    address: branch.address,
+    phone: branch.phone,
+    status: branch.status === 'ACTIVE' ? 'active' : 'inactive' as 'active' | 'inactive',
+    location: branch.address?.split(',').pop()?.trim() || '',
+    revenue: 0, // TODO: Lấy từ API report
+    createdAt: branch.createdAt,
+  })) ?? [];
 
   const {
     filters,
@@ -43,15 +58,32 @@ export default function BranchesPage() {
     clearFilters,
     updatePage,
     totalPages,
-  } = useBranchFilters(mockBranchDetails);
+  } = useBranchFilters(branchesData);
 
-  const totalBranches = mockBranchDetails.length;
-  const activeBranches = mockBranchDetails.filter((b) => b.status === "active").length;
-  const todayRevenue = 25500000;
+  const totalBranches = branchesData.length;
+  const activeBranches = branchesData.filter((b) => b.status === "active").length;
+  const todayRevenue = 25500000; // TODO: Lấy từ API report
 
   const handleAddBranch = () => {
     navigate(ROUTES.OWNER.BRANCHES_NEW);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="spinner spinner-md" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 font-medium mb-4">Không thể tải danh sách chi nhánh</p>
+        <Button onClick={() => window.location.reload()}>Thử lại</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-8">

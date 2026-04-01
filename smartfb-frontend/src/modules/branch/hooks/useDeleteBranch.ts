@@ -4,28 +4,35 @@ import { branchService } from '../services/branchService';
 import { useToast } from '@shared/hooks/useToast';
 
 /**
- * Hook xóa chi nhánh
- * @returns mutation object để trigger xóa
+ * Hook xử lý xóa chi nhánh
+ * Gọi API DELETE /api/v1/branches/:id
  *
  * @example
- * const { deleteBranch, isPending } = useDeleteBranch();
- * deleteBranch('branch-id', {
+ * const { mutate, isPending } = useDeleteBranch();
+ * mutate(branchId, {
  *   onSuccess: () => console.log('Xóa thành công'),
  * });
  */
 export const useDeleteBranch = () => {
   const queryClient = useQueryClient();
-  const { success,error } = useToast();
+  const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: (id: string) => branchService.delete(id),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      return branchService.delete(id);
+    },
+    onSuccess: (response, branchId) => {
       // Invalidate để refetch danh sách
       queryClient.invalidateQueries({ queryKey: queryKeys.branches.all });
-      success('Xóa chi nhánh thành công');
+      success(
+        'Xóa chi nhánh thành công',
+        'Chi nhánh đã được xóa khỏi hệ thống'
+      );
     },
-    onError: (errors) => {
-      error('Không thể xóa chi nhánh', errors.message);
+    onError: (err) => {
+      console.error('Failed to delete branch:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
+      error('Không thể xóa chi nhánh', errorMessage);
     },
   });
 };

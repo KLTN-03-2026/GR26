@@ -10,7 +10,8 @@ import toast from 'react-hot-toast';
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-
+const VERSION_BASE_URL = import.meta.env.VERSION_API_BASE_URL ||"V1"
+ 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,

@@ -10,9 +10,10 @@ import type { User } from '../types/auth.types';
 interface AuthStore {
   user: User | null;
   isAuthenticated: boolean;
-  
+
   // Actions
   setUser: (user: User | null) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -29,11 +30,17 @@ export const useAuthStore = create<AuthStore>()(
           isAuthenticated: !!user,
         }),
 
+      setTokens: (accessToken, refreshToken) => {
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+      },
+
       logout: () => {
         // Clear tokens from localStorage
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        
+        localStorage.removeItem('tenant_id');
+
         set({
           user: null,
           isAuthenticated: false,

@@ -1,6 +1,25 @@
 import type { BranchDetail } from '../data/branchDetails';
 
-export type BranchStatus = 'active' | 'inactive';
+/**
+ * Trạng thái chi nhánh theo backend
+ * ACTIVE: Đang hoạt động
+ * INACTIVE: Ngừng hoạt động
+ */
+export type BranchStatus = 'ACTIVE' | 'INACTIVE';
+
+/**
+ * Branch entity theo backend response
+ */
+export interface Branch {
+  id: string;
+  tenantId: string;
+  name: string;
+  code: string;
+  address: string;
+  phone: string;
+  status: BranchStatus;
+  createdAt: string;
+}
 
 export type BranchFilters = {
   search: string;
@@ -105,4 +124,27 @@ export type EditBranchFormData = {
   closeTime: string;
   managerId?: string;
   isOpened?: boolean;
+};
+
+/**
+ * Payload gửi lên khi tạo chi nhánh
+ * Khớp với BranchRequest từ backend
+ */
+export type CreateBranchPayload = {
+  name: string;
+  code: string;
+  address: string;
+  phone: string;
+};
+
+/**
+ * Payload gửi lên khi cập nhật chi nhánh
+ */
+export type UpdateBranchPayload = Partial<CreateBranchPayload>;
+
+/**
+ * Payload gán user vào chi nhánh
+ */
+export type AssignUserToBranchPayload = {
+  userId: string;
 };

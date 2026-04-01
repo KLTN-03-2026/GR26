@@ -8,6 +8,8 @@ import BranchesPage from '@pages/owner/BranchesPage';
 import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
 import MenuPage from '@pages/owner/MenuPage';
+import LoginPage from '@pages/auth/LoginPage';
+import RegisterPage from '@pages/auth/RegisterPage';
 
 // Placeholder pages - will be created later
 const DashboardPage = () => <div className="p-4">Dashboard Page</div>;
@@ -37,12 +39,8 @@ function App() {
   const { isOwner } = usePermission();
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
 
-  // TODO: Replace with actual auth check
+  // TODO: Replace with actual auth check from useAuthStore
   const isAuthenticated = true;
-
-  if (!isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
-  }
 
   const handleBranchChange = (branchId: string) => {
     setSelectedBranchId(branchId);
@@ -70,6 +68,10 @@ function App() {
 
   return (
     <Routes>
+      {/* Auth Routes */}
+      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+
       {/* Owner Routes */}
       {isOwner && ownerRoutes.map(({ path, element, pageTitle }) => (
         <Route

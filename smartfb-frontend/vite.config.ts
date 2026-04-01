@@ -14,15 +14,24 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      "@assets":  path.resolve(__dirname, './src/assets'),
-      "@layouts":  path.resolve(__dirname, './src/layouts'),
-      "@lib":  path.resolve(__dirname, './src/lib'),
-      "@data":  path.resolve(__dirname, './src/data'),
-      "@modules":  path.resolve(__dirname, './src/modules'),
-      "@pages":  path.resolve(__dirname, './src/pages'),
-      "@providers":  path.resolve(__dirname, './src/providers'),
-      "@routes":  path.resolve(__dirname, './src/routes'),
-      "@shared":  path.resolve(__dirname, './src/shared')
+      "@assets": path.resolve(__dirname, './src/assets'),
+      "@layouts": path.resolve(__dirname, './src/layouts'),
+      "@lib": path.resolve(__dirname, './src/lib'),
+      "@data": path.resolve(__dirname, './src/data'),
+      "@modules": path.resolve(__dirname, './src/modules'),
+      "@pages": path.resolve(__dirname, './src/pages'),
+      "@providers": path.resolve(__dirname, './src/providers'),
+      "@routes": path.resolve(__dirname, './src/routes'),
+      "@shared": path.resolve(__dirname, './src/shared')
     },
-  },
+  }, 
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })
