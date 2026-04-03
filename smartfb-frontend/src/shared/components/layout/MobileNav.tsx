@@ -13,6 +13,7 @@ import {
 import { ROUTES } from '@shared/constants/routes';
 import { cn } from '@shared/utils/cn';
 import { menuConfig } from '@data/menuConfig';
+import { BrandLogo } from './BrandLogo';
 
 /**
  * Bottom Navigation cho mobile - 5 action chính
@@ -136,12 +137,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
         <div className="flex flex-col h-full">
           {/* Header với close button */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">F</span>
-              </div>
-              <span className="text-lg font-bold text-orange-500">SmartF&B</span>
-            </div>
+            <BrandLogo iconClassName="h-9 w-9" textClassName="text-lg" />
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
