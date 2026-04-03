@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -30,26 +29,17 @@ export const DeleteBranchDialog = ({
   onSuccess,
 }: DeleteBranchDialogProps) => {
   const { mutate: deleteBranch, isPending } = useDeleteBranch();
-  // const [isConfirming, setIsConfirming] = useState(false);
 
   const handleDelete = () => {
-    // setIsConfirming(true);
     deleteBranch(branchId, {
       onSuccess: () => {
-        // setIsConfirming(false);
         onOpenChange(false);
         onSuccess?.();
-      },
-      onError: () => {
-        // setIsConfirming(false);
       },
     });
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      // setIsConfirming(false);
-    }
     onOpenChange(newOpen);
   };
 

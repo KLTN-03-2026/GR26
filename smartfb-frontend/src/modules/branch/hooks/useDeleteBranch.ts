@@ -21,16 +21,15 @@ export const useDeleteBranch = () => {
     mutationFn: async (id: string) => {
       return branchService.delete(id);
     },
-    onSuccess: (response, branchId) => {
+    onSuccess: () => {
       // Invalidate để refetch danh sách
-      queryClient.invalidateQueries({ queryKey: queryKeys.branches.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.branches.all });
       success(
         'Xóa chi nhánh thành công',
         'Chi nhánh đã được xóa khỏi hệ thống'
       );
     },
     onError: (err) => {
-      console.error('Failed to delete branch:', err);
       const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
       error('Không thể xóa chi nhánh', errorMessage);
     },

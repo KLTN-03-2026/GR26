@@ -1,4 +1,4 @@
-import { Pencil, Phone, Mail, DoorOpen, DoorClosed } from "lucide-react";
+import { Pencil, Phone, Mail } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
 import type { BranchDetailFull } from "@modules/branch/data/branchDetailMock";
 
