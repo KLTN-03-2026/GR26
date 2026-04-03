@@ -4,8 +4,9 @@ import type { BranchDetail } from '../data/branchDetails';
  * Trạng thái chi nhánh theo backend
  * ACTIVE: Đang hoạt động
  * INACTIVE: Ngừng hoạt động
+ * TEMPORARILY_CLOSED: Tạm đóng chi nhánh
  */
-export type BranchStatus = 'ACTIVE' | 'INACTIVE';
+export type BranchStatus = 'ACTIVE' | 'INACTIVE' | 'TEMPORARILY_CLOSED';
 
 /**
  * Branch entity theo backend response
@@ -21,9 +22,15 @@ export interface Branch {
   createdAt: string;
 }
 
+/**
+ * Trạng thái hiển thị ở UI danh sách chi nhánh.
+ * Khác với `BranchStatus` vì màn hình quản trị đang dùng nhãn rút gọn `active/inactive`.
+ */
+export type BranchFilterStatus = BranchDetail['status'];
+
 export type BranchFilters = {
   search: string;
-  status: BranchStatus | 'all';
+  status: BranchFilterStatus | 'all';
   location: string | 'all';
 };
 
@@ -56,61 +63,22 @@ export type ActivityLog = {
   description: string;
 };
 
-// Form wizard types
-export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
-
-export type WorkingHours = {
-  enabled: boolean;
-  openTime: string;
-  closeTime: string;
-};
-
-export type WorkingSchedule = {
-  [key in DayOfWeek]: WorkingHours;
-};
-
-export type IntegrationPlatform = 'grabfood' | 'shopeefood';
-
-export type IntegrationSettings = {
-  [key in IntegrationPlatform]: boolean;
-};
-
-export type TableSetupOption = 'copy-from-branch' | 'use-template' | 'setup-later';
-export type MenuSetupOption = 'copy-menu' | 'import-excel' | 'empty-menu';
-
-// Step 1: Thông tin cơ bản
+/**
+ * Dữ liệu form tạo chi nhánh mà backend hiện hỗ trợ.
+ * Giữ riêng type này để page và component form dùng chung một contract.
+ */
 export type Step1BasicInfoData = {
   name: string;
   code: string;
   address: string;
-  city: string;
   phone: string;
-  managerId: string;
-  taxCode: string;
-  notes: string;
-  image?: File | null;
 };
 
-// Step 2: Vận hành
-export type Step2OperationsData = {
-  workingSchedule: WorkingSchedule;
-  integrations: IntegrationSettings;
-};
-
-// Step 3: Xác nhận
-export type Step3ConfirmationData = {
-  tableSetupOption: TableSetupOption;
-  copyTableFromBranchId?: string;
-  menuSetupOption: MenuSetupOption;
-  copyMenuFromBranchId?: string;
-  importMenuFile?: File | null;
-};
-
-// Combined form data
-export type CreateBranchFormData = Step1BasicInfoData & Step2OperationsData & Step3ConfirmationData;
-
-// Form values type (all fields optional for partial form updates)
-export type CreateBranchFormValues = Partial<CreateBranchFormData>;
+/**
+ * Alias dữ liệu form cho luồng tạo chi nhánh hiện tại.
+ * Tách alias để sau này có thể mở rộng lại flow mà không đổi contract ở page.
+ */
+export type CreateBranchFormData = Step1BasicInfoData;
 
 // Edit branch types - chỉ edit được những fields cơ bản
 export type EditBranchFormData = {

@@ -70,12 +70,13 @@ export const useBranchFilters = (branches: BranchDetail[]) => {
     };
   }, [filteredBranches, pagination.page, pagination.pageSize]);
 
-  // Update pagination total when filtered results change
-  useMemo(() => {
-    if (pagination.total !== totalItems) {
-      setPagination(prev => ({ ...prev, total: totalItems }));
-    }
-  }, [totalItems, pagination.total]);
+  const resolvedPagination = useMemo(
+    () => ({
+      ...pagination,
+      total: totalItems,
+    }),
+    [pagination, totalItems]
+  );
 
   const updateFilter = useCallback((key: keyof BranchFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -99,7 +100,7 @@ export const useBranchFilters = (branches: BranchDetail[]) => {
 
   return {
     filters,
-    pagination,
+    pagination: resolvedPagination,
     locations,
     branches: paginatedBranches,
     totalItems,
@@ -107,6 +108,6 @@ export const useBranchFilters = (branches: BranchDetail[]) => {
     updateFilter,
     clearFilters,
     updatePage,
-    totalPages: Math.ceil(pagination.total / pagination.pageSize),
+    totalPages: Math.ceil(totalItems / pagination.pageSize),
   };
 };

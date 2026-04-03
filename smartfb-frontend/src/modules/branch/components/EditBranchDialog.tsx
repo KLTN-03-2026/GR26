@@ -169,7 +169,7 @@ export const EditBranchDialog = ({
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Số điện thoại không được để trống";
-    } else if (!/^[\d\s\-\+\(\)]{10,}$/.test(formData.phone)) {
+    } else if (!/^[\d\s\-+()]{10,}$/.test(formData.phone)) {
       newErrors.phone = "Số điện thoại không hợp lệ";
     }
 
@@ -198,9 +198,12 @@ export const EditBranchDialog = ({
       mutate(
         {
           id: branch.id,
-          data: {
-            ...formData,
-            // TODO: Thêm managerId và isOpened vào EditBranchFormData type
+          payload: {
+            // Backend hiện chỉ hỗ trợ cập nhật 4 trường cơ bản của chi nhánh.
+            name: formData.name,
+            code: formData.code,
+            address: formData.address,
+            phone: formData.phone,
           },
         },
         {
