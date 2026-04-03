@@ -46,6 +46,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+    repair-on-migrate: true   # Tự động xóa record failed trước khi retry migration
 
   ## ------ Thread Pool (Java 21 Virtual Threads) ------
   threads:

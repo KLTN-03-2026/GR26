@@ -436,17 +436,130 @@ stompClient.connect(
 
 ---
 
-## 🧾 7. MODULE THANH TOÁN (PAYMENT) - _Coming Soon (S-11)_
+## 📦 7. MODULE THANH TOÁN (PAYMENT) - Prefix: `/api/v1/payments` & `/api/v1/invoices`
+
+> Đã hoàn thành S-11 & S-12. Xem chi tiết trong codebase.
 
 ---
 
-## 📊 🚀 TÓMLỊCH PHÁT HÀNH (TIMELINE)
+## 🏭 8. MODULE KHO NGUYÊN LIỆU (INVENTORY) - S-13 & S-14 - Prefix: `/api/v1/inventory`
 
-| Sprint       | Module                                  | Status           |
-| ------------ | --------------------------------------- | ---------------- |
-| S-01 to S-08 | Auth, Branch, Menu, Table, Subscription | ✅ Hoàn thành    |
-| **S-09**     | **Inventory Module**                    | 🔄 Đang làm      |
-| **S-10**     | **Order Realtime WebSocket**            | ✅ **COMPLETED** |
-| S-11         | Payment & Invoice                       | 📅 Sắp tới       |
-| S-12         | Report & Analytics                      | 📅 Sắp tới       |
-| S-13+        | Advanced Features                       | Tùy hoàn cảnh    |
+> **Phân quyền cần có trong JWT:**
+> - `INVENTORY_VIEW` — OWNER, ADMIN, BRANCH_MANAGER
+> - `INVENTORY_IMPORT` — OWNER, ADMIN, BRANCH_MANAGER
+> - `INVENTORY_ADJUST` — OWNER, ADMIN
+> - `INVENTORY_WASTE` — OWNER, ADMIN, BRANCH_MANAGER
+
+### 8.1 Nhập Kho Nguyên Liệu (S-13)
+
+Tạo lô hàng nhập mới (`StockBatch`). Tự động cộng vào `inventory_balances`. Hệ thống ghi `inventory_transactions` (type=IMPORT) và publish `StockImportedEvent`.
+
+- **Method:** `POST /api/v1/inventory/import`
+- **Headers:** `Authorization: Bearer <token>` (cần `INVENTORY_IMPORT`)
+- **Request Body:**
+  ```json
+  {
+    "itemId": "uuid-nguyen-lieu",
+    "supplierId": "uuid-nha-cung-cap",   // Tùy chọn
+    "quantity": 100.5,                    // Bắt buộc, > 0
+    "costPerUnit": 12000.0,              // Bắt buộc, >= 0
+    "expiresAt": "2026-06-30T00:00:00Z", // Tùy chọn (hạn sử dụng lô hàng)
+    "note": "Nhập từ kho Hà Nội"        // Tùy chọn
+  }
+  ```
+- **Response `data`:** UUID của `StockBatch` vừa tạo.
+  ```json
+  "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  ```
+- **HTTP Status:** `201 Created`
+
+### 8.2 Điều Chỉnh Kho Thủ Công (S-14)
+
+Set lại số lượng tuyệt đối cho tồn kho. **Bắt buộc** phải truyền `reason`. Hệ thống tự động ghi `audit_logs` và `inventory_transactions` (type=ADJUSTMENT).
+
+- **Method:** `POST /api/v1/inventory/adjust`
+- **Headers:** `Authorization: Bearer <token>` (cần `INVENTORY_ADJUST`)
+- **Request Body:**
+  ```json
+  {
+    "itemId": "uuid-nguyen-lieu",
+    "newQuantity": 85.5,            // Giá trị tuyệt đối mới (>= 0)
+    "reason": "Kiểm kê cuối tháng phát hiện thừa/thiếu"  // Bắt buộc
+  }
+  ```
+- **Response:** `200 OK` với `data: null` (không có data trả về)
+- **Lưu ý:** Backend tính delta = newQuantity - currentQuantity tự động. FE chỉ cần gửi số lượng mới muốn set.
+
+### 8.3 Ghi Nhận Hao Hụt Nguyên Liệu (S-14)
+
+Ghi nhận nguyên liệu bị hỏng, rơi vỡ, hết hạn... Hệ thống giảm tồn kho và ghi `audit_logs` + `inventory_transactions` (type=WASTE).
+
+- **Method:** `POST /api/v1/inventory/waste`
+- **Headers:** `Authorization: Bearer <token>` (cần `INVENTORY_WASTE`)
+- **Request Body:**
+  ```json
+  {
+    "itemId": "uuid-nguyen-lieu",
+    "quantity": 2.5,               // Số lượng hao hụt (> 0)
+    "reason": "Hết hạn sử dụng"    // Bắt buộc
+  }
+  ```
+- **Response:** `200 OK` với `data: null`
+- **Nếu lỗi không đủ kho:** `422 Unprocessable Entity`
+  ```json
+  { "success": false, "error": { "code": "INSUFFICIENT_STOCK", "message": "Nguyên liệu '...' không đủ. Cần 2.5000, hiện còn 1.0000" } }
+  ```
+
+### 8.4 Xem Tồn Kho Theo Chi Nhánh (S-14)
+
+Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **Các role khác** chỉ thấy chi nhánh đang làm việc (tự động filter theo JWT).
+
+- **Method:** `GET /api/v1/inventory`
+- **Headers:** `Authorization: Bearer <token>` (cần `INVENTORY_VIEW`)
+- **Query Params:** `?page=0&size=20`
+- **Response `data`:**
+  ```json
+  {
+    "content": [
+      {
+        "id": "uuid-balance",
+        "branchId": "uuid-chi-nhanh",
+        "itemId": "uuid-nguyen-lieu",
+        "itemName": "Cà phê Arabica",
+        "unit": "g",
+        "quantity": 850.5000,
+        "minLevel": 500.0000,
+        "isLowStock": false,    // true nếu quantity <= minLevel
+        "updatedAt": "2026-04-03T09:00:00Z"
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 45,
+    "totalPages": 3
+  }
+  ```
+
+> **💡 Tip cho FE:** Highlight màu đỏ những dòng có `isLowStock: true` để cảnh báo branch manager cần đặt hàng thêm.
+
+### 8.5 Cơ Chế Tự Động (Không Cần FE Gọi)
+
+| Sự kiện | Trigger | Kết quả |
+|---------|---------|---------|
+| `OrderCompletedEvent` | Đơn hàng chuyển COMPLETED | Tự động trừ kho theo công thức (FIFO) |
+| `LowStockAlertEvent` | Tồn kho <= min_level | Broadcast cảnh báo (Phase 2: gửi notification) |
+| `StockImportedEvent` | Nhập kho mới | Report module cập nhật báo cáo kho |
+
+---
+
+## 📊 🚀 TỔNG LỊCH PHÁT HÀNH (TIMELINE)
+
+| Sprint       | Module                                           | Status              |
+| ------------ | ------------------------------------------------ | ------------------- |
+| S-01 to S-08 | Auth, Branch, Menu, Table, Subscription, RBAC    | ✅ Hoàn thành        |
+| S-09         | Inventory (cơ bản)                               | ✅ Hoàn thành        |
+| S-10         | Order Realtime WebSocket                         | ✅ Hoàn thành        |
+| S-11 & S-12  | Payment & Invoice                                | ✅ Hoàn thành        |
+| **S-13**     | **Inventory — Nhập kho & FIFO**                  | ✅ **COMPLETED**     |
+| **S-14**     | **Inventory — Điều chỉnh, Hao hụt, Cảnh báo**   | ✅ **COMPLETED**     |
+| S-15+        | Report, Supplier modules                         | 📅 Sắp tới           |

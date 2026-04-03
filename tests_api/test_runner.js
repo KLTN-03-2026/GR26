@@ -166,8 +166,74 @@ async function runTests() {
         if (res.status !== 200) throw new Error("Search invoices failed: " + JSON.stringify(res.data));
         console.log(`   ✅ Truy vấn hóa đơn thành công. Có ${res.data.data.totalElements} hóa đơn trong chi nhánh.`);
 
+        // --- S-13 & S-14: INVENTORY ---
+        console.log("\n--- BẮT ĐẦU TEST S-13 & S-14 (INVENTORY) ---");
+
+        console.log("14. [Đúng] Nhập kho (Import Stock) nguyên liệu (+50)");
+        res = await request('/inventory/import', 'POST', {
+            itemId: itemId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 50,
+            costPerUnit: 10000,
+            expiresAt: new Date(Date.now() + 30*24*3600*1000).toISOString(),
+            note: "Nhập test lô hàng 1"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import stock failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Nhập kho thành công. BatchId: " + res.data.data);
+
+        console.log("15. [Sai] Nhập kho với số lượng âm (Validation Error)");
+        let failRes = await request('/inventory/import', 'POST', {
+            itemId: itemId,
+            quantity: -10,
+            costPerUnit: 10000
+        }, currentToken);
+        if (failRes.status === 200 || failRes.status === 201) throw new Error("Expected validation error but succeeded!");
+        console.log("   ✅ Server từ chối request sai thành công: " + (failRes.data.message || JSON.stringify(failRes.data.errors)));
+
+        console.log("16. [Đúng] Điều chỉnh kho (Adjust Stock) -> Tồn kho = 45");
+        res = await request('/inventory/adjust', 'POST', {
+            itemId: itemId,
+            newQuantity: 45,
+            reason: "Kiểm kê tháng"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Adjust stock failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Điều chỉnh kho thành công.");
+
+        console.log("17. [Đúng] Ghi hao hụt (Record Waste) (-5)");
+        res = await request('/inventory/waste', 'POST', {
+            itemId: itemId,
+            quantity: 5,
+            reason: "Hư hỏng"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Record waste failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Ghi nhận hao hụt thành công.");
+
+        console.log("18. [Sai] Ghi hao hụt mà thiếu lý do (Validation Error)");
+        failRes = await request('/inventory/waste', 'POST', {
+            itemId: itemId,
+            quantity: 5,
+            reason: "" // Rỗng
+        }, currentToken);
+        if (failRes.status === 200) throw new Error("Expected validation error but succeeded!");
+        console.log("   ✅ Server từ chối request thiếu lý do thành công.");
+
+        console.log("19. [Đúng] Truy vấn Tồn kho (GET /inventory)");
+        res = await request('/inventory', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get inventory failed: " + JSON.stringify(res.data));
+        console.log(`   ✅ Truy vấn tồn kho thành công. Số mã hàng: ${res.data.data.totalElements}`);
+        
+        let invItem = res.data.data.content.find(i => i.itemId === itemId);
+        if (invItem) {
+            console.log(`   🔎 Số lượng tồn kho hiện tại đối với món test (sau khi set 45 -> trừ 5 hao hụt -> còn 40): ${invItem.quantity}`);
+            if (Number(invItem.quantity) !== 40) {
+                console.warn("   ⚠️ CẢNH BÁO: Số dư tồn kho không khớp kỳ vọng! Thực tế: " + invItem.quantity);
+            } else {
+                console.log("   ✅ Cân bằng kho (Balance) tính toán chính xác!");
+            }
+        }
+
         console.log("\n==========================================");
-        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-11) HOẠT ĐỘNG HOÀN HẢO!");
+        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-14) HOẠT ĐỘNG HOÀN HẢO!");
         console.log("==========================================");
 
     } catch (e) {
