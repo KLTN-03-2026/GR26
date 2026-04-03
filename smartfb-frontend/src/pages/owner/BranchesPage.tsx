@@ -34,7 +34,8 @@ export default function BranchesPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useBranches();
 
-  // Convert từ Branch API response sang BranchDetail format
+  // Convert từ Branch API response sang dữ liệu bảng hiện tại của UI.
+  // Một số field như `staff` hoặc giờ mở/đóng chưa có từ backend nên dùng giá trị mặc định tạm thời.
   const branchesData = data?.map(branch => ({
     id: branch.id,
     name: branch.name,
@@ -44,6 +45,9 @@ export default function BranchesPage() {
     status: branch.status === 'ACTIVE' ? 'active' : 'inactive' as 'active' | 'inactive',
     location: branch.address?.split(',').pop()?.trim() || '',
     revenue: 0, // TODO: Lấy từ API report
+    staff: 0, // TODO(@hoang): Đồng bộ số lượng nhân sự khi backend trả field tương ứng - #issue-branch-staff-count
+    openTime: '--:--',
+    closeTime: '--:--',
     createdAt: branch.createdAt,
   })) ?? [];
 
