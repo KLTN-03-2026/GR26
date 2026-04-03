@@ -1,118 +1,196 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import type { AuthResponseContext, BackendAuthResponse } from '@modules/auth/types/auth.types';
+import { ROUTES } from '@shared/constants/routes';
+import type { ApiResponse } from '@shared/types/api.types';
+import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_TIMEOUT = 30000;
+
+let refreshRequestPromise: Promise<BackendAuthResponse> | null = null;
+
 /**
- * Axios instance with interceptors
- * - Auto attach access token to every request
- * - Auto attach tenant_id header
- * - Handle token refresh on 401
- * - Show toast notification on errors
+ * Tạo axios client với cấu hình base dùng chung cho toàn app.
+ *
+ * @returns Axios instance đã gắn baseURL, timeout và content-type mặc định
  */
+const createApiClient = (): AxiosInstance => {
+  return axios.create({
+    baseURL: API_BASE_URL,
+    timeout: API_TIMEOUT,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+};
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-const VERSION_BASE_URL = import.meta.env.VERSION_API_BASE_URL ||"V1"
- 
-export const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+/**
+ * Client cho các request public hoặc request không nên dính auth interceptor.
+ */
+export const publicAxiosInstance = createApiClient();
 
-// Request interceptor: Attach token & tenant_id
+/**
+ * Client chính cho request nghiệp vụ có auth.
+ */
+export const axiosInstance = createApiClient();
+
+/**
+ * Chỉ cho phép retry bằng refresh token với các request nghiệp vụ thông thường.
+ * Các endpoint đăng nhập/refresh phải giữ nguyên luồng lỗi gốc để tránh lặp vô hạn.
+ *
+ * @param requestUrl - URL của request đang bị lỗi
+ * @returns `true` nếu request có thể chạy lại sau khi refresh token
+ */
+const isRefreshableRequest = (requestUrl?: string): boolean => {
+  if (!requestUrl) {
+    return false;
+  }
+
+  return !requestUrl.includes('/auth/login') && !requestUrl.includes('/auth/refresh');
+};
+
+/**
+ * Gọi endpoint refresh token và đồng bộ lại auth session trong store.
+ *
+ * @returns Session mới do backend trả về sau khi refresh thành công
+ */
+const requestRefreshToken = async (): Promise<BackendAuthResponse> => {
+  const { session, user, setAuthSession } = useAuthStore.getState();
+  const refreshToken = session?.refreshToken;
+
+  // Ưu tiên refresh token đang có trong store.
+  // Khi backend chuyển sang HttpOnly cookie thì payload có thể rỗng,
+  // browser sẽ tự gửi cookie nếu `withCredentials` được bật.
+  const payload = refreshToken ? { refreshToken } : {};
+  const authContext: AuthResponseContext = {
+    email: user?.email,
+    fullName: user?.fullName,
+    phone: user?.phone,
+  };
+
+  const response = await publicAxiosInstance.post<ApiResponse<BackendAuthResponse>>(
+    '/auth/refresh',
+    payload,
+    {
+      withCredentials: !refreshToken,
+    }
+  );
+
+  setAuthSession(response.data.data, authContext);
+  return response.data.data;
+};
+
+/**
+ * Đảm bảo tại một thời điểm chỉ có một request refresh token đang chạy.
+ *
+ * @returns Session mới từ request refresh đang chạy hoặc vừa được tạo
+ */
+const refreshAccessToken = async (): Promise<BackendAuthResponse> => {
+  if (!refreshRequestPromise) {
+    refreshRequestPromise = requestRefreshToken().finally(() => {
+      refreshRequestPromise = null;
+    });
+  }
+
+  return refreshRequestPromise;
+};
+
+/**
+ * Trích xuất message lỗi theo đúng contract `ApiResponse` của backend.
+ *
+ * @param responseData - response lỗi trả về từ backend
+ * @returns Message lỗi ưu tiên từ `error.message`
+ */
+const getApiErrorMessage = (responseData?: ApiResponse<unknown>): string | undefined => {
+  return responseData?.error?.message ?? responseData?.message;
+};
+
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const { session, user } = useAuthStore.getState();
+    const accessToken = session?.accessToken;
+    const tenantId = session?.tenantId ?? user?.tenantId;
+
+    if (accessToken) {
+      config.headers.Authorization = `${session?.tokenType ?? 'Bearer'} ${accessToken}`;
     }
 
-    // Get tenant_id from localStorage (for multi-tenant)
-    const tenantId = localStorage.getItem('tenant_id');
     if (tenantId) {
       config.headers['X-Tenant-Id'] = tenantId;
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (requestError) => Promise.reject(requestError)
 );
 
-// Response interceptor: Handle errors
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error: AxiosError<{ message?: string }>) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+  (response) => response,
+  async (error: AxiosError<ApiResponse<unknown>>) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-    // Handle 401 Unauthorized - Token expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      isRefreshableRequest(originalRequest.url)
+    ) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
+        const refreshedSession = await refreshAccessToken();
 
-        // Call refresh token API
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
+        originalRequest.headers.Authorization =
+          `${refreshedSession.tokenType} ${refreshedSession.accessToken}`;
+        originalRequest.headers['X-Tenant-Id'] = refreshedSession.tenantId;
 
-        const { access_token } = response.data.data;
-        localStorage.setItem('access_token', access_token);
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        useAuthStore.getState().clearAuthSession();
         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        window.location.href = '/login';
+
+        if (window.location.pathname !== ROUTES.LOGIN) {
+          window.location.href = ROUTES.LOGIN;
+        }
+
         return Promise.reject(refreshError);
       }
     }
 
-    // Handle other error codes with toast
     if (error.response) {
       const status = error.response.status;
-      const message = error.response.data?.message;
+      const backendMessage = getApiErrorMessage(error.response.data);
 
       switch (status) {
         case 400:
-          // Bad request - không show toast, để component tự handle validation errors
+          toast.error(backendMessage || 'Dữ liệu gửi lên không hợp lệ');
           break;
         case 403:
-          toast.error('Bạn không có quyền thực hiện thao tác này');
+          toast.error(backendMessage || 'Bạn không có quyền thực hiện thao tác này');
           break;
         case 404:
-          toast.error('Không tìm thấy dữ liệu yêu cầu');
+          toast.error(backendMessage || 'Không tìm thấy dữ liệu yêu cầu');
           break;
         case 409:
-          toast.error(message || 'Dữ liệu đã tồn tại hoặc xung đột');
+          toast.error(backendMessage || 'Dữ liệu đã tồn tại hoặc xung đột');
           break;
         case 500:
-          toast.error('Lỗi hệ thống. Vui lòng thử lại sau.');
+          toast.error(backendMessage || 'Lỗi hệ thống. Vui lòng thử lại sau.');
           break;
         case 503:
-          toast.error('Dịch vụ tạm thời không khả dụng');
+          toast.error(backendMessage || 'Dịch vụ tạm thời không khả dụng');
           break;
         default:
           if (status >= 500) {
-            toast.error('Lỗi server. Vui lòng thử lại sau.');
+            toast.error(backendMessage || 'Lỗi server. Vui lòng thử lại sau.');
           }
       }
     } else if (error.request) {
-      // Request được gửi nhưng không nhận được response
       toast.error('Không thể kết nối đến server. Kiểm tra kết nối mạng.');
     }
 
