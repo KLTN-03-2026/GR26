@@ -1,18 +1,18 @@
-import {axiosInstance as api } from '@lib/axios';
+import { axiosInstance as api, publicAxiosInstance as publicApi } from '@lib/axios';
+import type { ApiResponse } from '@shared/types/api.types';
 import type {
-  LoginCredentials,
   BackendAuthResponse,
-  RegisterPayload,
   ForgotPasswordPayload,
+  LoginCredentials,
+  RegisterPayload,
+  ResetPasswordPayload,
   VerifyOtpPayload,
   VerifyOtpResponse,
-  ResetPasswordPayload,
 } from '../types/auth.types';
-import type { ApiResponse } from '@shared/types/api.types';
 
 /**
- * Auth service - gọi API xác thực
- * Base URL: /api/v1/auth
+ * Auth service chỉ làm đúng một việc:
+ * gọi API và trả về `response.data`.
  */
 export const authService = {
   /**
@@ -20,17 +20,24 @@ export const authService = {
    * POST /api/v1/auth/login
    */
   login: async (credentials: LoginCredentials): Promise<ApiResponse<BackendAuthResponse>> => {
-    return api.post<ApiResponse<BackendAuthResponse>>('/auth/login', credentials).then(r => r.data);
+    const response = await publicApi.post<ApiResponse<BackendAuthResponse>>('/auth/login', credentials);
+    return response.data;
   },
 
   /**
    * Làm mới access token
    * POST /api/v1/auth/refresh
    */
-  refreshToken: async (refreshToken: string): Promise<ApiResponse<BackendAuthResponse>> => {
-    return api
-      .post<ApiResponse<BackendAuthResponse>>('/auth/refresh', { refreshToken })
-      .then(r => r.data);
+  refreshToken: async (refreshToken?: string): Promise<ApiResponse<BackendAuthResponse>> => {
+    const payload = refreshToken ? { refreshToken } : {};
+    const response = await publicApi.post<ApiResponse<BackendAuthResponse>>(
+      '/auth/refresh',
+      payload,
+      {
+        withCredentials: !refreshToken,
+      }
+    );
+    return response.data;
   },
 
   /**
@@ -38,7 +45,8 @@ export const authService = {
    * POST /api/v1/auth/register
    */
   register: async (payload: RegisterPayload): Promise<ApiResponse<BackendAuthResponse>> => {
-    return api.post<ApiResponse<BackendAuthResponse>>('/auth/register', payload).then(r => r.data);
+    const response = await publicApi.post<ApiResponse<BackendAuthResponse>>('/auth/register', payload);
+    return response.data;
   },
 
   /**
@@ -46,7 +54,8 @@ export const authService = {
    * POST /api/v1/auth/forgot-password
    */
   forgotPassword: async (payload: ForgotPasswordPayload): Promise<ApiResponse<void>> => {
-    return api.post<ApiResponse<void>>('/auth/forgot-password', payload).then(r => r.data);
+    const response = await publicApi.post<ApiResponse<void>>('/auth/forgot-password', payload);
+    return response.data;
   },
 
   /**
@@ -54,7 +63,8 @@ export const authService = {
    * POST /api/v1/auth/verify-otp
    */
   verifyOtp: async (payload: VerifyOtpPayload): Promise<ApiResponse<VerifyOtpResponse>> => {
-    return api.post<ApiResponse<VerifyOtpResponse>>('/auth/verify-otp', payload).then(r => r.data);
+    const response = await publicApi.post<ApiResponse<VerifyOtpResponse>>('/auth/verify-otp', payload);
+    return response.data;
   },
 
   /**
@@ -62,7 +72,8 @@ export const authService = {
    * POST /api/v1/auth/reset-password
    */
   resetPassword: async (payload: ResetPasswordPayload): Promise<ApiResponse<void>> => {
-    return api.post<ApiResponse<void>>('/auth/reset-password', payload).then(r => r.data);
+    const response = await publicApi.post<ApiResponse<void>>('/auth/reset-password', payload);
+    return response.data;
   },
 
   /**
@@ -70,6 +81,7 @@ export const authService = {
    * POST /api/v1/auth/select-branch
    */
   selectBranch: async (branchId: string): Promise<ApiResponse<BackendAuthResponse>> => {
-    return api.post<ApiResponse<BackendAuthResponse>>('/auth/select-branch', { branchId }).then(r => r.data);
+    const response = await api.post<ApiResponse<BackendAuthResponse>>('/auth/select-branch', { branchId });
+    return response.data;
   },
 };
