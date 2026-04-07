@@ -351,8 +351,63 @@ async function runTests() {
         if (res.status !== 200) throw new Error("Close POS Session failed: " + JSON.stringify(res.data));
         console.log("   ✅ Đóng POS Session thành công.");
 
+        console.log("\n--- BẮT ĐẦU TEST S-17 (SUPPLIER & PURCHASE ORDER) ---");
+        console.log("33. Tạo Nhà cung cấp (Supplier)");
+        res = await request('/suppliers', 'POST', {
+            name: "NCC Cà Phê Mộc",
+            code: "NCC-CFM",
+            phone: "0901234567",
+            address: "123 Đường ABC",
+            note: "Nhà cung cấp hạt cà phê ngon"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create supplier failed: " + JSON.stringify(res.data));
+        const supplierId = res.data.data;
+        console.log("   ✅ Tạo Supplier thành công. ID: " + supplierId);
+
+        console.log("34. Tạo Đơn mua hàng (Purchase Order) - DRAFT");
+        // We need an itemId to map to PO items. Taking global testItemId (from S-06)
+        res = await request('/purchase-orders', 'POST', {
+            supplierId: supplierId,
+            note: "Nhập đợt 1",
+            expectedDate: "2026-05-01",
+            items: [
+                {
+                    itemId: itemId,
+                    itemName: "Hạt Cafe Arabica",
+                    unit: "kg",
+                    quantity: 10,
+                    unitPrice: 200000,
+                    note: "Loại 1"
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create PO failed: " + JSON.stringify(res.data));
+        const poId = res.data.data;
+        console.log("   ✅ Tạo Purchase Order (DRAFT) thành công. ID: " + poId);
+
+        console.log("35. Gửi Đơn mua hàng cho NCC (DRAFT -> SENT)");
+        res = await request(`/purchase-orders/${poId}/send`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Send PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Send Purchase Order thành công.");
+
+        console.log("36. Xác nhận nhận hàng (SENT -> RECEIVED)");
+        res = await request(`/purchase-orders/${poId}/receive`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Receive PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Nhận Purchase Order thành công. (Đã trigger sinh StockBatch autmatically)");
+
+        console.log("37. Huỷ Đơn mua hàng (CANCELLED)");
+        // create a quick dummy PO to test cancel
+        res = await request('/purchase-orders', 'POST', {
+            supplierId: supplierId,
+            items: [{ itemId: itemId, itemName: "Test Item", quantity: 1, unitPrice: 10 }]
+        }, currentToken);
+        const poCancelId = res.data.data;
+        res = await request(`/purchase-orders/${poCancelId}/cancel`, 'POST', { reason: "Không cần nhập hàng nữa" }, currentToken);
+        if (res.status !== 200) throw new Error("Cancel PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Huỷ Purchase Order thành công.");
+
         console.log("\n==========================================");
-        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-16) HOẠT ĐỘNG HOÀN HẢO!");
+        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-17) HOẠT ĐỘNG HOÀN HẢO!");
         console.log("==========================================");
 
     } catch (e) {
