@@ -16,36 +16,39 @@ export const Header: FC<HeaderProps> = ({
   const userName = 'Orlando';
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur-md md:px-6 lg:px-8">
       {/* Left Section - Hamburger + Title */}
-      <div className="flex items-center gap-3">
-        {/* Hamburger Button - chỉ hiển thị trên mobile */}
+      <div className="flex min-w-0 items-center gap-3">
+        {/* Hamburger Button - hiển thị cho mobile và tablet */}
         {showHamburger && (
           <button
             onClick={onHamburgerClick}
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-hover-light lg:hidden"
+            aria-label="Mở menu điều hướng"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="h-5 w-5 text-text-secondary" />
           </button>
         )}
 
         {/* Page Title */}
-        <div>
-          <h1 className="text-lg md:text-2xl font-bold text-slate-900">{title}</h1>
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-bold text-text-primary md:text-xl lg:text-2xl">
+            {title}
+          </h1>
         </div>
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-2 md:gap-3 lg:gap-4">
         {/* Greeting - ẩn trên mobile rất nhỏ */}
-        <p className="hidden sm:block text-sm font-medium text-slate-600">
+        <p className="hidden text-sm font-medium text-text-secondary md:block">
           Xin chào, {userName}! 👋
         </p>
 
         {/* Notification Bell */}
-        <button className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors duration-150">
-          <Bell className="w-5 h-5 text-slate-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+        <button className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-150 hover:bg-hover-light">
+          <Bell className="h-5 w-5 text-text-secondary" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger-text" />
         </button>
       </div>
     </header>

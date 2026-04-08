@@ -1,5 +1,5 @@
 import { Clock, User, Crown } from 'lucide-react';
-import type { Shift } from '../../data/shiftScheduleMock';
+import type { Shift } from '@modules/staff/data/shiftScheduleMock';
 
 interface ShiftScheduleSectionProps {
   shifts: Shift[];

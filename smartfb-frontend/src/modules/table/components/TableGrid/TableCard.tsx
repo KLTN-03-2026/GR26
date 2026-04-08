@@ -1,4 +1,5 @@
 import { Users, MapPin, MoreVertical, Edit, Trash2, Eye, Power, PowerOff } from 'lucide-react';
+import type { TableItem } from '@modules/table/types/table.types';
 import { Button } from '@shared/components/ui/button';
 import {
   DropdownMenu,
@@ -6,8 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@shared/components/ui/dropdown-menu';
-import type { TableItem } from '../../types/table.types';
-// import { TableStatusValues } from '../../types/table.types';
 
 interface TableCardProps {
   table: TableItem;

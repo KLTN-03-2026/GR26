@@ -8,6 +8,7 @@ import {
 } from "@shared/components/ui/dialog";
 import { Button } from "@shared/components/ui/button";
 import { Input } from "@shared/components/ui/input";
+import { NumericInput } from "@shared/components/common/NumericInput";
 import { Label } from "@shared/components/ui/label";
 import {
   Select,
@@ -287,11 +288,14 @@ export const EditStaffDialog = ({
               <Label htmlFor="salary" className="text-sm font-medium text-gray-700">
                 Lương (VND)
               </Label>
-              <Input
+              <NumericInput
                 id="salary"
-                type="number"
                 value={formData.salary}
-                onChange={(e) => handleChange('salary', parseInt(e.target.value) || 0)}
+                onValueChange={(value) => handleChange('salary', value)}
+                hideZeroValue
+                min={0}
+                step={1000}
+                placeholder="Ví dụ: 8000000"
                 className="mt-1"
               />
             </div>

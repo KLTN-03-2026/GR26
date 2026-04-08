@@ -29,10 +29,10 @@ export const FormStepper = ({ steps, currentStep }: FormStepperProps) => {
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs transition-all duration-200 border-2',
-                  isCompleted && 'bg-green-500 border-green-500 text-white',
-                  isCurrent && 'bg-orange-500 border-orange-500 text-white',
-                  !isCompleted && !isCurrent && 'bg-white border-gray-200 text-gray-400'
+                  'flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-all duration-200',
+                  isCompleted && 'border-success-text bg-success-light text-success-text',
+                  isCurrent && 'border-primary bg-primary-light text-primary',
+                  !isCompleted && !isCurrent && 'border-border bg-card text-text-secondary'
                 )}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : step.id}
@@ -40,9 +40,9 @@ export const FormStepper = ({ steps, currentStep }: FormStepperProps) => {
               <span
                 className={cn(
                   'mt-2 text-xs font-medium transition-colors',
-                  isCompleted && 'text-green-600',
-                  isCurrent && 'text-orange-600',
-                  !isCompleted && !isCurrent && 'text-gray-400'
+                  isCompleted && 'text-success-text',
+                  isCurrent && 'text-primary',
+                  !isCompleted && !isCurrent && 'text-text-secondary'
                 )}
               >
                 {step.label}
@@ -54,7 +54,7 @@ export const FormStepper = ({ steps, currentStep }: FormStepperProps) => {
               <div
                 className={cn(
                   'w-24 h-0.5 mx-4 transition-colors',
-                  isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                  isCompleted ? 'bg-success-text' : 'bg-border'
                 )}
               />
             )}

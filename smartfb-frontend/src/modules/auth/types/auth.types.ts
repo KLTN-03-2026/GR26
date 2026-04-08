@@ -115,7 +115,8 @@ export type VerifyOtpPayload = {
  */
 export type VerifyOtpResponse = {
   resetToken: string;
-  expiresIn: number;
+  message: string;
+  expiresIn?: number;
 };
 
 /**

@@ -37,8 +37,20 @@ export const queryKeys = {
     all: ['menu'] as const,
     list: (filters?: Record<string, unknown>) => ['menu', 'list', filters] as const,
     detail: (id: string) => ['menu', 'detail', id] as const,
+    branchItems: (branchId: string, itemIds: string[]) => ['menu', 'branch-items', branchId, itemIds] as const,
+    branchItemDetail: (branchId: string, itemId: string) => ['menu', 'branch-item', branchId, itemId] as const,
     categories: ['menu', 'categories'] as const,
+    addons: ['menu', 'addons'] as const,
     toppings: ['menu', 'toppings'] as const,
+  },
+
+  // Recipes
+  recipes: {
+    all: ['recipes'] as const,
+    menuItems: (filters?: Record<string, unknown>) => ['recipes', 'menu-items', filters] as const,
+    categories: ['recipes', 'categories'] as const,
+    ingredients: ['recipes', 'ingredients'] as const,
+    detail: (itemId: string) => ['recipes', 'detail', itemId] as const,
   },
   
   // Orders
@@ -51,6 +63,10 @@ export const queryKeys = {
   
   // Inventory
   inventory: {
+    balances: {
+      all: ['inventory', 'balances'] as const,
+      list: (filters?: Record<string, unknown>) => ['inventory', 'balances', 'list', filters] as const,
+    },
     ingredients: {
       all: ['inventory', 'ingredients'] as const,
       list: (filters?: Record<string, unknown>) => ['inventory', 'ingredients', 'list', filters] as const,

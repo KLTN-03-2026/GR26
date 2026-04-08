@@ -7,17 +7,14 @@ interface MenuCardGridProps {
 }
 
 /**
- * Grid layout cho Menu Card
- * Desktop: 3 columns
- * Tablet: 2 columns
- * Mobile: 1 column
+ * Grid layout cho Menu Card.
+ * Dùng auto-fit để card tự lấp đầy chiều ngang, tránh dư khoảng trắng lớn ở tablet/desktop hẹp.
  */
 export const MenuCardGrid: FC<MenuCardGridProps> = ({ children, className }) => {
   return (
     <div
       className={cn(
-        'grid gap-6',
-        'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+        'grid grid-cols-[repeat(auto-fit,minmax(176px,1fr))] gap-3 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] xl:grid-cols-[repeat(auto-fit,minmax(236px,1fr))]',
         className
       )}
     >

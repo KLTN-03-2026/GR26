@@ -81,9 +81,11 @@ function App() {
           key={path}
           path={path}
           element={
-            <div className="min-h-screen bg-[#faf7f2] p-4 font-sans antialiased text-slate-900 overflow-hidden">
-              {element}
-            </div>
+            <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.STAFF]}>
+              <div className="min-h-screen overflow-hidden bg-[#faf7f2] p-4 font-sans antialiased text-slate-900">
+                {element}
+              </div>
+            </ProtectedRoute>
           }
         />
       ))}

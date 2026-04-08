@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
+import type { BranchFilters } from '@modules/branch/types/branch.types';
 import { FilterTag } from '../FilterTag';
-import type { BranchFilters } from '../../types/branch.types';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 
@@ -28,12 +28,13 @@ export const BranchFilterBar = ({
   hasActiveFilters,
   onAddBranch,
 }: BranchFilterBarProps) => {
-  const statusLabel = filters.status === 'active' ? 'Mở cửa' : 'Tạm nghỉ';
+  const statusLabel =
+    filters.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động';
   const locationLabel = filters.location === 'all' ? null : filters.location;
 
   const statusOptions = [
-    { value: 'active', label: 'Mở cửa' },
-    { value: 'inactive', label: 'Tạm nghỉ' },
+    { value: 'ACTIVE', label: 'Đang hoạt động' },
+    { value: 'INACTIVE', label: 'Ngừng hoạt động' },
   ];
 
   const locationOptions = locations.map((location) => ({
@@ -48,7 +49,7 @@ export const BranchFilterBar = ({
         <SearchBar
           value={filters.search}
           onChange={onSearchChange}
-          placeholder="Tìm kiếm chi nhánh..."
+          placeholder="Tìm tên, mã hoặc số điện thoại..."
         />
 
         <div className="flex gap-2">

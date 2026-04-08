@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import {
   Select,
@@ -52,8 +53,8 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
     register,
     handleSubmit,
     reset,
+    control,
     setValue,
-    watch,
     formState: { errors, isDirty },
   } = useForm<EditTableFormData>({
     resolver: zodResolver(editTableSchema),
@@ -76,8 +77,9 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
     }
   }, [open, table, reset]);
 
-  const selectedStatus = watch('status');
-  const selectedAreaName = watch('areaName');
+  const selectedStatus = useWatch({ control, name: 'status' });
+  const selectedAreaName = useWatch({ control, name: 'areaName' });
+  const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: EditTableFormData) => {
     const selectedArea = areas.find((item) => item.name === data.areaName);
@@ -140,10 +142,14 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
 
             <div className="space-y-1">
               <Label htmlFor="capacity">Sức chứa</Label>
-              <Input
+              <NumericInput
                 id="capacity"
-                type="number"
-                {...register('capacity', { valueAsNumber: true })}
+                min={1}
+                max={20}
+                value={selectedCapacity}
+                onValueChange={(value) =>
+                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true })
+                }
               />
               {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>

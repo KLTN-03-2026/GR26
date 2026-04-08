@@ -42,37 +42,37 @@ export default function LoginPage() {
         description="Đăng nhập vào SmartF&B để quản lý chi nhánh, đơn hàng, thực đơn và vận hành chuỗi F&B của bạn."
         noIndex
       />
-      <div className="min-h-screen bg-[#faf7f2] flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-cream p-4">
         <div className="w-full max-w-md">
           {/* Logo + Title */}
-          <div className="text-center mb-8">
+          <div className="mb-8 text-center">
             <h1 className="sr-only">Đăng nhập SmartF&amp;B</h1>
             <BrandLogo
               className="justify-center mb-4 gap-3"
               iconClassName="h-16 w-16 drop-shadow-lg"
-              textClassName="text-4xl text-[#1a1a1a]"
+              textClassName="text-4xl text-text-primary"
             />
-            <p className="text-[#7a7a7a]">Đăng nhập để quản lý chuỗi quán của bạn</p>
+            <p className="text-text-secondary">Đăng nhập để quản lý chuỗi quán của bạn</p>
           </div>
 
           {/* Login Form */}
-          <div className="bg-white rounded-2xl shadow-lg border border-[#f0ebe3] p-8">
+          <div className="rounded-card border border-border bg-card p-8 shadow-card">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="email" className="text-sm font-semibold text-text-primary">
                   Email
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-[#e8692a]" />
+                    <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="email"
                     type="email"
                     placeholder="name@example.com"
                     className={cn(
-                      'pl-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 focus:border-primary',
                       touchedFields.email && errors.email && 'border-red-500 focus:border-red-500'
                     )}
                     {...register('email', {
@@ -91,19 +91,19 @@ export default function LoginPage() {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="password" className="text-sm font-semibold text-text-primary">
                   Mật khẩu
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-[#e8692a]" />
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Nhập mật khẩu"
                     className={cn(
-                      'pl-11 pr-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 pr-11 focus:border-primary',
                       touchedFields.password && errors.password && 'border-red-500 focus:border-red-500'
                     )}
                     {...register('password', {
@@ -117,7 +117,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a7a7a] hover:text-[#e8692a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary transition-colors hover:text-primary"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -130,8 +130,8 @@ export default function LoginPage() {
               {/* Forgot Password Link */}
               <div className="flex justify-end">
                 <Link
-                  to="/forgot-password"
-                  className="text-sm text-[#e8692a] hover:text-[#d1551f] font-medium transition-colors"
+                  to={ROUTES.FORGOT_PASSWORD}
+                  className="text-sm font-medium text-primary transition-colors hover:text-primary-hover"
                 >
                   Quên mật khẩu?
                 </Link>
@@ -140,7 +140,7 @@ export default function LoginPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-[#e8692a] hover:bg-[#d1551f] text-white font-semibold text-base shadow-lg transition-all duration-200"
+                className="h-12 w-full bg-primary text-base font-semibold text-white shadow-card transition-all duration-200 hover:bg-primary-hover"
                 disabled={isPending}
               >
                 {isPending ? (
@@ -157,20 +157,20 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#f0ebe3]" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-[#7a7a7a]">Hoặc</span>
+                <span className="bg-card px-4 text-text-secondary">Hoặc</span>
               </div>
             </div>
 
             {/* Register Link */}
             <div className="text-center">
-              <p className="text-sm text-[#7a7a7a]">
+              <p className="text-sm text-text-secondary">
                 Chưa có tài khoản?{' '}
                 <Link
                   to={ROUTES.REGISTER}
-                  className="text-[#e8692a] hover:text-[#d1551f] font-semibold transition-colors"
+                  className="font-semibold text-primary transition-colors hover:text-primary-hover"
                 >
                   Đăng ký ngay
                 </Link>
@@ -179,7 +179,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-sm text-[#7a7a7a] mt-8">
+          <p className="mt-8 text-center text-sm text-text-secondary">
             © 2026 SmartF&B. Nền tảng quản lý chuỗi F&B
           </p>
         </div>

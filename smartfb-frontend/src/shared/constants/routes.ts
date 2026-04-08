@@ -39,6 +39,7 @@ export const ROUTES = {
     DASHBOARD: '/staff/dashboard',
     TABLES: '/staff/tables',
     ORDERS: '/staff/orders',
+    INVENTORY: '/staff/inventory',
     MY_SHIFTS: '/staff/my-shifts',
   },
 

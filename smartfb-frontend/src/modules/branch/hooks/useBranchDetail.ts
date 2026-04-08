@@ -1,35 +1,37 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
-import { branchDetailMock } from '@modules/branch/data/branchDetailMock';
-import { shiftScheduleMock } from '@modules/branch/data/shiftScheduleMock';
-import { branchActivityLogsMock } from '@modules/branch/data/branchActivityLogsMock';
+import { branchService } from '../services/branchService';
 
 /**
  * Hook lấy chi tiết chi nhánh theo ID.
- * Hiện tại dùng mock data, sẽ thay bằng API call sau.
+ * Backend hiện chưa có endpoint `GET /branches/:id`,
+ * nên FE đọc từ danh sách branch của tenant rồi lọc theo `branchId`.
  *
  * @param branchId - ID chi nhánh cần lấy thông tin
  * @returns Query result với thông tin chi tiết chi nhánh
  */
 export const useBranchDetail = (branchId: string) => {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: queryKeys.branches.detail(branchId),
     queryFn: async () => {
-      // TODO: Thay bằng API call thực tế
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const branches = await queryClient.ensureQueryData({
+        queryKey: queryKeys.branches.list(),
+        queryFn: async () => branchService.getList().then(r => r.data ?? []),
+        staleTime: 5 * 60 * 1000,
+      });
 
-      // Mock: trả về cùng 1 branch cho mọi ID
-      if (branchId !== branchDetailMock.id) {
-        throw new Error('Branch not found');
+      const branch = branches.find(item => item.id === branchId);
+
+      if (!branch) {
+        throw new Error('Không tìm thấy chi nhánh');
       }
 
-      return {
-        branch: branchDetailMock,
-        shifts: shiftScheduleMock,
-        activityLogs: branchActivityLogsMock,
-      };
+      return branch;
     },
     staleTime: 5 * 60 * 1000, // 5 phút
+    retry: 1,
+    enabled: Boolean(branchId),
   });
 };

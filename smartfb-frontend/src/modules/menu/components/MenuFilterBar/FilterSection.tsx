@@ -19,7 +19,7 @@ export const FilterSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className={cn('border-b border-gray-100 pb-4', className)}>
+    <div className={cn('border-b border-gray-100 pb-4 last:border-b-0 last:pb-0', className)}>
       <Button
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
@@ -35,7 +35,7 @@ export const FilterSection = ({
           )}
         />
       </Button>
-      {isOpen && <div className="mt-3">{children}</div>}
+      {isOpen && <div className="mt-3 overflow-hidden">{children}</div>}
     </div>
   );
 };

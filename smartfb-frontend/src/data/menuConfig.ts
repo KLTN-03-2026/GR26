@@ -67,7 +67,8 @@ export const menuConfig: MenuSection[] = [
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Kho', icon: Archive, path: ROUTES.OWNER.INVENTORY, roles: [ROLES.OWNER, ROLES.STAFF] },
+          { title: 'Kho', icon: Archive, path: ROUTES.OWNER.INVENTORY, roles: [ROLES.OWNER] },
+          { title: 'Kho', icon: Archive, path: ROUTES.STAFF.INVENTORY, roles: [ROLES.STAFF] },
           { title: 'Công thức', icon: BookOpenCheck, path: ROUTES.OWNER.RECIPES, roles: [ROLES.OWNER] },
         ],
       },

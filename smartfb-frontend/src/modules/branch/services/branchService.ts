@@ -21,14 +21,6 @@ export const branchService = {
   },
 
   /**
-   * Lấy chi tiết một chi nhánh
-   * GET /api/v1/branches/:id
-   */
-  getById: async (id: string): Promise<ApiResponse<Branch>> => {
-    return api.get<ApiResponse<Branch>>(`/branches/${id}`).then(r => r.data);
-  },
-
-  /**
    * Tạo mới một chi nhánh
    * POST /api/v1/branches
    * @param payload - thông tin chi nhánh cần tạo
@@ -45,14 +37,6 @@ export const branchService = {
    */
   update: async (id: string, payload: UpdateBranchPayload): Promise<ApiResponse<Branch>> => {
     return api.put<ApiResponse<Branch>>(`/branches/${id}`, payload).then(r => r.data);
-  },
-
-  /**
-   * Xóa chi nhánh
-   * DELETE /api/v1/branches/:id
-   */
-  delete: async (id: string): Promise<ApiResponse<void>> => {
-    return api.delete<ApiResponse<void>>(`/branches/${id}`).then(r => r.data);
   },
 
   /**

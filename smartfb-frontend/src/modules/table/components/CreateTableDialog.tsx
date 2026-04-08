@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import {
   Select,
@@ -22,7 +23,6 @@ import {
 } from '@shared/components/ui/select';
 import { useCreateTable } from '../hooks/useCreateTable';
 import { mockTableDetails, mockTableAreas } from '../data/tableDetails';
-import type { TableDetail } from '../types/table.types';
 
 const createTableSchema = z.object({
   name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
@@ -47,8 +47,8 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess }: CreateTable
     handleSubmit,
     setError,
     clearErrors,
+    control,
     setValue,
-    watch,
     reset,
     formState: { errors, isDirty },
   } = useForm<CreateTableFormData>({
@@ -78,8 +78,9 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess }: CreateTable
   }, []);
 
   const areas = mockTableAreas;
-  const selectedAreaId = watch('areaId');
-  const selectedBranchId = watch('branchId');
+  const selectedAreaId = useWatch({ control, name: 'areaId' });
+  const selectedBranchId = useWatch({ control, name: 'branchId' });
+  const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: CreateTableFormData) => {
     const duplicate = mockTableDetails.find(
@@ -106,7 +107,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess }: CreateTable
         description: '',
       },
       {
-        onSuccess: (_newTable: TableDetail) => {
+        onSuccess: () => {
           onSuccess?.();
           onOpenChange(false);
           reset();
@@ -181,10 +182,15 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess }: CreateTable
 
             <div className="space-y-1">
               <Label htmlFor="capacity">Sức chứa</Label>
-              <Input
+              <NumericInput
                 id="capacity"
-                type="number"
-                {...register('capacity', { valueAsNumber: true })}
+                min={1}
+                max={20}
+                value={selectedCapacity}
+                onValueChange={(value) => {
+                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true });
+                  clearErrors('capacity');
+                }}
               />
               {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>

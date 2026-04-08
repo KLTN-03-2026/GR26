@@ -5,7 +5,7 @@ import {
   TableHeader,
   TableRow,
 } from '@shared/components/ui/table';
-import type { StaffListItem } from '../../types/staff.types';
+import type { StaffListItem } from '@modules/staff/types/staff.types';
 import { StaffRow } from './StaffRow';
 import { StaffTablePagination } from './StaffTablePagination';
 

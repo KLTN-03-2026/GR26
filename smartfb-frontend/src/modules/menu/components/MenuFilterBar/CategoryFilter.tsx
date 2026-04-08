@@ -1,22 +1,27 @@
 import { Checkbox } from '@shared/components/ui/checkbox';
 import { cn } from '@shared/utils/cn';
-import type { MenuCategory } from '@modules/menu/types/menu.types';
-import { MENU_CATEGORIES } from '@modules/menu/constants/menu.constants';
+import type { MenuCategory, MenuCategoryInfo } from '@modules/menu/types/menu.types';
 
 interface CategoryFilterProps {
+  categories: MenuCategoryInfo[];
   selectedCategories: MenuCategory[];
   onCategoryChange: (category: MenuCategory) => void;
   className?: string;
 }
 
 export const CategoryFilter = ({
+  categories,
   selectedCategories,
   onCategoryChange,
   className,
 }: CategoryFilterProps) => {
+  if (categories.length === 0) {
+    return <p className={cn('text-sm text-gray-500', className)}>Chưa có danh mục để lọc.</p>;
+  }
+
   return (
     <div className={cn('space-y-3', className)}>
-      {MENU_CATEGORIES.map((category) => (
+      {categories.map((category) => (
         <div key={category.id} className="flex items-center space-x-2">
           <Checkbox
             id={`category-${category.id}`}

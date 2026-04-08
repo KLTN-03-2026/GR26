@@ -1,28 +1,35 @@
 import { type FC } from 'react';
-
 import type { UseFormReturn } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/components/ui/form';
 import { Input } from '@shared/components/ui/input';
-import { Textarea } from '@shared/components/ui/textarea';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/components/ui/select';
 import { Button } from '@shared/components/ui/button';
+import { Switch } from '@shared/components/ui/switch';
 import { cn } from '@shared/utils/cn';
 import type { CreateMenuFormValues } from '@modules/menu/schemas/menu.schema';
-import { MENU_CATEGORIES } from '@modules/menu/constants/menu.constants';
+import type { MenuCategoryInfo } from '@modules/menu/types/menu.types';
+import { NO_MENU_CATEGORY_LABEL, NO_MENU_CATEGORY_VALUE } from '@modules/menu/constants/menu.constants';
 
 interface MenuFormProps {
   form: UseFormReturn<CreateMenuFormValues>;
+  categories: MenuCategoryInfo[];
   onSubmit: (values: CreateMenuFormValues) => void;
   isPending?: boolean;
+  submitLabel: string;
   className?: string;
 }
 
 export const MenuForm: FC<MenuFormProps> = ({
   form,
+  categories,
   onSubmit,
   isPending = false,
+  submitLabel,
   className,
 }) => {
+  const selectableCategories = categories.filter((category) => category.id !== NO_MENU_CATEGORY_VALUE);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className={cn('space-y-4', className)}>
@@ -48,14 +55,15 @@ export const MenuForm: FC<MenuFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Danh mục *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn danh mục" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {MENU_CATEGORIES.map((cat) => (
+                  <SelectItem value={NO_MENU_CATEGORY_VALUE}>{NO_MENU_CATEGORY_LABEL}</SelectItem>
+                  {selectableCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
@@ -67,92 +75,43 @@ export const MenuForm: FC<MenuFormProps> = ({
           )}
         />
 
-        {/* Giá bán và Giá vốn */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Giá bán và đơn vị tính */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Giá bán *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0đ"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormLabel>Giá bán *</FormLabel>
+              <FormControl>
+                <NumericInput
+                  min={0}
+                  step={1000}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  hideZeroValue
+                  placeholder="Ví dụ: 45000"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
             )}
           />
 
           <FormField
             control={form.control}
-            name="cost"
+            name="unit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Giá vốn</FormLabel>
+                <FormLabel>Đơn vị tính</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="0đ"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                    value={field.value ?? ''}
-                  />
+                  <Input placeholder="Ví dụ: ly, phần, dĩa" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-
-        {/* Mô tả */}
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mô tả</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Mô tả ngắn về món ăn"
-                  className="resize-none"
-                  rows={3}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Thành phần */}
-        <FormField
-          control={form.control}
-          name="ingredients"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Thành phần</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Các thành phần chính (phân cách bằng dấu phẩy)"
-                  className="resize-none"
-                  rows={3}
-                  value={field.value?.join(', ') || ''}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-                    )
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {/* URL ảnh */}
         <FormField
@@ -169,50 +128,28 @@ export const MenuForm: FC<MenuFormProps> = ({
           )}
         />
 
-        {/* Tags */}
-        <div className="space-y-2">
-          <FormLabel>Tags</FormLabel>
-          <div className="flex flex-wrap gap-2">
-            {['moi', 'hot', 'bestseller', 'recommend'].map((tag) => (
-              <FormField
-                key={tag}
-                control={form.control}
-                name="tags"
-                render={({ field }) => {
-                  const isSelected = field.value?.includes(tag as 'moi' | 'hot' | 'bestseller' | 'recommend');
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        const newTags = isSelected
-                          ? field.value?.filter((t) => t !== tag)
-                          : [...(field.value || []), tag as 'moi' | 'hot' | 'bestseller' | 'recommend'];
-                        field.onChange(newTags);
-                      }}
-                      className={cn(
-                        'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
-                        isSelected
-                          ? 'bg-amber-600 text-white border-amber-600'
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-amber-600'
-                      )}
-                    >
-                      {tag === 'moi' && 'Mới'}
-                      {tag === 'hot' && 'Hot'}
-                      {tag === 'bestseller' && 'Bán chạy'}
-                      {tag === 'recommend' && 'Đề xuất'}
-                    </button>
-                  );
-                }}
-              />
-            ))}
-          </div>
-          <FormMessage />
-        </div>
+        {/* Đồng bộ lên app giao hàng */}
+        <FormField
+          control={form.control}
+          name="isSyncDelivery"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-3 rounded-lg border border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <FormLabel className="text-sm font-medium">Đồng bộ lên app giao hàng</FormLabel>
+                <p className="text-xs text-gray-500">
+                  Khi bật, món ăn sẽ được đánh dấu để đồng bộ sang kênh bán hàng bên ngoài.
+                </p>
+              </div>
+              <FormControl>
+                <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         {/* Submit Button */}
         <Button type="submit" disabled={isPending} className="w-full bg-amber-600 hover:bg-amber-700">
-          {isPending ? 'Đang lưu...' : 'Lưu món ăn'}
+          {isPending ? 'Đang lưu...' : submitLabel}
         </Button>
       </form>
     </Form>

@@ -1,8 +1,8 @@
 import { Plus, FilterX } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
+import type { TableFilters } from '@modules/table/types/table.types';
+import { TableUsageStatusValues } from '@modules/table/types/table.types';
 import { FilterDropdown } from './FilterDropdown';
-import type { TableFilters } from '../../types/table.types';
-import { TableUsageStatusValues } from '../../types/table.types';
 
 interface TableFilterBarProps {
   filters: TableFilters;

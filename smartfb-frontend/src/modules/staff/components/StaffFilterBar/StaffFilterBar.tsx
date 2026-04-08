@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
+import type { StaffFilters } from '@modules/staff/types/staff.types';
 import { FilterTag } from '../FilterTag';
-import type { StaffFilters } from '../../types/staff.types';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 

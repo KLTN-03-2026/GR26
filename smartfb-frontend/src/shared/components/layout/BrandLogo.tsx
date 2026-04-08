@@ -28,7 +28,7 @@ export const BrandLogo: FC<BrandLogoProps> = ({
       />
       <span
         className={cn(
-          'whitespace-nowrap text-xl font-bold tracking-tight text-[#e8692a]',
+          'whitespace-nowrap text-xl font-bold tracking-tight text-primary',
           textClassName
         )}
       >

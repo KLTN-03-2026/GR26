@@ -24,11 +24,27 @@ const LEGACY_AUTH_STORAGE_KEYS = [
 ] as const;
 
 type JwtPayload = {
+  sub?: unknown;
+  tenantId?: unknown;
+  role?: unknown;
   permissions?: unknown;
+  branchId?: unknown;
+};
+
+type DecodedAccessTokenClaims = {
+  userId?: string;
+  tenantId?: string;
+  role?: string;
+  permissions?: string[];
+  branchId?: string | null;
 };
 
 const isStringArray = (value: unknown): value is string[] => {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
+};
+
+const isNonEmptyString = (value: unknown): value is string => {
+  return typeof value === 'string' && value.trim().length > 0;
 };
 
 /**
@@ -51,6 +67,57 @@ const decodeBase64Url = (value: string): string => {
   return window.atob(paddedValue);
 };
 
+const extractOptionalString = (value: unknown): string | undefined => {
+  if (!isNonEmptyString(value)) {
+    return undefined;
+  }
+
+  return value;
+};
+
+const extractOptionalNullableString = (value: unknown): string | null | undefined => {
+  if (value === null) {
+    return null;
+  }
+
+  if (!isNonEmptyString(value)) {
+    return undefined;
+  }
+
+  return value;
+};
+
+/**
+ * Decode access token để lấy lại claims nghiệp vụ đang thực sự có trong JWT.
+ * FE ưu tiên dữ liệu này sau các luồng login / refresh / đổi chi nhánh
+ * để tránh session trong store bị lệch so với token mới nhất.
+ */
+export const extractAuthClaimsFromAccessToken = (
+  accessToken: string
+): DecodedAccessTokenClaims | null => {
+  try {
+    const [, payloadSegment] = accessToken.split('.');
+
+    if (!payloadSegment) {
+      return null;
+    }
+
+    const parsedPayload = JSON.parse(decodeBase64Url(payloadSegment)) as JwtPayload;
+
+    return {
+      userId: extractOptionalString(parsedPayload.sub),
+      tenantId: extractOptionalString(parsedPayload.tenantId),
+      role: extractOptionalString(parsedPayload.role),
+      permissions: isStringArray(parsedPayload.permissions)
+        ? parsedPayload.permissions
+        : undefined,
+      branchId: extractOptionalNullableString(parsedPayload.branchId),
+    };
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Đọc permissions từ access token để UI có thể dùng ngay cho RBAC
  * mà không cần gọi thêm profile endpoint.
@@ -59,23 +126,7 @@ export const extractPermissionsFromAccessToken = (
   accessToken: string,
   fallbackPermissions: string[]
 ): string[] => {
-  try {
-    const [, payloadSegment] = accessToken.split('.');
-
-    if (!payloadSegment) {
-      return fallbackPermissions;
-    }
-
-    const parsedPayload = JSON.parse(decodeBase64Url(payloadSegment)) as JwtPayload;
-
-    if (isStringArray(parsedPayload.permissions)) {
-      return parsedPayload.permissions;
-    }
-
-    return fallbackPermissions;
-  } catch {
-    return fallbackPermissions;
-  }
+  return extractAuthClaimsFromAccessToken(accessToken)?.permissions ?? fallbackPermissions;
 };
 
 /**
@@ -85,7 +136,10 @@ export const buildAuthSession = (
   authResponse: BackendAuthResponse,
   fallbackPermissions: string[]
 ): AuthSession => {
-  const normalizedRole = normalizeRole(authResponse.role);
+  // Luôn ưu tiên claims trong access token vì đây là nguồn sự thật
+  // mà mọi request nghiệp vụ thực tế sẽ sử dụng sau refresh.
+  const decodedClaims = extractAuthClaimsFromAccessToken(authResponse.accessToken);
+  const normalizedRole = normalizeRole(decodedClaims?.role ?? authResponse.role);
 
   return {
     accessToken: authResponse.accessToken,
@@ -93,11 +147,11 @@ export const buildAuthSession = (
     tokenType: authResponse.tokenType,
     expiresIn: authResponse.expiresIn,
     expiresAt: new Date(Date.now() + authResponse.expiresIn * 1000).toISOString(),
-    userId: authResponse.userId,
-    tenantId: authResponse.tenantId,
+    userId: decodedClaims?.userId ?? authResponse.userId,
+    tenantId: decodedClaims?.tenantId ?? authResponse.tenantId,
     role: normalizedRole,
-    branchId: authResponse.branchId ?? null,
-    permissions: extractPermissionsFromAccessToken(authResponse.accessToken, fallbackPermissions),
+    branchId: decodedClaims?.branchId ?? authResponse.branchId ?? null,
+    permissions: decodedClaims?.permissions ?? fallbackPermissions,
   };
 };
 

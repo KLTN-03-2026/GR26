@@ -1,6 +1,6 @@
 import { X, Users, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff } from 'lucide-react';
+import type { TableItem } from '@modules/table/types/table.types';
 import { Button } from '@shared/components/ui/button';
-import type { TableItem } from '../../types/table.types';
 
 interface TableDetailDrawerProps {
   table: TableItem | null;

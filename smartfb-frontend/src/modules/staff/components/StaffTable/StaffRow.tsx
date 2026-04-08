@@ -7,14 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@shared/components/ui/dropdown-menu';
+import { useStaffDetail } from '@modules/staff/hooks/useStaffDetail';
+import type { StaffListItem } from '@modules/staff/types/staff.types';
+import type { StaffDetailFull } from '@modules/staff/data/staffDetailMock';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
-import type { StaffListItem } from '../../types/staff.types';
 import { DeleteStaffDialog } from '../DeleteStaffDialog';
 import { EditStaffDialog } from '../EditStaffDialog';
 import { ToggleStaffStatusDialog } from '../ToggleStaffStatusDialog';
-import { useStaffDetail } from '../../hooks/useStaffDetail';
-import type { StaffDetailFull } from '../../data/staffDetailMock';
 
 interface StaffRowProps {
   staff: StaffListItem;

@@ -67,64 +67,90 @@ export const MenuPagination = ({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className={cn('flex items-center justify-between', className)}>
-      {/* Item count info */}
-      <div className="text-sm text-gray-500">
-        Hiển thị <span className="font-medium">{startItem}</span> -{' '}
-        <span className="font-medium">{endItem}</span> trên{' '}
-        <span className="font-medium">{totalItems}</span>
-      </div>
+    <div className={cn('rounded-2xl border border-amber-100 bg-white px-4 py-3 shadow-sm', className)}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Item count info */}
+        <div className="text-sm text-gray-500">
+          Hiển thị <span className="font-medium">{startItem}</span> -{' '}
+          <span className="font-medium">{endItem}</span> trên{' '}
+          <span className="font-medium">{totalItems}</span>
+        </div>
 
-      {/* Pagination buttons */}
-      <div className="flex items-center gap-1">
-        {/* Previous button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+        {/* Pagination mobile */}
+        <div className="flex items-center justify-between gap-2 sm:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-9 min-w-0 flex-1"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Trước
+          </Button>
+          <div className="min-w-[88px] text-center text-sm font-medium text-gray-700">
+            {currentPage} / {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-9 min-w-0 flex-1"
+          >
+            Sau
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
 
-        {/* Page numbers */}
-        {pageNumbers.map((page, index) =>
-          page === 'ellipsis' ? (
-            <span
-              key={`ellipsis-${index}`}
-              className="px-2 text-gray-400"
-            >
-              ...
-            </span>
-          ) : (
-            <Button
-              key={page}
-              variant={currentPage === page ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onPageChange(page)}
-              className={cn(
-                'h-8 w-8 p-0',
-                currentPage === page
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : ''
-              )}
-            >
-              {page}
-            </Button>
-          )
-        )}
+        {/* Pagination desktop/tablet */}
+        <div className="hidden items-center gap-1 sm:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-        {/* Next button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+          {pageNumbers.map((page, index) =>
+            page === 'ellipsis' ? (
+              <span
+                key={`ellipsis-${index}`}
+                className="px-2 text-gray-400"
+              >
+                ...
+              </span>
+            ) : (
+              <Button
+                key={page}
+                variant={currentPage === page ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onPageChange(page)}
+                className={cn(
+                  'h-8 w-8 p-0',
+                  currentPage === page
+                    ? 'bg-amber-600 text-white hover:bg-amber-700'
+                    : ''
+                )}
+              >
+                {page}
+              </Button>
+            )
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

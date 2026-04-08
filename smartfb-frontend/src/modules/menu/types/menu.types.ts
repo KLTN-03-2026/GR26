@@ -1,19 +1,17 @@
-import { Status } from '@shared/types/common.types';
-
 /**
  * Trạng thái kinh doanh của món ăn
  */
-export type MenuStatus = 'selling' | 'hidden' | 'pending';
+export type MenuStatus = 'selling' | 'hidden';
 
 /**
  * Danh mục món ăn
  */
-export type MenuCategory = 'ca-phe' | 'tra-trai-cay' | 'banh-ngot' | 'da-ep' | 'sua-hat' | 'khac';
+export type MenuCategory = string;
 
 /**
  * Tùy chọn sắp xếp
  */
-export type MenuSortOption = 'newest' | 'price-asc' | 'price-desc' | 'bestseller';
+export type MenuSortOption = 'newest' | 'price-asc' | 'price-desc';
 
 /**
  * Tùy chọn lọc GP%
@@ -27,7 +25,11 @@ export interface MenuItem {
   id: string;
   name: string;
   category: MenuCategory;
+  categoryName?: string;
   price: number;              // Giá bán
+  basePrice?: number;         // Giá gốc cấu hình toàn hệ thống
+  branchPrice?: number | null;// Giá override tại chi nhánh đang chọn
+  effectivePrice?: number;    // Giá thực tế sau khi ghép cấu hình chi nhánh
   cost?: number;              // Giá vốn (dùng để tính GP%)
   gpPercent: number;          // Lợi nhuận gộp %
   image: string;              // URL ảnh
@@ -38,6 +40,12 @@ export interface MenuItem {
   description?: string;
   ingredients?: string[];     // Thành phần
   isAvailable?: boolean;      // Sẵn sàng để bán (toggle)
+  unit?: string;
+  isSyncDelivery?: boolean;
+  isActive?: boolean;
+  branchId?: string | null;
+  branchName?: string;
+  usesBranchPrice?: boolean;
 }
 
 /**
@@ -52,8 +60,6 @@ export interface MenuFilters {
   search: string;
   categories: MenuCategory[];
   statuses: MenuStatus[];
-  priceRange: [number, number];
-  gpMargin: GpMarginFilter;
   sortBy: MenuSortOption;
 }
 
@@ -89,10 +95,25 @@ export interface CreateMenuPayload {
   category: MenuCategory;
   price: number;
   cost?: number;
-  description?: string;
-  ingredients?: string[];
   image?: string;
-  tags?: MenuTag[];
+  unit?: string;
+  isSyncDelivery?: boolean;
+}
+
+/**
+ * Payload cho tạo mới danh mục món ăn
+ */
+export interface CreateMenuCategoryPayload {
+  name: string;
+  description?: string;
+  displayOrder?: number;
+}
+
+/**
+ * Payload cho cập nhật danh mục món ăn
+ */
+export interface UpdateMenuCategoryPayload extends CreateMenuCategoryPayload {
+  isActive: boolean;
 }
 
 /**
@@ -101,6 +122,54 @@ export interface CreateMenuPayload {
 export interface UpdateMenuPayload extends Partial<CreateMenuPayload> {
   status?: MenuStatus;
   isAvailable?: boolean;
+  isActive?: boolean;
+}
+
+/**
+ * Cấu hình món ăn theo từng chi nhánh.
+ * Backend trả về giá gốc, giá override và trạng thái phục vụ thực tế.
+ */
+export interface BranchMenuItemConfig {
+  branchId: string;
+  itemId: string;
+  itemName: string;
+  basePrice: number;
+  branchPrice: number | null;
+  effectivePrice: number;
+  isAvailable: boolean;
+}
+
+/**
+ * Payload cập nhật cấu hình món ăn theo chi nhánh.
+ */
+export interface UpdateBranchMenuItemPayload {
+  branchPrice: number | null;
+  isAvailable: boolean;
+}
+
+/**
+ * Thông tin addon/topping trong menu.
+ */
+export interface MenuAddonInfo {
+  id: string;
+  name: string;
+  extraPrice: number;
+  isActive?: boolean;
+}
+
+/**
+ * Payload cho tạo mới addon.
+ */
+export interface CreateMenuAddonPayload {
+  name: string;
+  extraPrice: number;
+}
+
+/**
+ * Payload cho cập nhật addon.
+ */
+export interface UpdateMenuAddonPayload extends CreateMenuAddonPayload {
+  isActive: boolean;
 }
 
 /**
@@ -109,6 +178,9 @@ export interface UpdateMenuPayload extends Partial<CreateMenuPayload> {
 export interface MenuCategoryInfo {
   id: MenuCategory;
   name: string;
+  description?: string;
   icon?: string;
   count?: number;
+  isActive?: boolean;
+  displayOrder?: number;
 }

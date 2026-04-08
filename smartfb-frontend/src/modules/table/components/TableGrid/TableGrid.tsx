@@ -1,5 +1,5 @@
+import type { TableItem } from '@modules/table/types/table.types';
 import { TableCard } from './TableCard';
-import type { TableItem } from '../../types/table.types';
 
 interface TableGridProps {
   tables: TableItem[];

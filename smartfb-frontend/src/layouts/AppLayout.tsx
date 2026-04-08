@@ -1,8 +1,10 @@
-import { mockBranches } from '@/data';
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import { useSelectBranch } from '@modules/auth/hooks/useSelectBranch';
+import { useBranches } from '@modules/branch/hooks/useBranches';
 import { PageMeta } from '@shared/components/common/PageMeta';
 import { OwnerLayout, StaffLayout } from '@shared/components/layout';
 import { usePermission } from '@shared/hooks/usePermission';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -15,10 +17,31 @@ interface AppLayoutProps {
  */
 export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   const { isOwner } = usePermission();
-  const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
+  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const updateBranchContext = useAuthStore((state) => state.updateBranchContext);
+  const { mutate: selectBranch } = useSelectBranch();
+  const { data: branches = [] } = useBranches();
+
+  const branchOptions = useMemo(() => {
+    return branches.map((branch) => ({
+      id: branch.id,
+      name: branch.name,
+    }));
+  }, [branches]);
+
+  const selectedBranchId = currentBranchId ?? 'all';
 
   const handleBranchChange = (branchId: string) => {
-    setSelectedBranchId(branchId);
+    if (branchId === 'all') {
+      updateBranchContext(null);
+      return;
+    }
+
+    if (branchId === currentBranchId) {
+      return;
+    }
+
+    selectBranch(branchId);
   };
 
   if (isOwner) {
@@ -27,7 +50,7 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
         <PageMeta title={pageTitle} />
         <OwnerLayout
           pageTitle={pageTitle}
-          branches={mockBranches}
+          branches={branchOptions}
           selectedBranchId={selectedBranchId}
           onBranchChange={handleBranchChange}
         >
@@ -38,14 +61,14 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   }
 
   return (
-    <>
-      <PageMeta title={pageTitle} />
-      <StaffLayout
-        pageTitle={pageTitle}
-        branches={mockBranches}
-        selectedBranchId={selectedBranchId}
-        onBranchChange={handleBranchChange}
-      >
+      <>
+        <PageMeta title={pageTitle} />
+        <StaffLayout
+          pageTitle={pageTitle}
+          branches={branchOptions}
+          selectedBranchId={selectedBranchId}
+          onBranchChange={handleBranchChange}
+        >
         {children}
       </StaffLayout>
     </>

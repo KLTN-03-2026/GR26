@@ -7,7 +7,6 @@ export * from './hooks/useCreateStaff';
 export * from './hooks/useEditStaff';
 export * from './hooks/useDeleteStaff';
 export * from './hooks/useToggleStaffStatus';
-export * from './hooks/useStaffPermissions';
 export * from './components/StaffFilterBar';
 export * from './components/StaffTable';
 export * from './components/EditStaffDialog';

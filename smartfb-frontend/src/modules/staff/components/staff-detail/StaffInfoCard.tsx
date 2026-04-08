@@ -1,6 +1,18 @@
-import { Building2, Phone, Mail, Calendar, CreditCard, MapPin, UserCircle, Edit, Fingerprint, Home } from 'lucide-react';
+import {
+  Building2,
+  Phone,
+  Mail,
+  Calendar,
+  CreditCard,
+  MapPin,
+  UserCircle,
+  Edit,
+  Fingerprint,
+  Home,
+  type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
-import type { StaffDetailFull } from '../../data/staffDetailMock';
+import type { StaffDetailFull } from '@modules/staff/data/staffDetailMock';
 
 interface StaffInfoCardProps {
   staff: StaffDetailFull;
@@ -70,7 +82,13 @@ export const StaffInfoCard = ({ staff, onEdit }: StaffInfoCardProps) => {
   );
 };
 
-const InfoItem = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
+interface InfoItemProps {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}
+
+const InfoItem = ({ icon: Icon, label, value }: InfoItemProps) => (
   <div className="flex items-start gap-2">
     <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
     <div>

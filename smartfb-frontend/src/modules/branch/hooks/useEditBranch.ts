@@ -27,7 +27,6 @@ export const useEditBranch = () => {
       );
     },
     onError: (err) => {
-      console.error('Failed to update branch:', err);
       const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
       error('Không thể cập nhật', errorMessage);
     },

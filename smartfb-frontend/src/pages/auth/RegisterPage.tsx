@@ -9,6 +9,7 @@ import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { useRegister } from '@modules/auth/hooks/useRegister';
 import { cn } from '@shared/utils/cn';
+import { ROUTES } from '@shared/constants/routes';
 
 /**
  * Form payload cho đăng ký tenant
@@ -72,43 +73,43 @@ export default function RegisterPage() {
         description="Đăng ký SmartF&B để tạo tài khoản quản lý chuỗi quán, chi nhánh, thực đơn và vận hành F&B tập trung."
         noIndex
       />
-      <div className="min-h-screen bg-[#faf7f2] flex items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center bg-cream p-4">
         <div className="w-full max-w-2xl">
           {/* Logo + Title */}
-          <div className="text-center mb-8">
+          <div className="mb-8 text-center">
             <h1 className="sr-only">Đăng ký SmartF&amp;B</h1>
             <BrandLogo
               className="justify-center mb-4 gap-3"
               iconClassName="h-16 w-16 drop-shadow-lg"
-              textClassName="text-4xl text-[#1a1a1a]"
+              textClassName="text-4xl text-text-primary"
             />
-            <p className="text-[#7a7a7a]">Tạo tài khoản quản lý chuỗi quán của bạn</p>
+            <p className="text-text-secondary">Tạo tài khoản quản lý chuỗi quán của bạn</p>
           </div>
 
           {/* Register Form */}
-          <div className="bg-white rounded-2xl shadow-lg border border-[#f0ebe3] p-8">
+          <div className="rounded-card border border-border bg-card p-8 shadow-card">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Business Info Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-[#1a1a1a] border-b border-[#f0ebe3] pb-2">
+                <h3 className="border-b border-border pb-2 text-lg font-semibold text-text-primary">
                   Thông tin doanh nghiệp
                 </h3>
 
               {/* Tenant Name */}
               <div className="space-y-2">
-                <Label htmlFor="tenantName" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="tenantName" className="text-sm font-semibold text-text-primary">
                   Tên quán / doanh nghiệp <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Store className="w-5 h-5 text-[#e8692a]" />
+                    <Store className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="tenantName"
                     type="text"
                     placeholder="VD: Coffee House, Restaurant ABC..."
                     className={cn(
-                      'pl-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 focus:border-primary',
                       touchedFields.tenantName && errors.tenantName && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('tenantName', {
@@ -127,19 +128,19 @@ export default function RegisterPage() {
 
               {/* Owner Name */}
               <div className="space-y-2">
-                <Label htmlFor="ownerName" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="ownerName" className="text-sm font-semibold text-text-primary">
                   Tên chủ quán <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="w-5 h-5 text-[#e8692a]" />
+                    <User className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="ownerName"
                     type="text"
                     placeholder="Nhập tên của bạn"
                     className={cn(
-                      'pl-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 focus:border-primary',
                       touchedFields.ownerName && errors.ownerName && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('ownerName', {
@@ -158,19 +159,19 @@ export default function RegisterPage() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="phone" className="text-sm font-semibold text-text-primary">
                   Số điện thoại
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Phone className="w-5 h-5 text-[#e8692a]" />
+                    <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="09xxxxxxxx"
                     className={cn(
-                      'pl-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 focus:border-primary',
                       touchedFields.phone && errors.phone && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('phone', {
@@ -189,25 +190,25 @@ export default function RegisterPage() {
 
             {/* Account Info Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#1a1a1a] border-b border-[#f0ebe3] pb-2">
+              <h3 className="border-b border-border pb-2 text-lg font-semibold text-text-primary">
                 Thông tin tài khoản
               </h3>
 
               {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="email" className="text-sm font-semibold text-text-primary">
                   Email <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-[#e8692a]" />
+                    <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="email"
                     type="email"
                     placeholder="name@example.com"
                     className={cn(
-                      'pl-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 focus:border-primary',
                       touchedFields.email && errors.email && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('email', {
@@ -226,19 +227,19 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="password" className="text-sm font-semibold text-text-primary">
                   Mật khẩu <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-[#e8692a]" />
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Ít nhất 8 ký tự"
                     className={cn(
-                      'pl-11 pr-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 pr-11 focus:border-primary',
                       touchedFields.password && errors.password && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('password', {
@@ -252,7 +253,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a7a7a] hover:text-[#e8692a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary transition-colors hover:text-primary"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -264,19 +265,19 @@ export default function RegisterPage() {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-text-primary">
                   Xác nhận mật khẩu <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-[#e8692a]" />
+                    <Lock className="h-5 w-5 text-primary" />
                   </div>
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Nhập lại mật khẩu"
                     className={cn(
-                      'pl-11 pr-11 h-12 border-[#f0ebe3] focus:border-[#e8692a]',
+                      'h-12 border-border pl-11 pr-11 focus:border-primary',
                       touchedFields.confirmPassword && errors.confirmPassword && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('confirmPassword', {
@@ -287,7 +288,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a7a7a] hover:text-[#e8692a] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary transition-colors hover:text-primary"
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -299,12 +300,12 @@ export default function RegisterPage() {
 
               {/* Plan Selection */}
               <div className="space-y-2">
-                <Label htmlFor="planSlug" className="text-sm font-semibold text-[#1a1a1a]">
+                <Label htmlFor="planSlug" className="text-sm font-semibold text-text-primary">
                   Gói dịch vụ
                 </Label>
                 <select
                   id="planSlug"
-                  className="w-full h-12 px-4 border border-[#f0ebe3] rounded-md focus:outline-none focus:ring-2 focus:ring-[#e8692a] focus:border-transparent"
+                  className="h-12 w-full rounded-md border border-border bg-card px-4 text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   {...registerForm('planSlug')}
                 >
                   <option value="trial">Dùng thử 7 ngày (Trial)</option>
@@ -312,14 +313,14 @@ export default function RegisterPage() {
                   <option value="standard">Tiêu chuẩn (Standard)</option>
                   <option value="premium">Nâng cao (Premium)</option>
                 </select>
-                <p className="text-xs text-[#7a7a7a]">Bạn có thể nâng cấp gói dịch vụ sau này</p>
+                <p className="text-xs text-text-secondary">Bạn có thể nâng cấp gói dịch vụ sau này</p>
               </div>
             </div>
 
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-[#e8692a] hover:bg-[#d1551f] text-white font-semibold text-base shadow-lg transition-all duration-200"
+                className="h-12 w-full bg-primary text-base font-semibold text-white shadow-card transition-all duration-200 hover:bg-primary-hover"
                 disabled={isPending}
               >
                 {isPending ? (
@@ -336,20 +337,20 @@ export default function RegisterPage() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#f0ebe3]" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-[#7a7a7a]">Hoặc</span>
+                <span className="bg-card px-4 text-text-secondary">Hoặc</span>
               </div>
             </div>
 
             {/* Login Link */}
             <div className="text-center">
-              <p className="text-sm text-[#7a7a7a]">
+              <p className="text-sm text-text-secondary">
                 Đã có tài khoản?{' '}
                 <Link
-                  to="/login"
-                  className="text-[#e8692a] hover:text-[#d1551f] font-semibold transition-colors"
+                  to={ROUTES.LOGIN}
+                  className="font-semibold text-primary transition-colors hover:text-primary-hover"
                 >
                   Đăng nhập ngay
                 </Link>
@@ -358,7 +359,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-sm text-[#7a7a7a] mt-8">
+          <p className="mt-8 text-center text-sm text-text-secondary">
             © 2026 SmartF&B. Nền tảng quản lý chuỗi F&B
           </p>
         </div>
