@@ -1,0 +1,38 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.smartfnb:smartfnb >------------------------
+[INFO] Building SmartF&B 1.0.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ smartfnb ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ smartfnb ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 77 source files with javac [debug parameters release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/SmartF&B/src/main/java/com/smartfnb/branch/application/dto/BranchResponse.java:[27,23] cannot find symbol
+  symbol:   method getUpdatedAt()
+  location: variable entity of type com.smartfnb.branch.infrastructure.persistence.BranchJpaEntity
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.227 s
+[INFO] Finished at: 2026-03-27T11:49:38+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project smartfnb: Compilation failure
+[ERROR] /E:/SmartF&B/src/main/java/com/smartfnb/branch/application/dto/BranchResponse.java:[27,23] cannot find symbol
+[ERROR]   symbol:   method getUpdatedAt()
+[ERROR]   location: variable entity of type com.smartfnb.branch.infrastructure.persistence.BranchJpaEntity
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
