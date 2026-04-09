@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { useToast } from '@shared/hooks/useToast';
 import { tableService } from '../services/tableService';
-import type { CreateTablePayload, TableDetail } from '../types/table.types';
+import type { CreateTablePayload, TableItem } from '../types/table.types';
 
 export const useCreateTable = () => {
   const queryClient = useQueryClient();
@@ -10,15 +10,15 @@ export const useCreateTable = () => {
 
   return useMutation({
     mutationFn: async (data: CreateTablePayload) => {
-      const response = await tableService.create(data);
-      if (!response.success) {
-        throw new Error('Không thể tạo bàn');
-      }
-      return response.data;
+      const newTable = await tableService.create(data);
+      return newTable;
     },
-    onSuccess: (data: TableDetail) => {
+    onSuccess: (data: TableItem) => {
+      // Invalidate tất cả queries liên quan
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
+      // Zones cũng có thể thay đổi nếu tạo bàn trong zone mới
+      queryClient.invalidateQueries({ queryKey: ['tables', 'zones'] });
       success('Tạo bàn thành công', `Bàn ${data.name} đã được tạo`);
     },
     onError: (err) => {

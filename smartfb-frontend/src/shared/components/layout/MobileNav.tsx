@@ -25,26 +25,22 @@ interface MobileNavProps {
   onOpenFullMenu: () => void;
 }
 
+// 5 menu items chính cho bottom nav
+const BOTTOM_NAV_ITEMS = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD },
+  { label: 'Đơn hàng', icon: ClipboardList, path: ROUTES.OWNER.ORDERS },
+  { label: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES },
+  { label: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU },
+  { label: 'Thêm', icon: MoreHorizontal, path: null, action: 'open-menu' },
+];
+
 export const MobileNav: FC<MobileNavProps> = ({ onOpenFullMenu }) => {
   const location = useLocation();
-  const { isOwner } = usePermission();
-
-  const bottomNavItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD },
-    {
-      label: 'Đơn hàng',
-      icon: ClipboardList,
-      path: isOwner ? ROUTES.OWNER.ORDERS : ROUTES.STAFF.ORDERS,
-    },
-    { label: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES },
-    { label: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU },
-    { label: 'Thêm', icon: MoreHorizontal, path: null, action: 'open-menu' },
-  ] as const;
 
   return (
     <nav className="safe-area-bottom fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border bg-card md:hidden">
       <div className="grid grid-cols-5 h-full">
-        {bottomNavItems.map((item) => {
+        {BOTTOM_NAV_ITEMS.map((item) => {
           const isActive = item.path && location.pathname === item.path;
 
           if (item.action === 'open-menu' || !item.path) {

@@ -23,17 +23,18 @@ import {
 } from '@shared/components/ui/select';
 import { useEditTable } from '../hooks/useEditTable';
 import type { TableItem, TableArea, UpdateTablePayload } from '../types/table.types';
-import { TableStatusValues } from '../types/table.types';
 
+
+// SỬA: Schema dùng zoneId thay vì areaName
 const editTableSchema = z.object({
   name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
-  areaName: z.string().min(1, 'Vui lòng chọn khu vực'),
+  zoneId: z.string().min(1, 'Vui lòng chọn khu vực'),  // ĐỔI: areaName -> zoneId
   capacity: z
     .number()
     .int('Sức chứa phải là số nguyên')
     .min(1, 'Sức chứa phải lớn hơn 0')
     .max(20, 'Sức chứa không quá 20'),
-  status: z.enum(['active', 'inactive']),
+  isActive: z.boolean(),  // ĐỔI: status string -> isActive boolean
 });
 
 type EditTableFormData = z.infer<typeof editTableSchema>;
@@ -42,12 +43,12 @@ interface EditTableDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   table: TableItem;
-  areas: TableArea[];
+  zones: TableArea[];  // ĐỔI: areas -> zones
   onSuccess?: () => void;
 }
 
-export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }: EditTableDialogProps) => {
-  const { mutate: editTable, isPending, isError } = useEditTable();
+export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }: EditTableDialogProps) => {
+  const { mutate: editTable, isPending, isError, error } = useEditTable();
 
   const {
     register,
@@ -60,9 +61,9 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
     resolver: zodResolver(editTableSchema),
     defaultValues: {
       name: table.name,
-      areaName: table.areaName,
+      zoneId: table.zoneId,  // ĐỔI: areaName -> zoneId
       capacity: table.capacity,
-      status: table.status,
+      isActive: table.status === 'active',  // ĐỔI: status -> isActive boolean
     },
   });
 
@@ -70,27 +71,25 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
     if (open) {
       reset({
         name: table.name,
-        areaName: table.areaName,
+        zoneId: table.zoneId,  // ĐỔI
         capacity: table.capacity,
-        status: table.status,
+        isActive: table.status === 'active',  // ĐỔI
       });
     }
   }, [open, table, reset]);
 
-  const selectedStatus = useWatch({ control, name: 'status' });
-  const selectedAreaName = useWatch({ control, name: 'areaName' });
+  const selectedIsActive = useWatch({ control, name: 'isActive' });  // ĐỔI
+  const selectedZoneId = useWatch({ control, name: 'zoneId' });  // ĐỔI
   const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: EditTableFormData) => {
-    const selectedArea = areas.find((item) => item.name === data.areaName);
-
     const payload: UpdateTablePayload = {
       name: data.name,
-      areaId: selectedArea?.id ?? table.areaId,
+      zoneId: data.zoneId,  // ĐỔI: areaId -> zoneId
       capacity: data.capacity,
-      branchId: table.branchId,
-      status: data.status,
+      isActive: data.isActive,  // ĐỔI: status -> isActive
     };
+    
     editTable(
       { id: table.id, payload },
       {
@@ -101,12 +100,6 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
       }
     );
   };
-
-  const areaOptions = areas.map((area) => (
-    <SelectItem key={area.id} value={area.name}>
-      {area.name}
-    </SelectItem>
-  ));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,17 +120,23 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="areaName">Khu vực</Label>
+              <Label htmlFor="zoneId">Khu vực</Label>  {/* ĐỔI */}
               <Select
-                value={selectedAreaName}
-                onValueChange={(value) => setValue('areaName', value, { shouldDirty: true })}
+                value={selectedZoneId}
+                onValueChange={(value) => setValue('zoneId', value, { shouldDirty: true })}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn khu vực" />
                 </SelectTrigger>
-                <SelectContent>{areaOptions}</SelectContent>
+                <SelectContent>
+                  {zones.map((zone) => (  // ĐỔI
+                    <SelectItem key={zone.id} value={zone.id}>
+                      {zone.name} {zone.floorNumber ? `(Tầng ${zone.floorNumber})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
-              {errors.areaName && <p className="text-xs text-red-500">{errors.areaName.message}</p>}
+              {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}  {/* ĐỔI */}
             </div>
 
             <div className="space-y-1">
@@ -155,25 +154,29 @@ export const EditTableDialog = ({ open, onOpenChange, table, areas, onSuccess }:
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="status">Trạng thái hoạt động</Label>
+              <Label htmlFor="isActive">Trạng thái hoạt động</Label>  {/* ĐỔI */}
               <Select
-                value={selectedStatus}
-                onValueChange={(value) => setValue('status', value as 'active' | 'inactive', { shouldDirty: true })}
+                value={selectedIsActive ? 'active' : 'inactive'}
+                onValueChange={(value) => 
+                  setValue('isActive', value === 'active', { shouldDirty: true })
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={TableStatusValues.ACTIVE}>Hoạt động</SelectItem>
-                  <SelectItem value={TableStatusValues.INACTIVE}>Ngưng hoạt động</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Ngưng hoạt động</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.status && <p className="text-xs text-red-500">{errors.status.message}</p>}
+              {errors.isActive && <p className="text-xs text-red-500">{errors.isActive.message}</p>}
             </div>
           </div>
 
-          {isError && (
-            <p className="text-xs text-red-500">Đã có lỗi, vui lòng kiểm tra lại thông tin.</p>
+          {isError && error && (
+            <p className="text-xs text-red-500">
+              {error instanceof Error ? error.message : 'Đã có lỗi, vui lòng kiểm tra lại thông tin.'}
+            </p>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">

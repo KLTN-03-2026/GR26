@@ -110,11 +110,16 @@ const getApiErrorMessage = (responseData?: ApiResponse<unknown>): string | undef
   return responseData?.error?.message ?? responseData?.message;
 };
 
+// ============================================
+// 🔧 ĐÀO THU THIÊN SỬA - THÊM HEADER X-BRANCH-ID
+// ============================================
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const { session, user } = useAuthStore.getState();
     const accessToken = session?.accessToken;
     const tenantId = session?.tenantId ?? user?.tenantId;
+    // Lấy branchId từ store
+    const branchId = session?.branchId ?? user?.branchId;
 
     if (accessToken) {
       config.headers.Authorization = `${session?.tokenType ?? 'Bearer'} ${accessToken}`;
@@ -123,6 +128,21 @@ axiosInstance.interceptors.request.use(
     if (tenantId) {
       config.headers['X-Tenant-Id'] = tenantId;
     }
+
+    // Thêm header X-Branch-Id cho request
+    if (branchId) {
+      config.headers['X-Branch-Id'] = branchId;
+    }
+
+    // Log debug để kiểm tra
+    console.log('🔍 Axios Request:', {
+      url: config.url,
+      method: config.method,
+      hasToken: !!accessToken,
+      hasBranchId: !!branchId,
+      branchId: branchId,
+      tenantId: tenantId
+    });
 
     return config;
   },
@@ -148,6 +168,10 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization =
           `${refreshedSession.tokenType} ${refreshedSession.accessToken}`;
         originalRequest.headers['X-Tenant-Id'] = refreshedSession.tenantId;
+        // Thêm branchId vào header khi retry
+        if (refreshedSession.branchId) {
+          originalRequest.headers['X-Branch-Id'] = refreshedSession.branchId;
+        }
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {

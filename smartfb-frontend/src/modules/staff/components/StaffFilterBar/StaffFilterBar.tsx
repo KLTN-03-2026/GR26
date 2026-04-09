@@ -6,12 +6,10 @@ import { FilterDropdown } from './FilterDropdown';
 
 interface StaffFilterBarProps {
   filters: StaffFilters;
-  roles: string[];
-  branches: { id: string; name: string }[];
+  positions: string[]; // Mảng các tên chức vụ (positionName)
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onPositionChange: (value: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
   onAddStaff: () => void;
@@ -19,67 +17,63 @@ interface StaffFilterBarProps {
 
 export const StaffFilterBar = ({
   filters,
-  roles,
-  branches,
+  positions,
   onSearchChange,
   onStatusChange,
-  onRoleChange,
-  onBranchChange,
+  onPositionChange,
   onClearFilters,
   hasActiveFilters,
   onAddStaff,
 }: StaffFilterBarProps) => {
-  const statusLabel = filters.status === 'active' ? 'Đang làm' 
-    : filters.status === 'inactive' ? 'Đã nghỉ' 
-    : '';
-  const roleLabel = filters.role === 'all' ? null : filters.role;
-  const branchLabel = branches.find(b => b.id === filters.branchId)?.name;
+  // Tìm label cho status
+  const getStatusLabel = (status?: string) => {
+    if (status === 'ACTIVE') return 'Đang làm';
+    if (status === 'INACTIVE') return 'Đã nghỉ';
+    return '';
+  };
+
+  // Tìm label cho position (dựa trên positionId)
+  const getPositionLabel = (positionId?: string) => {
+    if (!positionId) return null;
+    // positions là mảng các positionName, nhưng filter dùng positionId
+    // Nếu backend trả về positionName, cần map từ positionId
+    return positionId; // Tạm thời trả về ID, sau này có thể map nếu cần
+  };
+
+  const statusLabel = getStatusLabel(filters.status);
+  const positionLabel = getPositionLabel(filters.positionId);
 
   const statusOptions = [
-    { value: 'active', label: 'Đang làm' },
-    { value: 'inactive', label: 'Đã nghỉ' },
+    { value: 'ACTIVE', label: 'Đang làm' },
+    { value: 'INACTIVE', label: 'Đã nghỉ' },
   ];
 
-  const roleOptions = roles.map((role) => ({
-    value: role,
-    label: role === 'manager' ? 'Quản lý' 
-      : role === 'chef' ? 'Đầu bếp'
-      : role === 'waiter' ? 'Phục vụ'
-      : role === 'cashier' ? 'Thu ngân'
-      : 'Nhân viên',
-  }));
-
-  const branchOptions = branches.map((branch) => ({
-    value: branch.id,
-    label: branch.name,
+  // Chuyển positions (mảng string) thành options
+  const positionOptions = positions.map((posName) => ({
+    value: posName, // Dùng tên chức vụ làm value
+    label: posName,
   }));
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <SearchBar
-          value={filters.search}
+          value={filters.keyword || ''}
           onChange={onSearchChange}
           placeholder="Tìm kiếm theo tên hoặc số điện thoại..."
         />
         <div className="flex gap-2 flex-wrap">
           <FilterDropdown
-            value={filters.branchId}
-            onChange={onBranchChange}
-            options={branchOptions}
-            defaultLabel="Tất cả chi nhánh"
-          />
-          <FilterDropdown
-            value={filters.status}
+            value={filters.status || 'all'}
             onChange={onStatusChange}
             options={statusOptions}
             defaultLabel="Trạng thái"
           />
           <FilterDropdown
-            value={filters.role}
-            onChange={onRoleChange}
-            options={roleOptions}
-            defaultLabel="Vị trí"
+            value={filters.positionId || 'all'}
+            onChange={onPositionChange}
+            options={positionOptions}
+            defaultLabel="Chức vụ"
           />
         </div>
         <button
@@ -90,23 +84,21 @@ export const StaffFilterBar = ({
           Thêm nhân viên
         </button>
       </div>
+      
       {hasActiveFilters && (
         <div className="flex gap-2 items-center flex-wrap">
-          {filters.search && (
-            <FilterTag label={`Tìm: "${filters.search}"`} onRemove={() => onSearchChange('')} />
+          {filters.keyword && (
+            <FilterTag label={`Tìm: "${filters.keyword}"`} onRemove={() => onSearchChange('')} />
           )}
-          {branchLabel && filters.branchId !== 'all' && (
-            <FilterTag label={branchLabel} onRemove={() => onBranchChange('all')} />
+          {positionLabel && positionLabel !== 'all' && (
+            <FilterTag label={positionLabel} onRemove={() => onPositionChange('all')} />
           )}
-          {roleLabel && (
-            <FilterTag label={roleLabel} onRemove={() => onRoleChange('all')} />
-          )}
-          {filters.status !== 'all' && (
+          {filters.status && (
             <FilterTag label={statusLabel} onRemove={() => onStatusChange('all')} />
           )}
           <button
             onClick={onClearFilters}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1"
+            className="text-xs text-orange-600 hover:text-orange-700 font-medium px-2 py-1"
           >
             Xóa hết
           </button>

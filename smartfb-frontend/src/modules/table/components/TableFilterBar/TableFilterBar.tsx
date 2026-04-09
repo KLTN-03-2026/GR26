@@ -1,4 +1,4 @@
-import { Plus, FilterX } from 'lucide-react';
+import { Plus, FilterX, Search } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import type { TableFilters } from '@modules/table/types/table.types';
 import { TableUsageStatusValues } from '@modules/table/types/table.types';
@@ -49,76 +49,84 @@ export const TableFilterBar = ({
   ];
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      {/* Ô tìm kiếm */}
-      <div className="relative w-64">
+    <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
+
+      {/* Ô tìm kiếm - Tăng chiều dài */}
+      <div className="relative flex-1 min-w-[280px] md:max-w-[400px]">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Tìm kiếm bàn..."
+          placeholder="Tìm kiếm bàn theo tên..."
           value={filters.search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="input w-full pl-10"
+          className="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           disabled={disabled}
         />
-        <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
       </div>
 
+      {/* Bộ lọc khu vực - Tăng độ dài */}
       <FilterDropdown
         value={filters.area}
         onChange={onAreaChange}
         options={areaOptions}
-        placeholder="Khu vực"
-        className="w-36"
+        placeholder="Tất cả khu vực"
+        className="w-44 md:w-52"
       />
 
-      <FilterDropdown
-        value={filters.branch}
-        onChange={onBranchChange}
-        options={branchOptions}
-        placeholder="Chi nhánh"
-        className="w-36"
-      />
+      {/* Chỉ hiển thị branch filter nếu có nhiều hơn 1 branch */}
+      {branches.length > 1 && (
+        <FilterDropdown
+          value={filters.branch}
+          onChange={onBranchChange}
+          options={branchOptions}
+          placeholder="Tất cả chi nhánh"
+          className="w-44 md:w-52"
+        />
+      )}
 
+      {/* Bộ lọc trạng thái hoạt động */}
       <FilterDropdown
         value={filters.status}
         onChange={onStatusChange}
         options={statusOptions}
-        placeholder="Trạng thái hoạt động"
-        className="w-44"
+        placeholder="Tất cả trạng thái"
+        className="w-40 md:w-48"
       />
 
+      {/* Bộ lọc trạng thái sử dụng */}
       <FilterDropdown
         value={filters.usageStatus}
         onChange={onUsageStatusChange}
         options={usageOptions}
-        placeholder="Trạng thái sử dụng"
-        className="w-44"
+        placeholder="Tất cả trạng thái SD"
+        className="w-44 md:w-52"
       />
 
+      {/* Nút xóa lọc */}
       {hasActiveFilters && (
         <Button
           variant="ghost"
           size="sm"
           onClick={onClearFilters}
           disabled={disabled}
-          className="text-gray-500 hover:text-red-600"
+          className="h-10 px-4 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
         >
-          <FilterX className="h-4 w-4 mr-1" />
+          <FilterX className="h-4 w-4 mr-1.5" />
           Xóa lọc
         </Button>
       )}
 
-      <Button onClick={onAddTable} disabled={disabled} className="gap-2">
-        <Plus className="h-4 w-4" />
-        Thêm bàn
-      </Button>
+      {/* Nút thêm bàn */}
+      <div className="flex-1 md:flex-none md:ml-auto">
+        <Button
+          onClick={onAddTable}
+          disabled={disabled}
+          className="h-10 px-5 gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl shadow-sm hover:shadow-md transition-all"
+        >
+          <Plus className="h-4 w-4" />
+          Thêm bàn
+        </Button>
+      </div>
     </div>
   );
 };

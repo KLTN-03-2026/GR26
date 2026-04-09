@@ -1,19 +1,18 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { StaffDetail } from '../data/staffList';
-import type { StaffFilters, PaginationState } from '../types/staff.types';
+import type { StaffSummary, StaffFilters, PaginationState } from '../types/staff.types';
 
 const PAGE_SIZE = 10;
 
 /**
  * Hook quản lý filter, search, và pagination cho danh sách nhân viên
  * Đáp ứng PB09: Tìm kiếm và lọc nhân viên
+ * Đã sửa để dùng API response structure
  */
-export const useStaffFilters = (staff: StaffDetail[]) => {
+export const useStaffFilters = (staffList: StaffSummary[]) => {
   const [filters, setFilters] = useState<StaffFilters>({
-    search: '',
-    status: 'all',
-    role: 'all',
-    branchId: 'all',
+    keyword: '',
+    status: undefined,
+    positionId: undefined,
   });
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -22,61 +21,44 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     total: 0,
   });
 
-  // Lấy danh sách unique roles từ staff
-  const roles = useMemo(() => {
-    const unique = new Set(staff.map(s => s.role).filter(Boolean));
+  // Lấy danh sách unique position names từ staff
+  const positions = useMemo(() => {
+    const unique = new Set(staffList.map(s => s.positionName).filter(Boolean));
     return Array.from(unique).sort();
-  }, [staff]);
+  }, [staffList]);
 
-  // Lấy danh sách unique branchIds từ staff
-  const branchIds = useMemo(() => {
-    const unique = new Set(staff.map(s => s.branchId).filter(Boolean));
-    return Array.from(unique);
-  }, [staff]);
-
-  // Filter và search staff
+  // Filter và search staff (client-side filtering)
   const filteredStaff = useMemo(() => {
-    return staff.filter(member => {
-      // Search by name or phone
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
-        const matchName = fullName.includes(searchLower);
-        const matchPhone = member.phone?.toLowerCase().includes(searchLower);
-        if (!matchName && !matchPhone) return false;
-      }
+    let result = [...staffList];
 
-      // Filter by status
-      if (filters.status !== 'all' && member.status !== filters.status) {
-        return false;
-      }
+    // Search by keyword (fullName or phone)
+    if (filters.keyword) {
+      const keywordLower = filters.keyword.toLowerCase();
+      result = result.filter(member => 
+        member.fullName?.toLowerCase().includes(keywordLower) ||
+        member.phone?.toLowerCase().includes(keywordLower)
+      );
+    }
 
-      // Filter by role
-      if (filters.role !== 'all' && member.role !== filters.role) {
-        return false;
-      }
+    // Filter by status
+    if (filters.status) {
+      result = result.filter(member => member.status === filters.status);
+    }
 
-      // Filter by branch
-      if (filters.branchId !== 'all' && member.branchId !== filters.branchId) {
-        return false;
-      }
+    // Filter by position
+    if (filters.positionId) {
+      result = result.filter(member => member.positionId === filters.positionId);
+    }
 
-      return true;
-    });
-  }, [staff, filters]);
+    return result;
+  }, [staffList, filters]);
 
   // Paginate filtered staff
   const { paginatedStaff, totalItems } = useMemo(() => {
     const total = filteredStaff.length;
     const startIdx = (pagination.page - 1) * pagination.pageSize;
     const endIdx = startIdx + pagination.pageSize;
-
-    const items = filteredStaff.slice(startIdx, endIdx).map(member => ({
-      ...member,
-      salaryDisplay: member.salary
-        ? member.salary.toLocaleString('vi-VN')
-        : '0',
-    }));
+    const items = filteredStaff.slice(startIdx, endIdx);
 
     return {
       paginatedStaff: items,
@@ -91,14 +73,13 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     }
   }, [totalItems, pagination.total]);
 
-  const updateFilter = useCallback((key: keyof StaffFilters, value: string) => {
+  const updateFilter = useCallback((key: keyof StaffFilters, value: string | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    // Reset to page 1 when filter changes
     setPagination(prev => ({ ...prev, page: 1 }));
   }, []);
 
   const clearFilters = useCallback(() => {
-    setFilters({ search: '', status: 'all', role: 'all', branchId: 'all' });
+    setFilters({ keyword: '', status: undefined, positionId: undefined });
     setPagination({ page: 1, pageSize: PAGE_SIZE, total: 0 });
   }, []);
 
@@ -106,16 +87,14 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     setPagination(prev => ({ ...prev, page }));
   }, []);
 
-  // Check if có active filters
   const hasActiveFilters = useMemo(() => {
-    return filters.search !== '' || filters.status !== 'all' || filters.role !== 'all' || filters.branchId !== 'all';
+    return !!filters.keyword || !!filters.status || !!filters.positionId;
   }, [filters]);
 
   return {
     filters,
     pagination,
-    roles,
-    branchIds,
+    positions,
     staff: paginatedStaff,
     totalItems,
     hasActiveFilters,

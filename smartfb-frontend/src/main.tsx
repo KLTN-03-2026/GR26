@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 import App from './App.tsx';
+// Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
+import { autoFixBranchId } from './utils/autoFixBranchId';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,6 +16,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
+autoFixBranchId();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

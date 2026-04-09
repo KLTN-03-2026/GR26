@@ -5,10 +5,28 @@ import {
   FileText,
   Fingerprint,
 } from "lucide-react";
-import type {
-  StaffActivityLog,
-  ActivityLogType,
-} from "@modules/staff/data/staffActivityLogsMock";
+
+// Định nghĩa type tạm thời (sau sẽ thay bằng API thật)
+export type ActivityLogType =
+  | 'attendance'
+  | 'role_change'
+  | 'shift_update'
+  | 'document'
+  | 'leave'
+  | 'system';
+
+export interface StaffActivityLog {
+  id: string;
+  type: ActivityLogType;
+  title: string;
+  timestamp: string;
+  actor: {
+    name: string;
+    type: 'user' | 'system';
+    avatar?: string;
+  };
+  metadata?: Record<string, string | number>;
+}
 
 interface ActivityLogSectionProps {
   logs: StaffActivityLog[];

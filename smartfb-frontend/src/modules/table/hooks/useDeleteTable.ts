@@ -9,11 +9,8 @@ export const useDeleteTable = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await tableService.delete(id);
-      if (!response.success) {
-        throw new Error('Không thể xóa bàn');
-      }
-      return response.data;
+      await tableService.delete(id);
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });

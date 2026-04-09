@@ -3,30 +3,27 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
 
-/**
- * Hook xử lý khóa/mở khóa nhân viên
- * Đáp ứng PB08 AC5: Khóa/mở khóa nhân viên
- */
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
-      return staffService.updateStatus(id, status);
+    mutationFn: async ({ id, status }: { id: string; status: 'ACTIVE' | 'INACTIVE' }) => {
+      if (status === 'INACTIVE') {
+        await staffService.deactivate(id, 'Vô hiệu hoá nhân viên từ giao diện quản lý');
+      } else {
+        throw new Error('Tính năng kích hoạt lại nhân viên hiện chưa được hỗ trợ');
+      }
+      return { id, status };
     },
-    onSuccess: (_response, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(variables.id) });
-      queryClient.invalidateQueries({ queryKey: ['staff', 'detail', variables.id] });
-      
-      const statusText = variables.status === 'active' ? 'mở khóa' : 'khóa';
-      success('Cập nhật trạng thái thành công', `Đã ${statusText} nhân viên`);
+      success('Vô hiệu hoá nhân viên thành công', 'Nhân viên đã bị vô hiệu hoá');
     },
-    onError: (err) => {
-      console.error('Failed to toggle staff status:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
+    onError: (err: any) => {
+      const errorMessage = err.response?.data?.error?.message || err.message || 'Vui lòng thử lại sau';
       error('Không thể cập nhật trạng thái', errorMessage);
     },
   });

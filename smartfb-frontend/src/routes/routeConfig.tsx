@@ -87,8 +87,8 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.TABLES, 'Quản lý bàn', <TablesPage />),
   createRoute(
     ROUTES.OWNER.ORDERS,
-    'Quản lý đơn hàng',
-    <Navigate to={ROUTES.POS_MANAGEMENT} replace />
+    'Đặt món',
+    <Navigate to={ROUTES.POS_ORDER} replace />
   ),
   createPlaceholderRoute(
     ROUTES.OWNER.REVENUE,
@@ -158,8 +158,8 @@ export const staffRoutes: RouteConfigItem[] = [
   ),
   createRoute(
     ROUTES.STAFF.ORDERS,
-    'Quản lý đơn hàng',
-    <Navigate to={ROUTES.POS_MANAGEMENT} replace />
+    'Đặt món',
+    <Navigate to={ROUTES.POS_ORDER} replace />
   ),
   createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />),
   createPlaceholderRoute(

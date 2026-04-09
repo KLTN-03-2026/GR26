@@ -61,7 +61,8 @@ export const TableDetailDrawer = ({ table, isOpen, onClose, onEdit, onToggleStat
               <MapPin className="w-5 h-5 text-gray-400" />
               <div>
                 <p className="text-xs text-gray-400">Khu vực</p>
-                <p className="font-medium">{table.areaName}</p>
+                {/* SỬA: areaName -> zoneName */}
+                <p className="font-medium">{table.zoneName || 'Chưa có khu vực'}</p>
               </div>
             </div>
 
@@ -73,11 +74,22 @@ export const TableDetailDrawer = ({ table, isOpen, onClose, onEdit, onToggleStat
               </div>
             </div>
 
+            {/* SỬA: Thêm hiển thị shape */}
+            <div className="flex items-center gap-3 text-gray-600">
+              <div className="w-5 h-5 text-gray-400">
+                {table.shape === 'square' ? '⬛' : '⚪'}
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Hình dạng</p>
+                <p className="font-medium">{table.shape === 'square' ? 'Bàn vuông' : 'Bàn tròn'}</p>
+              </div>
+            </div>
+
             <div className="flex items-center gap-3 text-gray-600">
               <Building2 className="w-5 h-5 text-gray-400" />
               <div>
                 <p className="text-xs text-gray-400">Chi nhánh</p>
-                <p className="font-medium">{table.branchName}</p>
+                <p className="font-medium">{table.branchName || 'Đang tải...'}</p>
               </div>
             </div>
 
