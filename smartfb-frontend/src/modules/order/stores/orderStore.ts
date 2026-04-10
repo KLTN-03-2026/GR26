@@ -1,149 +1,398 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { 
-  OrderResponse, 
-  PlaceOrderRequest, 
-  OrderStatus, 
-  OrderItemCommand 
-} from '../types/order.types';
-import { orderService } from '../services/orderService';
 import toast from 'react-hot-toast';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  notes?: string;
-}
+import { orderService } from '../services/orderService';
+import type {
+  DraftOrderMeta,
+  OrderAddonSelection,
+  OrderDraftItem,
+  OrderResponse,
+  OrderStatus,
+  OrderTableContext,
+} from '../types/order.types';
 
 interface OrderState {
-  cart: CartItem[];
+  cart: OrderDraftItem[];
   orders: OrderResponse[];
+  tableContext: OrderTableContext | null;
+  draftOrder: DraftOrderMeta;
+  draftsByContext: Record<string, PersistedOrderDraft>;
   isLoading: boolean;
-  
-  addToCart: (item: any) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, delta: number) => void;
-  clearCart: () => void;
-  
+  isSyncingDraft: boolean;
+  setTableContext: (context: OrderTableContext | null) => void;
+  setDraftOrder: (payload: Partial<DraftOrderMeta>) => void;
+  setCart: (items: OrderDraftItem[]) => void;
+  upsertCartItem: (item: OrderDraftItem) => void;
+  removeFromCart: (draftItemId: string) => void;
+  setSyncingDraft: (value: boolean) => void;
+  clearDraft: () => void;
   fetchOrders: () => Promise<void>;
-  placeOrder: (tableId?: string, notes?: string) => Promise<boolean>;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => Promise<void>;
 }
 
+const INITIAL_DRAFT_ORDER: DraftOrderMeta = {
+  orderId: null,
+  orderNumber: null,
+  status: 'PENDING',
+  createdAt: null,
+};
+
+interface PersistedCartItem extends Partial<OrderDraftItem> {
+  id?: string;
+  price?: number;
+}
+
+interface PersistedOrderDraft {
+  cart: OrderDraftItem[];
+  draftOrder: DraftOrderMeta;
+  tableContext: OrderTableContext | null;
+}
+
+const createDraftItemId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const normalizeCartItem = (item: PersistedCartItem): OrderDraftItem => {
+  const resolvedMenuItemId = item.menuItemId ?? item.id ?? '';
+  const resolvedDraftItemId = item.draftItemId ?? createDraftItemId();
+  const resolvedUnitPrice = item.unitPrice ?? item.price ?? 0;
+  const resolvedQuantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1;
+  const resolvedAddons = Array.isArray(item.addons) ? item.addons : [];
+  const addonTotal = resolvedAddons.reduce((sum: number, addon: OrderAddonSelection) => {
+    return sum + addon.extraPrice * addon.quantity;
+  }, 0);
+
+  return {
+    draftItemId: resolvedDraftItemId,
+    menuItemId: resolvedMenuItemId,
+    orderItemId: item.orderItemId,
+    name: item.name ?? '',
+    description: item.description,
+    image: item.image ?? '',
+    categoryId: item.categoryId,
+    quantity: resolvedQuantity,
+    unitPrice: resolvedUnitPrice,
+    addons: resolvedAddons,
+    notes: item.notes ?? '',
+    lineTotal:
+      typeof item.lineTotal === 'number'
+        ? item.lineTotal
+        : (resolvedUnitPrice + addonTotal) * resolvedQuantity,
+  };
+};
+
+const normalizeCart = (cart: PersistedCartItem[] | undefined): OrderDraftItem[] => {
+  if (!Array.isArray(cart)) {
+    return [];
+  }
+
+  return cart
+    .map(normalizeCartItem)
+    .filter((item) => item.menuItemId.trim().length > 0);
+};
+
+const normalizeDraftOrder = (
+  draftOrder: Partial<DraftOrderMeta> | undefined
+): DraftOrderMeta => {
+  return {
+    ...INITIAL_DRAFT_ORDER,
+    ...draftOrder,
+    status: draftOrder?.status ?? INITIAL_DRAFT_ORDER.status,
+  };
+};
+
+const getOrderContextKey = (context: OrderTableContext | null | undefined): string => {
+  const tableId = context?.tableId?.trim();
+
+  if (tableId) {
+    return `table:${tableId}`;
+  }
+
+  const branchKey = context?.branchId?.trim() || context?.branchName.trim() || 'current-branch';
+
+  return `takeaway:${branchKey}`;
+};
+
+const hasMeaningfulDraft = (cart: OrderDraftItem[], draftOrder: DraftOrderMeta): boolean => {
+  return cart.length > 0 || Boolean(draftOrder.orderId) || Boolean(draftOrder.createdAt);
+};
+
+const syncDraftsByContext = (
+  draftsByContext: Record<string, PersistedOrderDraft>,
+  tableContext: OrderTableContext | null,
+  cart: OrderDraftItem[],
+  draftOrder: DraftOrderMeta
+): Record<string, PersistedOrderDraft> => {
+  const nextDraftsByContext = { ...draftsByContext };
+  const contextKey = getOrderContextKey(tableContext);
+
+  // Luôn đồng bộ draft active vào map để mỗi bàn giữ được giỏ hàng riêng.
+  if (hasMeaningfulDraft(cart, draftOrder)) {
+    nextDraftsByContext[contextKey] = {
+      cart,
+      draftOrder,
+      tableContext,
+    };
+
+    return nextDraftsByContext;
+  }
+
+  delete nextDraftsByContext[contextKey];
+
+  return nextDraftsByContext;
+};
+
+const normalizeDraftsByContext = (
+  draftsByContext: Record<string, PersistedOrderDraft> | undefined
+): Record<string, PersistedOrderDraft> => {
+  if (!draftsByContext) {
+    return {};
+  }
+
+  return Object.entries(draftsByContext).reduce<Record<string, PersistedOrderDraft>>(
+    (accumulator, [contextKey, draft]) => {
+      const normalizedCart = normalizeCart(draft?.cart);
+      const normalizedDraftOrder = normalizeDraftOrder(draft?.draftOrder);
+
+      if (!hasMeaningfulDraft(normalizedCart, normalizedDraftOrder)) {
+        return accumulator;
+      }
+
+      accumulator[contextKey] = {
+        cart: normalizedCart,
+        draftOrder: normalizedDraftOrder,
+        tableContext: draft?.tableContext ?? null,
+      };
+
+      return accumulator;
+    },
+    {}
+  );
+};
+
+const isSameTableContext = (
+  currentContext: OrderTableContext | null,
+  nextContext: OrderTableContext | null
+): boolean => {
+  return (
+    currentContext?.tableId === nextContext?.tableId &&
+    currentContext?.tableName === nextContext?.tableName &&
+    currentContext?.zoneId === nextContext?.zoneId &&
+    currentContext?.zoneName === nextContext?.zoneName &&
+    currentContext?.branchId === nextContext?.branchId &&
+    currentContext?.branchName === nextContext?.branchName
+  );
+};
+
+/**
+ * Store giữ state đơn nháp để chia sẻ giữa màn order và thanh toán.
+ */
 export const useOrderStore = create<OrderState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       cart: [],
       orders: [],
+      tableContext: null,
+      draftOrder: INITIAL_DRAFT_ORDER,
+      draftsByContext: {},
       isLoading: false,
+      isSyncingDraft: false,
 
-      addToCart: (item) => {
+      setTableContext: (context) =>
         set((state) => {
-          const existing = state.cart.find((i) => i.id === item.id);
-          if (existing) {
-            return {
-              cart: state.cart.map((i) =>
-                i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-              ),
-            };
+          if (isSameTableContext(state.tableContext, context)) {
+            return state;
           }
+
+          const persistedDrafts = syncDraftsByContext(
+            state.draftsByContext,
+            state.tableContext,
+            state.cart,
+            state.draftOrder
+          );
+          const nextContextKey = getOrderContextKey(context);
+          const nextDraft = persistedDrafts[nextContextKey];
+
           return {
-            cart: [...state.cart, { id: item.id, name: item.name, price: item.price, quantity: 1 }],
+            draftsByContext: persistedDrafts,
+            tableContext: context,
+            cart: nextDraft?.cart ?? [],
+            draftOrder: nextDraft?.draftOrder ?? INITIAL_DRAFT_ORDER,
           };
-        });
-        toast.success(`Đã thêm ${item.name}`);
-      },
+        }),
 
-      removeFromCart: (id) => {
+      setDraftOrder: (payload) =>
+        set((state) => {
+          const nextDraftOrder = normalizeDraftOrder({
+            ...state.draftOrder,
+            ...payload,
+          });
+
+          return {
+            draftOrder: nextDraftOrder,
+            draftsByContext: syncDraftsByContext(
+              state.draftsByContext,
+              state.tableContext,
+              state.cart,
+              nextDraftOrder
+            ),
+          };
+        }),
+
+      setCart: (items) =>
+        set((state) => {
+          const nextCart = normalizeCart(items);
+
+          return {
+            cart: nextCart,
+            draftsByContext: syncDraftsByContext(
+              state.draftsByContext,
+              state.tableContext,
+              nextCart,
+              state.draftOrder
+            ),
+          };
+        }),
+
+      upsertCartItem: (item) =>
+        set((state) => {
+          const existingIndex = state.cart.findIndex(
+            (cartItem) => cartItem.draftItemId === item.draftItemId
+          );
+          const normalizedItem = normalizeCartItem(item);
+
+          const nextCart =
+            existingIndex === -1
+              ? [...state.cart, normalizedItem]
+              : state.cart.map((cartItem, index) =>
+                  index === existingIndex ? normalizedItem : cartItem
+                );
+
+          return {
+            cart: nextCart,
+            draftsByContext: syncDraftsByContext(
+              state.draftsByContext,
+              state.tableContext,
+              nextCart,
+              state.draftOrder
+            ),
+          };
+        }),
+
+      removeFromCart: (draftItemId) =>
+        set((state) => {
+          const nextCart = state.cart.filter((item) => item.draftItemId !== draftItemId);
+
+          return {
+            cart: nextCart,
+            draftsByContext: syncDraftsByContext(
+              state.draftsByContext,
+              state.tableContext,
+              nextCart,
+              state.draftOrder
+            ),
+          };
+        }),
+
+      setSyncingDraft: (value) => set({ isSyncingDraft: value }),
+
+      clearDraft: () =>
         set((state) => ({
-          cart: state.cart.filter((i) => i.id !== id),
-        }));
-      },
-
-      updateQuantity: (id, delta) => {
-        set((state) => ({
-          cart: state.cart.map((i) => {
-            if (i.id === id) {
-              return { ...i, quantity: Math.max(1, i.quantity + delta) };
-            }
-            return i;
-          }),
-        }));
-      },
-
-      clearCart: () => set({ cart: [] }),
+          cart: [],
+          draftOrder: INITIAL_DRAFT_ORDER,
+          draftsByContext: syncDraftsByContext(
+            state.draftsByContext,
+            state.tableContext,
+            [],
+            INITIAL_DRAFT_ORDER
+          ),
+          isSyncingDraft: false,
+        })),
 
       fetchOrders: async () => {
         set({ isLoading: true });
+
         try {
           const response = await orderService.getOrders();
           if (response.success) {
             set({ orders: response.data });
           }
         } catch (error) {
-          console.error('Failed to fetch orders:', error);
+          console.error('Không thể tải danh sách đơn hàng:', error);
         } finally {
           set({ isLoading: false });
         }
       },
 
-      placeOrder: async (tableId, notes) => {
-        const { cart, clearCart } = get();
-        if (cart.length === 0) return false;
-
-        const items: OrderItemCommand[] = cart.map((item) => ({
-          itemId: item.id,
-          itemName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          notes: item.notes,
-        }));
-
-        const payload: PlaceOrderRequest = {
-          tableId,
-          notes,
-          source: 'POS',
-          items,
-        };
-
-        set({ isLoading: true });
+      updateOrderStatus: async (orderId, status, reason) => {
         try {
-          const response = await orderService.placeOrder(payload);
-          if (response.success) {
-            toast.success('Đặt món thành công!');
-            clearCart();
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error('Order failed:', error);
-          return false;
-        } finally {
-          set({ isLoading: false });
-        }
-      },
+          const response =
+            status === 'CANCELLED'
+              ? await orderService.cancelOrder(orderId, { reason })
+              : await orderService.updateStatus(orderId, { newStatus: status, reason });
 
-      updateOrderStatus: async (orderId, status) => {
-        try {
-          const response = await orderService.updateStatus(orderId, { newStatus: status });
           if (response.success) {
             toast.success(`Đã cập nhật trạng thái đơn hàng sang ${status}`);
+
             set((state) => ({
-              orders: state.orders.map((o) => 
-                o.id === orderId ? { ...o, status } : o
+              orders: state.orders.map((order) =>
+                order.id === orderId
+                  ? {
+                      ...order,
+                      status,
+                    }
+                  : order
               ),
             }));
           }
         } catch (error) {
-          console.error('Update status failed:', error);
+          console.error('Không thể cập nhật trạng thái đơn hàng:', error);
         }
       },
     }),
     {
       name: 'smartfb-order-storage',
-      partialize: (state) => ({ cart: state.cart }),
+      merge: (persistedState, currentState) => {
+        const typedState = persistedState as Partial<OrderState> | undefined;
+        const normalizedDraftsByContext = normalizeDraftsByContext(typedState?.draftsByContext);
+        const persistedTableContext = typedState?.tableContext ?? currentState.tableContext;
+        const persistedCart = normalizeCart(typedState?.cart);
+        const persistedDraftOrder = normalizeDraftOrder(typedState?.draftOrder);
+        const legacyContextKey = getOrderContextKey(persistedTableContext);
+        const hasLegacyDraft = hasMeaningfulDraft(persistedCart, persistedDraftOrder);
+
+        if (
+          hasLegacyDraft &&
+          !normalizedDraftsByContext[legacyContextKey]
+        ) {
+          normalizedDraftsByContext[legacyContextKey] = {
+            cart: persistedCart,
+            draftOrder: persistedDraftOrder,
+            tableContext: persistedTableContext,
+          };
+        }
+
+        const activeDraft = normalizedDraftsByContext[legacyContextKey];
+
+        return {
+          ...currentState,
+          ...typedState,
+          cart: activeDraft?.cart ?? persistedCart,
+          tableContext: persistedTableContext,
+          draftOrder: activeDraft?.draftOrder ?? persistedDraftOrder,
+          draftsByContext: normalizedDraftsByContext,
+        };
+      },
+      partialize: (state) => ({
+        cart: state.cart,
+        tableContext: state.tableContext,
+        draftOrder: state.draftOrder,
+        draftsByContext: state.draftsByContext,
+      }),
     }
   )
 );

@@ -20,6 +20,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@assets/*": ["./src/assets/*"],
+      "@layouts": ["./src/layouts/index.ts"],
       "@layouts/*": ["./src/layouts/*"],
       "@lib/*": ["./src/lib/*"],
       "@data/*": ["./src/data/*"],

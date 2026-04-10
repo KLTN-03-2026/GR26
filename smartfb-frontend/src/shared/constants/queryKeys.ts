@@ -23,6 +23,7 @@ export const queryKeys = {
     all: ['tables'] as const,
     list: (filters?: Record<string, unknown>) => ['tables', 'list', filters] as const,
     detail: (id: string) => ['tables', 'detail', id] as const,
+    zones: ['tables', 'zones'] as const,
   },
   
   // Staff

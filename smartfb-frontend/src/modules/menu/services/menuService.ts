@@ -68,12 +68,7 @@ interface BackendCreateMenuItemPayload {
   name: string;
   basePrice: number;
   unit: string | null;
-  imageUrl: string | null;
   isSyncDelivery: boolean;
-}
-
-interface BackendUpdateMenuItemPayload extends BackendCreateMenuItemPayload {
-  isActive: boolean;
 }
 
 interface BackendCreateCategoryPayload {
@@ -229,9 +224,35 @@ const toMenuPayload = (payload: CreateMenuPayload | UpdateMenuPayload): BackendC
     name: payload.name ?? '',
     basePrice: payload.price ?? 0,
     unit: payload.unit?.trim() ? payload.unit.trim() : null,
-    imageUrl: payload.image?.trim() ? payload.image.trim() : null,
     isSyncDelivery: Boolean(payload.isSyncDelivery),
   };
+};
+
+/**
+ * Đóng gói request tạo/cập nhật món ăn theo contract multipart/form-data của backend.
+ */
+const toMenuFormData = (payload: CreateMenuPayload | UpdateMenuPayload): FormData => {
+  const formData = new FormData();
+  const dataPayload =
+    'isActive' in payload
+      ? {
+          ...toMenuPayload(payload),
+          isActive: payload.isActive ?? payload.isAvailable ?? true,
+        }
+      : toMenuPayload(payload);
+
+  formData.append(
+    'data',
+    new Blob([JSON.stringify(dataPayload)], {
+      type: 'application/json',
+    })
+  );
+
+  if (payload.imageFile) {
+    formData.append('image', payload.imageFile, payload.imageFile.name);
+  }
+
+  return formData;
 };
 
 /**
@@ -328,7 +349,7 @@ export const menuService = {
    * Tạo mới món ăn
    */
   create: async (payload: CreateMenuPayload): Promise<ApiResponse<MenuItem>> => {
-    const response = await api.post<ApiResponse<BackendMenuItemResponse>>('/menu/items', toMenuPayload(payload));
+    const response = await api.post<ApiResponse<BackendMenuItemResponse>>('/menu/items', toMenuFormData(payload));
 
     return {
       ...response.data,
@@ -340,10 +361,10 @@ export const menuService = {
    * Cập nhật món ăn
    */
   update: async (id: string, payload: UpdateMenuPayload): Promise<ApiResponse<MenuItem>> => {
-    const response = await api.put<ApiResponse<BackendMenuItemResponse>>(`/menu/items/${id}`, {
-      ...toMenuPayload(payload),
-      isActive: payload.isActive ?? payload.isAvailable ?? true,
-    } satisfies BackendUpdateMenuItemPayload);
+    const response = await api.put<ApiResponse<BackendMenuItemResponse>>(
+      `/menu/items/${id}`,
+      toMenuFormData(payload)
+    );
 
     return {
       ...response.data,
@@ -367,7 +388,6 @@ export const menuService = {
       name: menu.name,
       category: menu.category,
       price: menu.price,
-      image: menu.image,
       unit: menu.unit,
       isSyncDelivery: menu.isSyncDelivery,
       isActive: isAvailable,
