@@ -1,0 +1,422 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.smartfnb:smartfnb >------------------------
+[INFO] Building SmartF&B 1.0.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot-maven-plugin:3.3.5:run (default-cli) > test-compile @ smartfnb >>>
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ smartfnb ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 7 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ smartfnb ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ smartfnb ---
+[INFO] Not copying test resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ smartfnb ---
+[INFO] Not compiling test sources
+[INFO] 
+[INFO] <<< spring-boot-maven-plugin:3.3.5:run (default-cli) < test-compile @ smartfnb <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.3.5:run (default-cli) @ smartfnb ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+22:59:53.526 [main] INFO  com.smartfnb.SmartFnbApplication - Starting SmartFnbApplication using Java 21.0.6 with PID 34188 (E:\Smart_web\SmartF&B\target\classes started by ASUS in E:\Smart_web\SmartF&B)
+22:59:53.528 [main] DEBUG com.smartfnb.SmartFnbApplication - Running with Spring Boot v3.3.5, Spring v6.1.14
+22:59:53.528 [main] INFO  com.smartfnb.SmartFnbApplication - No active profile set, falling back to 1 default profile: "default"
+22:59:55.516 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+22:59:55.518 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+22:59:55.812 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 287 ms. Found 29 JPA repository interfaces.
+22:59:55.829 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+22:59:55.831 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+22:59:55.859 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.OtpRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.859 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.PlanRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.861 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.TenantRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.861 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.861 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.861 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchUserJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.862 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.AuditLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.863 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.864 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryTransactionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.864 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.StockBatchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.864 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.864 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.BranchItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.865 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.CategoryJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.865 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.865 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.865 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableZoneJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.InvoiceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.PaymentJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.plan.infrastructure.persistence.SubscriptionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RolePermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.866 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.867 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+22:59:55.867 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 27 ms. Found 0 Redis repository interfaces.
+22:59:56.968 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+22:59:56.994 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+22:59:56.995 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.31]
+22:59:57.082 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+22:59:57.084 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 3501 ms
+22:59:57.408 [main] DEBUG c.s.a.i.jwt.JwtAuthFilter - Filter 'jwtAuthFilter' configured for use
+22:59:58.044 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Starting...
+22:59:58.524 [main] INFO  com.zaxxer.hikari.pool.HikariPool - SmartFnbHikariPool - Added connection org.postgresql.jdbc.PgConnection@425f94d7
+22:59:58.526 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Start completed.
+22:59:58.600 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/smartfnb (PostgreSQL 16.13)
+22:59:58.773 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 7 migrations (execution time 00:00.085s)
+22:59:58.786 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": 7
+22:59:58.801 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "public" is up to date. No migration necessary.
+22:59:58.990 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+22:59:59.166 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.3.Final
+22:59:59.267 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+23:00:00.073 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+23:00:00.239 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+23:00:00.938 [main] WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+23:00:00.939 [main] WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+23:00:02.070 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+23:00:02.168 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+23:00:02.566 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+23:00:06.255 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+23:00:07.471 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+23:00:07.472 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+23:00:07.473 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@5aef3960]]
+23:00:07.473 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+23:00:07.488 [main] INFO  com.smartfnb.SmartFnbApplication - Started SmartFnbApplication in 14.473 seconds (process running for 14.917)
+23:00:28.030 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+23:00:28.030 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+23:00:28.032 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+23:00:28.152 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Bắt đầu đăng ký tenant mới — email: testowner_1775232027918@test.com, plan: standard
+23:00:28.772 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Đăng ký tenant thành công — tenantId: e88857b2-fca0-4206-9d87-d96ed50e1ffb, userId: db4b7077-f3d2-40fc-a13e-597d172cc5cd
+23:00:28.772 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - Subscription Module đang cấp plan standard cho tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:28.779 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - Cấp plan standard thành công cho tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:28.779 [tomcat-handler-0] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nhận sự kiện tạo Role OWNER cho tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb (Đã được xử lý ở RegisterTenantCommandHandler)
+23:00:28.908 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - Xử lý đăng nhập — email: testowner_1775232027918@test.com
+23:00:29.320 [tomcat-handler-1] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.322 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - Đăng nhập thành công — userId: db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId: e88857b2-fca0-4206-9d87-d96ed50e1ffb, role: OWNER, permissions: 31
+23:00:29.373 [tomcat-handler-2] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.422 [tomcat-handler-3] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.459 [tomcat-handler-3] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.461 [tomcat-handler-3] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(db4b7077-f3d2-40fc-a13e-597d172cc5cd, BRANCH_EDIT) = true
+23:00:29.464 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - Bắt đầu tạo chi nhánh mới cho tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.481 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - Tạo chi nhánh thành công id=125fafc5-5eee-415b-94ca-636a028fef73, name=Chi nhánh Auto 1775232029419
+23:00:29.498 [tomcat-handler-4] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.507 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - User db4b7077-f3d2-40fc-a13e-597d172cc5cd đang yêu cầu đổi sang chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.542 [tomcat-handler-4] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.544 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - Cấp lại JWT thành công cho branchId=125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.553 [tomcat-handler-5] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.572 [tomcat-handler-5] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.574 [tomcat-handler-5] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(db4b7077-f3d2-40fc-a13e-597d172cc5cd, MENU_EDIT) = true
+23:00:29.575 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - Tạo danh mục mới 'Đồ uống Test' cho tenant e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.625 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - Đã tạo danh mục bf5752c1-cbb5-407b-8c99-9a1b56e43247 - 'Đồ uống Test'
+23:00:29.657 [tomcat-handler-6] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.673 [tomcat-handler-6] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.675 [tomcat-handler-6] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(db4b7077-f3d2-40fc-a13e-597d172cc5cd, MENU_EDIT) = true
+23:00:29.676 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - Tạo món ăn mới 'Cà phê Auto' cho tenant e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.695 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - Đã tạo món ăn 46448ea3-37ca-4ea0-9fc8-8fa63208d684 - 'Cà phê Auto'
+23:00:29.712 [tomcat-handler-7] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.722 [tomcat-handler-7] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.724 [tomcat-handler-7] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(db4b7077-f3d2-40fc-a13e-597d172cc5cd, BRANCH_EDIT) = true
+23:00:29.725 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - Tạo khu vực bàn 'Tầng 1' tại chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.736 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo khu vực bàn 595db644-0198-4089-a3fd-c45b7cd3688f - 'Tầng 1'
+23:00:29.767 [tomcat-handler-8] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.784 [tomcat-handler-8] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb
+23:00:29.787 [tomcat-handler-8] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(db4b7077-f3d2-40fc-a13e-597d172cc5cd, BRANCH_EDIT) = true
+23:00:29.787 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - Tạo bàn 'Bàn 01' tại chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73, zone 595db644-0198-4089-a3fd-c45b7cd3688f
+23:00:29.810 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo bàn 7c080f7a-8c89-499b-a113-15898f98a1a6 - 'Bàn 01'
+23:00:29.832 [tomcat-handler-9] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.850 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Tạo đơn hàng cho bàn 7c080f7a-8c89-499b-a113-15898f98a1a6 tại chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.858 [tomcat-handler-9] INFO  c.s.o.i.e.MenuInventoryAdapter - Kiểm tra tồn kho qua MenuInventoryAdapter cho chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.859 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Kiểm tra tồn kho cho 1 món tại chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.875 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Không có công thức nào — bỏ qua kiểm tra tồn kho
+23:00:29.892 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng mới: f5e469ef-1b6e-4964-bd7b-ee3f79c63982 tại chi nhánh 125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.892 [tomcat-handler-9] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast đơn mới ORD-125F-260403230029 tới topic /topic/orders/125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.904 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn mới ORD-125F-260403230029 tới WebSocket topic
+23:00:29.905 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Đã tạo đơn hàng ORD-125F-260403230029 thành công
+23:00:29.941 [tomcat-handler-10] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:29.946 [tomcat-handler-10] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - Cập nhật trạng thái đơn f5e469ef-1b6e-4964-bd7b-ee3f79c63982 sang COMPLETED
+23:00:29.971 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện thay đổi trạng thái đơn f5e469ef-1b6e-4964-bd7b-ee3f79c63982 từ PENDING sang COMPLETED
+23:00:29.971 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-125F-260403230029 tới topic /topic/orders/125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.971 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast thay đổi trạng thái đơn ORD-125F-260403230029 sang COMPLETED tới WebSocket
+23:00:29.972 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - Bắt đầu trừ kho FIFO cho đơn hàng: ORD-125F-260403230029
+23:00:29.979 [tomcat-handler-10] DEBUG c.s.i.a.e.OrderCompletedEventHandler - Món 46448ea3-37ca-4ea0-9fc8-8fa63208d684 không có công thức nguyên liệu — bỏ qua trừ kho
+23:00:29.979 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - Trừ kho FIFO hoàn tất cho đơn hàng: ORD-125F-260403230029
+23:00:29.980 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng hoàn tất: ORD-125F-260403230029
+23:00:29.980 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-125F-260403230029 tới topic /topic/orders/125fafc5-5eee-415b-94ca-636a028fef73
+23:00:29.980 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn ORD-125F-260403230029 hoàn tất tới WebSocket
+23:00:30.008 [tomcat-handler-11] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:30.023 [tomcat-handler-11] INFO  c.s.p.w.controller.PaymentController - Thu ngân db4b7077-f3d2-40fc-a13e-597d172cc5cd xử lý thanh toán tiền mặt cho đơn f5e469ef-1b6e-4964-bd7b-ee3f79c63982
+23:00:30.024 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Xử lý thanh toán tiền mặt cho đơn f5e469ef-1b6e-4964-bd7b-ee3f79c63982 bằng 40000
+23:00:30.024 [tomcat-handler-11] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module đang lấy Order f5e469ef-1b6e-4964-bd7b-ee3f79c63982 từ Order Module
+23:00:30.036 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Payment 6fe3b337-f673-4259-8da7-881bdb0d3629 thành công
+23:00:30.555 [tomcat-handler-11] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-125-20260403-000001
+23:00:30.576 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Invoice INV-125-20260403-000001 thành công
+23:00:30.577 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nhận InvoiceCreatedEvent cho hóa đơn INV-125-20260403-000001 (đơn f5e469ef-1b6e-4964-bd7b-ee3f79c63982)
+23:00:30.577 [tomcat-handler-11] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module đang cập nhật trạng thái Table 7c080f7a-8c89-499b-a113-15898f98a1a6 thành CLEANING
+23:00:30.581 [tomcat-handler-11] INFO  c.s.p.i.persistence.TableAdapterImpl - Đã cập nhật trạng thái bàn 7c080f7a-8c89-499b-a113-15898f98a1a6 -> CLEANING
+23:00:30.582 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Cập nhật bàn 7c080f7a-8c89-499b-a113-15898f98a1a6 thành CLEANING
+23:00:30.582 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh toán tiền mặt hoàn tất: f5e469ef-1b6e-4964-bd7b-ee3f79c63982 → Invoice INV-125-20260403-000001
+23:00:30.651 [tomcat-handler-12] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:30.654 [tomcat-handler-12] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=125fafc5-5eee-415b-94ca-636a028fef73, invoiceNumber=null, page=0, size=20
+23:00:30.654 [tomcat-handler-12] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - Tìm kiếm Invoice: branchId=125fafc5-5eee-415b-94ca-636a028fef73, invoiceNumber=null, page=0, size=20
+23:00:30.702 [tomcat-handler-13] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=db4b7077-f3d2-40fc-a13e-597d172cc5cd, tenantId=e88857b2-fca0-4206-9d87-d96ed50e1ffb, role=OWNER
+23:00:30.711 [tomcat-handler-13] INFO  c.s.i.w.c.InventoryController - API nhập kho: itemId=46448ea3-37ca-4ea0-9fc8-8fa63208d684, qty=50
+23:00:30.711 [tomcat-handler-13] INFO  c.s.i.a.c.ImportStockCommandHandler - Nhập kho: item=46448ea3-37ca-4ea0-9fc8-8fa63208d684, quantity=50, branch=125fafc5-5eee-415b-94ca-636a028fef73
+23:00:30.767 [tomcat-handler-13] WARN  o.h.e.jdbc.spi.SqlExceptionHelper - SQL Error: 0, SQLState: 23502
+23:00:30.767 [tomcat-handler-13] ERROR o.h.e.jdbc.spi.SqlExceptionHelper - ERROR: null value in column "min_level" of relation "inventory_balances" violates not-null constraint
+  Detail: Failing row contains (66e3c5b2-8b0a-432b-8567-fb45057500e3, e88857b2-fca0-4206-9d87-d96ed50e1ffb, 125fafc5-5eee-415b-94ca-636a028fef73, 46448ea3-37ca-4ea0-9fc8-8fa63208d684, null, null, 50.0000, null, 0, 2026-04-03 23:00:30.740342).
+23:00:30.781 [tomcat-handler-13] ERROR c.s.s.web.GlobalExceptionHandler - Lỗi không mong đợi: JDBC exception executing SQL [INSERT INTO inventory_balances
+    (id, tenant_id, branch_id, item_id, item_name, unit, quantity, min_level, version, updated_at)
+VALUES
+    (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, 0, NOW())
+ON CONFLICT (branch_id, item_id)
+DO UPDATE SET
+    quantity = inventory_balances.quantity + EXCLUDED.quantity,
+    updated_at = NOW()
+] [ERROR: null value in column "min_level" of relation "inventory_balances" violates not-null constraint
+  Detail: Failing row contains (66e3c5b2-8b0a-432b-8567-fb45057500e3, e88857b2-fca0-4206-9d87-d96ed50e1ffb, 125fafc5-5eee-415b-94ca-636a028fef73, 46448ea3-37ca-4ea0-9fc8-8fa63208d684, null, null, 50.0000, null, 0, 2026-04-03 23:00:30.740342).] [n/a]; SQL [n/a]; constraint [min_level" of relation "inventory_balances]
+org.springframework.dao.DataIntegrityViolationException: JDBC exception executing SQL [INSERT INTO inventory_balances
+    (id, tenant_id, branch_id, item_id, item_name, unit, quantity, min_level, version, updated_at)
+VALUES
+    (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, 0, NOW())
+ON CONFLICT (branch_id, item_id)
+DO UPDATE SET
+    quantity = inventory_balances.quantity + EXCLUDED.quantity,
+    updated_at = NOW()
+] [ERROR: null value in column "min_level" of relation "inventory_balances" violates not-null constraint
+  Detail: Failing row contains (66e3c5b2-8b0a-432b-8567-fb45057500e3, e88857b2-fca0-4206-9d87-d96ed50e1ffb, 125fafc5-5eee-415b-94ca-636a028fef73, 46448ea3-37ca-4ea0-9fc8-8fa63208d684, null, null, 50.0000, null, 0, 2026-04-03 23:00:30.740342).] [n/a]; SQL [n/a]; constraint [min_level" of relation "inventory_balances]
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.convertHibernateAccessException(HibernateJpaDialect.java:290)
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.translateExceptionIfPossible(HibernateJpaDialect.java:241)
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.translateExceptionIfPossible(AbstractEntityManagerFactoryBean.java:550)
+	at org.springframework.dao.support.ChainedPersistenceExceptionTranslator.translateExceptionIfPossible(ChainedPersistenceExceptionTranslator.java:61)
+	at org.springframework.dao.support.DataAccessUtils.translateIfNecessary(DataAccessUtils.java:335)
+	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:160)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:136)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223)
+	at jdk.proxy2/jdk.proxy2.$Proxy216.upsertBalance(Unknown Source)
+	at com.smartfnb.inventory.domain.service.InventoryDomainService.increaseBalance(InventoryDomainService.java:140)
+	at com.smartfnb.inventory.application.command.ImportStockCommandHandler.handle(ImportStockCommandHandler.java:62)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.inventory.application.command.ImportStockCommandHandler$$SpringCGLIB$$0.handle(<generated>)
+	at com.smartfnb.inventory.web.controller.InventoryController.importStock(InventoryController.java:81)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.proceed(AuthorizationManagerBeforeMethodInterceptor.java:269)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.attemptAuthorization(AuthorizationManagerBeforeMethodInterceptor.java:264)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:197)
+	at org.springframework.security.config.annotation.method.configuration.DeferringMethodInterceptor.invoke(DeferringMethodInterceptor.java:44)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.inventory.web.controller.InventoryController$$SpringCGLIB$$0.importStock(<generated>)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at com.smartfnb.auth.infrastructure.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:73)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:384)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)
+Caused by: org.hibernate.exception.ConstraintViolationException: JDBC exception executing SQL [INSERT INTO inventory_balances
+    (id, tenant_id, branch_id, item_id, item_name, unit, quantity, min_level, version, updated_at)
+VALUES
+    (uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?, 0, NOW())
+ON CONFLICT (branch_id, item_id)
+DO UPDATE SET
+    quantity = inventory_balances.quantity + EXCLUDED.quantity,
+    updated_at = NOW()
+] [ERROR: null value in column "min_level" of relation "inventory_balances" violates not-null constraint
+  Detail: Failing row contains (66e3c5b2-8b0a-432b-8567-fb45057500e3, e88857b2-fca0-4206-9d87-d96ed50e1ffb, 125fafc5-5eee-415b-94ca-636a028fef73, 46448ea3-37ca-4ea0-9fc8-8fa63208d684, null, null, 50.0000, null, 0, 2026-04-03 23:00:30.740342).] [n/a]
+	at org.hibernate.exception.internal.SQLStateConversionDelegate.convert(SQLStateConversionDelegate.java:97)
+	at org.hibernate.exception.internal.StandardSQLExceptionConverter.convert(StandardSQLExceptionConverter.java:58)
+	at org.hibernate.engine.jdbc.spi.SqlExceptionHelper.convert(SqlExceptionHelper.java:108)
+	at org.hibernate.engine.jdbc.spi.SqlExceptionHelper.convert(SqlExceptionHelper.java:94)
+	at org.hibernate.sql.exec.internal.StandardJdbcMutationExecutor.execute(StandardJdbcMutationExecutor.java:104)
+	at org.hibernate.query.sql.internal.NativeNonSelectQueryPlanImpl.executeUpdate(NativeNonSelectQueryPlanImpl.java:76)
+	at org.hibernate.query.sql.internal.NativeQueryImpl.doExecuteUpdate(NativeQueryImpl.java:895)
+	at org.hibernate.query.spi.AbstractQuery.executeUpdate(AbstractQuery.java:651)
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution$ModifyingExecution.doExecute(JpaQueryExecution.java:266)
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution.execute(JpaQueryExecution.java:92)
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.doExecute(AbstractJpaQuery.java:152)
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.execute(AbstractJpaQuery.java:140)
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:169)
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:148)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138)
+	... 163 common frames omitted
+Caused by: org.postgresql.util.PSQLException: ERROR: null value in column "min_level" of relation "inventory_balances" violates not-null constraint
+  Detail: Failing row contains (66e3c5b2-8b0a-432b-8567-fb45057500e3, e88857b2-fca0-4206-9d87-d96ed50e1ffb, 125fafc5-5eee-415b-94ca-636a028fef73, 46448ea3-37ca-4ea0-9fc8-8fa63208d684, null, null, 50.0000, null, 0, 2026-04-03 23:00:30.740342).
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2733)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2420)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:372)
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:517)
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:434)
+	at org.postgresql.jdbc.PgPreparedStatement.executeWithFlags(PgPreparedStatement.java:194)
+	at org.postgresql.jdbc.PgPreparedStatement.executeUpdate(PgPreparedStatement.java:155)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java)
+	at org.hibernate.sql.exec.internal.StandardJdbcMutationExecutor.execute(StandardJdbcMutationExecutor.java:90)
+	... 181 common frames omitted
+23:01:07.427 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 3, active threads = 1, queued tasks = 2, completed tasks = 0]

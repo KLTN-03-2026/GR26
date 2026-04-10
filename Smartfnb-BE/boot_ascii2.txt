@@ -1,0 +1,950 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.smartfnb:smartfnb >------------------------
+[INFO] Building SmartF&B 1.0.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot-maven-plugin:3.3.5:run (default-cli) > test-compile @ smartfnb >>>
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ smartfnb ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 9 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ smartfnb ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ smartfnb ---
+[INFO] skip non existing resourceDirectory E:\Smart_web\SmartF&B\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ smartfnb ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot-maven-plugin:3.3.5:run (default-cli) < test-compile @ smartfnb <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.3.5:run (default-cli) @ smartfnb ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+00:09:38.632 [main] INFO  com.smartfnb.SmartFnbApplication - Starting SmartFnbApplication using Java 21.0.6 with PID 8528 (E:\Smart_web\SmartF&B\target\classes started by ASUS in E:\Smart_web\SmartF&B)
+00:09:38.633 [main] DEBUG com.smartfnb.SmartFnbApplication - Running with Spring Boot v3.3.5, Spring v6.1.14
+00:09:38.634 [main] INFO  com.smartfnb.SmartFnbApplication - No active profile set, falling back to 1 default profile: "default"
+00:09:39.705 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+00:09:39.707 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+00:09:39.920 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 209 ms. Found 39 JPA repository interfaces.
+00:09:39.933 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+00:09:39.935 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+00:09:39.960 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.OtpRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.960 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.PlanRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.961 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.TenantRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.962 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.962 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.963 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchUserJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.965 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.AuditLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.965 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.966 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryTransactionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.966 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.StockBatchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.966 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.966 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.BranchItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.966 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.CategoryJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.967 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.967 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.967 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.967 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.967 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableZoneJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.InvoiceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.PaymentJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.plan.infrastructure.persistence.SubscriptionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RolePermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.968 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.shift.infrastructure.persistence.PosSessionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.shift.infrastructure.persistence.ShiftScheduleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.shift.infrastructure.persistence.ShiftTemplateJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.PositionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.969 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffAuditLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffPermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffRoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffRolePermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.staff.infrastructure.persistence.StaffUserRoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+00:09:39.970 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 28 ms. Found 0 Redis repository interfaces.
+00:09:40.711 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+00:09:40.723 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+00:09:40.723 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.31]
+00:09:40.782 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+00:09:40.783 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2104 ms
+00:09:40.960 [main] DEBUG c.s.a.i.jwt.JwtAuthFilter - Filter 'jwtAuthFilter' configured for use
+00:09:41.161 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Starting...
+00:09:41.295 [main] INFO  com.zaxxer.hikari.pool.HikariPool - SmartFnbHikariPool - Added connection org.postgresql.jdbc.PgConnection@47ae6c18
+00:09:41.297 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Start completed.
+00:09:41.323 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/smartfnb (PostgreSQL 16.13)
+00:09:41.376 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 9 migrations (execution time 00:00.030s)
+00:09:41.423 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": 9
+00:09:41.427 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "public" is up to date. No migration necessary.
+00:09:41.529 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+00:09:41.567 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.3.Final
+00:09:41.595 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+00:09:41.785 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+00:09:41.826 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+00:09:42.228 [main] WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+00:09:42.228 [main] WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+00:09:42.997 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+00:09:43.076 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+00:09:43.285 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+00:09:45.860 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+00:09:46.744 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+00:09:46.745 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+00:09:46.746 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18b1c737]]
+00:09:46.746 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+00:09:46.757 [main] INFO  com.smartfnb.SmartFnbApplication - Started SmartFnbApplication in 8.578 seconds (process running for 9.04)
+00:10:10.451 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+00:10:10.451 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+00:10:10.453 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+00:10:10.559 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - B???t ?????u ????ng k?? tenant m???i ??? email: testowner_1775495410303@test.com, plan: standard
+00:10:11.120 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - ????ng k?? tenant th??nh c??ng ??? tenantId: 9545c0d7-7a93-45ef-b24b-544b8f7170cc, userId: 4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23
+00:10:11.120 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - Subscription Module ??ang c???p plan standard cho tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.125 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - C???p plan standard th??nh c??ng cho tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.125 [tomcat-handler-0] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nh???n s??? ki???n t???o Role OWNER cho tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc (???? ???????c x??? l?? ??? RegisterTenantCommandHandler)
+00:10:11.235 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - X??? l?? ????ng nh???p ??? email: testowner_1775495410303@test.com
+00:10:11.628 [tomcat-handler-1] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.629 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - ????ng nh???p th??nh c??ng ??? userId: 4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId: 9545c0d7-7a93-45ef-b24b-544b8f7170cc, role: OWNER, permissions: 33
+00:10:11.686 [tomcat-handler-2] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.713 [tomcat-handler-3] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.729 [tomcat-handler-3] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.730 [tomcat-handler-3] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, BRANCH_EDIT) = true
+00:10:11.733 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - B???t ?????u t???o chi nh??nh m???i cho tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.743 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - T???o chi nh??nh th??nh c??ng id=d846e6c1-15a3-4501-8012-eb6efecafc6f, name=Chi nh??nh Auto 1775495411710
+00:10:11.754 [tomcat-handler-4] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.760 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - User 4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 ??ang y??u c???u ?????i sang chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.776 [tomcat-handler-4] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.778 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - C???p l???i JWT th??nh c??ng cho branchId=d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.786 [tomcat-handler-5] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.798 [tomcat-handler-5] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.799 [tomcat-handler-5] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, MENU_EDIT) = true
+00:10:11.800 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - T???o danh m???c m???i '????? u???ng Test' cho tenant 9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.817 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - ???? t???o danh m???c 738eb6ed-794b-47aa-9135-d27189bd2c10 - '????? u???ng Test'
+00:10:11.827 [tomcat-handler-6] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.838 [tomcat-handler-6] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.839 [tomcat-handler-6] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, MENU_EDIT) = true
+00:10:11.839 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - T???o m??n ??n m???i 'C?? ph?? Auto' cho tenant 9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.846 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - ???? t???o m??n ??n f4650210-ea40-4f2d-a9e5-c6d4fd15cc32 - 'C?? ph?? Auto'
+00:10:11.856 [tomcat-handler-7] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.864 [tomcat-handler-7] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.865 [tomcat-handler-7] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, BRANCH_EDIT) = true
+00:10:11.865 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - T???o khu v???c b??n 'T???ng 1' t???i chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.870 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o khu v???c b??n ec22abe1-853e-4651-8b4a-ff5d351abfa6 - 'T???ng 1'
+00:10:11.879 [tomcat-handler-8] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.889 [tomcat-handler-8] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:11.890 [tomcat-handler-8] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, BRANCH_EDIT) = true
+00:10:11.891 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - T???o b??n 'B??n 01' t???i chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f, zone ec22abe1-853e-4651-8b4a-ff5d351abfa6
+00:10:11.898 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o b??n e341ba12-25ff-496f-abba-ffb5f8abeaf2 - 'B??n 01'
+00:10:11.912 [tomcat-handler-9] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.924 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - T???o ????n h??ng cho b??n e341ba12-25ff-496f-abba-ffb5f8abeaf2 t???i chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.929 [tomcat-handler-9] INFO  c.s.o.i.e.MenuInventoryAdapter - Ki???m tra t???n kho qua MenuInventoryAdapter cho chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.930 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Ki???m tra t???n kho cho 1 m??n t???i chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.938 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Kh??ng c?? c??ng th???c n??o ??? b??? qua ki???m tra t???n kho
+00:10:11.950 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng m???i: da787067-9496-4dff-9f27-c55526b8e737 t???i chi nh??nh d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.950 [tomcat-handler-9] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast ????n m???i ORD-D846-260407001011 t???i topic /topic/orders/d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:11.957 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n m???i ORD-D846-260407001011 t???i WebSocket topic
+00:10:11.957 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - ???? t???o ????n h??ng ORD-D846-260407001011 th??nh c??ng
+00:10:11.981 [tomcat-handler-10] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:11.984 [tomcat-handler-10] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - C???p nh???t tr???ng th??i ????n da787067-9496-4dff-9f27-c55526b8e737 sang COMPLETED
+00:10:12.000 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n thay ?????i tr???ng th??i ????n da787067-9496-4dff-9f27-c55526b8e737 t??? PENDING sang COMPLETED
+00:10:12.000 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-D846-260407001011 t???i topic /topic/orders/d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:12.000 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast thay ?????i tr???ng th??i ????n ORD-D846-260407001011 sang COMPLETED t???i WebSocket
+00:10:12.001 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - B???t ?????u tr??? kho FIFO cho ????n h??ng: ORD-D846-260407001011
+00:10:12.006 [tomcat-handler-10] DEBUG c.s.i.a.e.OrderCompletedEventHandler - M??n f4650210-ea40-4f2d-a9e5-c6d4fd15cc32 kh??ng c?? c??ng th???c nguy??n li???u ??? b??? qua tr??? kho
+00:10:12.006 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - Tr??? kho FIFO ho??n t???t cho ????n h??ng: ORD-D846-260407001011
+00:10:12.006 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng ho??n t???t: ORD-D846-260407001011
+00:10:12.006 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-D846-260407001011 t???i topic /topic/orders/d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:12.006 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n ORD-D846-260407001011 ho??n t???t t???i WebSocket
+00:10:12.019 [tomcat-handler-11] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.028 [tomcat-handler-11] INFO  c.s.p.w.controller.PaymentController - Thu ng??n 4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23 x??? l?? thanh to??n ti???n m???t cho ????n da787067-9496-4dff-9f27-c55526b8e737
+00:10:12.028 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - X??? l?? thanh to??n ti???n m???t cho ????n da787067-9496-4dff-9f27-c55526b8e737 b???ng 40000
+00:10:12.028 [tomcat-handler-11] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module ??ang l???y Order da787067-9496-4dff-9f27-c55526b8e737 t??? Order Module
+00:10:12.037 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Payment cf54a43e-0e95-4cc8-bfa0-a60b72148ea1 th??nh c??ng
+00:10:12.395 [tomcat-handler-11] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-D84-20260407-000001
+00:10:12.404 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Invoice INV-D84-20260407-000001 th??nh c??ng
+00:10:12.405 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nh???n InvoiceCreatedEvent cho h??a ????n INV-D84-20260407-000001 (????n da787067-9496-4dff-9f27-c55526b8e737)
+00:10:12.405 [tomcat-handler-11] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module ??ang c???p nh???t tr???ng th??i Table e341ba12-25ff-496f-abba-ffb5f8abeaf2 th??nh CLEANING
+00:10:12.409 [tomcat-handler-11] INFO  c.s.p.i.persistence.TableAdapterImpl - ???? c???p nh???t tr???ng th??i b??n e341ba12-25ff-496f-abba-ffb5f8abeaf2 -> CLEANING
+00:10:12.409 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - C???p nh???t b??n e341ba12-25ff-496f-abba-ffb5f8abeaf2 th??nh CLEANING
+00:10:12.409 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh to??n ti???n m???t ho??n t???t: da787067-9496-4dff-9f27-c55526b8e737 ??? Invoice INV-D84-20260407-000001
+00:10:12.427 [tomcat-handler-12] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.428 [tomcat-handler-12] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=d846e6c1-15a3-4501-8012-eb6efecafc6f, invoiceNumber=null, page=0, size=20
+00:10:12.429 [tomcat-handler-12] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - T??m ki???m Invoice: branchId=d846e6c1-15a3-4501-8012-eb6efecafc6f, invoiceNumber=null, page=0, size=20
+00:10:12.447 [tomcat-handler-13] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.453 [tomcat-handler-13] INFO  c.s.i.w.c.InventoryController - API nh???p kho: itemId=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=50
+00:10:12.453 [tomcat-handler-13] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, quantity=50, branch=d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:12.473 [tomcat-handler-13] INFO  c.s.i.d.s.InventoryDomainService - C???p nh???t t???n kho: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, +50
+00:10:12.475 [tomcat-handler-13] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho th??nh c??ng: batchId=39f62536-dead-4881-91dd-fbe041b6ccdb
+00:10:12.484 [tomcat-handler-14] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.514 [tomcat-handler-14] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must be greater than or equal to 0.0001
+00:10:12.520 [tomcat-handler-15] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.524 [tomcat-handler-15] INFO  c.s.i.w.c.InventoryController - API ??i???u ch???nh kho: itemId=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, newQty=45
+00:10:12.525 [tomcat-handler-15] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, newQty=45, reason=Ki???m k?? th??ng
+00:10:12.535 [tomcat-handler-15] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho th??nh c??ng: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, delta=-5.0000
+00:10:12.549 [tomcat-handler-16] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.552 [tomcat-handler-16] INFO  c.s.i.w.c.InventoryController - API ghi hao h???t: itemId=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5
+00:10:12.552 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5, reason=H?? h???ng
+00:10:12.555 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t th??nh c??ng: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5
+00:10:12.565 [tomcat-handler-17] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.567 [tomcat-handler-17] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must not be blank
+00:10:12.571 [tomcat-handler-18] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.572 [tomcat-handler-18] DEBUG c.s.i.w.c.InventoryController - API xem t???n kho: page=0, size=20
+00:10:12.573 [tomcat-handler-18] DEBUG c.s.i.a.q.GetInventoryQueryHandler - L???y t???n kho: tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc, branch=null, page=0/20
+00:10:12.613 [tomcat-handler-19] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.617 [tomcat-handler-19] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? m???i: name=Qu???n l?? c???a h??ng, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.622 [tomcat-handler-19] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? th??nh c??ng: positionId=d702699a-d6ac-457a-850d-0d196c39ca7b
+00:10:12.635 [tomcat-handler-20] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.647 [tomcat-handler-21] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.653 [tomcat-handler-21] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n m???i: phone=0999888777, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.664 [tomcat-handler-21] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n th??nh c??ng: staffId=c382b48b-e11e-48ec-9e52-981df792026f, phone=0999888777
+00:10:12.673 [tomcat-handler-22] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.678 [tomcat-handler-22] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n: staffId=c382b48b-e11e-48ec-9e52-981df792026f
+00:10:12.685 [tomcat-handler-22] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n th??nh c??ng: staffId=c382b48b-e11e-48ec-9e52-981df792026f
+00:10:12.694 [tomcat-handler-23] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.696 [tomcat-handler-23] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? m???i: name=Thu Ng??n Test, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.700 [tomcat-handler-23] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? th??nh c??ng: roleId=526560bd-8f63-407b-bfef-5920515f5f7c
+00:10:12.707 [tomcat-handler-24] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.713 [tomcat-handler-24] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u m???i: name=Ca S??ng Test, branch=d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:12.718 [tomcat-handler-24] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u th??nh c??ng: id=666c3ae9-734e-4279-897c-b910d9cb1287, name=Ca S??ng Test
+00:10:12.733 [tomcat-handler-25] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.735 [tomcat-handler-25] ERROR c.s.s.web.GlobalExceptionHandler - L???i kh??ng mong ?????i: No static resource api/v1/shift-schedules.
+org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/v1/shift-schedules.
+	at org.springframework.web.servlet.resource.ResourceHttpRequestHandler.handleRequest(ResourceHttpRequestHandler.java:585)
+	at org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.handle(HttpRequestHandlerAdapter.java:52)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at com.smartfnb.auth.infrastructure.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:73)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:384)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)
+00:10:46.716 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 3, active threads = 1, queued tasks = 2, completed tasks = 0]
+00:14:18.836 [tomcat-handler-26] INFO  c.s.a.a.c.RegisterTenantCommandHandler - B???t ?????u ????ng k?? tenant m???i ??? email: testowner_1775495658772@test.com, plan: standard
+00:14:19.204 [tomcat-handler-26] INFO  c.s.a.a.c.RegisterTenantCommandHandler - ????ng k?? tenant th??nh c??ng ??? tenantId: 9cec436a-428c-42ec-a805-9d009bb056f9, userId: 0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d
+00:14:19.205 [tomcat-handler-26] INFO  c.s.p.a.SubscriptionService - Subscription Module ??ang c???p plan standard cho tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.210 [tomcat-handler-26] INFO  c.s.p.a.SubscriptionService - C???p plan standard th??nh c??ng cho tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.210 [tomcat-handler-26] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nh???n s??? ki???n t???o Role OWNER cho tenantId=9cec436a-428c-42ec-a805-9d009bb056f9 (???? ???????c x??? l?? ??? RegisterTenantCommandHandler)
+00:14:19.296 [tomcat-handler-27] INFO  c.s.a.a.command.LoginCommandHandler - X??? l?? ????ng nh???p ??? email: testowner_1775495658772@test.com
+00:14:19.703 [tomcat-handler-27] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.704 [tomcat-handler-27] INFO  c.s.a.a.command.LoginCommandHandler - ????ng nh???p th??nh c??ng ??? userId: 0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId: 9cec436a-428c-42ec-a805-9d009bb056f9, role: OWNER, permissions: 33
+00:14:19.716 [tomcat-handler-28] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.731 [tomcat-handler-29] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.737 [tomcat-handler-29] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.738 [tomcat-handler-29] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, BRANCH_EDIT) = true
+00:14:19.738 [tomcat-handler-29] INFO  c.s.branch.application.BranchService - B???t ?????u t???o chi nh??nh m???i cho tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.748 [tomcat-handler-29] INFO  c.s.branch.application.BranchService - T???o chi nh??nh th??nh c??ng id=193ee3c8-4bd4-46aa-9bc9-b1917d71768d, name=Chi nh??nh Auto 1775495659727
+00:14:19.758 [tomcat-handler-30] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.759 [tomcat-handler-30] INFO  c.s.a.a.c.SelectBranchCommandHandler - User 0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d ??ang y??u c???u ?????i sang chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.775 [tomcat-handler-30] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.776 [tomcat-handler-30] INFO  c.s.a.a.c.SelectBranchCommandHandler - C???p l???i JWT th??nh c??ng cho branchId=193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.784 [tomcat-handler-31] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.791 [tomcat-handler-31] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.794 [tomcat-handler-31] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, MENU_EDIT) = true
+00:14:19.795 [tomcat-handler-31] INFO  c.s.m.a.c.CategoryCommandHandler - T???o danh m???c m???i '????? u???ng Test' cho tenant 9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.802 [tomcat-handler-31] INFO  c.s.m.a.c.CategoryCommandHandler - ???? t???o danh m???c 6da83458-e263-4cfb-b7f6-5c1f96be0236 - '????? u???ng Test'
+00:14:19.815 [tomcat-handler-32] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.820 [tomcat-handler-32] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.822 [tomcat-handler-32] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, MENU_EDIT) = true
+00:14:19.823 [tomcat-handler-32] INFO  c.s.m.a.c.MenuItemCommandHandler - T???o m??n ??n m???i 'C?? ph?? Auto' cho tenant 9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.830 [tomcat-handler-32] INFO  c.s.m.a.c.MenuItemCommandHandler - ???? t???o m??n ??n ddf70f6b-b775-465e-b363-b1e7cd5ee971 - 'C?? ph?? Auto'
+00:14:19.846 [tomcat-handler-33] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.853 [tomcat-handler-33] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.857 [tomcat-handler-33] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, BRANCH_EDIT) = true
+00:14:19.858 [tomcat-handler-33] INFO  c.s.o.a.command.TableCommandHandler - T???o khu v???c b??n 'T???ng 1' t???i chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.867 [tomcat-handler-33] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o khu v???c b??n a2d11d74-5a06-42a1-a7d6-202664de4dce - 'T???ng 1'
+00:14:19.884 [tomcat-handler-34] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.891 [tomcat-handler-34] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d tenantId=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:19.894 [tomcat-handler-34] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, BRANCH_EDIT) = true
+00:14:19.894 [tomcat-handler-34] INFO  c.s.o.a.command.TableCommandHandler - T???o b??n 'B??n 01' t???i chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d, zone a2d11d74-5a06-42a1-a7d6-202664de4dce
+00:14:19.902 [tomcat-handler-34] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o b??n 5864879b-fa00-446d-bd59-d1d98c689466 - 'B??n 01'
+00:14:19.918 [tomcat-handler-35] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.920 [tomcat-handler-35] INFO  c.s.o.a.c.PlaceOrderCommandHandler - T???o ????n h??ng cho b??n 5864879b-fa00-446d-bd59-d1d98c689466 t???i chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.925 [tomcat-handler-35] INFO  c.s.o.i.e.MenuInventoryAdapter - Ki???m tra t???n kho qua MenuInventoryAdapter cho chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.925 [tomcat-handler-35] DEBUG c.s.m.d.s.InventoryCheckService - Ki???m tra t???n kho cho 1 m??n t???i chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.929 [tomcat-handler-35] DEBUG c.s.m.d.s.InventoryCheckService - Kh??ng c?? c??ng th???c n??o ??? b??? qua ki???m tra t???n kho
+00:14:19.930 [tomcat-handler-35] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng m???i: 565c7aff-8c99-4892-8796-b8f09ffdebad t???i chi nh??nh 193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.930 [tomcat-handler-35] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast ????n m???i ORD-193E-260407001419 t???i topic /topic/orders/193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.930 [tomcat-handler-35] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n m???i ORD-193E-260407001419 t???i WebSocket topic
+00:14:19.930 [tomcat-handler-35] INFO  c.s.o.a.c.PlaceOrderCommandHandler - ???? t???o ????n h??ng ORD-193E-260407001419 th??nh c??ng
+00:14:19.952 [tomcat-handler-36] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.955 [tomcat-handler-36] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - C???p nh???t tr???ng th??i ????n 565c7aff-8c99-4892-8796-b8f09ffdebad sang COMPLETED
+00:14:19.963 [tomcat-handler-36] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n thay ?????i tr???ng th??i ????n 565c7aff-8c99-4892-8796-b8f09ffdebad t??? PENDING sang COMPLETED
+00:14:19.963 [tomcat-handler-36] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-193E-260407001419 t???i topic /topic/orders/193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.964 [tomcat-handler-36] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast thay ?????i tr???ng th??i ????n ORD-193E-260407001419 sang COMPLETED t???i WebSocket
+00:14:19.964 [tomcat-handler-36] INFO  c.s.i.a.e.OrderCompletedEventHandler - B???t ?????u tr??? kho FIFO cho ????n h??ng: ORD-193E-260407001419
+00:14:19.967 [tomcat-handler-36] DEBUG c.s.i.a.e.OrderCompletedEventHandler - M??n ddf70f6b-b775-465e-b363-b1e7cd5ee971 kh??ng c?? c??ng th???c nguy??n li???u ??? b??? qua tr??? kho
+00:14:19.967 [tomcat-handler-36] INFO  c.s.i.a.e.OrderCompletedEventHandler - Tr??? kho FIFO ho??n t???t cho ????n h??ng: ORD-193E-260407001419
+00:14:19.968 [tomcat-handler-36] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng ho??n t???t: ORD-193E-260407001419
+00:14:19.968 [tomcat-handler-36] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-193E-260407001419 t???i topic /topic/orders/193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:19.968 [tomcat-handler-36] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n ORD-193E-260407001419 ho??n t???t t???i WebSocket
+00:14:19.982 [tomcat-handler-37] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:19.985 [tomcat-handler-37] INFO  c.s.p.w.controller.PaymentController - Thu ng??n 0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d x??? l?? thanh to??n ti???n m???t cho ????n 565c7aff-8c99-4892-8796-b8f09ffdebad
+00:14:19.985 [tomcat-handler-37] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - X??? l?? thanh to??n ti???n m???t cho ????n 565c7aff-8c99-4892-8796-b8f09ffdebad b???ng 40000
+00:14:19.985 [tomcat-handler-37] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module ??ang l???y Order 565c7aff-8c99-4892-8796-b8f09ffdebad t??? Order Module
+00:14:19.994 [tomcat-handler-37] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Payment e739e89f-ce21-4a97-96ab-b53a1a595de7 th??nh c??ng
+00:14:19.999 [tomcat-handler-37] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-193-20260407-000001
+00:14:20.005 [tomcat-handler-37] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Invoice INV-193-20260407-000001 th??nh c??ng
+00:14:20.006 [tomcat-handler-37] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nh???n InvoiceCreatedEvent cho h??a ????n INV-193-20260407-000001 (????n 565c7aff-8c99-4892-8796-b8f09ffdebad)
+00:14:20.006 [tomcat-handler-37] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module ??ang c???p nh???t tr???ng th??i Table 5864879b-fa00-446d-bd59-d1d98c689466 th??nh CLEANING
+00:14:20.010 [tomcat-handler-37] INFO  c.s.p.i.persistence.TableAdapterImpl - ???? c???p nh???t tr???ng th??i b??n 5864879b-fa00-446d-bd59-d1d98c689466 -> CLEANING
+00:14:20.010 [tomcat-handler-37] INFO  c.s.p.i.e.InvoiceCreatedEventListener - C???p nh???t b??n 5864879b-fa00-446d-bd59-d1d98c689466 th??nh CLEANING
+00:14:20.010 [tomcat-handler-37] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh to??n ti???n m???t ho??n t???t: 565c7aff-8c99-4892-8796-b8f09ffdebad ??? Invoice INV-193-20260407-000001
+00:14:20.028 [tomcat-handler-38] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.030 [tomcat-handler-38] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=193ee3c8-4bd4-46aa-9bc9-b1917d71768d, invoiceNumber=null, page=0, size=20
+00:14:20.030 [tomcat-handler-38] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - T??m ki???m Invoice: branchId=193ee3c8-4bd4-46aa-9bc9-b1917d71768d, invoiceNumber=null, page=0, size=20
+00:14:20.043 [tomcat-handler-39] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.044 [tomcat-handler-39] INFO  c.s.i.w.c.InventoryController - API nh???p kho: itemId=ddf70f6b-b775-465e-b363-b1e7cd5ee971, qty=50
+00:14:20.044 [tomcat-handler-39] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, quantity=50, branch=193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:20.050 [tomcat-handler-39] INFO  c.s.i.d.s.InventoryDomainService - C???p nh???t t???n kho: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, +50
+00:14:20.051 [tomcat-handler-39] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho th??nh c??ng: batchId=b8294f4d-de6d-4fba-8b7f-29a785b647d9
+00:14:20.062 [tomcat-handler-40] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.064 [tomcat-handler-40] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must be greater than or equal to 0.0001
+00:14:20.075 [tomcat-handler-41] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.078 [tomcat-handler-41] INFO  c.s.i.w.c.InventoryController - API ??i???u ch???nh kho: itemId=ddf70f6b-b775-465e-b363-b1e7cd5ee971, newQty=45
+00:14:20.078 [tomcat-handler-41] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, newQty=45, reason=Ki???m k?? th??ng
+00:14:20.082 [tomcat-handler-41] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho th??nh c??ng: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, delta=-5.0000
+00:14:20.099 [tomcat-handler-42] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.102 [tomcat-handler-42] INFO  c.s.i.w.c.InventoryController - API ghi hao h???t: itemId=ddf70f6b-b775-465e-b363-b1e7cd5ee971, qty=5
+00:14:20.102 [tomcat-handler-42] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, qty=5, reason=H?? h???ng
+00:14:20.107 [tomcat-handler-42] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t th??nh c??ng: item=ddf70f6b-b775-465e-b363-b1e7cd5ee971, qty=5
+00:14:20.127 [tomcat-handler-43] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.130 [tomcat-handler-43] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must not be blank
+00:14:20.142 [tomcat-handler-44] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.144 [tomcat-handler-44] DEBUG c.s.i.w.c.InventoryController - API xem t???n kho: page=0, size=20
+00:14:20.144 [tomcat-handler-44] DEBUG c.s.i.a.q.GetInventoryQueryHandler - L???y t???n kho: tenant=9cec436a-428c-42ec-a805-9d009bb056f9, branch=null, page=0/20
+00:14:20.162 [tomcat-handler-45] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.164 [tomcat-handler-45] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? m???i: name=Qu???n l?? c???a h??ng, tenant=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:20.171 [tomcat-handler-45] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? th??nh c??ng: positionId=770f504a-c785-4f7c-99c7-b647fb9df71f
+00:14:20.187 [tomcat-handler-46] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.201 [tomcat-handler-47] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.204 [tomcat-handler-47] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n m???i: phone=0999888777, tenant=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:20.214 [tomcat-handler-47] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n th??nh c??ng: staffId=babc055c-e41a-4cc4-9830-3fa46f899b74, phone=0999888777
+00:14:20.234 [tomcat-handler-48] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.237 [tomcat-handler-48] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n: staffId=babc055c-e41a-4cc4-9830-3fa46f899b74
+00:14:20.245 [tomcat-handler-48] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n th??nh c??ng: staffId=babc055c-e41a-4cc4-9830-3fa46f899b74
+00:14:20.257 [tomcat-handler-49] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.259 [tomcat-handler-49] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? m???i: name=Thu Ng??n Test, tenant=9cec436a-428c-42ec-a805-9d009bb056f9
+00:14:20.262 [tomcat-handler-49] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? th??nh c??ng: roleId=c5bfb60b-e8ff-46bd-866b-6b2d604debd1
+00:14:20.273 [tomcat-handler-50] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.275 [tomcat-handler-50] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u m???i: name=Ca S??ng Test, branch=193ee3c8-4bd4-46aa-9bc9-b1917d71768d
+00:14:20.279 [tomcat-handler-50] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u th??nh c??ng: id=c8abaf6b-1d9f-4571-918c-f537fb9bcd7f, name=Ca S??ng Test
+00:14:20.291 [tomcat-handler-51] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.298 [tomcat-handler-51] INFO  c.s.s.a.c.RegisterShiftCommandHandler - ????ng k?? ca: userId=babc055c-e41a-4cc4-9830-3fa46f899b74, templateId=c8abaf6b-1d9f-4571-918c-f537fb9bcd7f, date=2026-04-07
+00:14:20.312 [tomcat-handler-51] INFO  c.s.s.a.c.RegisterShiftCommandHandler - ????ng k?? ca th??nh c??ng: scheduleId=157126b2-e15b-4840-830a-38b636f16226
+00:14:20.329 [tomcat-handler-52] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.348 [tomcat-handler-53] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d, tenantId=9cec436a-428c-42ec-a805-9d009bb056f9, role=OWNER
+00:14:20.350 [tomcat-handler-53] INFO  c.s.s.a.c.CheckInCommandHandler - Check-in ca: scheduleId=157126b2-e15b-4840-830a-38b636f16226, userId=0ad2ac5a-a7e9-4525-aea1-d6649a7e7f5d
+00:14:20.361 [tomcat-handler-53] ERROR c.s.s.web.GlobalExceptionHandler - L???i kh??ng mong ?????i: Nh??n vi??n kh??ng ???????c check-in ca c???a ng?????i kh??c: scheduleId=157126b2-e15b-4840-830a-38b636f16226
+java.lang.SecurityException: Nh??n vi??n kh??ng ???????c check-in ca c???a ng?????i kh??c: scheduleId=157126b2-e15b-4840-830a-38b636f16226
+	at com.smartfnb.shift.application.command.CheckInCommandHandler.handle(CheckInCommandHandler.java:61)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.shift.application.command.CheckInCommandHandler$$SpringCGLIB$$0.handle(<generated>)
+	at com.smartfnb.shift.web.controller.ShiftScheduleController.checkIn(ShiftScheduleController.java:118)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.proceed(AuthorizationManagerBeforeMethodInterceptor.java:269)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.attemptAuthorization(AuthorizationManagerBeforeMethodInterceptor.java:264)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:197)
+	at org.springframework.security.config.annotation.method.configuration.DeferringMethodInterceptor.invoke(DeferringMethodInterceptor.java:44)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.shift.web.controller.ShiftScheduleController$$SpringCGLIB$$0.checkIn(<generated>)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at com.smartfnb.auth.infrastructure.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:73)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:384)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)
+00:16:22.568 [tomcat-handler-54] INFO  c.s.a.a.c.RegisterTenantCommandHandler - B???t ?????u ????ng k?? tenant m???i ??? email: testowner_1775495782505@test.com, plan: standard
+00:16:22.921 [tomcat-handler-54] INFO  c.s.a.a.c.RegisterTenantCommandHandler - ????ng k?? tenant th??nh c??ng ??? tenantId: 0ffc5750-b1d5-48e9-afc3-d072b11377b0, userId: 1cf1b16d-389c-4444-a155-d028529b8185
+00:16:22.921 [tomcat-handler-54] INFO  c.s.p.a.SubscriptionService - Subscription Module ??ang c???p plan standard cho tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:22.924 [tomcat-handler-54] INFO  c.s.p.a.SubscriptionService - C???p plan standard th??nh c??ng cho tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:22.924 [tomcat-handler-54] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nh???n s??? ki???n t???o Role OWNER cho tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0 (???? ???????c x??? l?? ??? RegisterTenantCommandHandler)
+00:16:22.982 [tomcat-handler-55] INFO  c.s.a.a.command.LoginCommandHandler - X??? l?? ????ng nh???p ??? email: testowner_1775495782505@test.com
+00:16:23.302 [tomcat-handler-55] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.302 [tomcat-handler-55] INFO  c.s.a.a.command.LoginCommandHandler - ????ng nh???p th??nh c??ng ??? userId: 1cf1b16d-389c-4444-a155-d028529b8185, tenantId: 0ffc5750-b1d5-48e9-afc3-d072b11377b0, role: OWNER, permissions: 33
+00:16:23.312 [tomcat-handler-56] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.324 [tomcat-handler-57] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.329 [tomcat-handler-57] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.330 [tomcat-handler-57] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(1cf1b16d-389c-4444-a155-d028529b8185, BRANCH_EDIT) = true
+00:16:23.330 [tomcat-handler-57] INFO  c.s.branch.application.BranchService - B???t ?????u t???o chi nh??nh m???i cho tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.338 [tomcat-handler-57] INFO  c.s.branch.application.BranchService - T???o chi nh??nh th??nh c??ng id=04e8e239-03e4-4068-bae2-9c9f395ac2c9, name=Chi nh??nh Auto 1775495783322
+00:16:23.346 [tomcat-handler-58] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.348 [tomcat-handler-58] INFO  c.s.a.a.c.SelectBranchCommandHandler - User 1cf1b16d-389c-4444-a155-d028529b8185 ??ang y??u c???u ?????i sang chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.359 [tomcat-handler-58] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.359 [tomcat-handler-58] INFO  c.s.a.a.c.SelectBranchCommandHandler - C???p l???i JWT th??nh c??ng cho branchId=04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.364 [tomcat-handler-59] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.368 [tomcat-handler-59] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.369 [tomcat-handler-59] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(1cf1b16d-389c-4444-a155-d028529b8185, MENU_EDIT) = true
+00:16:23.370 [tomcat-handler-59] INFO  c.s.m.a.c.CategoryCommandHandler - T???o danh m???c m???i '????? u???ng Test' cho tenant 0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.374 [tomcat-handler-59] INFO  c.s.m.a.c.CategoryCommandHandler - ???? t???o danh m???c 8c690cea-70cb-4a8e-a567-4e6d7f41896e - '????? u???ng Test'
+00:16:23.381 [tomcat-handler-60] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.384 [tomcat-handler-60] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.385 [tomcat-handler-60] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(1cf1b16d-389c-4444-a155-d028529b8185, MENU_EDIT) = true
+00:16:23.385 [tomcat-handler-60] INFO  c.s.m.a.c.MenuItemCommandHandler - T???o m??n ??n m???i 'C?? ph?? Auto' cho tenant 0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.388 [tomcat-handler-60] INFO  c.s.m.a.c.MenuItemCommandHandler - ???? t???o m??n ??n 9f2d7f43-fe96-44bd-a1fe-8c66973d07cc - 'C?? ph?? Auto'
+00:16:23.394 [tomcat-handler-61] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.398 [tomcat-handler-61] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.399 [tomcat-handler-61] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(1cf1b16d-389c-4444-a155-d028529b8185, BRANCH_EDIT) = true
+00:16:23.399 [tomcat-handler-61] INFO  c.s.o.a.command.TableCommandHandler - T???o khu v???c b??n 'T???ng 1' t???i chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.402 [tomcat-handler-61] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o khu v???c b??n 0b15734d-416c-4e90-ad22-5f1985615196 - 'T???ng 1'
+00:16:23.408 [tomcat-handler-62] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.411 [tomcat-handler-62] DEBUG c.s.r.d.service.PermissionService - T???i 33 quy???n cho userId=1cf1b16d-389c-4444-a155-d028529b8185 tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.413 [tomcat-handler-62] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(1cf1b16d-389c-4444-a155-d028529b8185, BRANCH_EDIT) = true
+00:16:23.413 [tomcat-handler-62] INFO  c.s.o.a.command.TableCommandHandler - T???o b??n 'B??n 01' t???i chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9, zone 0b15734d-416c-4e90-ad22-5f1985615196
+00:16:23.415 [tomcat-handler-62] INFO  c.s.o.a.command.TableCommandHandler - ???? t???o b??n 876941d5-a606-43a2-88ab-945cfa711956 - 'B??n 01'
+00:16:23.430 [tomcat-handler-63] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.431 [tomcat-handler-63] INFO  c.s.o.a.c.PlaceOrderCommandHandler - T???o ????n h??ng cho b??n 876941d5-a606-43a2-88ab-945cfa711956 t???i chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.434 [tomcat-handler-63] INFO  c.s.o.i.e.MenuInventoryAdapter - Ki???m tra t???n kho qua MenuInventoryAdapter cho chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.434 [tomcat-handler-63] DEBUG c.s.m.d.s.InventoryCheckService - Ki???m tra t???n kho cho 1 m??n t???i chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.436 [tomcat-handler-63] DEBUG c.s.m.d.s.InventoryCheckService - Kh??ng c?? c??ng th???c n??o ??? b??? qua ki???m tra t???n kho
+00:16:23.436 [tomcat-handler-63] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng m???i: d35cff1b-de24-4085-a709-185971a37551 t???i chi nh??nh 04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.436 [tomcat-handler-63] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast ????n m???i ORD-04E8-260407001623 t???i topic /topic/orders/04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.436 [tomcat-handler-63] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n m???i ORD-04E8-260407001623 t???i WebSocket topic
+00:16:23.436 [tomcat-handler-63] INFO  c.s.o.a.c.PlaceOrderCommandHandler - ???? t???o ????n h??ng ORD-04E8-260407001623 th??nh c??ng
+00:16:23.449 [tomcat-handler-64] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.451 [tomcat-handler-64] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - C???p nh???t tr???ng th??i ????n d35cff1b-de24-4085-a709-185971a37551 sang COMPLETED
+00:16:23.456 [tomcat-handler-64] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n thay ?????i tr???ng th??i ????n d35cff1b-de24-4085-a709-185971a37551 t??? PENDING sang COMPLETED
+00:16:23.456 [tomcat-handler-64] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-04E8-260407001623 t???i topic /topic/orders/04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.456 [tomcat-handler-64] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast thay ?????i tr???ng th??i ????n ORD-04E8-260407001623 sang COMPLETED t???i WebSocket
+00:16:23.456 [tomcat-handler-64] INFO  c.s.i.a.e.OrderCompletedEventHandler - B???t ?????u tr??? kho FIFO cho ????n h??ng: ORD-04E8-260407001623
+00:16:23.458 [tomcat-handler-64] DEBUG c.s.i.a.e.OrderCompletedEventHandler - M??n 9f2d7f43-fe96-44bd-a1fe-8c66973d07cc kh??ng c?? c??ng th???c nguy??n li???u ??? b??? qua tr??? kho
+00:16:23.458 [tomcat-handler-64] INFO  c.s.i.a.e.OrderCompletedEventHandler - Tr??? kho FIFO ho??n t???t cho ????n h??ng: ORD-04E8-260407001623
+00:16:23.458 [tomcat-handler-64] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nh???n s??? ki???n ????n h??ng ho??n t???t: ORD-04E8-260407001623
+00:16:23.458 [tomcat-handler-64] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast tr???ng th??i ????n ORD-04E8-260407001623 t???i topic /topic/orders/04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.459 [tomcat-handler-64] INFO  c.s.o.i.w.OrderWebSocketEventHandler - ???? broadcast ????n ORD-04E8-260407001623 ho??n t???t t???i WebSocket
+00:16:23.468 [tomcat-handler-65] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.469 [tomcat-handler-65] INFO  c.s.p.w.controller.PaymentController - Thu ng??n 1cf1b16d-389c-4444-a155-d028529b8185 x??? l?? thanh to??n ti???n m???t cho ????n d35cff1b-de24-4085-a709-185971a37551
+00:16:23.470 [tomcat-handler-65] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - X??? l?? thanh to??n ti???n m???t cho ????n d35cff1b-de24-4085-a709-185971a37551 b???ng 40000
+00:16:23.470 [tomcat-handler-65] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module ??ang l???y Order d35cff1b-de24-4085-a709-185971a37551 t??? Order Module
+00:16:23.474 [tomcat-handler-65] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Payment ba5f0b44-8a80-4e3b-a8d1-5be55577e68b th??nh c??ng
+00:16:23.477 [tomcat-handler-65] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-04E-20260407-000001
+00:16:23.480 [tomcat-handler-65] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - ???? t???o Invoice INV-04E-20260407-000001 th??nh c??ng
+00:16:23.480 [tomcat-handler-65] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nh???n InvoiceCreatedEvent cho h??a ????n INV-04E-20260407-000001 (????n d35cff1b-de24-4085-a709-185971a37551)
+00:16:23.480 [tomcat-handler-65] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module ??ang c???p nh???t tr???ng th??i Table 876941d5-a606-43a2-88ab-945cfa711956 th??nh CLEANING
+00:16:23.482 [tomcat-handler-65] INFO  c.s.p.i.persistence.TableAdapterImpl - ???? c???p nh???t tr???ng th??i b??n 876941d5-a606-43a2-88ab-945cfa711956 -> CLEANING
+00:16:23.482 [tomcat-handler-65] INFO  c.s.p.i.e.InvoiceCreatedEventListener - C???p nh???t b??n 876941d5-a606-43a2-88ab-945cfa711956 th??nh CLEANING
+00:16:23.482 [tomcat-handler-65] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh to??n ti???n m???t ho??n t???t: d35cff1b-de24-4085-a709-185971a37551 ??? Invoice INV-04E-20260407-000001
+00:16:23.494 [tomcat-handler-66] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.495 [tomcat-handler-66] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=04e8e239-03e4-4068-bae2-9c9f395ac2c9, invoiceNumber=null, page=0, size=20
+00:16:23.495 [tomcat-handler-66] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - T??m ki???m Invoice: branchId=04e8e239-03e4-4068-bae2-9c9f395ac2c9, invoiceNumber=null, page=0, size=20
+00:16:23.517 [tomcat-handler-67] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.530 [tomcat-handler-67] INFO  c.s.i.w.c.InventoryController - API nh???p kho: itemId=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, qty=50
+00:16:23.531 [tomcat-handler-67] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, quantity=50, branch=04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.543 [tomcat-handler-67] INFO  c.s.i.d.s.InventoryDomainService - C???p nh???t t???n kho: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, +50
+00:16:23.544 [tomcat-handler-67] INFO  c.s.i.a.c.ImportStockCommandHandler - Nh???p kho th??nh c??ng: batchId=1ea2b756-d811-4e10-9f8c-1de596f012ba
+00:16:23.581 [tomcat-handler-68] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.586 [tomcat-handler-68] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must be greater than or equal to 0.0001
+00:16:23.598 [tomcat-handler-69] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.602 [tomcat-handler-69] INFO  c.s.i.w.c.InventoryController - API ??i???u ch???nh kho: itemId=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, newQty=45
+00:16:23.604 [tomcat-handler-69] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, newQty=45, reason=Ki???m k?? th??ng
+00:16:23.611 [tomcat-handler-69] INFO  c.s.i.a.c.AdjustStockCommandHandler - ??i???u ch???nh kho th??nh c??ng: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, delta=-5.0000
+00:16:23.628 [tomcat-handler-70] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.631 [tomcat-handler-70] INFO  c.s.i.w.c.InventoryController - API ghi hao h???t: itemId=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, qty=5
+00:16:23.631 [tomcat-handler-70] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, qty=5, reason=H?? h???ng
+00:16:23.635 [tomcat-handler-70] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t th??nh c??ng: item=9f2d7f43-fe96-44bd-a1fe-8c66973d07cc, qty=5
+00:16:23.649 [tomcat-handler-71] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.650 [tomcat-handler-71] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must not be blank
+00:16:23.654 [tomcat-handler-72] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.656 [tomcat-handler-72] DEBUG c.s.i.w.c.InventoryController - API xem t???n kho: page=0, size=20
+00:16:23.656 [tomcat-handler-72] DEBUG c.s.i.a.q.GetInventoryQueryHandler - L???y t???n kho: tenant=0ffc5750-b1d5-48e9-afc3-d072b11377b0, branch=null, page=0/20
+00:16:23.668 [tomcat-handler-73] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.670 [tomcat-handler-73] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? m???i: name=Qu???n l?? c???a h??ng, tenant=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.674 [tomcat-handler-73] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? th??nh c??ng: positionId=f11033fb-0b87-4d0b-b86f-d75515016fb6
+00:16:23.684 [tomcat-handler-74] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.692 [tomcat-handler-75] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.696 [tomcat-handler-75] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n m???i: phone=0999888777, tenant=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.702 [tomcat-handler-75] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n th??nh c??ng: staffId=dc2c51d9-db2c-4380-b6a3-e100a19b20f5, phone=0999888777
+00:16:23.713 [tomcat-handler-76] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.717 [tomcat-handler-76] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n: staffId=dc2c51d9-db2c-4380-b6a3-e100a19b20f5
+00:16:23.723 [tomcat-handler-76] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n th??nh c??ng: staffId=dc2c51d9-db2c-4380-b6a3-e100a19b20f5
+00:16:23.731 [tomcat-handler-77] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.733 [tomcat-handler-77] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? m???i: name=Thu Ng??n Test, tenant=0ffc5750-b1d5-48e9-afc3-d072b11377b0
+00:16:23.736 [tomcat-handler-77] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? th??nh c??ng: roleId=45780bf5-dbbb-4b52-947f-ce9c7d6f47a6
+00:16:23.749 [tomcat-handler-78] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.753 [tomcat-handler-78] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u m???i: name=Ca S??ng Test, branch=04e8e239-03e4-4068-bae2-9c9f395ac2c9
+00:16:23.756 [tomcat-handler-78] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u th??nh c??ng: id=86b1a7a6-e336-4f94-95db-54d91a2ea6a1, name=Ca S??ng Test
+00:16:23.765 [tomcat-handler-79] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.767 [tomcat-handler-79] INFO  c.s.s.a.c.RegisterShiftCommandHandler - ????ng k?? ca: userId=1cf1b16d-389c-4444-a155-d028529b8185, templateId=86b1a7a6-e336-4f94-95db-54d91a2ea6a1, date=2026-04-07
+00:16:23.773 [tomcat-handler-79] INFO  c.s.s.a.c.RegisterShiftCommandHandler - ????ng k?? ca th??nh c??ng: scheduleId=14318338-f94e-44d6-8fc2-d323c74a0d04
+00:16:23.781 [tomcat-handler-80] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.789 [tomcat-handler-81] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.790 [tomcat-handler-81] INFO  c.s.s.a.c.CheckInCommandHandler - Check-in ca: scheduleId=14318338-f94e-44d6-8fc2-d323c74a0d04, userId=1cf1b16d-389c-4444-a155-d028529b8185
+00:16:23.795 [tomcat-handler-81] INFO  c.s.s.a.c.CheckInCommandHandler - Check-in th??nh c??ng: scheduleId=14318338-f94e-44d6-8fc2-d323c74a0d04
+00:16:23.805 [tomcat-handler-82] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=1cf1b16d-389c-4444-a155-d028529b8185, tenantId=0ffc5750-b1d5-48e9-afc3-d072b11377b0, role=OWNER
+00:16:23.806 [tomcat-handler-82] INFO  c.s.s.a.c.CheckOutCommandHandler - Check-out ca: scheduleId=14318338-f94e-44d6-8fc2-d323c74a0d04, userId=1cf1b16d-389c-4444-a155-d028529b8185
+00:16:23.814 [tomcat-handler-82] ERROR c.s.s.web.GlobalExceptionHandler - L???i kh??ng mong ?????i: Invalid value for NanoOfSecond (valid values 0 - 999999999): -205000000
+java.time.DateTimeException: Invalid value for NanoOfSecond (valid values 0 - 999999999): -205000000
+	at java.base/java.time.temporal.ValueRange.checkValidValue(ValueRange.java:319)
+	at java.base/java.time.temporal.ChronoField.checkValidValue(ChronoField.java:718)
+	at java.base/java.time.LocalTime.with(LocalTime.java:867)
+	at org.hibernate.type.descriptor.java.LocalTimeJavaType.wrap(LocalTimeJavaType.java:143)
+	at org.hibernate.type.descriptor.java.LocalTimeJavaType.wrap(LocalTimeJavaType.java:39)
+	at org.hibernate.type.descriptor.jdbc.TimeJdbcType$2.doExtract(TimeJdbcType.java:111)
+	at org.hibernate.type.descriptor.jdbc.BasicExtractor.extract(BasicExtractor.java:44)
+	at org.hibernate.sql.results.jdbc.internal.JdbcValuesResultSetImpl.getCurrentRowValue(JdbcValuesResultSetImpl.java:379)
+	at org.hibernate.sql.results.internal.RowProcessingStateStandardImpl.getJdbcValue(RowProcessingStateStandardImpl.java:120)
+	at org.hibernate.sql.results.graph.basic.BasicResultAssembler.extractRawValue(BasicResultAssembler.java:52)
+	at org.hibernate.sql.results.graph.basic.BasicResultAssembler.assemble(BasicResultAssembler.java:59)
+	at org.hibernate.sql.results.graph.DomainResultAssembler.assemble(DomainResultAssembler.java:35)
+	at org.hibernate.sql.results.graph.entity.AbstractEntityInitializer.extractConcreteTypeStateValues(AbstractEntityInitializer.java:1038)
+	at org.hibernate.sql.results.graph.entity.AbstractEntityInitializer.initializeEntityInstance(AbstractEntityInitializer.java:795)
+	at org.hibernate.sql.results.graph.entity.AbstractEntityInitializer.initializeEntity(AbstractEntityInitializer.java:770)
+	at org.hibernate.sql.results.graph.entity.AbstractEntityInitializer.initializeInstance(AbstractEntityInitializer.java:762)
+	at org.hibernate.sql.results.internal.InitializersList.initializeInstance(InitializersList.java:73)
+	at org.hibernate.sql.results.internal.StandardRowReader.coordinateInitializers(StandardRowReader.java:113)
+	at org.hibernate.sql.results.internal.StandardRowReader.readRow(StandardRowReader.java:87)
+	at org.hibernate.sql.results.spi.ListResultsConsumer.consume(ListResultsConsumer.java:205)
+	at org.hibernate.sql.results.spi.ListResultsConsumer.consume(ListResultsConsumer.java:33)
+	at org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl.doExecuteQuery(JdbcSelectExecutorStandardImpl.java:211)
+	at org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl.executeQuery(JdbcSelectExecutorStandardImpl.java:83)
+	at org.hibernate.sql.exec.spi.JdbcSelectExecutor.list(JdbcSelectExecutor.java:76)
+	at org.hibernate.sql.exec.spi.JdbcSelectExecutor.list(JdbcSelectExecutor.java:65)
+	at org.hibernate.query.sqm.internal.ConcreteSqmSelectQueryPlan.lambda$new$2(ConcreteSqmSelectQueryPlan.java:139)
+	at org.hibernate.query.sqm.internal.ConcreteSqmSelectQueryPlan.withCacheableSqmInterpretation(ConcreteSqmSelectQueryPlan.java:382)
+	at org.hibernate.query.sqm.internal.ConcreteSqmSelectQueryPlan.performList(ConcreteSqmSelectQueryPlan.java:302)
+	at org.hibernate.query.sqm.internal.QuerySqmImpl.doList(QuerySqmImpl.java:526)
+	at org.hibernate.query.spi.AbstractSelectionQuery.list(AbstractSelectionQuery.java:423)
+	at org.hibernate.query.spi.AbstractSelectionQuery.getSingleResult(AbstractSelectionQuery.java:555)
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution$SingleEntityExecution.doExecute(JpaQueryExecution.java:223)
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution.execute(JpaQueryExecution.java:92)
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.doExecute(AbstractJpaQuery.java:152)
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.execute(AbstractJpaQuery.java:140)
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:169)
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:148)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:138)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:136)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223)
+	at jdk.proxy2/jdk.proxy2.$Proxy238.findByIdAndTenantId(Unknown Source)
+	at com.smartfnb.shift.application.command.CheckOutCommandHandler.handle(CheckOutCommandHandler.java:55)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.shift.application.command.CheckOutCommandHandler$$SpringCGLIB$$0.handle(<generated>)
+	at com.smartfnb.shift.web.controller.ShiftScheduleController.checkOut(ShiftScheduleController.java:134)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.proceed(AuthorizationManagerBeforeMethodInterceptor.java:269)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.attemptAuthorization(AuthorizationManagerBeforeMethodInterceptor.java:264)
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:197)
+	at org.springframework.security.config.annotation.method.configuration.DeferringMethodInterceptor.invoke(DeferringMethodInterceptor.java:44)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.smartfnb.shift.web.controller.ShiftScheduleController$$SpringCGLIB$$0.checkOut(<generated>)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at com.smartfnb.auth.infrastructure.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:73)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:384)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)

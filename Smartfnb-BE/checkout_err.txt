@@ -1,0 +1,50 @@
+﻿
+> 00:16:23.806 [tomcat-handler-82] INFO  
+c.s.s.a.c.CheckOutCommandHandler - Check-out ca: 
+scheduleId=14318338-f94e-44d6-8fc2-d323c74a0d04, 
+userId=1cf1b16d-389c-4444-a155-d028529b8185
+  00:16:23.814 [tomcat-handler-82] ERROR 
+c.s.s.web.GlobalExceptionHandler - Lß╗ùi kh├┤ng mong ─æß╗úi: 
+Invalid value for NanoOfSecond (valid values 0 - 999999999): 
+-205000000
+  java.time.DateTimeException: Invalid value for NanoOfSecond 
+(valid values 0 - 999999999): -205000000
+  	at java.base/java.time.temporal.ValueRange.checkValidValue(V
+alueRange.java:319)
+  	at java.base/java.time.temporal.ChronoField.checkValidValue(
+ChronoField.java:718)
+  	at java.base/java.time.LocalTime.with(LocalTime.java:867)
+  	at org.hibernate.type.descriptor.java.LocalTimeJavaType.wrap
+(LocalTimeJavaType.java:143)
+  	at org.hibernate.type.descriptor.java.LocalTimeJavaType.wrap
+(LocalTimeJavaType.java:39)
+  	at org.hibernate.type.descriptor.jdbc.TimeJdbcType$2.doExtra
+ct(TimeJdbcType.java:111)
+  	at org.hibernate.type.descriptor.jdbc.BasicExtractor.extract
+(BasicExtractor.java:44)
+  	at org.hibernate.sql.results.jdbc.internal.JdbcValuesResultS
+etImpl.getCurrentRowValue(JdbcValuesResultSetImpl.java:379)
+  	at org.hibernate.sql.results.internal.RowProcessingStateStan
+dardImpl.getJdbcValue(RowProcessingStateStandardImpl.java:120)
+  	at org.hibernate.sql.results.graph.basic.BasicResultAssemble
+r.extractRawValue(BasicResultAssembler.java:52)
+  	at org.hibernate.sql.results.graph.basic.BasicResultAssemble
+r.assemble(BasicResultAssembler.java:59)
+  	at org.hibernate.sql.results.graph.DomainResultAssembler.ass
+emble(DomainResultAssembler.java:35)
+  	at org.hibernate.sql.results.graph.entity.AbstractEntityInit
+ializer.extractConcreteTypeStateValues(AbstractEntityInitialize
+r.java:1038)
+  	at org.hibernate.sql.results.graph.entity.AbstractEntityInit
+ializer.initializeEntityInstance(AbstractEntityInitializer.java
+:795)
+  	at org.hibernate.sql.results.graph.entity.AbstractEntityInit
+ializer.initializeEntity(AbstractEntityInitializer.java:770)
+  	at org.hibernate.sql.results.graph.entity.AbstractEntityInit
+ializer.initializeInstance(AbstractEntityInitializer.java:762)
+  	at org.hibernate.sql.results.internal.InitializersList.initi
+alizeInstance(InitializersList.java:73)
+  	at org.hibernate.sql.results.internal.StandardRowReader.coor
+dinateInitializers(StandardRowReader.java:113)
+
+

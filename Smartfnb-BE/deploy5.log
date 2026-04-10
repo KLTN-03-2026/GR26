@@ -1,0 +1,293 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.smartfnb:smartfnb >------------------------
+[INFO] Building SmartF&B 1.0.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot-maven-plugin:3.3.5:run (default-cli) > test-compile @ smartfnb >>>
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ smartfnb ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 7 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:compile (default-compile) @ smartfnb ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ smartfnb ---
+[INFO] Not copying test resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile (default-testCompile) @ smartfnb ---
+[INFO] Not compiling test sources
+[INFO] 
+[INFO] <<< spring-boot-maven-plugin:3.3.5:run (default-cli) < test-compile @ smartfnb <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.3.5:run (default-cli) @ smartfnb ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+23:05:55.229 [main] INFO  com.smartfnb.SmartFnbApplication - Starting SmartFnbApplication using Java 21.0.6 with PID 17788 (E:\Smart_web\SmartF&B\target\classes started by ASUS in E:\Smart_web\SmartF&B)
+23:05:55.230 [main] DEBUG com.smartfnb.SmartFnbApplication - Running with Spring Boot v3.3.5, Spring v6.1.14
+23:05:55.232 [main] INFO  com.smartfnb.SmartFnbApplication - No active profile set, falling back to 1 default profile: "default"
+23:05:56.810 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+23:05:56.813 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+23:05:57.591 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 763 ms. Found 29 JPA repository interfaces.
+23:05:57.629 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+23:05:57.632 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+23:05:57.694 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.OtpRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.695 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.PlanRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.695 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.TenantRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.696 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.auth.infrastructure.persistence.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.696 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.697 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.branch.infrastructure.persistence.BranchUserJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.699 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.AuditLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.701 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.702 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.InventoryTransactionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.702 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.inventory.infrastructure.persistence.StockBatchJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.703 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.703 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.BranchItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.705 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.CategoryJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.705 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.706 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.706 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.706 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.708 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.708 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.order.infrastructure.persistence.TableZoneJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.708 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.InvoiceJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.709 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.payment.infrastructure.persistence.PaymentJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.710 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.plan.infrastructure.persistence.SubscriptionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.710 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.710 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.PermissionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.710 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.711 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RolePermissionJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.711 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.RoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.711 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleJpaRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.711 [main] INFO  o.s.d.r.c.RepositoryConfigurationExtensionSupport - Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.smartfnb.rbac.infrastructure.persistence.UserRoleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+23:05:57.711 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 60 ms. Found 0 Redis repository interfaces.
+23:05:58.885 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+23:05:58.902 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+23:05:58.902 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.31]
+23:05:58.985 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+23:05:58.986 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 3702 ms
+23:05:59.238 [main] DEBUG c.s.a.i.jwt.JwtAuthFilter - Filter 'jwtAuthFilter' configured for use
+23:05:59.520 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Starting...
+23:05:59.702 [main] INFO  com.zaxxer.hikari.pool.HikariPool - SmartFnbHikariPool - Added connection org.postgresql.jdbc.PgConnection@5d6b5d3d
+23:05:59.703 [main] INFO  com.zaxxer.hikari.HikariDataSource - SmartFnbHikariPool - Start completed.
+23:05:59.741 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://localhost:5432/smartfnb (PostgreSQL 16.13)
+23:05:59.818 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 7 migrations (execution time 00:00.043s)
+23:05:59.858 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": 7
+23:05:59.862 [main] INFO  o.f.core.internal.command.DbMigrate - Schema "public" is up to date. No migration necessary.
+23:05:59.997 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+23:06:00.060 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.3.Final
+23:06:00.091 [main] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+23:06:00.414 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+23:06:00.468 [main] WARN  org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+23:06:00.976 [main] WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+23:06:00.976 [main] WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.smartfnb.menu.infrastructure.persistence.BranchItemJpaEntity$BranchItemId
+23:06:02.007 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+23:06:02.082 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+23:06:02.415 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+23:06:05.797 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+23:06:06.616 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+23:06:06.619 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+23:06:06.619 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@13bb5b63]]
+23:06:06.619 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+23:06:06.639 [main] INFO  com.smartfnb.SmartFnbApplication - Started SmartFnbApplication in 11.931 seconds (process running for 12.623)
+23:07:06.576 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 3, active threads = 1, queued tasks = 2, completed tasks = 0]
+23:08:34.741 [tomcat-handler-0] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+23:08:34.742 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+23:08:34.745 [tomcat-handler-0] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 3 ms
+23:08:34.934 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Bắt đầu đăng ký tenant mới — email: testowner_1775232514573@test.com, plan: standard
+23:08:35.671 [tomcat-handler-0] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Đăng ký tenant thành công — tenantId: fe673dff-6751-4875-9629-df4bfe4fbd5b, userId: 001172e1-3315-4c64-93fa-8e977a0dd054
+23:08:35.671 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - Subscription Module đang cấp plan standard cho tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:35.679 [tomcat-handler-0] INFO  c.s.p.a.SubscriptionService - Cấp plan standard thành công cho tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:35.679 [tomcat-handler-0] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nhận sự kiện tạo Role OWNER cho tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b (Đã được xử lý ở RegisterTenantCommandHandler)
+23:08:35.784 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - Xử lý đăng nhập — email: testowner_1775232514573@test.com
+23:08:36.192 [tomcat-handler-1] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.193 [tomcat-handler-1] INFO  c.s.a.a.command.LoginCommandHandler - Đăng nhập thành công — userId: 001172e1-3315-4c64-93fa-8e977a0dd054, tenantId: fe673dff-6751-4875-9629-df4bfe4fbd5b, role: OWNER, permissions: 31
+23:08:36.227 [tomcat-handler-2] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.260 [tomcat-handler-3] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.287 [tomcat-handler-3] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.289 [tomcat-handler-3] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(001172e1-3315-4c64-93fa-8e977a0dd054, BRANCH_EDIT) = true
+23:08:36.291 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - Bắt đầu tạo chi nhánh mới cho tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.308 [tomcat-handler-3] INFO  c.s.branch.application.BranchService - Tạo chi nhánh thành công id=c3e341dd-dc62-4e43-aa9a-1873923402c8, name=Chi nhánh Auto 1775232516255
+23:08:36.323 [tomcat-handler-4] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.332 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - User 001172e1-3315-4c64-93fa-8e977a0dd054 đang yêu cầu đổi sang chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.356 [tomcat-handler-4] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.357 [tomcat-handler-4] INFO  c.s.a.a.c.SelectBranchCommandHandler - Cấp lại JWT thành công cho branchId=c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.366 [tomcat-handler-5] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.384 [tomcat-handler-5] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.386 [tomcat-handler-5] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(001172e1-3315-4c64-93fa-8e977a0dd054, MENU_EDIT) = true
+23:08:36.388 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - Tạo danh mục mới 'Đồ uống Test' cho tenant fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.418 [tomcat-handler-5] INFO  c.s.m.a.c.CategoryCommandHandler - Đã tạo danh mục 195f8ed8-6da3-4fd5-96af-0f405d29e83a - 'Đồ uống Test'
+23:08:36.433 [tomcat-handler-6] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.450 [tomcat-handler-6] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.452 [tomcat-handler-6] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(001172e1-3315-4c64-93fa-8e977a0dd054, MENU_EDIT) = true
+23:08:36.452 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - Tạo món ăn mới 'Cà phê Auto' cho tenant fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.467 [tomcat-handler-6] INFO  c.s.m.a.c.MenuItemCommandHandler - Đã tạo món ăn 83f3f811-9d81-4e49-a839-7e675d81cf2f - 'Cà phê Auto'
+23:08:36.483 [tomcat-handler-7] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.494 [tomcat-handler-7] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.496 [tomcat-handler-7] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(001172e1-3315-4c64-93fa-8e977a0dd054, BRANCH_EDIT) = true
+23:08:36.497 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - Tạo khu vực bàn 'Tầng 1' tại chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.505 [tomcat-handler-7] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo khu vực bàn f743a967-a788-48d7-b945-7ba0ef67031e - 'Tầng 1'
+23:08:36.521 [tomcat-handler-8] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.537 [tomcat-handler-8] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=001172e1-3315-4c64-93fa-8e977a0dd054 tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b
+23:08:36.540 [tomcat-handler-8] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(001172e1-3315-4c64-93fa-8e977a0dd054, BRANCH_EDIT) = true
+23:08:36.541 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - Tạo bàn 'Bàn 01' tại chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8, zone f743a967-a788-48d7-b945-7ba0ef67031e
+23:08:36.551 [tomcat-handler-8] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo bàn 6771e461-e5f3-4907-981e-fd8d786d6532 - 'Bàn 01'
+23:08:36.568 [tomcat-handler-9] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.584 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Tạo đơn hàng cho bàn 6771e461-e5f3-4907-981e-fd8d786d6532 tại chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.591 [tomcat-handler-9] INFO  c.s.o.i.e.MenuInventoryAdapter - Kiểm tra tồn kho qua MenuInventoryAdapter cho chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.592 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Kiểm tra tồn kho cho 1 món tại chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.599 [tomcat-handler-9] DEBUG c.s.m.d.s.InventoryCheckService - Không có công thức nào — bỏ qua kiểm tra tồn kho
+23:08:36.614 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng mới: b6cec08b-fe90-445f-a8dd-7531ed7d9d9e tại chi nhánh c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.616 [tomcat-handler-9] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast đơn mới ORD-C3E3-260403230836 tới topic /topic/orders/c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.629 [tomcat-handler-9] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn mới ORD-C3E3-260403230836 tới WebSocket topic
+23:08:36.629 [tomcat-handler-9] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Đã tạo đơn hàng ORD-C3E3-260403230836 thành công
+23:08:36.668 [tomcat-handler-10] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.674 [tomcat-handler-10] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - Cập nhật trạng thái đơn b6cec08b-fe90-445f-a8dd-7531ed7d9d9e sang COMPLETED
+23:08:36.699 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện thay đổi trạng thái đơn b6cec08b-fe90-445f-a8dd-7531ed7d9d9e từ PENDING sang COMPLETED
+23:08:36.699 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-C3E3-260403230836 tới topic /topic/orders/c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.699 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast thay đổi trạng thái đơn ORD-C3E3-260403230836 sang COMPLETED tới WebSocket
+23:08:36.700 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - Bắt đầu trừ kho FIFO cho đơn hàng: ORD-C3E3-260403230836
+23:08:36.707 [tomcat-handler-10] DEBUG c.s.i.a.e.OrderCompletedEventHandler - Món 83f3f811-9d81-4e49-a839-7e675d81cf2f không có công thức nguyên liệu — bỏ qua trừ kho
+23:08:36.708 [tomcat-handler-10] INFO  c.s.i.a.e.OrderCompletedEventHandler - Trừ kho FIFO hoàn tất cho đơn hàng: ORD-C3E3-260403230836
+23:08:36.708 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng hoàn tất: ORD-C3E3-260403230836
+23:08:36.708 [tomcat-handler-10] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-C3E3-260403230836 tới topic /topic/orders/c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:36.708 [tomcat-handler-10] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn ORD-C3E3-260403230836 hoàn tất tới WebSocket
+23:08:36.728 [tomcat-handler-11] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:36.753 [tomcat-handler-11] INFO  c.s.p.w.controller.PaymentController - Thu ngân 001172e1-3315-4c64-93fa-8e977a0dd054 xử lý thanh toán tiền mặt cho đơn b6cec08b-fe90-445f-a8dd-7531ed7d9d9e
+23:08:36.754 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Xử lý thanh toán tiền mặt cho đơn b6cec08b-fe90-445f-a8dd-7531ed7d9d9e bằng 40000
+23:08:36.754 [tomcat-handler-11] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module đang lấy Order b6cec08b-fe90-445f-a8dd-7531ed7d9d9e từ Order Module
+23:08:36.767 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Payment ef358000-93a8-4002-b3e4-2f7e42bfb9dd thành công
+23:08:37.424 [tomcat-handler-11] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-C3E-20260403-000001
+23:08:37.455 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Invoice INV-C3E-20260403-000001 thành công
+23:08:37.459 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nhận InvoiceCreatedEvent cho hóa đơn INV-C3E-20260403-000001 (đơn b6cec08b-fe90-445f-a8dd-7531ed7d9d9e)
+23:08:37.459 [tomcat-handler-11] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module đang cập nhật trạng thái Table 6771e461-e5f3-4907-981e-fd8d786d6532 thành CLEANING
+23:08:37.488 [tomcat-handler-11] INFO  c.s.p.i.persistence.TableAdapterImpl - Đã cập nhật trạng thái bàn 6771e461-e5f3-4907-981e-fd8d786d6532 -> CLEANING
+23:08:37.488 [tomcat-handler-11] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Cập nhật bàn 6771e461-e5f3-4907-981e-fd8d786d6532 thành CLEANING
+23:08:37.489 [tomcat-handler-11] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh toán tiền mặt hoàn tất: b6cec08b-fe90-445f-a8dd-7531ed7d9d9e → Invoice INV-C3E-20260403-000001
+23:08:37.533 [tomcat-handler-12] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.537 [tomcat-handler-12] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=c3e341dd-dc62-4e43-aa9a-1873923402c8, invoiceNumber=null, page=0, size=20
+23:08:37.538 [tomcat-handler-12] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - Tìm kiếm Invoice: branchId=c3e341dd-dc62-4e43-aa9a-1873923402c8, invoiceNumber=null, page=0, size=20
+23:08:37.574 [tomcat-handler-13] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.584 [tomcat-handler-13] INFO  c.s.i.w.c.InventoryController - API nhập kho: itemId=83f3f811-9d81-4e49-a839-7e675d81cf2f, qty=50
+23:08:37.584 [tomcat-handler-13] INFO  c.s.i.a.c.ImportStockCommandHandler - Nhập kho: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, quantity=50, branch=c3e341dd-dc62-4e43-aa9a-1873923402c8
+23:08:37.626 [tomcat-handler-13] INFO  c.s.i.d.s.InventoryDomainService - Cập nhật tồn kho: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, +50
+23:08:37.628 [tomcat-handler-13] INFO  c.s.i.a.c.ImportStockCommandHandler - Nhập kho thành công: batchId=8c456b7b-003f-4807-8ec3-9d1b49409f3c
+23:08:37.654 [tomcat-handler-14] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.753 [tomcat-handler-14] WARN  c.s.s.web.GlobalExceptionHandler - Lỗi validation: must be greater than or equal to 0.0001
+23:08:37.769 [tomcat-handler-15] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.777 [tomcat-handler-15] INFO  c.s.i.w.c.InventoryController - API điều chỉnh kho: itemId=83f3f811-9d81-4e49-a839-7e675d81cf2f, newQty=45
+23:08:37.778 [tomcat-handler-15] INFO  c.s.i.a.c.AdjustStockCommandHandler - Điều chỉnh kho: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, newQty=45, reason=Kiểm kê tháng
+23:08:37.800 [tomcat-handler-15] INFO  c.s.i.a.c.AdjustStockCommandHandler - Điều chỉnh kho thành công: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, delta=-5.0000
+23:08:37.827 [tomcat-handler-16] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.833 [tomcat-handler-16] INFO  c.s.i.w.c.InventoryController - API ghi hao hụt: itemId=83f3f811-9d81-4e49-a839-7e675d81cf2f, qty=5
+23:08:37.833 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao hụt: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, qty=5, reason=Hư hỏng
+23:08:37.839 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao hụt thành công: item=83f3f811-9d81-4e49-a839-7e675d81cf2f, qty=5
+23:08:37.859 [tomcat-handler-17] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.863 [tomcat-handler-17] WARN  c.s.s.web.GlobalExceptionHandler - Lỗi validation: must not be blank
+23:08:37.871 [tomcat-handler-18] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=001172e1-3315-4c64-93fa-8e977a0dd054, tenantId=fe673dff-6751-4875-9629-df4bfe4fbd5b, role=OWNER
+23:08:37.874 [tomcat-handler-18] DEBUG c.s.i.w.c.InventoryController - API xem tồn kho: page=0, size=20
+23:08:37.874 [tomcat-handler-18] DEBUG c.s.i.a.q.GetInventoryQueryHandler - Lấy tồn kho: tenant=fe673dff-6751-4875-9629-df4bfe4fbd5b, branch=null, page=0/20
+23:09:11.489 [tomcat-handler-20] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Bắt đầu đăng ký tenant mới — email: testowner_1775232551419@test.com, plan: standard
+23:09:11.861 [tomcat-handler-20] INFO  c.s.a.a.c.RegisterTenantCommandHandler - Đăng ký tenant thành công — tenantId: d8a73a2f-27eb-4e73-b882-88f6808e4f3b, userId: 54c25c75-f7f6-4109-a3bc-e4415baf3623
+23:09:11.861 [tomcat-handler-20] INFO  c.s.p.a.SubscriptionService - Subscription Module đang cấp plan standard cho tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:11.865 [tomcat-handler-20] INFO  c.s.p.a.SubscriptionService - Cấp plan standard thành công cho tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:11.865 [tomcat-handler-20] INFO  c.s.r.a.e.RbacTenantRegisteredEventHandler - RBAC Module nhận sự kiện tạo Role OWNER cho tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b (Đã được xử lý ở RegisterTenantCommandHandler)
+23:09:11.946 [tomcat-handler-21] INFO  c.s.a.a.command.LoginCommandHandler - Xử lý đăng nhập — email: testowner_1775232551419@test.com
+23:09:12.342 [tomcat-handler-21] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.344 [tomcat-handler-21] INFO  c.s.a.a.command.LoginCommandHandler - Đăng nhập thành công — userId: 54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId: d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role: OWNER, permissions: 31
+23:09:12.355 [tomcat-handler-22] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.369 [tomcat-handler-23] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.376 [tomcat-handler-23] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.378 [tomcat-handler-23] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(54c25c75-f7f6-4109-a3bc-e4415baf3623, BRANCH_EDIT) = true
+23:09:12.378 [tomcat-handler-23] INFO  c.s.branch.application.BranchService - Bắt đầu tạo chi nhánh mới cho tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.386 [tomcat-handler-23] INFO  c.s.branch.application.BranchService - Tạo chi nhánh thành công id=2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b, name=Chi nhánh Auto 1775232552366
+23:09:12.396 [tomcat-handler-24] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.398 [tomcat-handler-24] INFO  c.s.a.a.c.SelectBranchCommandHandler - User 54c25c75-f7f6-4109-a3bc-e4415baf3623 đang yêu cầu đổi sang chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.412 [tomcat-handler-24] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.413 [tomcat-handler-24] INFO  c.s.a.a.c.SelectBranchCommandHandler - Cấp lại JWT thành công cho branchId=2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.420 [tomcat-handler-25] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.426 [tomcat-handler-25] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.428 [tomcat-handler-25] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(54c25c75-f7f6-4109-a3bc-e4415baf3623, MENU_EDIT) = true
+23:09:12.428 [tomcat-handler-25] INFO  c.s.m.a.c.CategoryCommandHandler - Tạo danh mục mới 'Đồ uống Test' cho tenant d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.434 [tomcat-handler-25] INFO  c.s.m.a.c.CategoryCommandHandler - Đã tạo danh mục 4e83e82b-0a0a-43ef-a59f-7639c199d333 - 'Đồ uống Test'
+23:09:12.444 [tomcat-handler-26] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.452 [tomcat-handler-26] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.454 [tomcat-handler-26] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(54c25c75-f7f6-4109-a3bc-e4415baf3623, MENU_EDIT) = true
+23:09:12.454 [tomcat-handler-26] INFO  c.s.m.a.c.MenuItemCommandHandler - Tạo món ăn mới 'Cà phê Auto' cho tenant d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.461 [tomcat-handler-26] INFO  c.s.m.a.c.MenuItemCommandHandler - Đã tạo món ăn 27ba9a07-d9fe-4f90-9583-617609a55690 - 'Cà phê Auto'
+23:09:12.472 [tomcat-handler-27] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.478 [tomcat-handler-27] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.479 [tomcat-handler-27] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(54c25c75-f7f6-4109-a3bc-e4415baf3623, BRANCH_EDIT) = true
+23:09:12.479 [tomcat-handler-27] INFO  c.s.o.a.command.TableCommandHandler - Tạo khu vực bàn 'Tầng 1' tại chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.485 [tomcat-handler-27] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo khu vực bàn 9a66c451-2180-49a7-889e-92a4a7b97da9 - 'Tầng 1'
+23:09:12.495 [tomcat-handler-28] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.502 [tomcat-handler-28] DEBUG c.s.r.d.service.PermissionService - Tải 31 quyền cho userId=54c25c75-f7f6-4109-a3bc-e4415baf3623 tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b
+23:09:12.503 [tomcat-handler-28] DEBUG c.s.r.s.CustomPermissionEvaluator - hasPermission(54c25c75-f7f6-4109-a3bc-e4415baf3623, BRANCH_EDIT) = true
+23:09:12.504 [tomcat-handler-28] INFO  c.s.o.a.command.TableCommandHandler - Tạo bàn 'Bàn 01' tại chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b, zone 9a66c451-2180-49a7-889e-92a4a7b97da9
+23:09:12.509 [tomcat-handler-28] INFO  c.s.o.a.command.TableCommandHandler - Đã tạo bàn c2cdc894-a51d-4cad-b83f-87e409943804 - 'Bàn 01'
+23:09:12.519 [tomcat-handler-29] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.523 [tomcat-handler-29] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Tạo đơn hàng cho bàn c2cdc894-a51d-4cad-b83f-87e409943804 tại chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.527 [tomcat-handler-29] INFO  c.s.o.i.e.MenuInventoryAdapter - Kiểm tra tồn kho qua MenuInventoryAdapter cho chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.527 [tomcat-handler-29] DEBUG c.s.m.d.s.InventoryCheckService - Kiểm tra tồn kho cho 1 món tại chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.530 [tomcat-handler-29] DEBUG c.s.m.d.s.InventoryCheckService - Không có công thức nào — bỏ qua kiểm tra tồn kho
+23:09:12.531 [tomcat-handler-29] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng mới: 40d6ca0f-0284-439c-9253-43315f726afb tại chi nhánh 2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.531 [tomcat-handler-29] INFO  c.s.o.i.w.OrderStatusBroadcaster - Broadcast đơn mới ORD-2EAC-260403230912 tới topic /topic/orders/2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.532 [tomcat-handler-29] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn mới ORD-2EAC-260403230912 tới WebSocket topic
+23:09:12.532 [tomcat-handler-29] INFO  c.s.o.a.c.PlaceOrderCommandHandler - Đã tạo đơn hàng ORD-2EAC-260403230912 thành công
+23:09:12.550 [tomcat-handler-30] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.553 [tomcat-handler-30] INFO  c.s.o.a.c.UpdateOrderStatusCommandHandler - Cập nhật trạng thái đơn 40d6ca0f-0284-439c-9253-43315f726afb sang COMPLETED
+23:09:12.561 [tomcat-handler-30] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện thay đổi trạng thái đơn 40d6ca0f-0284-439c-9253-43315f726afb từ PENDING sang COMPLETED
+23:09:12.561 [tomcat-handler-30] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-2EAC-260403230912 tới topic /topic/orders/2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.561 [tomcat-handler-30] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast thay đổi trạng thái đơn ORD-2EAC-260403230912 sang COMPLETED tới WebSocket
+23:09:12.562 [tomcat-handler-30] INFO  c.s.i.a.e.OrderCompletedEventHandler - Bắt đầu trừ kho FIFO cho đơn hàng: ORD-2EAC-260403230912
+23:09:12.565 [tomcat-handler-30] DEBUG c.s.i.a.e.OrderCompletedEventHandler - Món 27ba9a07-d9fe-4f90-9583-617609a55690 không có công thức nguyên liệu — bỏ qua trừ kho
+23:09:12.565 [tomcat-handler-30] INFO  c.s.i.a.e.OrderCompletedEventHandler - Trừ kho FIFO hoàn tất cho đơn hàng: ORD-2EAC-260403230912
+23:09:12.565 [tomcat-handler-30] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Nhận sự kiện đơn hàng hoàn tất: ORD-2EAC-260403230912
+23:09:12.565 [tomcat-handler-30] DEBUG c.s.o.i.w.OrderStatusBroadcaster - Broadcast trạng thái đơn ORD-2EAC-260403230912 tới topic /topic/orders/2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.565 [tomcat-handler-30] INFO  c.s.o.i.w.OrderWebSocketEventHandler - Đã broadcast đơn ORD-2EAC-260403230912 hoàn tất tới WebSocket
+23:09:12.580 [tomcat-handler-31] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.583 [tomcat-handler-31] INFO  c.s.p.w.controller.PaymentController - Thu ngân 54c25c75-f7f6-4109-a3bc-e4415baf3623 xử lý thanh toán tiền mặt cho đơn 40d6ca0f-0284-439c-9253-43315f726afb
+23:09:12.583 [tomcat-handler-31] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Xử lý thanh toán tiền mặt cho đơn 40d6ca0f-0284-439c-9253-43315f726afb bằng 40000
+23:09:12.583 [tomcat-handler-31] DEBUG c.s.p.i.persistence.OrderAdapterImpl - Payment Module đang lấy Order 40d6ca0f-0284-439c-9253-43315f726afb từ Order Module
+23:09:12.591 [tomcat-handler-31] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Payment 1bc5fbee-9d05-4665-bc2f-6ac209ceb126 thành công
+23:09:12.595 [tomcat-handler-31] DEBUG c.s.p.i.p.InvoiceNumberGeneratorImpl - Sinh ra invoice_number: INV-2EA-20260403-000001
+23:09:12.604 [tomcat-handler-31] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Đã tạo Invoice INV-2EA-20260403-000001 thành công
+23:09:12.605 [tomcat-handler-31] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Nhận InvoiceCreatedEvent cho hóa đơn INV-2EA-20260403-000001 (đơn 40d6ca0f-0284-439c-9253-43315f726afb)
+23:09:12.605 [tomcat-handler-31] DEBUG c.s.p.i.persistence.TableAdapterImpl - Payment Module đang cập nhật trạng thái Table c2cdc894-a51d-4cad-b83f-87e409943804 thành CLEANING
+23:09:12.610 [tomcat-handler-31] INFO  c.s.p.i.persistence.TableAdapterImpl - Đã cập nhật trạng thái bàn c2cdc894-a51d-4cad-b83f-87e409943804 -> CLEANING
+23:09:12.610 [tomcat-handler-31] INFO  c.s.p.i.e.InvoiceCreatedEventListener - Cập nhật bàn c2cdc894-a51d-4cad-b83f-87e409943804 thành CLEANING
+23:09:12.610 [tomcat-handler-31] INFO  c.s.p.a.c.ProcessCashPaymentCommandHandler - Thanh toán tiền mặt hoàn tất: 40d6ca0f-0284-439c-9253-43315f726afb → Invoice INV-2EA-20260403-000001
+23:09:12.628 [tomcat-handler-32] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.630 [tomcat-handler-32] INFO  c.s.p.w.controller.PaymentController - Search Invoice: branchId=2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b, invoiceNumber=null, page=0, size=20
+23:09:12.630 [tomcat-handler-32] INFO  c.s.p.a.q.SearchInvoiceQueryHandler - Tìm kiếm Invoice: branchId=2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b, invoiceNumber=null, page=0, size=20
+23:09:12.644 [tomcat-handler-33] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.645 [tomcat-handler-33] INFO  c.s.i.w.c.InventoryController - API nhập kho: itemId=27ba9a07-d9fe-4f90-9583-617609a55690, qty=50
+23:09:12.646 [tomcat-handler-33] INFO  c.s.i.a.c.ImportStockCommandHandler - Nhập kho: item=27ba9a07-d9fe-4f90-9583-617609a55690, quantity=50, branch=2eacd2bd-b6b3-499c-b3f2-b9863f5eb92b
+23:09:12.651 [tomcat-handler-33] INFO  c.s.i.d.s.InventoryDomainService - Cập nhật tồn kho: item=27ba9a07-d9fe-4f90-9583-617609a55690, +50
+23:09:12.651 [tomcat-handler-33] INFO  c.s.i.a.c.ImportStockCommandHandler - Nhập kho thành công: batchId=fb60b4f6-fc43-4529-a6d9-ad5a067bee49
+23:09:12.663 [tomcat-handler-34] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.665 [tomcat-handler-34] WARN  c.s.s.web.GlobalExceptionHandler - Lỗi validation: must be greater than or equal to 0.0001
+23:09:12.674 [tomcat-handler-35] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.676 [tomcat-handler-35] INFO  c.s.i.w.c.InventoryController - API điều chỉnh kho: itemId=27ba9a07-d9fe-4f90-9583-617609a55690, newQty=45
+23:09:12.676 [tomcat-handler-35] INFO  c.s.i.a.c.AdjustStockCommandHandler - Điều chỉnh kho: item=27ba9a07-d9fe-4f90-9583-617609a55690, newQty=45, reason=Kiểm kê tháng
+23:09:12.681 [tomcat-handler-35] INFO  c.s.i.a.c.AdjustStockCommandHandler - Điều chỉnh kho thành công: item=27ba9a07-d9fe-4f90-9583-617609a55690, delta=-5.0000
+23:09:12.699 [tomcat-handler-36] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.701 [tomcat-handler-36] INFO  c.s.i.w.c.InventoryController - API ghi hao hụt: itemId=27ba9a07-d9fe-4f90-9583-617609a55690, qty=5
+23:09:12.701 [tomcat-handler-36] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao hụt: item=27ba9a07-d9fe-4f90-9583-617609a55690, qty=5, reason=Hư hỏng
+23:09:12.705 [tomcat-handler-36] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao hụt thành công: item=27ba9a07-d9fe-4f90-9583-617609a55690, qty=5
+23:09:12.721 [tomcat-handler-37] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.723 [tomcat-handler-37] WARN  c.s.s.web.GlobalExceptionHandler - Lỗi validation: must not be blank
+23:09:12.730 [tomcat-handler-38] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT hợp lệ — userId=54c25c75-f7f6-4109-a3bc-e4415baf3623, tenantId=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, role=OWNER
+23:09:12.731 [tomcat-handler-38] DEBUG c.s.i.w.c.InventoryController - API xem tồn kho: page=0, size=20
+23:09:12.731 [tomcat-handler-38] DEBUG c.s.i.a.q.GetInventoryQueryHandler - Lấy tồn kho: tenant=d8a73a2f-27eb-4e73-b882-88f6808e4f3b, branch=null, page=0/20

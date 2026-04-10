@@ -1,0 +1,52 @@
+﻿
+09:00:45.787 [main] WARN  
+o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext 
+- Exception encountered during context initialization - 
+cancelling refresh attempt: org.springframework.beans.factory.U
+nsatisfiedDependencyException: Error creating bean with name 
+'confirmQRPaymentCommandHandler' defined in file [E:\Smart_web\
+SmartF&B\target\classes\com\smartfnb\payment\application\comman
+d\ConfirmQRPaymentCommandHandler.class]: Unsatisfied 
+dependency expressed through constructor parameter 3: Error 
+creating bean with name 'orderAdapterImpl': Lookup method 
+resolution failed
+Error starting ApplicationContext. To display the condition 
+evaluation report re-run your application with 'debug' enabled.
+09:00:45.904 [main] ERROR o.s.boot.SpringApplication - 
+Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyExceptio
+n: Error creating bean with name 
+'confirmQRPaymentCommandHandler' defined in file [E:\Smart_web\
+SmartF&B\target\classes\com\smartfnb\payment\application\comman
+d\ConfirmQRPaymentCommandHandler.class]: Unsatisfied 
+dependency expressed through constructor parameter 3: Error 
+creating bean with name 'orderAdapterImpl': Lookup method 
+resolution failed
+Caused by: 
+org.springframework.beans.factory.BeanCreationException: Error 
+creating bean with name 'orderAdapterImpl': Lookup method 
+resolution failed
+Caused by: java.lang.IllegalStateException: Failed to 
+introspect Class [com.smartfnb.payment.infrastructure.persisten
+ce.OrderAdapterImpl] from ClassLoader 
+[jdk.internal.loader.ClassLoaders$AppClassLoader@70dea4e]
+Caused by: java.lang.NoClassDefFoundError: 
+com/smartfnb/payment/infrastructure/persistence/OrderDto
+Caused by: java.lang.ClassNotFoundException: 
+com.smartfnb.payment.infrastructure.persistence.OrderDto
+[ERROR] Failed to execute goal 
+org.springframework.boot:spring-boot-maven-plugin:3.3.5:run 
+(default-cli) on project smartfnb: Process terminated with 
+exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run 
+Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug 
+logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible 
+solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAV
+EN/MojoExecutionException
+
+

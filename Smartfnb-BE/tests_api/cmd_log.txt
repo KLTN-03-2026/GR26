@@ -1,0 +1,80 @@
+==========================================
+🚀 Bắt đầu chuỗi Test API SmartF&B (S-01 -> S-12)
+==========================================
+
+1. MỚI: Đăng ký Tenant (Chủ quán)
+   ✅ Đăng ký thành công.
+2. Đăng nhập
+   ✅ Đăng nhập thành công. Token lấy được.
+3. Kiểm tra Gói cước (Subscription)
+   ✅ API Subscription chạy tốt.
+4. Tạo Chi nhánh mới
+   ✅ Tạo chi nhánh thành công: b6b19ae9-bfb3-41db-a905-b6611379dad2
+5. Chọn chi nhánh làm việc (Select Branch)
+   ✅ Chuyển scope sang chi nhánh thành công.
+6. Tạo Danh mục (Category)
+   ✅ Tạo Category thành công.
+7. Tạo Món bán (Item)
+   ✅ Tạo Món thành công.
+8. Tạo Khu vực (Zone)
+   ✅ Tạo Zone thành công.
+9. Tạo Bàn (Table)
+   ✅ Tạo Bàn thành công.
+10. Tạo Đơn hàng (Order)
+   ✅ Tạo Order thành công. Mã: 38b75439-7f35-47f3-a71b-eed2f1650d93
+11. Cập nhật Order sang COMPLETED
+   ✅ Đổi Order sang COMPLETED.
+12. Thanh toán bằng tiền mặt (Cash Payment)
+   ✅ Thanh toán thành công. PaymentId: 323704b1-a0ee-4e1b-a11e-e42d2c75e680
+13. Truy vấn Hóa đơn (Invoices)
+   ✅ Truy vấn hóa đơn thành công. Có undefined hóa đơn trong chi nhánh.
+
+--- BẮT ĐẦU TEST S-13 & S-14 (INVENTORY) ---
+14. [Đúng] Nhập kho (Import Stock) nguyên liệu (+50)
+   ✅ Nhập kho thành công. BatchId: 6405ec0e-f416-4db5-8e2f-604171795151
+15. [Sai] Nhập kho với số lượng âm (Validation Error)
+   ✅ Server từ chối request sai thành công: undefined
+16. [Đúng] Điều chỉnh kho (Adjust Stock) -> Tồn kho = 45
+   ✅ Điều chỉnh kho thành công.
+17. [Đúng] Ghi hao hụt (Record Waste) (-5)
+   ✅ Ghi nhận hao hụt thành công.
+18. [Sai] Ghi hao hụt mà thiếu lý do (Validation Error)
+   ✅ Server từ chối request thiếu lý do thành công.
+19. [Đúng] Truy vấn Tồn kho (GET /inventory)
+   ✅ Truy vấn tồn kho thành công. Số mã hàng: 1
+   🔎 Số lượng tồn kho hiện tại đối với món test (sau khi set 45 -> trừ 5 hao hụt -> còn 40): 40
+   ✅ Cân bằng kho (Balance) tính toán chính xác!
+
+--- BẮT ĐẦU TEST S-15 (STAFF) ---
+20. Tạo Chức vụ (Position)
+   ✅ Tạo Chức vụ thành công. ID: 67d39308-59e0-42a7-ae1e-46048e8ba0e5
+21. Lấy danh sách Chức vụ
+   ✅ Lấy danh sách Chức vụ thành công.
+22. Tạo Nhân sự (Staff)
+   ✅ Tạo Nhân sự thành công. ID: b6a99df1-9d37-4edf-bcfa-821348554056
+23. Cập nhật Nhân sự (Staff)
+   ✅ Cập nhật Nhân sự thành công.
+24. Tạo Vai trò (Role)
+   ✅ Tạo Role thành công. ID: 31ab63a2-ba33-4e22-bf9e-b633f135a653
+
+--- BẮT ĐẦU TEST S-16 (SHIFT) ---
+25. Tạo Ca làm việc mẫu (Shift Template)
+   ✅ Tạo Shift Template thành công. ID: 06322d13-3796-4640-8d0d-3aa73b596be6
+26. Đăng ký Ca làm việc (Register Shift)
+   ✅ Đăng ký Shift Schedule thành công. ID: 30ea6c97-5daa-41e2-988e-03efc94caeb7
+27. Lấy danh sách Ca của tôi (My Shifts)
+   ✅ Lấy danh sách ca làm việc cá nhân thành công.
+28. Check-IN Ca làm việc
+   ✅ Check-In thành công.
+29. Check-OUT Ca làm việc
+   ✅ Check-Out thành công.
+30. Mở Phiên bàn giao POS (Open PosSession)
+   ✅ Mở POS Session thành công. ID: 79d95588-14b0-499d-a9c0-bf95f48bc968
+31. Lấy POS Session đang Active
+   ✅ Lấy Active POS Session thành công.
+32. Đóng Phiên Bàn giao POS (Close PosSession)
+   ✅ Đóng POS Session thành công.
+
+==========================================
+🎉 TẤT CẢ MODULES (S-01 đến S-16) HOẠT ĐỘNG HOÀN HẢO!
+==========================================

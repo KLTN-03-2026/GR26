@@ -1,0 +1,15 @@
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$4.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$5.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$9.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest.class
+com\smartfnb\branch\application\BranchServiceTest.class
+com\smartfnb\auth\application\command\SelectBranchCommandHandlerTest.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$1.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$8.class
+com\smartfnb\order\application\command\PlaceOrderCommandHandlerTest.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$3.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$6.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$10.class
+com\smartfnb\order\domain\model\OrderTest.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$2.class
+com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$7.class
