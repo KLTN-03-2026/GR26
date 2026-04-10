@@ -105,6 +105,7 @@ com\smartfnb\shift\web\controller\PosSessionController.class
 com\smartfnb\staff\infrastructure\persistence\RolePermissionJpaEntity$RolePermissionId.class
 com\smartfnb\payment\application\command\ProcessCashPaymentCommandHandler.class
 com\smartfnb\payment\application\command\ConfirmQRPaymentCommandHandler.class
+com\smartfnb\shared\exception\InvalidImageException.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleJpaEntity.class
 com\smartfnb\supplier\application\command\CreatePurchaseOrderCommand$PurchaseOrderItemCommand.class
 com\smartfnb\supplier\infrastructure\persistence\PurchaseOrderJpaRepository.class
@@ -231,6 +232,7 @@ com\smartfnb\payment\application\query\SearchInvoiceResult.class
 com\smartfnb\staff\application\command\DeactivateStaffCommandHandler.class
 com\smartfnb\inventory\domain\exception\InsufficientStockException.class
 com\smartfnb\plan\web\controller\PlanController.class
+com\smartfnb\shared\storage\LocalFileStorageService.class
 com\smartfnb\supplier\infrastructure\persistence\SupplierJpaEntity.class
 com\smartfnb\menu\application\dto\AddonResponse.class
 com\smartfnb\auth\application\command\LoginCommand.class
@@ -268,6 +270,7 @@ com\smartfnb\rbac\infrastructure\persistence\RoleJpaRepository.class
 com\smartfnb\menu\web\controller\BranchItemController.class
 com\smartfnb\payment\domain\exception\InvoiceNotFoundException.class
 com\smartfnb\plan\application\dto\PlanRequest.class
+com\smartfnb\shared\storage\FileStorageService.class
 com\smartfnb\inventory\infrastructure\persistence\InventoryBalanceJpaRepository.class
 com\smartfnb\staff\application\query\RolePermissionMatrixResult$RoleDetail.class
 com\smartfnb\menu\application\dto\BranchItemResponse.class
@@ -365,6 +368,7 @@ com\smartfnb\staff\application\query\RolePermissionMatrixResult$PermissionInfo.c
 com\smartfnb\shared\config\AuditConfig.class
 com\smartfnb\supplier\application\command\CreateSupplierCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommand$PurchaseOrderItemCmd.class
+com\smartfnb\shared\config\WebMvcConfig.class
 com\smartfnb\supplier\application\query\GetPurchaseOrderListQueryHandler.class
 com\smartfnb\plan\domain\FeatureFlag$1.class
 com\smartfnb\menu\domain\service\InventoryCheckService.class
