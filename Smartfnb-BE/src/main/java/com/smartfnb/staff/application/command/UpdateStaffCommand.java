@@ -38,5 +38,9 @@ public record UpdateStaffCommand(
         /** Giới tính */
         String gender,
         /** Địa chỉ */
-        String address
+        String address,
+        /** Mật khẩu đăng nhập mới (nullable) */
+        String password,
+        /** PIN đăng nhập POS mới (nullable) */
+        String posPin
 ) {}

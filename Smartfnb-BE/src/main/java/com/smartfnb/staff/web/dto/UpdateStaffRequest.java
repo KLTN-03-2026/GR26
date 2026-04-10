@@ -29,5 +29,11 @@ public record UpdateStaffRequest(
         @Pattern(regexp = "^(MALE|FEMALE|OTHER)$")
         String gender,
 
-        String address
+        String address,
+
+        @Size(min = 8, max = 255, message = "Mật khẩu phải từ 8 đến 255 ký tự")
+        String password,
+
+        @Pattern(regexp = "^[0-9]{4,6}$", message = "Mã PIN phải từ 4 đến 6 chữ số")
+        String posPin
 ) {}

@@ -9,6 +9,7 @@ import com.smartfnb.staff.infrastructure.persistence.StaffJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class CreateStaffCommandHandler {
     private final StaffJpaRepository staffJpaRepository;
     private final PositionJpaRepository positionJpaRepository;
     private final StaffAuditLogJpaRepository auditLogJpaRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Tạo nhân viên mới trong tenant.
@@ -82,6 +84,12 @@ public class CreateStaffCommandHandler {
         }
         if (command.address() != null) {
             staff.setAddress(command.address());
+        }
+        if (command.password() != null && !command.password().isEmpty()) {
+            staff.setPasswordHash(passwordEncoder.encode(command.password()));
+        }
+        if (command.posPin() != null && !command.posPin().isEmpty()) {
+            staff.setPosPin(passwordEncoder.encode(command.posPin()));
         }
 
         staffJpaRepository.save(staff);
