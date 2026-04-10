@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment / local config
+.env
+.env.*
+!.env.example
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local tool metadata
+.claude/
+
+# Internal local notes / workflows
+src/docs/plans/
+workflows/
+CLAUDE.md
+AGENTS.md
+
+# Internal docs you do not want to push
+docs/report/
+src/docs/reports/
+src/docs/plans/
+src/docs/dev-notes/
+**/BUG*.md
+**/bug*.md
+**/*Prompt*.md
+**/*prompt*.md
