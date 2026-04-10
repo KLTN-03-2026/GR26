@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import com.smartfnb.shared.web.PageResponse;
 
 /**
  * REST Controller quản lý nhân viên (S-15).
@@ -55,7 +56,7 @@ public class StaffController {
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
     @Operation(summary = "Danh sách nhân viên", description = "Lấy danh sách nhân viên có filter và phân trang")
-    public ResponseEntity<ApiResponse<Page<StaffSummaryResult>>> listStaff(
+    public ResponseEntity<ApiResponse<PageResponse<StaffSummaryResult>>> listStaff(
             @RequestParam(required = false) UUID positionId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
@@ -67,7 +68,7 @@ public class StaffController {
                 positionId, status, keyword, page, size
         );
         Page<StaffSummaryResult> result = getStaffListQueryHandler.handle(query);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(result)));
     }
 
     /**
