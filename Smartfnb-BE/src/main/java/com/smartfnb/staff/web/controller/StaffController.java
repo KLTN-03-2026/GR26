@@ -16,18 +16,20 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import com.smartfnb.shared.web.PageResponse;
 
 /**
  * REST Controller quản lý nhân viên (S-15).
  *
  * <p>Endpoints:
  * <ul>
- *   <li>GET    /api/v1/staff            — Danh sách nhân viên (phân trang, filter)</li>
- *   <li>POST   /api/v1/staff            — Tạo nhân viên mới</li>
- *   <li>GET    /api/v1/staff/{id}       — Chi tiết nhân viên</li>
- *   <li>PUT    /api/v1/staff/{id}       — Cập nhật nhân viên</li>
- *   <li>DELETE /api/v1/staff/{id}       — Vô hiệu hoá nhân viên (soft delete)</li>
- *   <li>PUT    /api/v1/staff/{id}/roles — Gán roles cho nhân viên</li>
+ *   <li>GET    /api/v1/staff                — Danh sách nhân viên (phân trang, filter)</li>
+ *   <li>POST   /api/v1/staff                — Tạo nhân viên mới</li>
+ *   <li>GET    /api/v1/staff/{id}           — Chi tiết nhân viên</li>
+ *   <li>PUT    /api/v1/staff/{id}           — Cập nhật thông tin nhân viên</li>
+ *   <li>PATCH  /api/v1/staff/{id}/status    — Khóa / Mở khóa nhân viên [BUG FIX]</li>
+ *   <li>DELETE /api/v1/staff/{id}           — Vô hiệu hoá nhân viên (soft delete)</li>
+ *   <li>PUT    /api/v1/staff/{id}/roles     — Gán roles cho nhân viên</li>
  * </ul>
  *
  * @author SmartF&B Team
@@ -39,12 +41,13 @@ import java.util.UUID;
 @Tag(name = "Staff", description = "Quản lý nhân viên — S-15")
 public class StaffController {
 
-    private final CreateStaffCommandHandler      createStaffCommandHandler;
-    private final UpdateStaffCommandHandler      updateStaffCommandHandler;
-    private final DeactivateStaffCommandHandler  deactivateStaffCommandHandler;
-    private final AssignRoleToStaffCommandHandler assignRoleCommandHandler;
-    private final GetStaffListQueryHandler       getStaffListQueryHandler;
-    private final GetStaffDetailQueryHandler     getStaffDetailQueryHandler;
+    private final CreateStaffCommandHandler        createStaffCommandHandler;
+    private final UpdateStaffCommandHandler        updateStaffCommandHandler;
+    private final UpdateStaffStatusCommandHandler  updateStaffStatusCommandHandler;
+    private final DeactivateStaffCommandHandler    deactivateStaffCommandHandler;
+    private final AssignRoleToStaffCommandHandler  assignRoleCommandHandler;
+    private final GetStaffListQueryHandler         getStaffListQueryHandler;
+    private final GetStaffDetailQueryHandler       getStaffDetailQueryHandler;
 
     /**
      * Lấy danh sách nhân viên có phân trang và filter.
@@ -53,7 +56,7 @@ public class StaffController {
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
     @Operation(summary = "Danh sách nhân viên", description = "Lấy danh sách nhân viên có filter và phân trang")
-    public ResponseEntity<ApiResponse<Page<StaffSummaryResult>>> listStaff(
+    public ResponseEntity<ApiResponse<PageResponse<StaffSummaryResult>>> listStaff(
             @RequestParam(required = false) UUID positionId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
@@ -65,7 +68,7 @@ public class StaffController {
                 positionId, status, keyword, page, size
         );
         Page<StaffSummaryResult> result = getStaffListQueryHandler.handle(query);
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(result)));
     }
 
     /**
@@ -94,7 +97,8 @@ public class StaffController {
                 TenantContext.getCurrentUserId(),
                 request.fullName(), request.phone(), request.email(),
                 request.positionId(), request.employeeCode(), request.hireDate(),
-                request.dateOfBirth(), request.gender(), request.address()
+                request.dateOfBirth(), request.gender(), request.address(),
+                request.password(), request.posPin()
         );
         UUID staffId = createStaffCommandHandler.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(staffId));
@@ -115,19 +119,46 @@ public class StaffController {
                 id,
                 request.fullName(), request.phone(), request.email(),
                 request.positionId(), request.employeeCode(), request.hireDate(),
-                request.dateOfBirth(), request.gender(), request.address()
+                request.dateOfBirth(), request.gender(), request.address(),
+                request.password(), request.posPin()
         );
         updateStaffCommandHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     /**
-     * Vô hiệu hoá nhân viên (soft delete).
+     * Khóa hoặc mở khóa nhân viên (thay đổi status ACTIVE ↔ INACTIVE).
+     *
+     * <p>Khác với DELETE (soft delete — ẩn hoàn toàn khỏi hệ thống),
+     * endpoint này chỉ thay đổi trạng thái làm việc, nhân viên vẫn tồn tại.
+     * Nhân viên bị khóa (INACTIVE) vẫn hiển thị khi FE lọc ?status=INACTIVE.
+     *
+     * <p>Quyền: OWNER hoặc ADMIN.
+     */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    @Operation(
+            summary = "Khóa / Mở khóa nhân viên",
+            description = "Thay đổi trạng thái ACTIVE ↔ INACTIVE. Khác DELETE (xóa mềm): nhân viên vẫn tồn tại trong hệ thống.")
+    public ResponseEntity<ApiResponse<Void>> updateStaffStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateStaffStatusRequest request) {
+        UpdateStaffStatusCommand command = new UpdateStaffStatusCommand(
+                TenantContext.getCurrentTenantId(),
+                TenantContext.getCurrentUserId(),
+                id, request.status(), request.reason()
+        );
+        updateStaffStatusCommandHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /**
+     * Vô hiệu hoá nhân viên (soft delete — ẩn hoàn toàn, không thể khôi phục qua API).
      * Chỉ OWNER được xoá nhân viên.
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('OWNER')")
-    @Operation(summary = "Vô hiệu hoá nhân viên (soft delete)")
+    @Operation(summary = "Vô hiệu hoá nhân viên (soft delete — không thể khôi phục qua API)")
     public ResponseEntity<ApiResponse<Void>> deactivateStaff(
             @PathVariable UUID id,
             @Valid @RequestBody DeactivateStaffRequest request) {

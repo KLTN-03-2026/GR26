@@ -95,7 +95,7 @@ export interface CreateMenuPayload {
   category: MenuCategory;
   price: number;
   cost?: number;
-  image?: string;
+  imageFile?: File | null;
   unit?: string;
   isSyncDelivery?: boolean;
 }

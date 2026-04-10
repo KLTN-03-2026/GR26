@@ -1,4 +1,4 @@
-import { AdminLayout, AppLayout } from '@/layouts';
+import { AdminLayout, AppLayout } from '@layouts';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
@@ -42,6 +42,10 @@ const renderProtectedRoutes = (
   });
 };
 
+const renderPosRouteElement = (route: RouteConfigItem) => {
+  return <AppLayout pageTitle={route.pageTitle}>{route.element}</AppLayout>;
+};
+
 /**
  * App shell chịu trách nhiệm mount hệ thống routes.
  */
@@ -75,16 +79,14 @@ function App() {
       {renderProtectedRoutes(ownerRoutes, [ROLES.OWNER], 'app')}
       {renderProtectedRoutes(staffRoutes, [ROLES.STAFF], 'app')}
       
-      {/* POS Routes - Custom full-screen layout */}
-      {posRoutes.map(({ path, element }) => (
+      {/* POS Routes - Owner/Staff dùng chung app shell để giữ sidebar và header nhất quán */}
+      {posRoutes.map((route) => (
         <Route
-          key={path}
-          path={path}
+          key={route.path}
+          path={route.path}
           element={
             <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.STAFF]}>
-              <div className="min-h-screen overflow-hidden bg-[#faf7f2] p-4 font-sans antialiased text-slate-900">
-                {element}
-              </div>
+              {renderPosRouteElement(route)}
             </ProtectedRoute>
           }
         />

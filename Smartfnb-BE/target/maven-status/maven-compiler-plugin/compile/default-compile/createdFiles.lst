@@ -214,6 +214,7 @@ com\smartfnb\auth\application\command\RegisterTenantCommand.class
 com\smartfnb\payment\infrastructure\persistence\TableAdapter.class
 com\smartfnb\staff\application\query\GetStaffListQuery.class
 com\smartfnb\staff\web\dto\CreateRoleRequest.class
+com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandler.class
 com\smartfnb\staff\infrastructure\persistence\RoleJpaEntity.class
 com\smartfnb\shift\application\command\CreateShiftTemplateCommand.class
 com\smartfnb\rbac\security\CustomPermissionEvaluator.class
@@ -376,6 +377,7 @@ com\smartfnb\order\infrastructure\persistence\OrderStatusLogJpaEntity.class
 com\smartfnb\shared\domain\BaseAggregateRoot.class
 com\smartfnb\menu\web\controller\MenuItemController.class
 com\smartfnb\supplier\application\command\ReceivePurchaseOrderCommand.class
+com\smartfnb\staff\web\dto\UpdateStaffStatusRequest.class
 com\smartfnb\auth\infrastructure\persistence\OtpRepository.class
 com\smartfnb\order\domain\exception\DuplicateTableNameException.class
 com\smartfnb\auth\infrastructure\persistence\UserJpaEntity.class
@@ -406,6 +408,7 @@ com\smartfnb\auth\infrastructure\persistence\TenantRepository.class
 com\smartfnb\inventory\application\query\GetInventoryQuery.class
 com\smartfnb\staff\domain\exception\StaffNotFoundException.class
 com\smartfnb\order\domain\event\OrderStatusChangedEvent.class
+com\smartfnb\staff\application\command\UpdateStaffStatusCommand.class
 com\smartfnb\order\domain\exception\TableNotAvailableException.class
 com\smartfnb\payment\domain\model\QRCodeStatus.class
 com\smartfnb\order\application\query\OrderListResult.class

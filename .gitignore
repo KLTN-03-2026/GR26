@@ -45,3 +45,21 @@ smartfb-frontend/src/docs/plans
 smartfb-frontend/src/docs/reports
 smartfb-frontend/src/docs/skills
 smartfb-frontend/scripts
+
+# Smartfnb-BE - Build and log files
+Smartfnb-BE/target/
+Smartfnb-BE/*.log
+Smartfnb-BE/*_log*.txt
+Smartfnb-BE/boot*.txt
+Smartfnb-BE/compile*.txt
+Smartfnb-BE/mvn*.txt
+Smartfnb-BE/run_errors*.txt
+Smartfnb-BE/test*.txt
+Smartfnb-BE/deploy*.log
+Smartfnb-BE/checkout_err.txt
+Smartfnb-BE/exceptions.txt
+Smartfnb-BE/tree.txt
+Smartfnb-BE/.agents/
+Smartfnb-BE/tests_api/
+Smartfnb-BE/uploads/
+

@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@shared/components/ui/select';
-import { useCreateTable } from '../hooks/useCreateTable';
-import type { TableArea } from '../types/table.types';
+import { useCreateTable } from '@modules/table/hooks/useCreateTable';
+import type { TableArea } from '@modules/table/types/table.types';
 
 const createTableSchema = z.object({
   name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
@@ -41,14 +41,10 @@ interface CreateTableDialogProps {
 
 export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }: CreateTableDialogProps) => {
   const { mutate: createTable, isPending } = useCreateTable();
-  
-  // XÓA: không cần currentBranchId vì service tự lấy
-  // const { user, session } = useAuthStore();
-  // const currentBranchId = user?.branchId || session?.branchId;
 
   const {
     register,
-    handleSubmit,  // Nếu không dùng thì xóa
+    handleSubmit,
     clearErrors,
     control,
     setValue,
@@ -108,11 +104,11 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="zoneId">Khu vực</Label>
+                <Label htmlFor="zoneId">Khu vực</Label>
               <Select
                 value={selectedZoneId}
                 onValueChange={(value) => {
-                  setValue('zoneId', value);
+                  setValue('zoneId', value, { shouldDirty: true, shouldValidate: true });
                   clearErrors('zoneId');
                 }}
               >
@@ -128,6 +124,11 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
                 </SelectContent>
               </Select>
               {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}
+              {zones.length === 0 && (
+                <p className="text-xs text-amber-600">
+                  Chưa có khu vực nào. Hãy tạo khu vực trước khi thêm bàn.
+                </p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -150,7 +151,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={!isDirty || isPending}>
+            <Button type="submit" disabled={!isDirty || isPending || zones.length === 0}>
               {isPending ? 'Đang tạo...' : 'Thêm bàn'}
             </Button>
           </DialogFooter>

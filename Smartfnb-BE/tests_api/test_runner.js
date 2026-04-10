@@ -73,6 +73,8 @@ async function runTests() {
     let zoneId = null;
     let tableId = null;
     let orderId = null;
+    const staffEmail = `stafftest_${Date.now()}@smartfnb.com`;
+    const staffEmailUpd = `stafftest_upd_${Date.now()}@smartfnb.com`;
 
     try {
         // --- S-01, S-02: AUTH & TENANT ---
@@ -299,11 +301,13 @@ async function runTests() {
         res = await request('/staff', 'POST', {
             positionId: positionId,
             fullName: "Nguyễn Văn Test",
-            email: "stafftest@smartfnb.com",
+            email: staffEmail,
             phone: "0999888777",
             employeeCode: "EMP-001",
             baseSalary: 10000000,
-            hireDate: "2026-04-06"
+            hireDate: "2026-04-06",
+            password: "StaffPassword1!",
+            posPin: "123456"
         }, currentToken);
         if (res.status !== 200 && res.status !== 201) throw new Error("Create staff failed: " + JSON.stringify(res.data));
         let staffId = res.data.data;
@@ -313,12 +317,14 @@ async function runTests() {
         res = await request(`/staff/${staffId}`, 'PUT', {
             positionId: positionId,
             fullName: "Nguyễn Văn Test (Updated)",
-            email: "stafftest_upd@smartfnb.com",
+            email: staffEmailUpd,
             phone: "0999888777",
             employeeCode: "EMP-001X",
             baseSalary: 12000000,
             hireDate: "2026-04-06",
-            isActive: true
+            isActive: true,
+            password: "StaffPassword2!",
+            posPin: "654321"
         }, currentToken);
         if (res.status !== 200) throw new Error("Update staff failed: " + JSON.stringify(res.data));
         console.log("   ✅ Cập nhật Nhân sự thành công.");
@@ -331,6 +337,31 @@ async function runTests() {
         if (res.status !== 200 && res.status !== 201) throw new Error("Create role failed: " + JSON.stringify(res.data));
         const roleId = res.data.data;
         console.log("   ✅ Tạo Role thành công. ID: " + roleId);
+
+        console.log("24b. Gán Role cho Staff");
+        res = await request(`/staff/${staffId}/roles`, 'PUT', { roleIds: [roleId] }, currentToken);
+        if (res.status !== 200) throw new Error("Assign role to staff failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Gán Role cho Staff thành công.");
+
+        console.log("24c. Đăng nhập Staff (Bằng Email/Pass)");
+        res = await request('/auth/login', 'POST', {
+            email: staffEmailUpd,
+            password: "StaffPassword2!"
+        });
+        if (res.status !== 200) throw new Error("Staff login failed: " + JSON.stringify(res.data));
+        let staffToken = res.data.data.accessToken || res.data.data.token;
+        console.log("   ✅ Staff Đăng nhập Email/Pass thành công.");
+
+        console.log("24d. Đăng nhập Staff (Bằng POS PIN)");
+        // Lấy tenantId từ token hiện tại (owner's token)
+        const ownerJwtPayload = JSON.parse(Buffer.from(currentToken.split('.')[1], 'base64').toString());
+        res = await request('/auth/pin-login', 'POST', {
+            tenantId: ownerJwtPayload.tenantId,
+            userId: staffId,
+            pin: "654321"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Staff PIN login failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Staff Đăng nhập qua POS PIN thành công.");
 
         // --- S-16: SHIFT & SESSION ---
         console.log("\n--- BẮT ĐẦU TEST S-16 (SHIFT) ---");

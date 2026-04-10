@@ -52,7 +52,7 @@ export const menuConfig: MenuSection[] = [
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Đơn hàng', icon: ClipboardList, path: ROUTES.OWNER.ORDERS, roles: [ROLES.OWNER, ROLES.STAFF] },
+          { title: 'Đơn hàng', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT, roles: [ROLES.OWNER, ROLES.STAFF] },
           { title: 'Báo cáo doanh thu', icon: Newspaper, path: ROUTES.OWNER.REVENUE, roles: [ROLES.OWNER] },
         ],
       },

@@ -1,12 +1,13 @@
 // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-import type { TableItem } from '@modules/table/types/table.types';
+import type { TableDisplayItem } from '@modules/table/types/table.types';
 import { TableCard } from './TableCard';
 import { LayoutGrid, Plus } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 
 interface TableGridProps {
-  tables: TableItem[];
-  onEdit: (table: TableItem) => void;
+  tables: TableDisplayItem[];
+  onSelectTable: (table: TableDisplayItem) => void;
+  onEdit: (table: TableDisplayItem) => void;
   onDelete: (id: string, name: string) => void;
   onToggleStatus: (id: string, currentStatus: string) => void;
   onViewDetail: (id: string) => void;
@@ -16,6 +17,7 @@ interface TableGridProps {
 // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026 - Thiết kế lại grid và empty state
 export const TableGrid = ({
   tables,
+  onSelectTable,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -58,11 +60,12 @@ export const TableGrid = ({
       </div>
 
       {/* Grid layout - Responsive và đẹp */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5 auto-rows-fr">
+      <div className="grid gap-2.5 auto-rows-fr grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
         {tables.map((table) => (
           <TableCard
             key={table.id}
             table={table}
+            onSelectTable={onSelectTable}
             onEdit={onEdit}
             onDelete={onDelete}
             onToggleStatus={onToggleStatus}

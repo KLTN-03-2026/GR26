@@ -39,5 +39,9 @@ public record CreateStaffCommand(
         /** Giới tính: MALE | FEMALE | OTHER (nullable) */
         String gender,
         /** Địa chỉ (nullable) */
-        String address
+        String address,
+        /** Mật khẩu cài đặt lần đầu (nullable) */
+        String password,
+        /** PIN đăng nhập POS (nullable) */
+        String posPin
 ) {}

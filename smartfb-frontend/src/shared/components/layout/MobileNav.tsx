@@ -28,7 +28,7 @@ interface MobileNavProps {
 // 5 menu items chính cho bottom nav
 const BOTTOM_NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD },
-  { label: 'Đơn hàng', icon: ClipboardList, path: ROUTES.OWNER.ORDERS },
+  { label: 'Đơn hàng', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT },
   { label: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES },
   { label: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU },
   { label: 'Thêm', icon: MoreHorizontal, path: null, action: 'open-menu' },

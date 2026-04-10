@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { menuImageUploadConstraints } from '@modules/menu/utils/menuImageUpload';
 
 /**
  * Schema cho việc tạo mới món ăn
@@ -22,11 +23,19 @@ export const createMenuSchema = z.object({
     .optional()
     .or(z.literal('').optional()),
 
-  image: z
-    .string()
-    .url('URL ảnh không hợp lệ')
-    .optional()
-    .or(z.literal('').optional()),
+  imageFile: z
+    .custom<File | null | undefined>((value) => value == null || value instanceof File, {
+      message: 'File ảnh không hợp lệ',
+    })
+    .refine(
+      (value) => !value || value.size <= menuImageUploadConstraints.maxRawSizeBytes,
+      'Ảnh gốc không được vượt quá 15MB'
+    )
+    .refine(
+      (value) => !value || menuImageUploadConstraints.accept.split(',').includes(value.type),
+      'Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP'
+    )
+    .optional(),
 
   isSyncDelivery: z.boolean().optional(),
 });

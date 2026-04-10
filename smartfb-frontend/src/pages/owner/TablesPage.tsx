@@ -1,9 +1,14 @@
-import { useState } from 'react';
-import { LayoutGrid, Users, Coffee } from 'lucide-react';
 
+import { useMemo, useState } from 'react';
+import { LayoutGrid, Users, Coffee } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import { useBranches } from '@modules/branch/hooks/useBranches';
 import { useTableList } from '@modules/table/hooks/useTableList';
 import { useZones } from '@modules/table/hooks/useZones';
 import { useTableFilters } from '@modules/table/hooks/useTableFilters';
+import { useTableDetail } from '@modules/table/hooks/useTableDetail';
 import { useEditTable } from '@modules/table/hooks/useEditTable';
 
 import { TableFilterBar } from '@modules/table/components/TableFilterBar';
@@ -12,9 +17,12 @@ import { TableDetailDrawer } from '@modules/table/components/TableDetailDrawer';
 import { EditTableDialog } from '@modules/table/components/EditTableDialog';
 import { DeleteTableDialog } from '@modules/table/components/DeleteTableDialog';
 import { CreateTableDialog } from '@modules/table/components/CreateTableDialog';
+import { CreateBulkTablesDialog } from '@modules/table/components/CreateBulkTablesDialog';
+import { ZoneManagementDialog } from '@modules/table/components/ZoneManagementDialog';
 
 import { Button } from '@shared/components/ui/button';
-import type { TableItem, UpdateTablePayload } from '@modules/table/types/table.types';
+import { ROUTES } from '@shared/constants/routes';
+import type { TableDisplayItem, UpdateTablePayload } from '@modules/table/types/table.types';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -37,17 +45,24 @@ const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: 
 );
 
 export default function TablesPage() {
-  // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-  console.log('[DEBUG] TablesPage render');
+  const navigate = useNavigate();
+  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const { data: branches = [] } = useBranches();
   const { data: tables = [], isLoading, isError, refetch, error } = useTableList();
-  // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-  console.log('[DEBUG] TablesPage received -> tables:', tables, 'isLoading:', isLoading, 'isError:', isError, 'error:', error);
-  const { data: zones = [] } = useZones();
+  const {
+    data: zones = [],
+    isLoading: zonesLoading,
+    isError: zonesError,
+    isFetching: zonesFetching,
+    refetch: refetchZones,
+  } = useZones();
 
-  const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
+  const [selectedTable, setSelectedTable] = useState<TableDisplayItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isZoneManagementDialogOpen, setIsZoneManagementDialogOpen] = useState(false);
+  const [isCreateBulkDialogOpen, setIsCreateBulkDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string; name: string }>({
     open: false,
     id: '',
@@ -55,15 +70,53 @@ export default function TablesPage() {
   });
 
   const { mutate: editTable } = useEditTable();
+  const {
+    data: selectedTableDetail,
+    isLoading: isTableDetailLoading,
+    isError: isTableDetailError,
+    refetch: refetchTableDetail,
+  } = useTableDetail(selectedTable?.id ?? '');
 
-  // Lấy danh sách tên khu vực từ zones
-  const areas = zones.map(zone => zone.name);
+  const branchNameMap = useMemo(
+    () => new Map(branches.map((branch) => [branch.id, branch.name])),
+    [branches]
+  );
 
-  // Lấy danh sách chi nhánh duy nhất (lọc bỏ undefined)
-  const branches = tables
-    .map(table => table.branchName)
-    .filter((name): name is string => Boolean(name));
-  const uniqueBranches = [...new Set(branches)];
+  const zoneNameMap = useMemo(
+    () => new Map(zones.map((zone) => [zone.id, zone.name])),
+    [zones]
+  );
+
+  const selectedBranchName = currentBranchId
+    ? branchNameMap.get(currentBranchId) ?? 'Chi nhánh đang chọn'
+    : 'Tất cả chi nhánh';
+
+  const tableDisplayData = useMemo<TableDisplayItem[]>(() => {
+    return tables.map((table) => {
+      const resolvedBranchName =
+        branchNameMap.get(table.branchId) ??
+        (table.branchId === currentBranchId ? selectedBranchName : undefined) ??
+        table.branchName ??
+        'Chi nhánh không xác định';
+
+      const resolvedZoneName =
+        zoneNameMap.get(table.zoneId) ??
+        table.zoneName ??
+        'Chưa có khu vực';
+
+      return {
+        ...table,
+        branchName: resolvedBranchName,
+        zoneName: resolvedZoneName,
+      };
+    });
+  }, [branchNameMap, currentBranchId, selectedBranchName, tables, zoneNameMap]);
+
+  // Dùng zoneId làm giá trị filter để bám đúng dữ liệu API.
+  const areaOptions = zones.map((zone) => ({
+    value: zone.id,
+    label: zone.name,
+  }));
 
   const {
     filters,
@@ -75,16 +128,41 @@ export default function TablesPage() {
     clearFilters,
     updatePage,
     totalPages,
-  } = useTableFilters(tables);
-
-  // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-  console.log('[DEBUG TablesPage] Đầu vào API - tables:', tables.length, tables);
-  console.log('[DEBUG TablesPage] Các filter áp dụng:', filters);
-  console.log('[DEBUG TablesPage] Bàn sau khi lọc (filteredTables):', filteredTables.length, filteredTables);
+  } = useTableFilters(tableDisplayData);
 
   const totalTables = tables.length;
   const availableTables = tables.filter((t) => t.usageStatus === 'available' && t.status === 'active').length;
-  const occupiedTables = tables.filter((t) => t.usageStatus === 'occupied').length;
+  const occupiedTables = tables.filter(
+    (t) => t.status === 'active' && (t.usageStatus === 'occupied' || t.usageStatus === 'unpaid')
+  ).length;
+  const zonesWithStats = zones.map((zone) => ({
+    ...zone,
+    tableCount: tables.filter((table) => table.zoneId === zone.id).length,
+  }));
+  const drawerTable = useMemo<TableDisplayItem | null>(() => {
+    if (!selectedTableDetail) {
+      return selectedTable;
+    }
+
+    const resolvedBranchName =
+      branchNameMap.get(selectedTableDetail.branchId) ??
+      (selectedTableDetail.branchId === currentBranchId ? selectedBranchName : undefined) ??
+      selectedTable?.branchName ??
+      selectedTableDetail.branchName ??
+      'Chi nhánh không xác định';
+
+    const resolvedZoneName =
+      zoneNameMap.get(selectedTableDetail.zoneId) ??
+      selectedTable?.zoneName ??
+      selectedTableDetail.zoneName ??
+      'Chưa có khu vực';
+
+    return {
+      ...selectedTableDetail,
+      branchName: resolvedBranchName,
+      zoneName: resolvedZoneName,
+    };
+  }, [branchNameMap, currentBranchId, selectedBranchName, selectedTable, selectedTableDetail, zoneNameMap]);
 
   if (isLoading) {
     return (
@@ -98,15 +176,13 @@ export default function TablesPage() {
   }
 
   if (isError) {
-    // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-    console.error('[DEBUG] TablesPage isError:', error);
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-red-500 mb-4">
             Có lỗi xảy ra khi tải dữ liệu:
             <br />
-            {String((error as any)?.message || 'Lỗi không xác định (hãy mở Console để xem chi tiết)')}
+            {error instanceof Error ? error.message : 'Lỗi không xác định'}
           </p>
           <button
             onClick={() => refetch()}
@@ -123,12 +199,32 @@ export default function TablesPage() {
     setIsCreateDialogOpen(true);
   };
 
-  const handleViewDetail = (table: TableItem) => {
+  const handleManageZones = () => {
+    setIsZoneManagementDialogOpen(true);
+  };
+
+  const handleCreateBulkTables = () => {
+    setIsCreateBulkDialogOpen(true);
+  };
+
+  const handleViewDetail = (table: TableDisplayItem) => {
     setSelectedTable(table);
     setIsDrawerOpen(true);
   };
 
-  const handleEdit = (table: TableItem) => {
+  const handleSelectTable = (table: TableDisplayItem) => {
+    // Điều hướng bằng query params để trang order đọc lại được cả khi người dùng refresh.
+    const searchParams = new URLSearchParams({
+      tableId: table.id,
+      tableName: table.name,
+      zoneId: table.zoneId ?? '',
+      branchName: table.branchName ?? '',
+    });
+
+    navigate(`${ROUTES.POS_ORDER}?${searchParams.toString()}`);
+  };
+
+  const handleEdit = (table: TableDisplayItem) => {
     setSelectedTable(table);
     setIsEditDialogOpen(true);
     setIsDrawerOpen(false);
@@ -199,25 +295,25 @@ export default function TablesPage() {
       <div className="bg-white p-4 space-y-4 rounded-2xl">
         <TableFilterBar
           filters={filters}
-          areas={areas}
-          branches={uniqueBranches}
+          areas={areaOptions}
           onSearchChange={(value) => updateFilter('search', value)}
           onAreaChange={(value) => updateFilter('area', value)}
-          onStatusChange={(value) => updateFilter('status', value)}
-          onUsageStatusChange={(value) => updateFilter('usageStatus', value)}
-          onBranchChange={(value) => updateFilter('branch', value)}
+          onStateChange={(value) => updateFilter('state', value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          onAddTable={handleAddTable}
+          onCreateSingleTable={handleAddTable}
+          onCreateBulkTables={handleCreateBulkTables}
+          onManageZones={handleManageZones}
         />
 
         <TableGrid
           tables={filteredTables}
+          onSelectTable={handleSelectTable}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}
           onViewDetail={(id) => {
-            const table = tables.find((t) => t.id === id);
+            const table = tableDisplayData.find((item) => item.id === id);
             if (table) handleViewDetail(table);
           }}
         />
@@ -256,9 +352,14 @@ export default function TablesPage() {
 
       {/* Drawers & Dialogs */}
       <TableDetailDrawer
-        table={selectedTable}
+        table={drawerTable}
         isOpen={isDrawerOpen}
+        isLoading={isTableDetailLoading}
+        isError={isTableDetailError}
         onClose={() => setIsDrawerOpen(false)}
+        onRetry={() => {
+          refetchTableDetail();
+        }}
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
       />
@@ -266,6 +367,25 @@ export default function TablesPage() {
       <CreateTableDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
+        onSuccess={refetchTables}
+        zones={zones}
+      />
+
+      <ZoneManagementDialog
+        open={isZoneManagementDialogOpen}
+        onOpenChange={setIsZoneManagementDialogOpen}
+        zones={zonesWithStats}
+        isLoading={zonesLoading}
+        isError={zonesError}
+        isFetching={zonesFetching}
+        onRetry={() => {
+          refetchZones();
+        }}
+      />
+
+      <CreateBulkTablesDialog
+        open={isCreateBulkDialogOpen}
+        onOpenChange={setIsCreateBulkDialogOpen}
         onSuccess={refetchTables}
         zones={zones}
       />

@@ -8,6 +8,7 @@ import com.smartfnb.staff.infrastructure.persistence.StaffJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class UpdateStaffCommandHandler {
 
     private final StaffJpaRepository staffJpaRepository;
     private final PositionJpaRepository positionJpaRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Cập nhật thông tin nhân viên.
@@ -67,6 +69,13 @@ public class UpdateStaffCommandHandler {
         if (command.dateOfBirth() != null) staff.setDateOfBirth(command.dateOfBirth());
         if (command.gender() != null) staff.setGender(command.gender());
         if (command.address() != null) staff.setAddress(command.address());
+        
+        if (command.password() != null && !command.password().isEmpty()) {
+            staff.setPasswordHash(passwordEncoder.encode(command.password()));
+        }
+        if (command.posPin() != null && !command.posPin().isEmpty()) {
+            staff.setPosPin(passwordEncoder.encode(command.posPin()));
+        }
 
         staffJpaRepository.save(staff);
         log.info("Cập nhật nhân viên thành công: staffId={}", command.staffId());
