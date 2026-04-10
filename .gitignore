@@ -1,0 +1,9 @@
+.github/
+.claude/
+smartfb-backend
+docs
+prompts
+# Smartfnb-BE/
+db/
+images/
+.vscode
