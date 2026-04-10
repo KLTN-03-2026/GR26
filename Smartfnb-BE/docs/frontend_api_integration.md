@@ -621,6 +621,142 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
 
 ---
 
+## 👨‍💼 9. MODULE QUẢN LÝ NHÂN VIÊN (STAFF) - S-15 - Prefix: `/api/v1/staff`
+
+> **Phân quyền (JWT Role):**
+> - `OWNER`, `ADMIN` — Toàn quyền (tạo, sửa, xóa, khóa/mở khóa, gán roles)
+> - `BRANCH_MANAGER` — Chỉ xem danh sách và chi tiết
+
+### 9.1 Danh sách nhân viên (có phân trang và filter)
+
+- **Method:** `GET /api/v1/staff`
+- **Query Params:**
+  - `positionId=uuid` — Lọc theo chức vụ (tùy chọn)
+  - `status=ACTIVE|INACTIVE` — Lọc theo trạng thái (tùy chọn)
+  - `keyword=abc` — Tìm kiếm theo tên/email/mã NV (tùy chọn)
+  - `page=0&size=20` — Phân trang
+- **Response `data`:** `Page<StaffSummaryResult>` — object phân trang
+
+### 9.2 Chi tiết nhân viên
+
+- **Method:** `GET /api/v1/staff/{id}`
+- **Response `data`:** Object chi tiết nhân viên kèm roles
+
+### 9.3 Tạo nhân viên mới
+
+- **Method:** `POST /api/v1/staff`
+- **Quyền:** `OWNER`, `ADMIN`
+- **Request Body:**
+  ```json
+  {
+    "fullName": "Nguyễn Văn A",       // Bắt buộc
+    "phone": "0987654321",             // Tùy chọn, duy nhất trong tenant
+    "email": "nva@coffee.vn",          // Tùy chọn
+    "positionId": "uuid-chuc-vu",      // Tùy chọn
+    "employeeCode": "NV001",           // Tùy chọn, max 50 ký tự
+    "hireDate": "2026-01-15",          // Tùy chọn
+    "dateOfBirth": "1998-05-20",       // Tùy chọn
+    "gender": "MALE",                  // Tùy chọn: MALE | FEMALE | OTHER
+    "address": "123 Đường ABC, Q1",    // Tùy chọn
+    "password": "Password123!",        // Tùy chọn, mật khẩu để nhân viên đăng nhập email (8-255 ký tự)
+    "posPin": "123456"                 // Tùy chọn, mã PIN 4-6 số để nhân viên đăng nhập nhanh POS
+  }
+  ```
+- **Response `data`:** UUID của nhân viên vừa tạo
+- **HTTP Status:** `201 Created`
+
+### 9.4 Cập nhật thông tin nhân viên
+
+- **Method:** `PUT /api/v1/staff/{id}`
+- **Quyền:** `OWNER`, `ADMIN`
+- **Ghi chú:** Tất cả fields đều optional (partial update — chỉ field nào gửi mới được cập nhật). Kể cả `password` và `posPin`, nếu được gửi qua, sẽ cập nhật lại thông tin đăng nhập của nhân viên.
+- **Request Body:** Tương tự 9.3 (không bắt buộc field nào, có thể truyền `password` và `posPin` mới vào đây).
+- **Response:** `200 OK` với `data: null`
+
+### 9.5 🔒 Khóa / Mở khóa nhân viên _(BUG FIX — Mới thêm)_
+
+> **⚠️ PHÂN BIỆT RÕ: Khóa (PATCH) vs Xóa mềm (DELETE)**
+>
+> | Hành động | Endpoint | Kết quả |
+> |-----------|----------|---------|
+> | **Khóa/Mở khóa** | `PATCH /staff/{id}/status` | Chỉ thay đổi `status`. Nhân viên vẫn tồn tại, tìm được với `?status=INACTIVE` |
+> | **Xóa mềm** | `DELETE /staff/{id}` | Set `deleted_at`, nhân viên **ẩn hoàn toàn** khỏi mọi query, **không thể khôi phục qua API** |
+
+- **Method:** `PATCH /api/v1/staff/{id}/status`
+- **Quyền:** `OWNER`, `ADMIN`
+- **Request Body:**
+  ```json
+  {
+    "status": "INACTIVE",                          // Bắt buộc: ACTIVE | INACTIVE
+    "reason": "Nhân viên xin nghỉ phép dài hạn"  // Bắt buộc, max 500 ký tự
+  }
+  ```
+- **Response:** `200 OK` với `data: null`
+- **Idempotent:** Gửi status trùng trạng thái hiện tại → `200 OK` không làm gì (không lỗi)
+- **Lỗi có thể nhận:**
+
+  | errorCode | HTTP | Mô tả |
+  |-----------|------|-------|
+  | `STAFF_NOT_FOUND` | 404 | Không tìm thấy nhân viên (đã bị xóa mềm hoặc không thuộc tenant) |
+
+**Ví dụ — Khóa nhân viên:**
+```javascript
+await fetch(`/api/v1/staff/${staffId}/status`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    status: 'INACTIVE',
+    reason: 'Nhân viên vi phạm nội quy, đang xử lý kỷ luật'
+  })
+});
+```
+
+**Ví dụ — Mở khóa nhân viên:**
+```javascript
+await fetch(`/api/v1/staff/${staffId}/status`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    status: 'ACTIVE',
+    reason: 'Xử lý kỷ luật xong, nhân viên quay lại làm việc'
+  })
+});
+```
+
+### 9.6 Xóa mềm nhân viên (không khôi phục được)
+
+- **Method:** `DELETE /api/v1/staff/{id}`
+- **Quyền:** Chỉ `OWNER`
+- **Request Body:**
+  ```json
+  {
+    "reason": "Nhân viên nghỉ việc chính thức"  // Bắt buộc, max 500 ký tự
+  }
+  ```
+- **Response:** `200 OK` với `data: null`
+- **⚠️ Lưu ý:** Sau khi xóa mềm, nhân viên **không thể tìm thấy** qua bất kỳ API nào. Dùng `PATCH /status` nếu chỉ muốn khóa tạm thời.
+
+### 9.7 Gán vai trò cho nhân viên
+
+- **Method:** `PUT /api/v1/staff/{id}/roles`
+- **Quyền:** Chỉ `OWNER`
+- **Ghi chú:** Thay thế toàn bộ danh sách roles (replace-all, không phải append)
+- **Request Body:**
+  ```json
+  {
+    "roleIds": ["uuid-role-1", "uuid-role-2"]
+  }
+  ```
+- **Response:** `200 OK` với `data: null`
+
+---
+
 ## 📊 🚀 TỔNG LỊCH PHÁT HÀNH (TIMELINE)
 
 | Sprint       | Module                                           | Status              |
@@ -631,4 +767,5 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
 | S-11 & S-12  | Payment & Invoice                                | ✅ Hoàn thành        |
 | **S-13**     | **Inventory — Nhập kho & FIFO**                  | ✅ **COMPLETED**     |
 | **S-14**     | **Inventory — Điều chỉnh, Hao hụt, Cảnh báo**   | ✅ **COMPLETED**     |
-| S-15+        | Report, Supplier modules                         | 📅 Sắp tới           |
+| **S-15**     | **Staff Management — Bug Fix: PATCH /status**    | ✅ **COMPLETED**     |
+| S-16+        | Shift, Report, Supplier modules                  | 📅 Sắp tới           |
