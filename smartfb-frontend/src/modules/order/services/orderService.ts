@@ -1,70 +1,72 @@
-import axiosInstance from '@/lib/axios';
-import type { 
-  OrderApiResponse, 
-  OrderListApiResponse, 
-  PlaceOrderRequest, 
-  UpdateOrderStatusRequest 
+import { axiosInstance as api } from '@lib/axios';
+import type { ApiResponse } from '@shared/types/api.types';
+import type {
+  CancelOrderRequest,
+  OrderApiResponse,
+  OrderListApiResponse,
+  OrderResponse,
+  PlaceOrderRequest,
+  UpdateOrderStatusRequest,
 } from '../types/order.types';
 
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+}
+
+/**
+ * Service thao tác với API đơn hàng.
+ * Giữ service thuần gọi API, không đặt logic nghiệp vụ tại đây.
+ */
 export const orderService = {
-  async placeOrder(payload: PlaceOrderRequest): Promise<OrderApiResponse> {
-    const response = await axiosInstance.post<OrderApiResponse>('/orders', payload);
+  /**
+   * Tạo mới đơn hàng POS.
+   */
+  placeOrder: async (payload: PlaceOrderRequest): Promise<OrderApiResponse> => {
+    const response = await api.post<OrderApiResponse>('/orders', payload);
     return response.data;
   },
 
-  async updateStatus(id: string, payload: UpdateOrderStatusRequest): Promise<OrderApiResponse> {
-    const response = await axiosInstance.put<OrderApiResponse>(`/orders/${id}/status`, payload);
+  /**
+   * Lấy chi tiết một đơn hàng.
+   */
+  getById: async (id: string): Promise<OrderApiResponse> => {
+    const response = await api.get<OrderApiResponse>(`/orders/${id}`);
     return response.data;
   },
 
-  async getOrders(): Promise<OrderListApiResponse> {
-    await new Promise(resolve => setTimeout(resolve, 800));
+  /**
+   * Cập nhật trạng thái đơn hàng.
+   */
+  updateStatus: async (id: string, payload: UpdateOrderStatusRequest): Promise<OrderApiResponse> => {
+    const response = await api.put<OrderApiResponse>(`/orders/${id}/status`, payload);
+    return response.data;
+  },
 
-    const mockOrders: any[] = [
-      {
-        id: 'o-001',
-        orderNumber: 'ORD-20240408-001',
-        status: 'PENDING',
-        source: 'POS',
-        tableName: 'Bàn 01',
-        totalAmount: 125000,
-        createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        items: [
-          { id: 'i-1', itemName: 'Cà phê Muối', quantity: 2, unitPrice: 35000, totalPrice: 70000 },
-          { id: 'i-2', itemName: 'Bánh Tiramisu', quantity: 1, unitPrice: 55000, totalPrice: 55000 }
-        ]
+  /**
+   * Hủy đơn hàng theo endpoint riêng của backend.
+   */
+  cancelOrder: async (id: string, payload: CancelOrderRequest): Promise<OrderApiResponse> => {
+    const response = await api.post<OrderApiResponse>(`/orders/${id}/cancel`, payload);
+    return response.data;
+  },
+
+  /**
+   * Lấy danh sách đơn hàng cho trang quản lý.
+   * Hiện backend trả dữ liệu phân trang kiểu Spring `content`.
+   */
+  getOrders: async (): Promise<OrderListApiResponse> => {
+    const response = await api.get<ApiResponse<PageResponse<OrderResponse>>>('/orders', {
+      params: {
+        page: 0,
+        size: 20,
       },
-      {
-        id: 'o-002',
-        orderNumber: 'ORD-20240408-002',
-        status: 'PROCESSING',
-        source: 'POS',
-        tableName: 'Bàn 05',
-        totalAmount: 45000,
-        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        items: [
-          { id: 'i-3', itemName: 'Trà Đào Cam Sả', quantity: 1, unitPrice: 45000, totalPrice: 45000 }
-        ]
-      },
-      {
-        id: 'o-003',
-        orderNumber: 'ORD-20240408-003',
-        status: 'COMPLETED',
-        source: 'WEB',
-        tableName: 'Mang đi',
-        totalAmount: 85000,
-        createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        items: [
-          { id: 'i-4', itemName: 'Nước Ép Cam', quantity: 1, unitPrice: 40000, totalPrice: 40000 },
-          { id: 'i-5', itemName: 'Sữa Hạnh Nhân', quantity: 1, unitPrice: 45000, totalPrice: 45000 }
-        ]
-      }
-    ];
+    });
 
     return {
-      success: true,
-      data: mockOrders,
-      message: 'Lấy danh sách đơn hàng thành công (Mock)'
+      ...response.data,
+      data: response.data.data.content,
     };
-  }
+  },
 };

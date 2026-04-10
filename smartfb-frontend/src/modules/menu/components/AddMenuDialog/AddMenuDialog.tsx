@@ -11,6 +11,8 @@ import { useCreateMenu } from '@modules/menu/hooks/useCreateMenu';
 import { useUpdateMenu } from '@modules/menu/hooks/useUpdateMenu';
 import type { MenuCategoryInfo, MenuItem } from '@modules/menu/types/menu.types';
 import { NO_MENU_CATEGORY_VALUE } from '@modules/menu/constants/menu.constants';
+import { optimizeMenuImageForUpload } from '@modules/menu/utils/menuImageUpload';
+import { useToast } from '@shared/hooks/useToast';
 
 interface AddMenuDialogProps {
   categories: MenuCategoryInfo[];
@@ -33,8 +35,10 @@ export const AddMenuDialog = ({
   triggerClassName,
 }: AddMenuDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const { mutate: createMenu, isPending: isCreating } = useCreateMenu();
-  const { mutate: updateMenu, isPending: isUpdating } = useUpdateMenu();
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const { mutateAsync: createMenu, isPending: isCreating } = useCreateMenu();
+  const { mutateAsync: updateMenu, isPending: isUpdating } = useUpdateMenu();
+  const { error } = useToast();
 
   const isEditMode = Boolean(menu);
   const isControlled = typeof open === 'boolean';
@@ -48,7 +52,7 @@ export const AddMenuDialog = ({
       category: menu?.category ?? categories[0]?.id ?? NO_MENU_CATEGORY_VALUE,
       price: menu?.price ?? 0,
       unit: menu?.unit ?? '',
-      image: menu?.image ?? '',
+      imageFile: undefined,
       isSyncDelivery: menu?.isSyncDelivery ?? false,
     };
   }, [categories, menu]);
@@ -64,6 +68,7 @@ export const AddMenuDialog = ({
   useEffect(() => {
     if (dialogOpen) {
       form.reset(defaultValues);
+      setFileInputKey((currentKey) => currentKey + 1);
     }
   }, [defaultValues, dialogOpen, form]);
 
@@ -77,47 +82,61 @@ export const AddMenuDialog = ({
 
     if (!nextOpen) {
       form.reset(defaultValues);
+      setFileInputKey((currentKey) => currentKey + 1);
     }
 
     onOpenChange?.(nextOpen);
   };
 
-  const handleSubmit = (values: CreateMenuFormValues) => {
+  const handleSubmit = async (values: CreateMenuFormValues) => {
+    let optimizedImageFile: File | null | undefined = values.imageFile;
+
+    if (values.imageFile) {
+      try {
+        optimizedImageFile = await optimizeMenuImageForUpload(values.imageFile);
+      } catch (optimizationError) {
+        error(
+          'Không thể xử lý ảnh trước khi tải lên',
+          optimizationError instanceof Error ? optimizationError.message : 'Vui lòng thử lại với ảnh khác'
+        );
+        return;
+      }
+    }
+
     const payload = {
       name: values.name.trim(),
       category: values.category,
       price: values.price,
       unit: values.unit?.trim() || undefined,
-      image: values.image?.trim() || undefined,
+      imageFile: optimizedImageFile,
       isSyncDelivery: Boolean(values.isSyncDelivery),
     };
 
     if (isEditMode && menu) {
-      updateMenu(
-        {
+      try {
+        await updateMenu({
           id: menu.id,
           payload: {
             ...payload,
             isActive: menu.isActive ?? menu.isAvailable ?? true,
           },
-        },
-        {
-          onSuccess: () => {
-            handleOpenChange(false);
-            onSuccess?.();
-          },
-        }
-      );
+        });
+        handleOpenChange(false);
+        onSuccess?.();
+      } catch {
+        return;
+      }
 
       return;
     }
 
-    createMenu(payload, {
-      onSuccess: () => {
-        handleOpenChange(false);
-        onSuccess?.();
-      },
-    });
+    try {
+      await createMenu(payload);
+      handleOpenChange(false);
+      onSuccess?.();
+    } catch {
+      return;
+    }
   };
 
   return (
@@ -139,6 +158,8 @@ export const AddMenuDialog = ({
         <MenuForm
           form={form}
           categories={categories}
+          existingImageUrl={menu?.image}
+          fileInputKey={fileInputKey}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={isEditMode ? 'Lưu thay đổi' : 'Lưu món ăn'}

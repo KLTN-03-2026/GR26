@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
-import { tableService } from '../services/tableService';
-import { useZones } from './useZones';
-import type { TableItem } from '../types/table.types';
+import { tableService } from '@modules/table/services/tableService';
+import type { TableArea, TableItem } from '@modules/table/types/table.types';
+import { useZones } from '@modules/table/hooks/useZones';
 
+/**
+ * Hook lấy danh sách bàn của chi nhánh hiện tại.
+ */
 export const useTableList = () => {
-  // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-  console.log('[DEBUG] useTableList hook called');
   return useQuery<TableItem[]>({
     queryKey: queryKeys.tables.list(),
     queryFn: async () => {
-      // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-      console.log('[DEBUG] useTableList queryFn executed');
       const tables = await tableService.getList();
       return tables;
     },
@@ -23,7 +22,9 @@ export const useTableList = () => {
   });
 };
 
-// Thêm hook riêng để lấy danh sách bàn cùng với tên zone
+/**
+ * Hook lấy danh sách bàn và map thêm tên khu vực để hiển thị ở UI.
+ */
 export const useTableListWithZones = () => {
   const { data: tables, isLoading: tablesLoading, error: tablesError } = useTableList();
   const { data: zones, isLoading: zonesLoading } = useZones();
@@ -34,8 +35,9 @@ export const useTableListWithZones = () => {
   const tablesWithZoneNames = useMemo(() => {
     if (!tables || !zones) return [];
 
-    // Fix lỗi type: thêm type annotation cho zone
-    const zoneMap = new Map(zones.map((zone: { id: string; name: string }) => [zone.id, zone.name]));
+    const zoneMap = new Map(
+      zones.map((zone: TableArea) => [zone.id, zone.name])
+    );
 
     return tables.map((table: TableItem) => ({
       ...table,

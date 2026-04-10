@@ -1,0 +1,301 @@
+import { ChevronRight, Minus, PencilLine, Plus, ReceiptText, Trash2, XCircle } from 'lucide-react';
+import type { OrderDraftItem, OrderTableContext } from '@modules/order/types/order.types';
+import { Button } from '@shared/components/ui/button';
+import { formatDateTime } from '@shared/utils/formatDate';
+import { formatVND } from '@shared/utils/formatCurrency';
+import { DEFAULT_MENU_IMAGE, getCartItemSummary } from './orderPage.utils';
+
+interface OrderCartPanelProps {
+  cart: OrderDraftItem[];
+  tableContext: OrderTableContext | null;
+  draftOrder: {
+    orderNumber: string | null;
+    createdAt: string | null;
+    orderId: string | null;
+  };
+  currentUserName: string;
+  hasPlacedOrder: boolean;
+  isSyncingDraft: boolean;
+  totalItemCount: number;
+  subtotal: number;
+  vatAmount: number;
+  totalAmount: number;
+  checkoutButtonLabel: string;
+  onOpenInvoice: () => void;
+  onCancelPlacedOrder: () => void;
+  onEditCartItem: (draftItemId: string) => void;
+  onDeleteCartItem: (item: OrderDraftItem) => void;
+  onChangeItemQuantity: (item: OrderDraftItem, delta: number) => void;
+  onSaveDraft: () => void;
+  onCheckout: () => void;
+}
+
+export const OrderCartPanel = ({
+  cart,
+  tableContext,
+  draftOrder,
+  currentUserName,
+  hasPlacedOrder,
+  isSyncingDraft,
+  totalItemCount,
+  subtotal,
+  vatAmount,
+  totalAmount,
+  checkoutButtonLabel,
+  onOpenInvoice,
+  onCancelPlacedOrder,
+  onEditCartItem,
+  onDeleteCartItem,
+  onChangeItemQuantity,
+  onSaveDraft,
+  onCheckout,
+}: OrderCartPanelProps) => {
+  return (
+    <aside className="flex min-h- max-h-dvh flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm xl:max-h-[calc(100vh-10rem)]">
+      <div className="space-y-4 border-b border-slate-100 bg-[linear-gradient(180deg,#fff9f4_0%,#ffffff_100%)] p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          {/* <div className="min-w-0">
+            <div className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400 shadow-sm">
+              {tableContext?.tableName ? 'Phục vụ tại bàn' : 'Đơn mang đi'}
+            </div>
+            <h2 className="mt-3 line-clamp-1 text-2xl font-black text-slate-900">
+              {tableContext?.tableName ? `Bàn ${tableContext.tableName}` : 'Khách lẻ tại quầy'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {draftOrder.orderNumber || 'Đơn nháp chưa phát số'}
+            </p>
+          </div> */}
+
+          {/* <div className="grid shrink-0 grid-cols-2 gap-3 text-right sm:min-w-[180px]">
+            <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Số món
+              </p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{totalItemCount}</p>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Tạm tính
+              </p>
+              <p className="mt-1 text-lg font-black text-orange-500">{formatVND(subtotal)}</p>
+            </div>
+          </div> */}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Khu vực</p>
+            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
+              {tableContext?.zoneName || 'Chưa gán khu vực'}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Thời gian</p>
+            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
+              {formatDateTime(draftOrder.createdAt ?? new Date().toISOString())}
+            </p>
+          </div>
+          {/* <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Người tạo</p>
+            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
+              {currentUserName}
+            </p>
+          </div> */}
+          {/* <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Trạng thái</p>
+            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
+              {hasPlacedOrder ? 'Đã tạo trên hệ thống' : 'Đơn nháp cục bộ'}
+            </p>
+          </div> */}
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onOpenInvoice}
+            className="h-11 flex-1 rounded-full border-orange-200 text-orange-500 hover:bg-orange-50"
+          >
+            In hóa đơn tạm
+          </Button>
+          {hasPlacedOrder && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancelPlacedOrder}
+              disabled={isSyncingDraft}
+              className="h-11 flex-1 rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Hủy đơn
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 pb-3 pt-4 text-sm text-slate-500">
+          <p className="font-bold text-slate-800">Danh sách món đã chọn</p>
+          <p>{cart.length} dòng món</p>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
+          {cart.length === 0 ? (
+            <div className="flex h-full min-h-[280px] items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 text-center">
+              <div>
+                <ReceiptText className="mx-auto h-12 w-12 text-slate-300" />
+                <p className="mt-4 text-base font-bold text-slate-700">Chưa có món trong đơn</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Chọn món từ danh sách bên trái để bắt đầu.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <div
+                  key={item.draftItemId}
+                  className="rounded-[24px] border border-[#efe2d5] bg-white p-4 shadow-[0_14px_30px_rgba(191,144,101,0.08)]"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* <div className="hidden h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[20px] bg-slate-100 sm:block">
+                      <img
+                        src={item.image || DEFAULT_MENU_IMAGE}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div> */}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <button
+                          type="button"
+                          onClick={() => onEditCartItem(item.draftItemId)}
+                          className="min-w-0 flex-1 text-left"
+                        >
+                          <p className="line-clamp-1 text-[1.08rem] font-black leading-6 tracking-tight text-slate-900">
+                            {item.name}
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-slate-400">
+                            {formatVND(item.unitPrice)} / món
+                          </p>
+                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                            {getCartItemSummary(item)}
+                          </p>
+                        </button>
+
+                        <div className="flex shrink-0 flex-col items-end gap-3">
+                          <p className="text-[1.08rem] font-black tracking-tight text-slate-900">
+                            {formatVND(item.lineTotal)}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteCartItem(item)}
+                            disabled={isSyncingDraft || hasPlacedOrder}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-[#ff5f4a] transition-colors hover:bg-[#fff1ee]"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 rounded-full border border-[#eadbce] bg-[#fcf7f2] px-3 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onChangeItemQuantity(item, -1)}
+                            disabled={isSyncingDraft || hasPlacedOrder}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="min-w-6 text-center text-[1rem] font-black text-slate-900">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onChangeItemQuantity(item, 1)}
+                            disabled={isSyncingDraft || hasPlacedOrder}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => onEditCartItem(item.draftItemId)}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:border-orange-200 hover:text-orange-500"
+                        >
+                          <PencilLine className="h-4 w-4" />
+                          Chỉnh món
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-5 border-t border-slate-100 p-5">
+        <div className="space-y-3 text-sm">
+          {hasPlacedOrder && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+              Đơn này đã được tạo trên hệ thống. Hiện backend chỉ hỗ trợ thanh toán hoặc hủy đơn,
+              chưa hỗ trợ sửa từng món sau khi tạo.
+            </div>
+          )}
+          <div className="flex items-center justify-between text-slate-500">
+            <span>Tạm tính</span>
+            <span>{formatVND(subtotal)}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-500">
+            <span>VAT (8%)</span>
+            <span>{formatVND(vatAmount)}</span>
+          </div>
+          <div className="flex items-center justify-between pt-2 text-2xl font-black text-slate-900">
+            <span>Tổng cộng</span>
+            <span className="text-orange-500">{formatVND(totalAmount)}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {hasPlacedOrder && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSyncingDraft}
+              onClick={onCancelPlacedOrder}
+              className="h-12 flex-1 rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
+            >
+              Hủy đơn đã tạo
+            </Button>
+          )}
+          {!hasPlacedOrder && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={cart.length === 0 || isSyncingDraft}
+              onClick={onSaveDraft}
+              className="h-12 flex-1 rounded-full border-slate-200"
+            >
+              Lưu nháp cục bộ
+            </Button>
+          )}
+          <Button
+            type="button"
+            disabled={cart.length === 0 || isSyncingDraft}
+            onClick={onCheckout}
+            className="h-12 flex-1 rounded-full bg-orange-500 font-bold hover:bg-orange-600"
+          >
+            {checkoutButtonLabel}
+            {!isSyncingDraft && <ChevronRight className="ml-2 h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
+};

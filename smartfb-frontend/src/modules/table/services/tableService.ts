@@ -7,7 +7,9 @@ import type {
   UpdateTablePayload,
   TableArea,
   BatchUpdatePositionsPayload,
-  TableShape
+  CreateZonePayload,
+  TableShape,
+  UpdateZonePayload,
 } from '../types/table.types';
 
 // Type response từ backend cho TableResponse
@@ -34,15 +36,50 @@ interface BackendZoneResponse {
   floorNumber: number;
 }
 
+interface UpdateTableRequestBody {
+  name: string;
+  zoneId: string;
+  capacity: number;
+  shape?: TableShape;
+  isActive?: boolean;
+}
+
+/**
+ * Chuẩn hóa dữ liệu bàn từ backend sang model FE.
+ */
+const mapTableResponse = (item: BackendTableResponse, branchId: string): TableItem => ({
+  id: item.id,
+  name: item.name,
+  zoneId: item.zoneId,
+  zoneName: '',
+  capacity: item.capacity,
+  branchId: item.branchId || branchId,
+  branchName: '',
+  status: item.isActive === false ? 'inactive' : 'active',
+  usageStatus: mapUsageStatus(item.status),
+  positionX: item.positionX || 0,
+  positionY: item.positionY || 0,
+  shape: item.shape || 'square',
+  createdAt: item.createdAt || new Date().toISOString(),
+  updatedAt: item.updatedAt || new Date().toISOString(),
+});
+
+/**
+ * Chuẩn hóa dữ liệu khu vực từ backend sang model FE.
+ */
+const mapZoneResponse = (zone: BackendZoneResponse): TableArea => ({
+  id: zone.id,
+  branchId: zone.branchId,
+  name: zone.name,
+  floorNumber: zone.floorNumber,
+});
+
 /**
  * Lấy branchId hiện tại từ auth store
  */
 const getCurrentBranchId = (): string => {
-  // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-  console.log('[DEBUG] getCurrentBranchId called');
   const { user, session } = useAuthStore.getState();
   const branchId = user?.branchId || session?.branchId;
-  console.log('[DEBUG] user.branchId:', user?.branchId, 'session.branchId:', session?.branchId, 'selected:', branchId);
 
   if (!branchId) {
     throw new Error('Chưa chọn chi nhánh. Vui lòng đăng nhập và chọn chi nhánh làm việc.');
@@ -69,47 +106,18 @@ export const tableService = {
    * API trả về ApiResponse<List<TableResponse>>
    */
   getList: async (): Promise<TableItem[]> => {
-    // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-    console.log('[DEBUG] tableService.getList called');
     const branchId = getCurrentBranchId();
-    console.log('[DEBUG] endpoint gọi API:', `/branches/${branchId}/tables`);
+    const response = await axiosInstance.get<ApiResponse<BackendTableResponse[]>>(
+      `/branches/${branchId}/tables`
+    );
 
-    try {
-      const response = await axiosInstance.get<ApiResponse<BackendTableResponse[]>>(
-        `/branches/${branchId}/tables`
-      );
-
-      console.log('[DEBUG] getList response:', response.data);
-
-      if (!response.data.success) {
-        throw new Error(response.data.error?.message || 'Không thể tải danh sách bàn');
-      }
-
-      // Map dữ liệu từ backend sang frontend format
-      const mappedTables: TableItem[] = (response.data.data || []).map((item: BackendTableResponse) => ({
-        id: item.id,
-        name: item.name,
-        zoneId: item.zoneId,
-        zoneName: '',  // sẽ được fill sau khi lấy zones
-        capacity: item.capacity,
-        branchId: item.branchId || branchId,
-        branchName: '',
-        status: item.isActive === false ? 'inactive' : 'active',
-        usageStatus: mapUsageStatus(item.status),
-        positionX: item.positionX || 0,
-        positionY: item.positionY || 0,
-        shape: item.shape || 'square',
-        createdAt: item.createdAt || new Date().toISOString(),
-        updatedAt: item.updatedAt || new Date().toISOString(),
-      }));
-
-      console.log('[DEBUG] mappedTables:', mappedTables);
-      return mappedTables;
-    } catch (error) {
-      // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-      console.error('[DEBUG] tableService.getList ERROR:', error);
-      throw error;
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Không thể tải danh sách bàn');
     }
+
+    return (response.data.data || []).map((item: BackendTableResponse) =>
+      mapTableResponse(item, branchId)
+    );
   },
 
   /**
@@ -127,22 +135,7 @@ export const tableService = {
 
     const item = response.data.data;
 
-    return {
-      id: item.id,
-      name: item.name,
-      zoneId: item.zoneId,
-      zoneName: '',
-      capacity: item.capacity,
-      branchId: item.branchId || branchId,
-      branchName: '',
-      status: item.isActive === false ? 'inactive' : 'active',
-      usageStatus: mapUsageStatus(item.status),
-      positionX: item.positionX || 0,
-      positionY: item.positionY || 0,
-      shape: item.shape || 'square',
-      createdAt: item.createdAt || new Date().toISOString(),
-      updatedAt: item.updatedAt || new Date().toISOString(),
-    };
+    return mapTableResponse(item, branchId);
   },
 
   /**
@@ -167,22 +160,7 @@ export const tableService = {
 
     const item = response.data.data;
 
-    return {
-      id: item.id,
-      name: item.name,
-      zoneId: item.zoneId,
-      zoneName: '',
-      capacity: item.capacity,
-      branchId: item.branchId || branchId,
-      branchName: '',
-      status: item.isActive === false ? 'inactive' : 'active',
-      usageStatus: mapUsageStatus(item.status),
-      positionX: item.positionX || 0,
-      positionY: item.positionY || 0,
-      shape: item.shape || 'square',
-      createdAt: item.createdAt || new Date().toISOString(),
-      updatedAt: item.updatedAt || new Date().toISOString(),
-    };
+    return mapTableResponse(item, branchId);
   },
 
   /**
@@ -191,7 +169,7 @@ export const tableService = {
    */
   update: async (id: string, payload: UpdateTablePayload): Promise<TableItem> => {
     const branchId = getCurrentBranchId();
-    const updateBody: any = {
+    const updateBody: UpdateTableRequestBody = {
       name: payload.name,
       zoneId: payload.zoneId,
       capacity: payload.capacity,
@@ -211,22 +189,7 @@ export const tableService = {
 
     const item = response.data.data;
 
-    return {
-      id: item.id,
-      name: item.name,
-      zoneId: item.zoneId,
-      zoneName: '',
-      capacity: item.capacity,
-      branchId: item.branchId || branchId,
-      branchName: '',
-      status: item.isActive === false ? 'inactive' : 'active',
-      usageStatus: mapUsageStatus(item.status),
-      positionX: item.positionX || 0,
-      positionY: item.positionY || 0,
-      shape: item.shape || 'square',
-      createdAt: item.createdAt || new Date().toISOString(),
-      updatedAt: item.updatedAt || new Date().toISOString(),
-    };
+    return mapTableResponse(item, branchId);
   },
 
   /**
@@ -234,11 +197,9 @@ export const tableService = {
    */
   delete: async (id: string): Promise<void> => {
     const branchId = getCurrentBranchId();
-    // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-    const url = `/branches/${branchId}/tables/${id}`;
-    console.log('[DEBUG] Đang thực thi DELETE request với URL ĐẦY ĐỦ là:', url);
-
-    const response = await axiosInstance.delete<ApiResponse<void>>(url);
+    const response = await axiosInstance.delete<ApiResponse<void>>(
+      `/branches/${branchId}/tables/${id}`
+    );
 
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Không thể xóa bàn');
@@ -275,12 +236,63 @@ export const tableService = {
       throw new Error(response.data.error?.message || 'Không thể tải danh sách khu vực');
     }
 
-    return (response.data.data || []).map((zone: BackendZoneResponse) => ({
-      id: zone.id,
-      branchId: zone.branchId,
-      name: zone.name,
-      floorNumber: zone.floorNumber,
-    }));
+    return (response.data.data || []).map(mapZoneResponse);
+  },
+
+  /**
+   * Tạo khu vực mới - POST /branches/{branchId}/zones
+   * Body theo CreateTableZoneRequest: { name, floorNumber }
+   */
+  createZone: async (payload: CreateZonePayload): Promise<TableArea> => {
+    const branchId = getCurrentBranchId();
+    const response = await axiosInstance.post<ApiResponse<BackendZoneResponse>>(
+      `/branches/${branchId}/zones`,
+      {
+        name: payload.name,
+        floorNumber: payload.floorNumber,
+      }
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Không thể tạo khu vực');
+    }
+
+    return mapZoneResponse(response.data.data);
+  },
+
+  /**
+   * Cập nhật khu vực - PUT /branches/{branchId}/zones/{zoneId}
+   * Body theo UpdateTableZoneRequest: { name, floorNumber }
+   */
+  updateZone: async (id: string, payload: UpdateZonePayload): Promise<TableArea> => {
+    const branchId = getCurrentBranchId();
+    const response = await axiosInstance.put<ApiResponse<BackendZoneResponse>>(
+      `/branches/${branchId}/zones/${id}`,
+      {
+        name: payload.name,
+        floorNumber: payload.floorNumber,
+      }
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Không thể cập nhật khu vực');
+    }
+
+    return mapZoneResponse(response.data.data);
+  },
+
+  /**
+   * Xóa khu vực - DELETE /branches/{branchId}/zones/{zoneId}
+   */
+  deleteZone: async (id: string): Promise<void> => {
+    const branchId = getCurrentBranchId();
+    const response = await axiosInstance.delete<ApiResponse<void>>(
+      `/branches/${branchId}/zones/${id}`
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.error?.message || 'Không thể xóa khu vực');
+    }
   },
 
   /**

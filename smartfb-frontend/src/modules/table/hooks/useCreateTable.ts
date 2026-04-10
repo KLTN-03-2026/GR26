@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { useToast } from '@shared/hooks/useToast';
-import { tableService } from '../services/tableService';
-import type { CreateTablePayload, TableItem } from '../types/table.types';
+import { tableService } from '@modules/table/services/tableService';
+import type { CreateTablePayload, TableItem } from '@modules/table/types/table.types';
 
+/**
+ * Hook tạo mới một bàn và đồng bộ lại cache liên quan.
+ */
 export const useCreateTable = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
@@ -17,8 +20,7 @@ export const useCreateTable = () => {
       // Invalidate tất cả queries liên quan
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
-      // Zones cũng có thể thay đổi nếu tạo bàn trong zone mới
-      queryClient.invalidateQueries({ queryKey: ['tables', 'zones'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tables.zones });
       success('Tạo bàn thành công', `Bàn ${data.name} đã được tạo`);
     },
     onError: (err) => {

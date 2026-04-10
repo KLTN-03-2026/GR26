@@ -1,131 +1,139 @@
-import { Plus, FilterX, Search } from 'lucide-react';
+import { FilterX, Layers3, MapPinned, Plus, Search, SquarePen } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@shared/components/ui/dropdown-menu';
 import type { TableFilters } from '@modules/table/types/table.types';
-import { TableUsageStatusValues } from '@modules/table/types/table.types';
 import { FilterDropdown } from './FilterDropdown';
 
 interface TableFilterBarProps {
   filters: TableFilters;
-  areas: string[];
-  branches: string[];
+  areas: Array<{ value: string; label: string }>;
   onSearchChange: (value: string) => void;
   onAreaChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
-  onUsageStatusChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
+  onStateChange: (value: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
-  onAddTable: () => void;
+  onCreateSingleTable: () => void;
+  onCreateBulkTables: () => void;
+  onManageZones: () => void;
   disabled?: boolean;
 }
 
 export const TableFilterBar = ({
   filters,
   areas,
-  branches,
   onSearchChange,
   onAreaChange,
-  onStatusChange,
-  onUsageStatusChange,
-  onBranchChange,
+  onStateChange,
   onClearFilters,
   hasActiveFilters,
-  onAddTable,
+  onCreateSingleTable,
+  onCreateBulkTables,
+  onManageZones,
   disabled = false,
 }: TableFilterBarProps) => {
-  const areaOptions = areas.map((area) => ({ value: area, label: area }));
-  const branchOptions = branches.map((branch) => ({ value: branch, label: branch }));
-
-  const statusOptions = [
+  const stateOptions = [
     { value: 'active', label: 'Hoạt động' },
-    { value: 'inactive', label: 'Ngưng hoạt động' },
-  ];
-
-  const usageOptions = [
-    { value: TableUsageStatusValues.AVAILABLE, label: 'Trống' },
-    { value: TableUsageStatusValues.OCCUPIED, label: 'Đang phục vụ' },
-    { value: TableUsageStatusValues.UNPAID, label: 'Chưa thanh toán' },
-    { value: TableUsageStatusValues.RESERVED, label: 'Đã đặt trước' },
+    { value: 'occupied', label: 'Có khách' },
+    { value: 'inactive', label: 'Không hoạt động' },
   ];
 
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
+    <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="relative min-w-[240px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Tìm theo tên bàn..."
+            value={filters.search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            disabled={disabled}
+          />
+        </div>
 
-      {/* Ô tìm kiếm - Tăng chiều dài */}
-      <div className="relative flex-1 min-w-[280px] md:max-w-[400px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Tìm kiếm bàn theo tên..."
-          value={filters.search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-          disabled={disabled}
-        />
-      </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto">
+          <FilterDropdown
+            value={filters.area}
+            onChange={onAreaChange}
+            options={areas}
+            placeholder="Khu vực"
+            className="w-full sm:w-[180px]"
+          />
 
-      {/* Bộ lọc khu vực - Tăng độ dài */}
-      <FilterDropdown
-        value={filters.area}
-        onChange={onAreaChange}
-        options={areaOptions}
-        placeholder="Tất cả khu vực"
-        className="w-44 md:w-52"
-      />
+          <FilterDropdown
+            value={filters.state}
+            onChange={onStateChange}
+            options={stateOptions}
+            placeholder="Trạng thái"
+            className="w-full sm:w-[190px]"
+          />
+        </div>
 
-      {/* Chỉ hiển thị branch filter nếu có nhiều hơn 1 branch */}
-      {branches.length > 1 && (
-        <FilterDropdown
-          value={filters.branch}
-          onChange={onBranchChange}
-          options={branchOptions}
-          placeholder="Tất cả chi nhánh"
-          className="w-44 md:w-52"
-        />
-      )}
+        <div className="flex flex-wrap items-center gap-2 xl:ml-auto">
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearFilters}
+              disabled={disabled}
+              className="h-10 rounded-xl px-4 text-gray-500 transition-all hover:bg-red-50 hover:text-red-600"
+            >
+              <FilterX className="mr-1.5 h-4 w-4" />
+              Xóa lọc
+            </Button>
+          )}
 
-      {/* Bộ lọc trạng thái hoạt động */}
-      <FilterDropdown
-        value={filters.status}
-        onChange={onStatusChange}
-        options={statusOptions}
-        placeholder="Tất cả trạng thái"
-        className="w-40 md:w-48"
-      />
-
-      {/* Bộ lọc trạng thái sử dụng */}
-      <FilterDropdown
-        value={filters.usageStatus}
-        onChange={onUsageStatusChange}
-        options={usageOptions}
-        placeholder="Tất cả trạng thái SD"
-        className="w-44 md:w-52"
-      />
-
-      {/* Nút xóa lọc */}
-      {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClearFilters}
-          disabled={disabled}
-          className="h-10 px-4 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-        >
-          <FilterX className="h-4 w-4 mr-1.5" />
-          Xóa lọc
-        </Button>
-      )}
-
-      {/* Nút thêm bàn */}
-      <div className="flex-1 md:flex-none md:ml-auto">
-        <Button
-          onClick={onAddTable}
-          disabled={disabled}
-          className="h-10 px-5 gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl shadow-sm hover:shadow-md transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Thêm bàn
-        </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={disabled}
+                className="h-10 gap-2 rounded-xl bg-primary px-5 text-white shadow-sm transition-all hover:bg-primary-hover hover:shadow-md"
+              >
+                <Plus className="h-4 w-4" />
+                Tạo mới
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 rounded-xl border-gray-100 p-2 shadow-lg">
+              <DropdownMenuLabel>Quản lý bàn và khu vực</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onManageZones} className="cursor-pointer gap-3 rounded-lg py-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <MapPinned className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">Quản lý khu vực</span>
+                  <span className="text-xs text-gray-500">Tạo mới, sửa và xóa khu vực trong modal</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCreateSingleTable} className="cursor-pointer gap-3 rounded-lg py-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                  <SquarePen className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">Tạo từng bàn</span>
+                  <span className="text-xs text-gray-500">Nhập thủ công cho một bàn</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCreateBulkTables} className="cursor-pointer gap-3 rounded-lg py-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                  <Layers3 className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">Tạo hàng loạt</span>
+                  <span className="text-xs text-gray-500">Sinh nhiều bàn theo tiền tố và số thứ tự</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

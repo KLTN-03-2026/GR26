@@ -12,18 +12,18 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] })
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      "@assets": path.resolve(__dirname, './src/assets'),
-      "@layouts": path.resolve(__dirname, './src/layouts'),
-      "@lib": path.resolve(__dirname, './src/lib'),
-      "@data": path.resolve(__dirname, './src/data'),
-      "@modules": path.resolve(__dirname, './src/modules'),
-      "@pages": path.resolve(__dirname, './src/pages'),
-      "@providers": path.resolve(__dirname, './src/providers'),
-      "@routes": path.resolve(__dirname, './src/routes'),
-      "@shared": path.resolve(__dirname, './src/shared')
-    },
+    alias: [
+      { find: '@assets', replacement: path.resolve(__dirname, './src/assets') },
+      { find: '@layouts', replacement: path.resolve(__dirname, './src/layouts') },
+      { find: '@lib', replacement: path.resolve(__dirname, './src/lib') },
+      { find: '@data', replacement: path.resolve(__dirname, './src/data') },
+      { find: '@modules', replacement: path.resolve(__dirname, './src/modules') },
+      { find: '@pages', replacement: path.resolve(__dirname, './src/pages') },
+      { find: '@providers', replacement: path.resolve(__dirname, './src/providers') },
+      { find: '@routes', replacement: path.resolve(__dirname, './src/routes') },
+      { find: '@shared', replacement: path.resolve(__dirname, './src/shared') },
+      { find: '@', replacement: path.resolve(__dirname, './src') }
+    ],
   }, 
   server: {
     proxy: {
