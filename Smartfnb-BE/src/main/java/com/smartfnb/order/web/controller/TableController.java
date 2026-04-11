@@ -43,7 +43,7 @@ public class TableController {
      * @return danh sách bàn với tọa độ và trạng thái
      */
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'ORDER_VIEW')")
+    @PreAuthorize("hasPermission(null, 'TABLE_VIEW')")
     @Operation(summary = "Sơ đồ bàn — toàn bộ bàn chưa xóa trong chi nhánh")
     public ResponseEntity<ApiResponse<List<TableResponse>>> listTables(
             @PathVariable UUID branchId) {
@@ -60,7 +60,7 @@ public class TableController {
      * @return thông tin bàn
      */
     @GetMapping("/{tableId}")
-    @PreAuthorize("hasPermission(null, 'ORDER_VIEW')")
+    @PreAuthorize("hasPermission(null, 'TABLE_VIEW')")
     @Operation(summary = "Chi tiết bàn")
     public ResponseEntity<ApiResponse<TableResponse>> getTableById(
             @PathVariable UUID branchId,
@@ -78,7 +78,7 @@ public class TableController {
      * @return số bàn đang có khách
      */
     @GetMapping("/stats/occupied-count")
-    @PreAuthorize("hasPermission(null, 'ORDER_VIEW')")
+    @PreAuthorize("hasPermission(null, 'TABLE_VIEW')")
     @Operation(summary = "Số bàn đang có khách")
     public ResponseEntity<ApiResponse<Long>> countOccupied(@PathVariable UUID branchId) {
         long count = tableQueryHandler.countOccupiedTables(branchId);
@@ -93,7 +93,7 @@ public class TableController {
      * @return thông tin bàn vừa tạo
      */
     @PostMapping
-    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    @PreAuthorize("hasPermission(null, 'TABLE_EDIT')")
     @Operation(summary = "Tạo bàn mới")
     public ResponseEntity<ApiResponse<TableResponse>> createTable(
             @PathVariable UUID branchId,
@@ -112,7 +112,7 @@ public class TableController {
      * @return thông tin bàn sau cập nhật
      */
     @PutMapping("/{tableId}")
-    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    @PreAuthorize("hasPermission(null, 'TABLE_EDIT')")
     @Operation(summary = "Cập nhật thông tin bàn")
     public ResponseEntity<ApiResponse<TableResponse>> updateTable(
             @PathVariable UUID branchId,
@@ -132,7 +132,7 @@ public class TableController {
      * @return 204 No Content
      */
     @DeleteMapping("/{tableId}")
-    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    @PreAuthorize("hasPermission(null, 'TABLE_EDIT')")
     @Operation(summary = "Xóa bàn (soft delete)")
     public ResponseEntity<Void> deleteTable(
             @PathVariable UUID branchId,
@@ -152,7 +152,7 @@ public class TableController {
      * @return 200 OK sau khi lưu và broadcast thành công
      */
     @PutMapping("/positions")
-    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    @PreAuthorize("hasPermission(null, 'TABLE_EDIT')")
     @Operation(summary = "Batch update vị trí bàn (Drag & Drop) — broadcast WebSocket")
     public ResponseEntity<ApiResponse<Void>> batchUpdatePositions(
             @PathVariable UUID branchId,

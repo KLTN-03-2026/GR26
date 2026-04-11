@@ -4,6 +4,7 @@ import com.smartfnb.auth.application.dto.AuthResponse;
 import com.smartfnb.auth.infrastructure.jwt.JwtService;
 import com.smartfnb.auth.infrastructure.persistence.UserJpaEntity;
 import com.smartfnb.auth.infrastructure.persistence.UserRepository;
+import com.smartfnb.branch.infrastructure.persistence.BranchJpaRepository;
 import com.smartfnb.rbac.domain.service.PermissionService;
 import com.smartfnb.shared.exception.SmartFnbException;
 import io.jsonwebtoken.Claims;
@@ -35,6 +36,7 @@ public class RefreshTokenCommandHandler {
     private final JwtService      jwtService;
     private final UserRepository   userRepository;
     private final PermissionService permissionService;
+    private final BranchJpaRepository branchRepository;
 
     /**
      * Làm mới access token từ refresh token hợp lệ.
@@ -80,10 +82,25 @@ public class RefreshTokenCommandHandler {
         String       primaryRole = roleNames.isEmpty() ? "STAFF" : roleNames.get(0);
         List<String> permissions = permissionService.getPermissionCodes(user.getId(), user.getTenantId());
 
-        String newAccessToken = jwtService.generateAccessToken(
-                userId, user.getTenantId(), primaryRole, permissions, null);
+        // 6. Parse branchId từ command (FE gửi kèm để giữ nguyên context chi nhánh sau refresh)
+        UUID branchId = null;
+        String branchName = null;
+        if (command.branchId() != null && !command.branchId().isBlank()) {
+            try {
+                branchId = UUID.fromString(command.branchId());
+                UUID finalBranchId = branchId;
+                branchName = branchRepository.findById(branchId)
+                        .map(b -> b.getName()).orElse(null);
+            } catch (IllegalArgumentException e) {
+                log.warn("branchId không hợp lệ trong refresh request: {}", command.branchId());
+            }
+        }
 
-        log.info("Refresh token thành công — userId: {}", userId);
+        // 7. Tạo access token mới — có branchId nếu FE truyền vào
+        String newAccessToken = jwtService.generateAccessToken(
+                userId, user.getTenantId(), primaryRole, permissions, branchId);
+
+        log.info("Refresh token thành công — userId: {}, branchId: {}", userId, branchId);
 
         return AuthResponse.of(
                 newAccessToken,
@@ -91,7 +108,10 @@ public class RefreshTokenCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 userId.toString(),
                 user.getTenantId().toString(),
-                primaryRole
+                primaryRole,
+                branchId != null ? branchId.toString() : null,
+                branchName,
+                user.getFullName()
         );
     }
 }

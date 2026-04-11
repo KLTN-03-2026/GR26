@@ -38,7 +38,14 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
   {
     "accessToken": "ey...",
     "refreshToken": "ey...",
-    "user": { "id": "uuid", "fullName": "Nguyễn Văn A", "role": "OWNER" }
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "userId": "uuid",
+    "tenantId": "uuid",
+    "role": "OWNER",
+    "branchId": "uuid-chi-nhanh", // null nếu chưa chọn chi nhánh
+    "branchName": "Tên chi nhánh", // null nếu chưa chọn chi nhánh
+    "fullName": "Nguyễn Văn A"
   }
   ```
 
@@ -67,16 +74,18 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
   ```
 - **Response `data`:** Tương tự `login`.
 
-### 1.4 Làm mới Token (Refresh Token)
+- **Model Note:** Khi làm mới token, bạn CẦN gửi kèm `branchId` (chọn từ trước) để Backend duy trì context chi nhánh trong access token mới. Nếu không gửi, token sẽ không có quyền thao tác trên chi nhánh.
+- **Role Note:** Token mới được cấp SẼ VẪN CHỨA QUYỀN (`role`, `permissions`) hiện tại của Account trong DB.
 
 - **Method:** `POST /refresh`
 - **Request Body:**
   ```json
   {
-    "refreshToken": "ey..." // Token được lấy từ lúc login
+    "refreshToken": "ey...", // Token được lấy từ lúc login
+    "branchId": "uuid-chi-nhanh" // (Optional) Truyền ID chi nhánh đang làm việc để giữ branch context
   }
   ```
-- **Response `data`:** Cấp lại Access Token và Refresh Token mới.
+- **Response `data`:** Cấp lại Access Token và Refresh Token mới. (Role, FullName và thông tin Branch vẫn được trả ra tương tự như lúc Login).
 
 ### 1.5 Đổi Scope làm việc sang 1 Chi nhánh
 
@@ -88,7 +97,7 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
     "branchId": "uuid-cua-chi-nhanh"
   }
   ```
-- **Response `data`:** Trả về Token mới có chứa `branchId`. FE lưu lại token này để gọi các API POS tiếp theo.
+- **Response `data`:** Trả về Token mới có chứa đầy đủ thông tin `branchId`, `branchName` và `fullName`. FE lưu lại token này để gọi các API POS tiếp theo.
 
 ### 1.6 Quên mật khẩu (Flow 3 bước)
 
@@ -311,6 +320,8 @@ _(Yêu cầu URL luôn chứa `branchId` hiện tại của người thao tác)_
 - `PUT /zones/{zoneId}` & `DELETE /zones/{zoneId}`
 
 ### 5.2 Quản lý Sơ đồ Bàn (Tables)
+
+> **Permission Note:** Các thao tác xem Sơ đồ Bàn yêu cầu quyền `TABLE_VIEW`. Các thao tác CRUD (Tạo, Sửa, Xóa, kéo thả) yêu cầu quyền `TABLE_EDIT`. (Hệ thống đã tự động cấp các quyền này cho các role cũ dựa trên `ORDER_VIEW` và `BRANCH_EDIT`).
 
 - `GET /tables` - Lấy array List trải phẳng các bàn (chứa `id`, `name`, `status`, `zoneId`, `positionX`, `positionY`, `shape`) -> Render giao diện Grid kéo thả.
 - `GET /tables/stats/occupied-count` - Widget: Đếm số bàn có khách (OCCUPIED).
