@@ -119,6 +119,8 @@ E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\Can
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\PlaceOrderCommand.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\PlaceOrderCommandHandler.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\TableCommandHandler.java
+E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\UpdateOrderCommand.java
+E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\UpdateOrderCommandHandler.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\UpdateOrderStatusCommand.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\command\UpdateOrderStatusCommandHandler.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\CancelOrderRequest.java
@@ -130,6 +132,7 @@ E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\PlaceOr
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\TablePositionItem.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\TableResponse.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\TableZoneResponse.java
+E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\UpdateOrderRequest.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\UpdateOrderStatusRequest.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\UpdateTablePositionsRequest.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\application\dto\UpdateTableRequest.java
@@ -143,6 +146,7 @@ E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\event\OrderCance
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\event\OrderCompletedEvent.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\event\OrderCreatedEvent.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\event\OrderStatusChangedEvent.java
+E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\event\OrderUpdatedEvent.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\exception\DuplicateTableNameException.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\exception\DuplicateZoneNameException.java
 E:\SmartFnB\Smartfnb-BE\src\main\java\com\smartfnb\order\domain\exception\InvalidOrderStatusTransitionException.java

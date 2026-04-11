@@ -503,6 +503,42 @@ stompClient.connect(
 3. **Waiter:** Subscribe `/topic/orders/{branchId}` + show từng item trong order → phục vụ từng phần.
 4. **Quản lý:** Có thể không subscribe, chỉ query API `GET /api/v1/orders` định kỳ hoặc theo nhu cầu.
 
+### 6.7 Cập nhật thông tin đơn hàng (Sửa món/Bàn/Ghi chú)
+
+- **Method:** `PUT /{orderId}`
+- **Headers:** Bearer Token
+- **Mô tả:** Cho phép nhân viên sửa thông tin bàn, ghi chú hoặc thay đổi danh sách món ăn (thêm món, bớt món, đổi số lượng). 
+- **⚠️ Lưu ý quan trọng:** API này sử dụng cơ chế **đồng bộ toàn phần** danh sách món ăn.
+  - Những món có `id` trùng với món đang có trong đơn: Sẽ được cập nhật thông tin.
+  - Những món **không có id**: Sẽ được thêm mới vào đơn.
+  - Những món đang có trong đơn nhưng **không xuất hiện** trong request này: Sẽ bị **xoá hẳn** khỏi đơn hàng.
+- **Request Body:**
+  ```json
+  {
+    "tableId": "uuid-ban-moi",
+    "notes": "Ghi chú đã sửa",
+    "items": [
+      {
+        "id": "uuid-item-dang-co-trong-don", // Bắt buộc nếu muốn cập nhật món cũ
+        "itemId": "uuid-mon-an",
+        "itemName": "Cà phê Sữa Đá",
+        "quantity": 3,
+        "unitPrice": 35000,
+        "addons": "Ít đá",
+        "notes": "Làm nhanh"
+      },
+      {
+        "itemId": "uuid-mon-moi", // Thêm món mới vào đơn
+        "itemName": "Bánh mì quay",
+        "quantity": 1,
+        "unitPrice": 25000
+      }
+    ]
+  }
+  ```
+- **Response `data`:** Object OrderResponse với các thông tin và `totalAmount` đã được cập nhật.
+- **Broadcast WebSocket:** Tự động bắn event `OrderUpdatedEvent` để các màn hình khác (Bếp/Thu ngân) nhận được thông báo thay đổi.
+
 ---
 
 ## 📦 7. MODULE THANH TOÁN (PAYMENT) - Prefix: `/api/v1/payments` & `/api/v1/invoices`

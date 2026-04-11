@@ -1,3 +1,4 @@
+com\smartfnb\order\application\dto\UpdateOrderRequest.class
 com\smartfnb\shared\exception\SmartFnbException.class
 com\smartfnb\shared\config\WebSocketConfig.class
 com\smartfnb\order\infrastructure\persistence\OrderJpaRepository.class
@@ -76,6 +77,7 @@ com\smartfnb\plan\infrastructure\persistence\SubscriptionJpaEntity$SubscriptionJ
 com\smartfnb\payment\application\command\ProcessQRPaymentCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommandHandler.class
 com\smartfnb\shift\infrastructure\persistence\ShiftTemplateJpaRepository.class
+com\smartfnb\order\application\command\UpdateOrderCommand$UpdateOrderItemCommand.class
 com\smartfnb\menu\application\dto\UpdateMenuItemRequest.class
 com\smartfnb\staff\application\command\DeactivateStaffCommand.class
 com\smartfnb\staff\infrastructure\persistence\StaffJpaEntity.class
@@ -264,8 +266,10 @@ com\smartfnb\inventory\infrastructure\persistence\AuditLogJpaEntity.class
 com\smartfnb\order\application\dto\UpdateTableZoneRequest.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommand.class
 com\smartfnb\auth\infrastructure\jwt\JwtAuthFilter.class
+com\smartfnb\order\application\command\UpdateOrderCommandHandler.class
 com\smartfnb\payment\infrastructure\persistence\PaymentJpaEntity.class
 com\smartfnb\menu\application\dto\SetBranchItemPriceRequest.class
+com\smartfnb\order\application\command\UpdateOrderCommand.class
 com\smartfnb\order\application\query\GetOrderListQuery.class
 com\smartfnb\rbac\infrastructure\persistence\RoleJpaRepository.class
 com\smartfnb\menu\web\controller\BranchItemController.class
@@ -366,6 +370,7 @@ com\smartfnb\staff\application\command\CreatePositionCommand.class
 com\smartfnb\supplier\domain\event\PurchaseOrderReceivedEvent$ReceivedItem.class
 com\smartfnb\menu\infrastructure\persistence\CategoryJpaRepository.class
 com\smartfnb\staff\application\query\RolePermissionMatrixResult$PermissionInfo.class
+com\smartfnb\order\application\dto\UpdateOrderRequest$UpdateOrderItemRequest.class
 com\smartfnb\shared\config\AuditConfig.class
 com\smartfnb\supplier\application\command\CreateSupplierCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommand$PurchaseOrderItemCmd.class
@@ -393,6 +398,7 @@ com\smartfnb\order\application\dto\PlaceOrderRequest$OrderItemRequest.class
 com\smartfnb\shift\application\command\UpdateShiftTemplateCommand.class
 com\smartfnb\order\application\dto\TableResponse.class
 com\smartfnb\inventory\infrastructure\persistence\AuditLogJpaRepository.class
+com\smartfnb\order\domain\event\OrderUpdatedEvent.class
 com\smartfnb\auth\infrastructure\persistence\PlanJpaEntity.class
 com\smartfnb\order\infrastructure\persistence\OrderItemJpaEntity.class
 com\smartfnb\shift\domain\event\StaffCheckedInEvent.class

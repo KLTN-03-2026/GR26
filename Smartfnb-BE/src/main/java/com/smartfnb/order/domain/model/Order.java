@@ -118,6 +118,46 @@ public class Order {
         }
     }
 
+    /**
+     * Cập nhật thông tin đơn hàng.
+     * Chỉ cho phép khi đơn ở trạng thái PENDING hoặc PROCESSING.
+     */
+    public void update(UUID tableId, String notes, List<OrderItem> newItems) {
+        if (this.status == OrderStatus.COMPLETED || this.status == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Không thể cập nhật đơn hàng đã hoàn tất hoặc đã huỷ.");
+        }
+
+        this.tableId = tableId;
+        this.notes = notes;
+
+        // Logic đồng bộ danh sách món ăn
+        // 1. Xoá các món không còn trong danh sách mới
+        this.items.removeIf(existing -> newItems.stream()
+                .noneMatch(n -> n.getId() != null && n.getId().equals(existing.getId())));
+
+        // 2. Cập nhật món cũ hoặc thêm món mới
+        for (OrderItem newItem : newItems) {
+            if (newItem.getId() != null) {
+                // Tìm món cũ để update
+                this.items.stream()
+                        .filter(existing -> existing.getId().equals(newItem.getId()))
+                        .findFirst()
+                        .ifPresent(existing -> existing.update(
+                                newItem.getQuantity(),
+                                newItem.getUnitPrice(),
+                                newItem.getAddons(),
+                                newItem.getNotes()
+                        ));
+            } else {
+                // Món mới (không có ID)
+                newItem.init();
+                this.items.add(newItem);
+            }
+        }
+
+        this.calculateTotals();
+    }
+
     // Builder methods for reconstituting from Repository/Entity
     public static Order reconstruct(
             UUID id, UUID tenantId, UUID branchId, UUID posSessionId, UUID userId, UUID tableId,
