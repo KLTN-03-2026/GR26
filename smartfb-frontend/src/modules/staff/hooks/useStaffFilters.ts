@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { StaffSummary, StaffFilters, PaginationState } from '../types/staff.types';
 
 const PAGE_SIZE = 10;
@@ -15,10 +15,9 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     positionId: undefined,
   });
 
-  const [pagination, setPagination] = useState<PaginationState>({
+  const [pagination, setPagination] = useState<Omit<PaginationState, 'total'>>({
     page: 1,
     pageSize: PAGE_SIZE,
-    total: 0,
   });
 
   // Lấy danh sách unique position names từ staff
@@ -66,13 +65,6 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     };
   }, [filteredStaff, pagination.page, pagination.pageSize]);
 
-  // Update pagination total when filtered results change
-  useEffect(() => {
-    if (pagination.total !== totalItems) {
-      setPagination(prev => ({ ...prev, total: totalItems }));
-    }
-  }, [totalItems, pagination.total]);
-
   const updateFilter = useCallback((key: keyof StaffFilters, value: string | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -80,7 +72,7 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
 
   const clearFilters = useCallback(() => {
     setFilters({ keyword: '', status: undefined, positionId: undefined });
-    setPagination({ page: 1, pageSize: PAGE_SIZE, total: 0 });
+    setPagination({ page: 1, pageSize: PAGE_SIZE });
   }, []);
 
   const updatePage = useCallback((page: number) => {
@@ -93,7 +85,10 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
 
   return {
     filters,
-    pagination,
+    pagination: {
+      ...pagination,
+      total: totalItems,
+    },
     positions,
     staff: paginatedStaff,
     totalItems,
@@ -101,6 +96,6 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     updateFilter,
     clearFilters,
     updatePage,
-    totalPages: Math.ceil(pagination.total / pagination.pageSize),
+    totalPages: Math.ceil(totalItems / pagination.pageSize),
   };
 };

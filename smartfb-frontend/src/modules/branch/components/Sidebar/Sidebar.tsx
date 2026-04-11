@@ -3,6 +3,7 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import { BrandLogo } from '@shared/components/layout/BrandLogo';
 import { ROUTES } from '@shared/constants/routes';
 import { usePermission } from '@shared/hooks/usePermission';
+import { hasAccess } from '@shared/utils/accessControl';
 import { cn } from '@shared/utils/cn';
 import { ChevronDown, LogOut, Package } from 'lucide-react';
 import { type FC, useState } from 'react';
@@ -40,7 +41,7 @@ export const Sidebar: FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isOwner, userRole } = usePermission();
+  const { isOwner, permissions, userRole } = usePermission();
   const user = useAuthStore((state) => state.user);
   const clearAuthSession = useAuthStore((state) => state.clearAuthSession);
 
@@ -68,20 +69,24 @@ export const Sidebar: FC<SidebarProps> = ({
   const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
     return items
       .filter((item) => {
-        if (!item.roles) {
-          return true;
-        }
-
-        return item.roles.includes(userRole);
+        return hasAccess(
+          { role: userRole, permissions },
+          {
+            roles: item.roles,
+            requiredPermissions: item.requiredPermissions ? [...item.requiredPermissions] : undefined,
+          }
+        );
       })
       .map((item) => ({
         ...item,
         children: item.children?.filter((child) => {
-          if (!child.roles) {
-            return true;
-          }
-
-          return child.roles.includes(userRole);
+          return hasAccess(
+            { role: userRole, permissions },
+            {
+              roles: child.roles,
+              requiredPermissions: child.requiredPermissions ? [...child.requiredPermissions] : undefined,
+            }
+          );
         }),
       }));
   };

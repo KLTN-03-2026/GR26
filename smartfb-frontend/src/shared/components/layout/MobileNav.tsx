@@ -5,11 +5,15 @@ import {
   ClipboardList,
   Table,
   ChefHat,
+  CreditCard,
   MoreHorizontal,
   X,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
+import { ROLES } from '@shared/constants/roles';
+import { hasAccess } from '@shared/utils/accessControl';
 import { ROUTES } from '@shared/constants/routes';
 import { cn } from '@shared/utils/cn';
 import { menuConfig } from '@data/menuConfig';
@@ -25,25 +29,129 @@ interface MobileNavProps {
   onOpenFullMenu: () => void;
 }
 
+interface BottomNavRouteItem {
+  label: string;
+  icon: FC<{ className?: string }>;
+  ownerLabel: string;
+  staffLabel: string;
+  ownerIcon: FC<{ className?: string }>;
+  staffIcon: FC<{ className?: string }>;
+  ownerPath: string;
+  staffPath: string;
+  staffPermissions: readonly string[];
+}
+
+interface BottomNavActionItem {
+  label: string;
+  icon: FC<{ className?: string }>;
+  path: null;
+  action: 'open-menu';
+}
+
+type BottomNavItem = BottomNavRouteItem | BottomNavActionItem;
+
+interface ResolvedBottomNavItem {
+  label: string;
+  icon: FC<{ className?: string }>;
+  path: string | null;
+  action?: 'open-menu';
+}
+
+const isBottomNavActionItem = (
+  item: BottomNavItem | ResolvedBottomNavItem
+): item is BottomNavActionItem => {
+  return 'action' in item && item.action === 'open-menu';
+};
+
 // 5 menu items chính cho bottom nav
-const BOTTOM_NAV_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD },
-  { label: 'Đơn hàng', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT },
-  { label: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES },
-  { label: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU },
+const BOTTOM_NAV_ITEMS: readonly BottomNavItem[] = [
+  {
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    ownerLabel: 'Dashboard',
+    staffLabel: 'Dashboard',
+    ownerIcon: LayoutDashboard,
+    staffIcon: LayoutDashboard,
+    ownerPath: ROUTES.OWNER.DASHBOARD,
+    staffPath: ROUTES.STAFF.DASHBOARD,
+    staffPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD,
+  },
+  {
+    label: 'Order',
+    icon: ClipboardList,
+    ownerLabel: 'Đơn hàng',
+    staffLabel: 'Order',
+    ownerIcon: ClipboardList,
+    staffIcon: ClipboardList,
+    ownerPath: ROUTES.POS_MANAGEMENT,
+    staffPath: ROUTES.POS_ORDER,
+    staffPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
+  },
+  {
+    label: 'Bàn',
+    icon: Table,
+    ownerLabel: 'Bàn',
+    staffLabel: 'Bàn',
+    ownerIcon: Table,
+    staffIcon: Table,
+    ownerPath: ROUTES.OWNER.TABLES,
+    staffPath: ROUTES.STAFF.TABLES,
+    staffPermissions: STAFF_ROUTE_PERMISSIONS.TABLES,
+  },
+  {
+    label: 'Thanh toán',
+    icon: ChefHat,
+    ownerLabel: 'Kho',
+    staffLabel: 'Thanh toán',
+    ownerIcon: ChefHat,
+    staffIcon: CreditCard,
+    ownerPath: ROUTES.OWNER.INVENTORY,
+    staffPath: ROUTES.POS_PAYMENT,
+    staffPermissions: STAFF_ROUTE_PERMISSIONS.POS_PAYMENT,
+  },
   { label: 'Thêm', icon: MoreHorizontal, path: null, action: 'open-menu' },
 ];
 
 export const MobileNav: FC<MobileNavProps> = ({ onOpenFullMenu }) => {
   const location = useLocation();
+  const { permissions, userRole } = usePermission();
+
+  const primaryItems: ResolvedBottomNavItem[] = BOTTOM_NAV_ITEMS.filter((item) => {
+    if (isBottomNavActionItem(item)) {
+      return true;
+    }
+
+    if (userRole === ROLES.OWNER) {
+      return true;
+    }
+
+    return hasAccess(
+      { role: userRole, permissions },
+      {
+        roles: [ROLES.STAFF],
+        requiredPermissions: [...item.staffPermissions],
+      }
+    );
+  }).map((item) => {
+    if (isBottomNavActionItem(item)) {
+      return item;
+    }
+
+    return {
+      ...item,
+      icon: userRole === ROLES.OWNER ? item.ownerIcon : item.staffIcon,
+      label: userRole === ROLES.OWNER ? item.ownerLabel : item.staffLabel,
+      path: userRole === ROLES.OWNER ? item.ownerPath : item.staffPath,
+    };
+  });
 
   return (
     <nav className="safe-area-bottom fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-border bg-card md:hidden">
       <div className="grid grid-cols-5 h-full">
-        {BOTTOM_NAV_ITEMS.map((item) => {
+        {primaryItems.map((item) => {
           const isActive = item.path && location.pathname === item.path;
 
-          if (item.action === 'open-menu' || !item.path) {
+          if (isBottomNavActionItem(item) || !item.path) {
             return (
               <button
                 key="more"
@@ -59,7 +167,7 @@ export const MobileNav: FC<MobileNavProps> = ({ onOpenFullMenu }) => {
           return (
             <Link
               key={item.path}
-              to={item.path!}
+              to={item.path}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 transition-colors',
                 isActive ? 'text-primary' : 'text-text-secondary hover:text-primary'
@@ -95,7 +203,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
   onBranchChange,
 }) => {
   const location = useLocation();
-  const { isOwner, userRole } = usePermission();
+  const { isOwner, permissions, userRole } = usePermission();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
 
@@ -226,20 +334,26 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
             {menuConfig.map((section) => {
               const filteredItems = section.items
                 .filter((item) => {
-                  if (!item.roles) {
-                    return true;
-                  }
-
-                  return item.roles.includes(userRole);
+                  return hasAccess(
+                    { role: userRole, permissions },
+                    {
+                      roles: item.roles,
+                      requiredPermissions: item.requiredPermissions ? [...item.requiredPermissions] : undefined,
+                    }
+                  );
                 })
                 .map((item) => ({
                   ...item,
                   children: item.children?.filter((child) => {
-                    if (!child.roles) {
-                      return true;
-                    }
-
-                    return child.roles.includes(userRole);
+                    return hasAccess(
+                      { role: userRole, permissions },
+                      {
+                        roles: child.roles,
+                        requiredPermissions: child.requiredPermissions
+                          ? [...child.requiredPermissions]
+                          : undefined,
+                      }
+                    );
                   }),
                 }));
               if (filteredItems.length === 0) return null;

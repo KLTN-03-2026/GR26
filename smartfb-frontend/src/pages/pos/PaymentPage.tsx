@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import { useProcessCashPayment } from '@modules/payment/hooks/useProcessCashPayment';
 import { useNavigate } from 'react-router-dom';
 import { PaymentEmptyState } from '@modules/order/components/payment-page/PaymentEmptyState';
 import { PaymentOrderSummary } from '@modules/order/components/payment-page/PaymentOrderSummary';
@@ -6,24 +9,52 @@ import {
   PaymentSidebar,
   type PaymentMethod,
 } from '@modules/order/components/payment-page/PaymentSidebar';
+import { ORDER_TAX_RATE } from '@modules/order/components/order-page/orderPage.utils';
 import { PaymentSuccessState } from '@modules/order/components/payment-page/PaymentSuccessState';
 import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
 import { useOrderStore } from '@modules/order/stores/orderStore';
+import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
+  const currentRole = useAuthStore((state) => state.user?.role);
   const { cart, tableContext, draftOrder, clearDraft } = useOrderStore();
   const hasCreatedOrder = Boolean(draftOrder.orderId);
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
-  const [amountReceived, setAmountReceived] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { subtotal, vatAmount, totalAmount } = useOrderPricing({
+    cart,
+    taxRate: ORDER_TAX_RATE,
+  });
 
-  const { subtotal, vatAmount, totalAmount } = useOrderPricing({ cart });
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
+  const [amountReceived, setAmountReceived] = useState(() =>
+    totalAmount > 0 ? String(totalAmount) : ''
+  );
+  const [isMockProcessing, setIsMockProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const processCashPaymentMutation = useProcessCashPayment();
   const amountReceivedValue = Number(amountReceived) || 0;
   const changeAmount = Math.max(0, amountReceivedValue - totalAmount);
+  const autoReturnDelayMs = 2500;
+  const isProcessing = processCashPaymentMutation.isPending || isMockProcessing;
+  const tableManagementRoute =
+    currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
+
+  useEffect(() => {
+    if (!isSuccess) {
+      return;
+    }
+
+    // Giữ màn hình thành công trong thời gian ngắn rồi quay lại khu vực bàn.
+    const autoReturnTimer = window.setTimeout(() => {
+      navigate(tableManagementRoute, { replace: true });
+    }, autoReturnDelayMs);
+
+    return () => {
+      window.clearTimeout(autoReturnTimer);
+    };
+  }, [autoReturnDelayMs, isSuccess, navigate, tableManagementRoute]);
 
   const canConfirmPayment =
     hasCreatedOrder &&
@@ -32,24 +63,52 @@ export default function PaymentPage() {
     (selectedMethod !== 'cash' || amountReceivedValue >= totalAmount);
 
   const handleConfirmPayment = () => {
-    if (!canConfirmPayment) {
+    if (!canConfirmPayment || !draftOrder.orderId) {
       return;
     }
 
-    setIsProcessing(true);
+    if (selectedMethod !== 'cash') {
+      // Chỉ gắn API thật cho tiền mặt ở task này.
+      setIsMockProcessing(true);
+      window.setTimeout(() => {
+        setIsMockProcessing(false);
+        setIsSuccess(true);
+        clearDraft();
+      }, 1200);
+      return;
+    }
 
-    window.setTimeout(() => {
-      setIsProcessing(false);
+    void processCashPaymentMutation.mutateAsync({
+      orderId: draftOrder.orderId,
+      amount: amountReceivedValue,
+    }).then((response) => {
+      if (!response.success) {
+        toast.error(response.error?.message ?? 'Không thể xử lý thanh toán tiền mặt');
+        return;
+      }
+
+      toast.success('Thanh toán tiền mặt thành công');
       setIsSuccess(true);
       clearDraft();
-    }, 1200);
+    }).catch(() => {
+      // Axios interceptor đã xử lý toast lỗi chung.
+    });
+  };
+
+  const handleSelectMethod = (method: PaymentMethod) => {
+    setSelectedMethod(method);
+
+    if (method === 'cash') {
+      // Với tiền mặt, mặc định điền đủ số tiền cần thanh toán để thu ngân chỉ sửa khi thật sự cần.
+      setAmountReceived(totalAmount > 0 ? String(totalAmount) : '');
+    }
   };
 
   if (isSuccess) {
     return (
       <PaymentSuccessState
         onPrint={() => window.print()}
-        onCreateNewOrder={() => navigate(ROUTES.POS_ORDER)}
+        onCreateNewOrder={() => navigate(tableManagementRoute, { replace: true })}
       />
     );
   }
@@ -78,7 +137,7 @@ export default function PaymentPage() {
         changeAmount={changeAmount}
         canConfirmPayment={canConfirmPayment}
         isProcessing={isProcessing}
-        onSelectMethod={setSelectedMethod}
+        onSelectMethod={handleSelectMethod}
         onAmountReceivedChange={setAmountReceived}
         onConfirmPayment={handleConfirmPayment}
       />

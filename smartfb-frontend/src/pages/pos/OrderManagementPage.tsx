@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { OrderManagementDetailPanel } from '@modules/order/components/order-management/OrderManagementDetailPanel';
 import { OrderManagementHeader } from '@modules/order/components/order-management/OrderManagementHeader';
 import { OrderManagementList } from '@modules/order/components/order-management/OrderManagementList';
-import { getOrderSummaryCards } from '@modules/order/components/order-management/orderManagement.utils';
+import {
+  buildOrderPageSearchParams,
+  getOrderSummaryCards,
+} from '@modules/order/components/order-management/orderManagement.utils';
+import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
 import { useOrderStore } from '@modules/order/stores/orderStore';
-import type { OrderStatus } from '@modules/order/types/order.types';
+import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
+import { ROUTES } from '@shared/constants/routes';
 
 const OrderManagementPage = () => {
+  const navigate = useNavigate();
   const { orders, fetchOrders, isLoading, updateOrderStatus } = useOrderStore();
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +43,7 @@ const OrderManagementPage = () => {
     });
   }, [activeTab, normalizedSearchQuery, orders]);
 
-  const selectedOrder = useMemo(() => {
+  const selectedOrderSummary = useMemo(() => {
     if (filteredOrders.length === 0) {
       return null;
     }
@@ -48,18 +55,46 @@ const OrderManagementPage = () => {
     return filteredOrders.find((order) => order.id === selectedOrderId) ?? filteredOrders[0];
   }, [filteredOrders, selectedOrderId]);
 
+  const selectedOrderQuery = useOrderDetail(selectedOrderSummary?.id ?? null);
+
   const summaryCards = useMemo(() => {
     return getOrderSummaryCards(orders);
   }, [orders]);
 
-  const handleCancelOrder = (orderId: string) => {
+  /**
+   * Đơn chưa thanh toán cần mở lại đúng context tại POS để xem và xử lý tiếp cart hiện tại.
+   */
+  const handleOpenOrder = (order: OrderListItemResponse) => {
+    const search = buildOrderPageSearchParams({
+      orderId: order.id,
+      tableId: order.tableId ?? undefined,
+      tableName: order.tableName ?? undefined,
+    });
+
+    navigate(`${ROUTES.POS_ORDER}?${search}`);
+  };
+
+  /**
+   * CTA tạo đơn mới tại trang quản lý sẽ đi vào luồng mang về để nhân viên tạo cart mới nhanh hơn.
+   */
+  const handleCreateTakeawayOrder = () => {
+    const search = buildOrderPageSearchParams({
+      freshTakeaway: true,
+    });
+
+    navigate(`${ROUTES.POS_ORDER}?${search}`);
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
     const reason = window.prompt('Lý do hủy đơn?');
 
     if (!reason) {
       return;
     }
 
-    void updateOrderStatus(orderId, 'CANCELLED', reason);
+    await updateOrderStatus(orderId, 'CANCELLED', reason);
+    void fetchOrders();
+    void selectedOrderQuery.refetch();
   };
 
   return (
@@ -71,6 +106,7 @@ const OrderManagementPage = () => {
           activeTab={activeTab}
           summaryCards={summaryCards}
           onRefresh={() => void fetchOrders()}
+          onCreateTakeaway={handleCreateTakeawayOrder}
           onSearchChange={setSearchQuery}
           onTabChange={setActiveTab}
         />
@@ -79,16 +115,23 @@ const OrderManagementPage = () => {
           <OrderManagementList
             orders={filteredOrders}
             isLoading={isLoading}
-            selectedOrderId={selectedOrder?.id ?? null}
+            selectedOrderId={selectedOrderSummary?.id ?? null}
+            onOpenOrder={handleOpenOrder}
             onSelectOrder={setSelectedOrderId}
           />
         </div>
       </section>
 
       <OrderManagementDetailPanel
-        selectedOrder={selectedOrder}
-        onUpdateStatus={(orderId, status) => void updateOrderStatus(orderId, status)}
-        onCancelOrder={handleCancelOrder}
+        selectedOrder={selectedOrderQuery.data ?? null}
+        isLoading={Boolean(selectedOrderSummary?.id) && selectedOrderQuery.isFetching}
+        onUpdateStatus={(orderId, status) => {
+          void updateOrderStatus(orderId, status).then(() => {
+            void fetchOrders();
+            void selectedOrderQuery.refetch();
+          });
+        }}
+        onCancelOrder={(orderId) => void handleCancelOrder(orderId)}
       />
     </div>
   );

@@ -32,6 +32,18 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['staff', 'list', filters] as const,
     detail: (id: string) => ['staff', 'detail', id] as const,
   },
+
+  // Positions
+  positions: {
+    all: ['positions'] as const,
+    list: () => ['positions', 'list'] as const,
+  },
+
+  // Roles & permissions
+  roles: {
+    all: ['roles'] as const,
+    matrix: () => ['roles', 'matrix'] as const,
+  },
   
   // Menu
   menu: {

@@ -4,8 +4,9 @@ import type {
   CancelOrderRequest,
   OrderApiResponse,
   OrderListApiResponse,
-  OrderResponse,
+  OrderListItemResponse,
   PlaceOrderRequest,
+  UpdateOrderRequest,
   UpdateOrderStatusRequest,
 } from '../types/order.types';
 
@@ -14,6 +15,48 @@ interface PageResponse<T> {
   totalElements: number;
   totalPages: number;
 }
+
+const ORDER_PAGE_SIZE = 100;
+
+/**
+ * Lấy toàn bộ danh sách đơn hàng qua tất cả trang backend.
+ *
+ * Backend hiện trả dữ liệu phân trang kiểu Spring nên FE cần lặp qua `totalPages`
+ * để trang quản lý đơn hàng luôn nhìn thấy đầy đủ dữ liệu thay vì chỉ 20 đơn đầu.
+ */
+const fetchAllOrderPages = async (): Promise<OrderListItemResponse[]> => {
+  const firstResponse = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
+    params: {
+      page: 1,
+      size: ORDER_PAGE_SIZE,
+    },
+  });
+
+  const firstPage = firstResponse.data.data;
+  const pages = Array.from(
+    { length: Math.max(firstPage.totalPages - 1, 0) },
+    (_, index) => index + 1
+  );
+
+  if (pages.length === 0) {
+    return firstPage.content;
+  }
+
+  const remainingPages = await Promise.all(
+    pages.map(async (page) => {
+      const response = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
+        params: {
+          page,
+          size: ORDER_PAGE_SIZE,
+        },
+      });
+
+      return response.data.data.content;
+    })
+  );
+
+  return [firstPage.content, ...remainingPages].flat();
+};
 
 /**
  * Service thao tác với API đơn hàng.
@@ -25,6 +68,14 @@ export const orderService = {
    */
   placeOrder: async (payload: PlaceOrderRequest): Promise<OrderApiResponse> => {
     const response = await api.post<OrderApiResponse>('/orders', payload);
+    return response.data;
+  },
+
+  /**
+   * Cập nhật toàn bộ đơn hàng đã tồn tại.
+   */
+  updateOrder: async (id: string, payload: UpdateOrderRequest): Promise<OrderApiResponse> => {
+    const response = await api.put<OrderApiResponse>(`/orders/${id}`, payload);
     return response.data;
   },
 
@@ -54,19 +105,14 @@ export const orderService = {
 
   /**
    * Lấy danh sách đơn hàng cho trang quản lý.
-   * Hiện backend trả dữ liệu phân trang kiểu Spring `content`.
+   * FE chủ động gom tất cả trang để danh sách không bị cắt ở 20 bản ghi đầu.
    */
   getOrders: async (): Promise<OrderListApiResponse> => {
-    const response = await api.get<ApiResponse<PageResponse<OrderResponse>>>('/orders', {
-      params: {
-        page: 0,
-        size: 20,
-      },
-    });
+    const orders = await fetchAllOrderPages();
 
     return {
-      ...response.data,
-      data: response.data.data.content,
+      success: true,
+      data: orders,
     };
   },
 };

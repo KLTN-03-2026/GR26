@@ -2,11 +2,12 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import { type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { getRoleHomePage } from '@shared/utils/getRoleHomePage';
-import { ROUTES } from '@shared/constants/routes';
 
 interface PublicRouteProps {
   children: ReactNode;
 }
+
+const EMPTY_PERMISSIONS: string[] = [];
 
 /**
  * Guard cho các route công khai như đăng nhập và đăng ký.
@@ -14,14 +15,12 @@ interface PublicRouteProps {
  */
 export const PublicRoute = ({ children }: PublicRouteProps) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const currentRole = useAuthStore((state) => state.user?.role);
+  const currentRole = useAuthStore((state) => state.user?.role ?? state.session?.role);
+  const permissions =
+    useAuthStore((state) => state.session?.permissions) ?? EMPTY_PERMISSIONS;
 
   if (isAuthenticated && currentRole) {
-    return <Navigate to={getRoleHomePage(currentRole)} replace />;
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to={ROUTES.LOGIN} replace />;
+    return <Navigate to={getRoleHomePage(currentRole, permissions)} replace />;
   }
 
   return <>{children}</>;

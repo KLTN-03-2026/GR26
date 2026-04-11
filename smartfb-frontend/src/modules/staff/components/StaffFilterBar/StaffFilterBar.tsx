@@ -4,9 +4,14 @@ import { FilterTag } from '../FilterTag';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 
+interface PositionOption {
+  id: string;
+  name: string;
+}
+
 interface StaffFilterBarProps {
   filters: StaffFilters;
-  positions: string[]; // Mảng các tên chức vụ (positionName)
+  positions: PositionOption[];
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onPositionChange: (value: string) => void;
@@ -35,9 +40,7 @@ export const StaffFilterBar = ({
   // Tìm label cho position (dựa trên positionId)
   const getPositionLabel = (positionId?: string) => {
     if (!positionId) return null;
-    // positions là mảng các positionName, nhưng filter dùng positionId
-    // Nếu backend trả về positionName, cần map từ positionId
-    return positionId; // Tạm thời trả về ID, sau này có thể map nếu cần
+    return positions.find((position) => position.id === positionId)?.name ?? positionId;
   };
 
   const statusLabel = getStatusLabel(filters.status);
@@ -48,10 +51,10 @@ export const StaffFilterBar = ({
     { value: 'INACTIVE', label: 'Đã nghỉ' },
   ];
 
-  // Chuyển positions (mảng string) thành options
-  const positionOptions = positions.map((posName) => ({
-    value: posName, // Dùng tên chức vụ làm value
-    label: posName,
+  // Dùng `positionId` làm value để đồng bộ với API filter của backend.
+  const positionOptions = positions.map((position) => ({
+    value: position.id,
+    label: position.name,
   }));
 
   return (

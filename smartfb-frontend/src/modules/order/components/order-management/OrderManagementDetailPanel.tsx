@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, ChevronRight, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, Loader2, XCircle } from 'lucide-react';
 import type { OrderResponse, OrderStatus } from '@modules/order/types/order.types';
 import { Button } from '@shared/components/ui/button';
 import { OrderStatusBadge } from './OrderStatusBadge';
@@ -7,19 +7,32 @@ import { formatOrderTime } from './orderManagement.utils';
 
 interface OrderManagementDetailPanelProps {
   selectedOrder: OrderResponse | null;
+  isLoading?: boolean;
   onUpdateStatus: (orderId: string, status: OrderStatus) => void;
   onCancelOrder: (orderId: string) => void;
 }
 
 export const OrderManagementDetailPanel = ({
   selectedOrder,
+  isLoading = false,
   onUpdateStatus,
   onCancelOrder,
 }: OrderManagementDetailPanelProps) => {
   return (
     <aside className="flex min-h-[320px] min-w-0 flex-col overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-sm xl:sticky xl:top-0 xl:max-h-[calc(100vh-9rem)]">
       <AnimatePresence mode="wait">
-        {!selectedOrder ? (
+        {isLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
+          >
+            <Loader2 className="h-10 w-10 animate-spin text-slate-300" />
+            <p className="text-sm font-medium text-slate-500">Đang tải chi tiết đơn hàng...</p>
+          </motion.div>
+        ) : !selectedOrder ? (
           <motion.div
             key="empty"
             initial={{ opacity: 0 }}
