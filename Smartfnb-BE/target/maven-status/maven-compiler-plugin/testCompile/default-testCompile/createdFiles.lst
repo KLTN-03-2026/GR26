@@ -5,7 +5,6 @@ com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$Idemp
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$9.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest.class
 com\smartfnb\branch\application\BranchServiceTest.class
-com\smartfnb\auth\application\command\SelectBranchCommandHandlerTest.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$HappyPath.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$1.class

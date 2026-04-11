@@ -29,11 +29,12 @@ public class BranchController {
     private final BranchService branchService;
 
     /**
-     * Lấy danh sách toàn bộ chi nhánh.
-     * Cần quyền MANAGE_BRANCH hoặc VIEW_BRANCH.
+     * Lấy danh sách toàn bộ chi nhánh của Tenant.
+     * Nhân viên thường (có BRANCH_VIEW) cũng có thể xem để hiển thị tên chi nhánh trên UI.
+     * Quản lý (có BRANCH_EDIT) có toàn quyền CRUD.
      */
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    @PreAuthorize("hasPermission(null, 'BRANCH_VIEW') or hasPermission(null, 'BRANCH_EDIT')")
     public ResponseEntity<ApiResponse<List<BranchResponse>>> getAllBranches() {
         UUID tenantId = TenantContext.getCurrentTenantId();
          return ResponseEntity.ok(ApiResponse.ok(
