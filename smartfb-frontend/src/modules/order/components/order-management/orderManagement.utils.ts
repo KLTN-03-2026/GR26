@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import type { OrderResponse, OrderStatus } from '@modules/order/types/order.types';
+import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
 
 interface StatusTab {
   id: OrderStatus | 'ALL';
@@ -24,7 +24,51 @@ export const formatOrderTime = (createdAt?: string, formatString = 'HH:mm') => {
   return format(resolveOrderCreatedAt(createdAt), formatString, { locale: vi });
 };
 
-export const getOrderSummaryCards = (orders: OrderResponse[]) => {
+/**
+ * Đơn còn mở là đơn chưa kết thúc và có thể tiếp tục xử lý ở màn POS.
+ */
+export const isOrderOpenable = (status: OrderStatus): boolean => {
+  return status !== 'COMPLETED' && status !== 'CANCELLED';
+};
+
+interface BuildOrderPageSearchParamsOptions {
+  orderId?: string;
+  tableId?: string | null;
+  tableName?: string | null;
+  freshTakeaway?: boolean;
+}
+
+/**
+ * Chuẩn hóa query params cho màn POS order để có thể khôi phục lại đúng đơn/bàn sau điều hướng.
+ */
+export const buildOrderPageSearchParams = ({
+  orderId,
+  tableId,
+  tableName,
+  freshTakeaway = false,
+}: BuildOrderPageSearchParamsOptions): string => {
+  const searchParams = new URLSearchParams();
+
+  if (orderId?.trim()) {
+    searchParams.set('orderId', orderId.trim());
+  }
+
+  if (tableId?.trim()) {
+    searchParams.set('tableId', tableId.trim());
+  }
+
+  if (tableName?.trim()) {
+    searchParams.set('tableName', tableName.trim());
+  }
+
+  if (freshTakeaway) {
+    searchParams.set('freshTakeaway', 'true');
+  }
+
+  return searchParams.toString();
+};
+
+export const getOrderSummaryCards = (orders: OrderListItemResponse[]) => {
   const pendingCount = orders.filter((order) => order.status === 'PENDING').length;
   const processingCount = orders.filter((order) => order.status === 'PROCESSING').length;
 

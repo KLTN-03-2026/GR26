@@ -6,14 +6,14 @@ import type {
   DraftOrderMeta,
   OrderAddonSelection,
   OrderDraftItem,
-  OrderResponse,
+  OrderListItemResponse,
   OrderStatus,
   OrderTableContext,
 } from '../types/order.types';
 
 interface OrderState {
   cart: OrderDraftItem[];
-  orders: OrderResponse[];
+  orders: OrderListItemResponse[];
   tableContext: OrderTableContext | null;
   draftOrder: DraftOrderMeta;
   draftsByContext: Record<string, PersistedOrderDraft>;

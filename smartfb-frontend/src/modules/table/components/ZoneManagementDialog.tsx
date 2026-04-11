@@ -28,7 +28,7 @@ const zoneManagementSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Tên khu vực phải có ít nhất 2 ký tự')
+    .min(1, 'Tên khu vực phải có ít nhất 2 ký tự')
     .max(100, 'Tên khu vực không quá 100 ký tự'),
   floorNumber: z
     .number()

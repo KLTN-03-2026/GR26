@@ -26,7 +26,11 @@ export const useLogin = () => {
 
       success('Đăng nhập thành công', 'Chào mừng bạn trở lại!');
 
-      const homePage = getRoleHomePage(useAuthStore.getState().session?.role ?? ROLES.STAFF);
+      const { session } = useAuthStore.getState();
+      const homePage = getRoleHomePage(
+        session?.role ?? ROLES.STAFF,
+        session?.permissions ?? []
+      );
       navigate(homePage);
     },
     onError: (err) => {

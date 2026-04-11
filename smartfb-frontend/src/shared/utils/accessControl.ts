@@ -2,7 +2,7 @@ import { ROLES, type Role } from '@shared/constants/roles';
 
 export interface AccessRequirement {
   roles?: Role[];
-  requiredPermissions?: string[];
+  requiredPermissions?: readonly string[];
 }
 
 interface PermissionContext {

@@ -93,6 +93,3 @@ export type { CreateCategoryFormValues } from './schemas/category.schema';
 
 // Service
 export { menuService } from './services/menuService';
-
-// Mock Data
-export { mockMenus } from './data/mockMenus';

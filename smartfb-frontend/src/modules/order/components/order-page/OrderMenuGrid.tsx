@@ -21,7 +21,7 @@ export const OrderMenuGrid = ({ items, onSelectItem }: OrderMenuGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-5 md:grid-cols-4 xl:grid-cols-5">
       {items.map((item) => (
         <button
           key={item.id}
@@ -29,7 +29,7 @@ export const OrderMenuGrid = ({ items, onSelectItem }: OrderMenuGridProps) => {
           onClick={() => onSelectItem(item.id)}
           className="overflow-hidden rounded-[28px] border border-slate-200 bg-white text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
         >
-          <div className="h-48 w-full overflow-hidden bg-slate-100">
+          <div className="h-30 w-full overflow-hidden bg-slate-100">
             <img
               src={item.image || DEFAULT_MENU_IMAGE}
               alt={item.name}
@@ -37,7 +37,7 @@ export const OrderMenuGrid = ({ items, onSelectItem }: OrderMenuGridProps) => {
             />
           </div>
 
-          <div className="space-y-4 p-5">
+          <div className="space-y-4 p-3">
             <div>
               <h3 className="line-clamp-1 text-xl font-black text-slate-900">{item.name}</h3>
               <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-6 text-slate-500">
@@ -46,9 +46,9 @@ export const OrderMenuGrid = ({ items, onSelectItem }: OrderMenuGridProps) => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-black text-orange-500">{formatVND(item.price)}</span>
+              <span className="text-xl font-black text-orange-500">{formatVND(item.price)}</span>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition-colors">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white transition-colors">
                 <Plus className="h-5 w-5" />
               </div>
             </div>

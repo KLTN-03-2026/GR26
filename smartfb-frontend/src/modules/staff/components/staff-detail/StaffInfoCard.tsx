@@ -1,4 +1,16 @@
-import { Building2, Phone, Mail, Calendar, MapPin, UserCircle, Edit, Fingerprint, Briefcase, Cake } from 'lucide-react';
+import {
+  Building2,
+  Phone,
+  Mail,
+  Calendar,
+  MapPin,
+  UserCircle,
+  Edit,
+  Fingerprint,
+  Briefcase,
+  Cake,
+  type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import type { StaffDetail } from '../../types/staff.types';
 
@@ -68,7 +80,15 @@ export const StaffInfoCard = ({ staff, onEdit }: StaffInfoCardProps) => {
   );
 };
 
-const InfoItem = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
+const InfoItem = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) => (
   <div className="flex items-start gap-2">
     <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
     <div>

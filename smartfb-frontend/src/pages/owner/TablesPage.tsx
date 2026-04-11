@@ -1,10 +1,12 @@
 
 import { useMemo, useState } from 'react';
 import { LayoutGrid, Users, Coffee } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
+import { useOrderStore } from '@modules/order/stores/orderStore';
 import { useTableList } from '@modules/table/hooks/useTableList';
 import { useZones } from '@modules/table/hooks/useZones';
 import { useTableFilters } from '@modules/table/hooks/useTableFilters';
@@ -22,7 +24,11 @@ import { ZoneManagementDialog } from '@modules/table/components/ZoneManagementDi
 
 import { Button } from '@shared/components/ui/button';
 import { ROUTES } from '@shared/constants/routes';
-import type { TableDisplayItem, UpdateTablePayload } from '@modules/table/types/table.types';
+import type {
+  TableDisplayItem,
+  TableUsageStatus,
+  UpdateTablePayload,
+} from '@modules/table/types/table.types';
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -44,9 +50,16 @@ const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: 
   </div>
 );
 
+const BLOCKED_ORDER_TABLE_STATUSES: readonly TableUsageStatus[] = [
+  'occupied',
+  'reserved',
+  'unpaid',
+];
+
 export default function TablesPage() {
   const navigate = useNavigate();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const draftsByContext = useOrderStore((state) => state.draftsByContext);
   const { data: branches = [] } = useBranches();
   const { data: tables = [], isLoading, isError, refetch, error } = useTableList();
   const {
@@ -91,6 +104,14 @@ export default function TablesPage() {
     ? branchNameMap.get(currentBranchId) ?? 'Chi nhánh đang chọn'
     : 'Tất cả chi nhánh';
 
+  const localDraftTableIds = useMemo(() => {
+    return new Set(
+      Object.values(draftsByContext)
+        .map((draft) => draft.tableContext?.tableId)
+        .filter((tableId): tableId is string => Boolean(tableId))
+    );
+  }, [draftsByContext]);
+
   const tableDisplayData = useMemo<TableDisplayItem[]>(() => {
     return tables.map((table) => {
       const resolvedBranchName =
@@ -104,13 +125,28 @@ export default function TablesPage() {
         table.zoneName ??
         'Chưa có khu vực';
 
+      // Nếu FE còn giữ draft theo bàn thì ưu tiên hiển thị như bàn chưa thanh toán
+      // để tránh hiểu nhầm bàn đã trống trong khi giỏ hàng vẫn còn.
+      const resolvedUsageStatus =
+        table.usageStatus === 'available' && localDraftTableIds.has(table.id)
+          ? 'unpaid'
+          : table.usageStatus;
+
       return {
         ...table,
         branchName: resolvedBranchName,
         zoneName: resolvedZoneName,
+        usageStatus: resolvedUsageStatus,
       };
     });
-  }, [branchNameMap, currentBranchId, selectedBranchName, tables, zoneNameMap]);
+  }, [
+    branchNameMap,
+    currentBranchId,
+    localDraftTableIds,
+    selectedBranchName,
+    tables,
+    zoneNameMap,
+  ]);
 
   // Dùng zoneId làm giá trị filter để bám đúng dữ liệu API.
   const areaOptions = zones.map((zone) => ({
@@ -130,9 +166,11 @@ export default function TablesPage() {
     totalPages,
   } = useTableFilters(tableDisplayData);
 
-  const totalTables = tables.length;
-  const availableTables = tables.filter((t) => t.usageStatus === 'available' && t.status === 'active').length;
-  const occupiedTables = tables.filter(
+  const totalTables = tableDisplayData.length;
+  const availableTables = tableDisplayData.filter(
+    (t) => t.usageStatus === 'available' && t.status === 'active'
+  ).length;
+  const occupiedTables = tableDisplayData.filter(
     (t) => t.status === 'active' && (t.usageStatus === 'occupied' || t.usageStatus === 'unpaid')
   ).length;
   const zonesWithStats = zones.map((zone) => ({
@@ -213,6 +251,18 @@ export default function TablesPage() {
   };
 
   const handleSelectTable = (table: TableDisplayItem) => {
+    if (BLOCKED_ORDER_TABLE_STATUSES.includes(table.usageStatus)) {
+      const statusMessageMap: Record<TableUsageStatus, string> = {
+        available: '',
+        occupied: 'Bàn này đang có đơn mở. Hãy xử lý tiếp ở luồng order hoặc thanh toán hiện tại.',
+        unpaid: 'Bàn này đang chờ thanh toán. Không thể tạo thêm đơn mới từ màn bàn.',
+        reserved: 'Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.',
+      };
+
+      toast.error(statusMessageMap[table.usageStatus]);
+      return;
+    }
+
     // Điều hướng bằng query params để trang order đọc lại được cả khi người dùng refresh.
     const searchParams = new URLSearchParams({
       tableId: table.id,

@@ -1,9 +1,21 @@
-import { ChevronRight, Minus, PencilLine, Plus, ReceiptText, Trash2, XCircle } from 'lucide-react';
-import type { OrderDraftItem, OrderTableContext } from '@modules/order/types/order.types';
-import { Button } from '@shared/components/ui/button';
-import { formatDateTime } from '@shared/utils/formatDate';
-import { formatVND } from '@shared/utils/formatCurrency';
-import { DEFAULT_MENU_IMAGE, getCartItemSummary } from './orderPage.utils';
+import {
+  ChevronRight,
+  Minus,
+  PencilLine,
+  Plus,
+  PrinterCheck,
+  ReceiptText,
+  Trash2,
+  X,
+} from "lucide-react";
+import type {
+  OrderDraftItem,
+  OrderTableContext,
+} from "@modules/order/types/order.types";
+import { Button } from "@shared/components/ui/button";
+import { formatVND } from "@shared/utils/formatCurrency";
+import { cn } from "@shared/utils/cn";
+import { getCartItemSummary } from "./orderPage.utils";
 
 interface OrderCartPanelProps {
   cart: OrderDraftItem[];
@@ -16,11 +28,13 @@ interface OrderCartPanelProps {
   currentUserName: string;
   hasPlacedOrder: boolean;
   isSyncingDraft: boolean;
+  isItemActionsDisabled?: boolean;
   totalItemCount: number;
   subtotal: number;
   vatAmount: number;
   totalAmount: number;
   checkoutButtonLabel: string;
+  isCheckoutDisabled?: boolean;
   onOpenInvoice: () => void;
   onCancelPlacedOrder: () => void;
   onEditCartItem: (draftItemId: string) => void;
@@ -28,20 +42,20 @@ interface OrderCartPanelProps {
   onChangeItemQuantity: (item: OrderDraftItem, delta: number) => void;
   onSaveDraft: () => void;
   onCheckout: () => void;
+  className?: string;
 }
 
 export const OrderCartPanel = ({
   cart,
-  tableContext,
-  draftOrder,
   currentUserName,
   hasPlacedOrder,
   isSyncingDraft,
-  totalItemCount,
+  isItemActionsDisabled = false,
   subtotal,
   vatAmount,
   totalAmount,
   checkoutButtonLabel,
+  isCheckoutDisabled = false,
   onOpenInvoice,
   onCancelPlacedOrder,
   onEditCartItem,
@@ -49,87 +63,48 @@ export const OrderCartPanel = ({
   onChangeItemQuantity,
   onSaveDraft,
   onCheckout,
+  className,
 }: OrderCartPanelProps) => {
   return (
-    <aside className="flex min-h- max-h-dvh flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm xl:max-h-[calc(100vh-10rem)]">
-      <div className="space-y-4 border-b border-slate-100 bg-[linear-gradient(180deg,#fff9f4_0%,#ffffff_100%)] p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          {/* <div className="min-w-0">
-            <div className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400 shadow-sm">
-              {tableContext?.tableName ? 'Phục vụ tại bàn' : 'Đơn mang đi'}
-            </div>
-            <h2 className="mt-3 line-clamp-1 text-2xl font-black text-slate-900">
-              {tableContext?.tableName ? `Bàn ${tableContext.tableName}` : 'Khách lẻ tại quầy'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {draftOrder.orderNumber || 'Đơn nháp chưa phát số'}
-            </p>
-          </div> */}
+    <aside
+      className={cn(
+        "flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm xl:max-h-[calc(100vh-10rem)]",
+        className,
+      )}
+    >
+      <div className="space-y-4 border-b border-slate-100 bg-[linear-gradient(180deg,#fff9f4_0%,#ffffff_100%)] p-3">
 
-          {/* <div className="grid shrink-0 grid-cols-2 gap-3 text-right sm:min-w-[180px]">
-            <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                Số món
-              </p>
-              <p className="mt-1 text-2xl font-black text-slate-900">{totalItemCount}</p>
-            </div>
-            <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                Tạm tính
-              </p>
-              <p className="mt-1 text-lg font-black text-orange-500">{formatVND(subtotal)}</p>
-            </div>
-          </div> */}
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Khu vực</p>
-            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
-              {tableContext?.zoneName || 'Chưa gán khu vực'}
+        <div className="flex flex-wrap gap-3 justify-between items-center">
+          <div className="rounded-[20px] bg-white/80 px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+              Thu ngân
             </p>
-          </div>
-          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Thời gian</p>
-            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
-              {formatDateTime(draftOrder.createdAt ?? new Date().toISOString())}
-            </p>
-          </div>
-          {/* <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Người tạo</p>
-            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
+            <p className="mt-1 line-clamp-1 text-sm font-bold text-slate-700">
               {currentUserName}
             </p>
-          </div> */}
-          {/* <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Trạng thái</p>
-            <p className="mt-1 line-clamp-1 text-sm font-black text-slate-900">
-              {hasPlacedOrder ? 'Đã tạo trên hệ thống' : 'Đơn nháp cục bộ'}
-            </p>
-          </div> */}
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onOpenInvoice}
-            className="h-11 flex-1 rounded-full border-orange-200 text-orange-500 hover:bg-orange-50"
-          >
-            In hóa đơn tạm
-          </Button>
-          {hasPlacedOrder && (
+          </div>
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={onCancelPlacedOrder}
-              disabled={isSyncingDraft}
-              className="h-11 flex-1 rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
+              onClick={onOpenInvoice}
+              className="h-11  w-fit rounded-full border-orange-200 text-orange-500 hover:bg-orange-50"
             >
-              <XCircle className="mr-2 h-4 w-4" />
-              Hủy đơn
+              <PrinterCheck />
             </Button>
-          )}
+            {hasPlacedOrder && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancelPlacedOrder}
+                disabled={isSyncingDraft}
+                className="h-11   w-fit rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
+              >
+                <X size={24} />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -144,7 +119,9 @@ export const OrderCartPanel = ({
             <div className="flex h-full min-h-[280px] items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 text-center">
               <div>
                 <ReceiptText className="mx-auto h-12 w-12 text-slate-300" />
-                <p className="mt-4 text-base font-bold text-slate-700">Chưa có món trong đơn</p>
+                <p className="mt-4 text-base font-bold text-slate-700">
+                  Chưa có món trong đơn
+                </p>
                 <p className="mt-1 text-sm text-slate-500">
                   Chọn món từ danh sách bên trái để bắt đầu.
                 </p>
@@ -191,7 +168,7 @@ export const OrderCartPanel = ({
                           <button
                             type="button"
                             onClick={() => onDeleteCartItem(item)}
-                            disabled={isSyncingDraft || hasPlacedOrder}
+                            disabled={isItemActionsDisabled}
                             className="flex h-9 w-9 items-center justify-center rounded-full text-[#ff5f4a] transition-colors hover:bg-[#fff1ee]"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -204,7 +181,7 @@ export const OrderCartPanel = ({
                           <button
                             type="button"
                             onClick={() => onChangeItemQuantity(item, -1)}
-                            disabled={isSyncingDraft || hasPlacedOrder}
+                            disabled={isItemActionsDisabled}
                             className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
                           >
                             <Minus className="h-4 w-4" />
@@ -215,7 +192,7 @@ export const OrderCartPanel = ({
                           <button
                             type="button"
                             onClick={() => onChangeItemQuantity(item, 1)}
-                            disabled={isSyncingDraft || hasPlacedOrder}
+                            disabled={isItemActionsDisabled}
                             className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
                           >
                             <Plus className="h-4 w-4" />
@@ -244,8 +221,8 @@ export const OrderCartPanel = ({
         <div className="space-y-3 text-sm">
           {hasPlacedOrder && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-              Đơn này đã được tạo trên hệ thống. Hiện backend chỉ hỗ trợ thanh toán hoặc hủy đơn,
-              chưa hỗ trợ sửa từng món sau khi tạo.
+              Đơn này đã được tạo trên hệ thống. Mọi thay đổi món ở màn này sẽ
+              được đồng bộ lại qua API trước khi tiếp tục thanh toán.
             </div>
           )}
           <div className="flex items-center justify-between text-slate-500">
@@ -287,7 +264,7 @@ export const OrderCartPanel = ({
           )}
           <Button
             type="button"
-            disabled={cart.length === 0 || isSyncingDraft}
+            disabled={cart.length === 0 || isSyncingDraft || isCheckoutDisabled}
             onClick={onCheckout}
             className="h-12 flex-1 rounded-full bg-orange-500 font-bold hover:bg-orange-600"
           >

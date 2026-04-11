@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutationErrorMessage';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
@@ -18,10 +19,9 @@ export const useDeleteStaff = () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       success('Vô hiệu hoá nhân viên thành công');
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
-      const errorMessage = err.response?.data?.error?.message || err.message || 'Vui lòng thử lại sau';
-      error('Không thể vô hiệu hoá nhân viên', errorMessage);
+      error('Không thể vô hiệu hoá nhân viên', getStaffMutationErrorMessage(err));
     },
   });
 };
