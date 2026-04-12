@@ -53,7 +53,7 @@ public class PaymentController {
      * POST /api/v1/payments/cash
      */
     @PostMapping("/cash")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<PaymentResponse>> processCashPayment(
             @Valid @RequestBody ProcessCashPaymentRequest request) {
 
@@ -80,7 +80,7 @@ public class PaymentController {
      * POST /api/v1/payments/qr
      */
     @PostMapping("/qr")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<ProcessQRPaymentResponse>> processQRPayment(
             @Valid @RequestBody ProcessQRPaymentRequest request) {
 

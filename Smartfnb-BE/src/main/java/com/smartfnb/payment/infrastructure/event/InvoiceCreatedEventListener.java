@@ -38,9 +38,9 @@ public class InvoiceCreatedEventListener {
         }
 
         try {
-            // Cập nhật trạng thái bàn thành CLEANING
-            tableAdapter.updateTableStatus(event.tableId(), "CLEANING");
-            log.info("Cập nhật bàn {} thành CLEANING", event.tableId());
+            // Cập nhật trạng thái bàn thành AVAILABLE để đón khách tiếp theo
+            tableAdapter.updateTableStatus(event.tableId(), "AVAILABLE");
+            log.info("Cập nhật bàn {} thành AVAILABLE", event.tableId());
         } catch (Exception e) {
             log.error("Lỗi cập nhật trạng thái bàn sau Invoice creation", e);
             // Không throw exception để không block Invoice creation

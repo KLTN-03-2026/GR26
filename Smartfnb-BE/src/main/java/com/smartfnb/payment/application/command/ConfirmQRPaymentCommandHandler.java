@@ -126,6 +126,9 @@ public class ConfirmQRPaymentCommandHandler {
         log.info("Đã tạo Invoice {} cho QR Payment {}", 
             savedInvoice.getInvoiceNumber(), payment.getId());
 
+        // Hoàn tất đơn hàng bên Order Module
+        orderAdapter.completeOrder(order.id(), payment.getTenantId(), order.branchId(), payment.getCashierUserId());
+
         // Publish InvoiceCreatedEvent
         eventPublisher.publishEvent(new InvoiceCreatedEvent(
             savedInvoice.getId(),

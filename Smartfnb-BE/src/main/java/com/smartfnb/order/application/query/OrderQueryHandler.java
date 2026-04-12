@@ -12,8 +12,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 
 /**
  * Xử lý các query liên quan đến đơn hàng.
@@ -46,23 +49,27 @@ public class OrderQueryHandler {
             Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<OrderJpaEntity> orderPage;
+        Specification<OrderJpaEntity> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("tenantId"), query.tenantId()));
+            predicates.add(cb.equal(root.get("branchId"), query.branchId()));
+            
+            if (query.status() != null && !query.status().isBlank()) {
+                predicates.add(cb.equal(root.get("status"), query.status()));
+            }
+            if (query.from() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), query.from().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()));
+            }
+            if (query.to() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), query.to().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()));
+            }
+            if (query.tableId() != null) {
+                predicates.add(cb.equal(root.get("tableId"), query.tableId()));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-        // Build query động theo filter
-        if (query.status() != null && !query.status().isBlank()) {
-            orderPage = orderJpaRepository.findByTenantIdAndBranchIdAndStatus(
-                query.branchId(),  // tenantId
-                query.branchId(),  // branchId
-                query.status(),
-                pageRequest
-            );
-        } else {
-            orderPage = orderJpaRepository.findByTenantIdAndBranchId(
-                query.branchId(),  // tenantId
-                query.branchId(),  // branchId
-                pageRequest
-            );
-        }
+        Page<OrderJpaEntity> orderPage = orderJpaRepository.findAll(spec, pageRequest);
 
         return orderPage.map(this::toOrderListResult);
     }

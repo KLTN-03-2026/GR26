@@ -149,6 +149,7 @@ public class OrderController {
             @RequestParam(defaultValue = "20") int size) {
 
         GetOrderListQuery query = new GetOrderListQuery(
+            TenantContext.getCurrentTenantId(),
             TenantContext.getCurrentBranchId(),
             status,
             from,
