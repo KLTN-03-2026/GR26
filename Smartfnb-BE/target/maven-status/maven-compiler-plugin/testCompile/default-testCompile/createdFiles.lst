@@ -1,10 +1,12 @@
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$ExceptionCases.class
+com\smartfnb\auth\application\command\RefreshTokenCommandHandlerTest.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$4.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$5.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$IdempotencyBehavior.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$9.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest.class
 com\smartfnb\branch\application\BranchServiceTest.class
+com\smartfnb\auth\application\command\SelectBranchCommandHandlerTest.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$HappyPath.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$1.class

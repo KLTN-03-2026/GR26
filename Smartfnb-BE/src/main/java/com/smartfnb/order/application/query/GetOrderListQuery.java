@@ -10,6 +10,7 @@ import java.util.UUID;
  * @since 2026-03-31
  */
 public record GetOrderListQuery(
+    UUID tenantId,
     UUID branchId,
     String status,
     Instant from,
