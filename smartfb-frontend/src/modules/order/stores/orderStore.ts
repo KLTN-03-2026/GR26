@@ -26,6 +26,7 @@ interface OrderState {
   removeFromCart: (draftItemId: string) => void;
   setSyncingDraft: (value: boolean) => void;
   clearDraft: () => void;
+  clearDraftAndContext: () => void;
   fetchOrders: () => Promise<void>;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => Promise<void>;
 }
@@ -303,6 +304,21 @@ export const useOrderStore = create<OrderState>()(
       clearDraft: () =>
         set((state) => ({
           cart: [],
+          draftOrder: INITIAL_DRAFT_ORDER,
+          draftsByContext: syncDraftsByContext(
+            state.draftsByContext,
+            state.tableContext,
+            [],
+            INITIAL_DRAFT_ORDER
+          ),
+          isSyncingDraft: false,
+        })),
+
+      clearDraftAndContext: () =>
+        set((state) => ({
+          // Sau khi thanh toán xong cần dọn cả context active để FE không còn giữ bàn vừa thanh toán.
+          cart: [],
+          tableContext: null,
           draftOrder: INITIAL_DRAFT_ORDER,
           draftsByContext: syncDraftsByContext(
             state.draftsByContext,

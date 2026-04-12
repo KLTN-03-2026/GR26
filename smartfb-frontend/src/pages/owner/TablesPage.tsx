@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
+import { buildOpenOrdersByTableMap, useOpenOrdersByTable } from '@modules/order/hooks/useOpenOrdersByTable';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import { useTableList } from '@modules/table/hooks/useTableList';
 import { useZones } from '@modules/table/hooks/useZones';
@@ -50,17 +51,12 @@ const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: 
   </div>
 );
 
-const BLOCKED_ORDER_TABLE_STATUSES: readonly TableUsageStatus[] = [
-  'occupied',
-  'reserved',
-  'unpaid',
-];
-
 export default function TablesPage() {
   const navigate = useNavigate();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const draftsByContext = useOrderStore((state) => state.draftsByContext);
   const { data: branches = [] } = useBranches();
+  const { openOrdersByTable, refetch: refetchOpenOrders } = useOpenOrdersByTable();
   const { data: tables = [], isLoading, isError, refetch, error } = useTableList();
   const {
     data: zones = [],
@@ -250,28 +246,72 @@ export default function TablesPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleSelectTable = (table: TableDisplayItem) => {
-    if (BLOCKED_ORDER_TABLE_STATUSES.includes(table.usageStatus)) {
-      const statusMessageMap: Record<TableUsageStatus, string> = {
-        available: '',
-        occupied: 'Bàn này đang có đơn mở. Hãy xử lý tiếp ở luồng order hoặc thanh toán hiện tại.',
-        unpaid: 'Bàn này đang chờ thanh toán. Không thể tạo thêm đơn mới từ màn bàn.',
-        reserved: 'Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.',
-      };
+  /**
+   * Giữ toàn bộ context của bàn trên URL để POS khôi phục đúng order/draft cả khi refresh.
+   */
+  const navigateToOrderPage = (table: TableDisplayItem, orderId?: string) => {
+    // Điều hướng bằng query params để trang order đọc lại được cả khi người dùng refresh.
+    const searchParams = new URLSearchParams();
 
-      toast.error(statusMessageMap[table.usageStatus]);
+    if (orderId?.trim()) {
+      searchParams.set('orderId', orderId.trim());
+    }
+
+    searchParams.set('tableId', table.id);
+    searchParams.set('tableName', table.name);
+
+    if (table.zoneId?.trim()) {
+      searchParams.set('zoneId', table.zoneId);
+    }
+
+    if (table.branchName?.trim()) {
+      searchParams.set('branchName', table.branchName);
+    }
+
+    navigate(`${ROUTES.POS_ORDER}?${searchParams.toString()}`);
+  };
+
+  const handleSelectTable = async (table: TableDisplayItem) => {
+    if (table.usageStatus === 'reserved') {
+      toast.error('Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.');
       return;
     }
 
-    // Điều hướng bằng query params để trang order đọc lại được cả khi người dùng refresh.
-    const searchParams = new URLSearchParams({
-      tableId: table.id,
-      tableName: table.name,
-      zoneId: table.zoneId ?? '',
-      branchName: table.branchName ?? '',
-    });
+    if (table.usageStatus === 'available') {
+      navigateToOrderPage(table);
+      return;
+    }
 
-    navigate(`${ROUTES.POS_ORDER}?${searchParams.toString()}`);
+    const localDraftExists = localDraftTableIds.has(table.id);
+    const existingOpenOrder = openOrdersByTable.get(table.id);
+
+    if (existingOpenOrder) {
+      navigateToOrderPage(table, existingOpenOrder.id);
+      return;
+    }
+
+    if (localDraftExists) {
+      // Với draft chỉ tồn tại ở local storage, mở lại theo context bàn để OrderPage tự restore giỏ hàng.
+      navigateToOrderPage(table);
+      return;
+    }
+
+    const refreshedOrdersResult = await refetchOpenOrders();
+    const refreshedOpenOrder = buildOpenOrdersByTableMap(refreshedOrdersResult.data ?? []).get(table.id);
+
+    if (refreshedOpenOrder) {
+      navigateToOrderPage(table, refreshedOpenOrder.id);
+      return;
+    }
+
+    const statusMessageMap: Record<TableUsageStatus, string> = {
+      available: '',
+      occupied: 'Không tìm thấy đơn đang mở của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
+      unpaid: 'Không tìm thấy đơn chờ thanh toán của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
+      reserved: 'Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.',
+    };
+
+    toast.error(statusMessageMap[table.usageStatus]);
   };
 
   const handleEdit = (table: TableDisplayItem) => {

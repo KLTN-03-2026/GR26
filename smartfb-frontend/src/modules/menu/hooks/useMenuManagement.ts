@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
+import { usePermission } from '@shared/hooks/usePermission';
 import { useDebounce } from '@shared/hooks/useDebounce';
+import { PERMISSIONS } from '@shared/constants/permissions';
 import {
   useAddons,
   useBranchMenuItems,
@@ -37,6 +39,7 @@ const DEFAULT_MENU_FILTERS: MenuFilters = {
  * Page chỉ nên render UI, còn việc đồng bộ dữ liệu, lọc và phân trang được dồn về module.
  */
 export const useMenuManagement = () => {
+  const { can } = usePermission();
   const [showFilter, setShowFilter] = useState(true);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
@@ -48,6 +51,7 @@ export const useMenuManagement = () => {
   });
 
   const debouncedSearch = useDebounce(filters.search.trim(), 400);
+  const canManageMenu = can(PERMISSIONS.MENU_EDIT);
   const selectedBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const isBranchMode = Boolean(selectedBranchId);
 
@@ -354,6 +358,7 @@ export const useMenuManagement = () => {
   return {
     categories,
     categoryManagementItems,
+    canManageMenu,
     configuringBranchMenu,
     currentPage,
     debouncedSearch,

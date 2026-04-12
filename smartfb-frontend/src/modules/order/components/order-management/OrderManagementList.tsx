@@ -3,22 +3,18 @@ import { ArrowUpRight, Clock, Loader2, Package } from 'lucide-react';
 import type { OrderListItemResponse } from '@modules/order/types/order.types';
 import { cn } from '@shared/utils/cn';
 import { OrderStatusBadge } from './OrderStatusBadge';
-import { formatOrderTime, isOrderOpenable } from './orderManagement.utils';
+import { formatOrderTime, resolveOrderNavigationTarget } from './orderManagement.utils';
 
 interface OrderManagementListProps {
   orders: OrderListItemResponse[];
   isLoading: boolean;
-  selectedOrderId: string | null;
   onOpenOrder: (order: OrderListItemResponse) => void;
-  onSelectOrder: (orderId: string) => void;
 }
 
 export const OrderManagementList = ({
   orders,
   isLoading,
-  selectedOrderId,
   onOpenOrder,
-  onSelectOrder,
 }: OrderManagementListProps) => {
   if (isLoading) {
     return (
@@ -42,7 +38,8 @@ export const OrderManagementList = ({
     <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
       <AnimatePresence mode="popLayout">
         {orders.map((order) => {
-          const canOpenOrder = isOrderOpenable(order.status);
+          const navigationTarget = resolveOrderNavigationTarget(order.status);
+          const opensAtPos = navigationTarget === 'pos';
 
           return (
             <motion.button
@@ -52,13 +49,11 @@ export const OrderManagementList = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98 }}
               key={order.id}
-              onClick={() => (canOpenOrder ? onOpenOrder(order) : onSelectOrder(order.id))}
+              onClick={() => onOpenOrder(order)}
               className={cn(
-                'rounded-[32px] border bg-white p-5 text-left transition-all',
-                selectedOrderId === order.id
-                  ? 'border-orange-500 shadow-xl shadow-orange-500/5'
-                  : 'border-slate-100 hover:border-slate-300',
-                canOpenOrder && 'cursor-pointer hover:-translate-y-0.5 hover:border-orange-300'
+                'cursor-pointer rounded-[32px] border bg-white p-5 text-left transition-all hover:-translate-y-0.5',
+                'border-slate-100 hover:border-slate-300',
+                opensAtPos ? 'hover:border-orange-300' : 'hover:border-slate-300'
               )}
             >
               <div className="mb-4 flex items-start justify-between gap-4">
@@ -89,12 +84,15 @@ export const OrderManagementList = ({
                     <span className="text-xs font-medium">{formatOrderTime(order.createdAt)}</span>
                   </div>
 
-                  {canOpenOrder ? (
-                    <div className="inline-flex items-center gap-1 text-xs font-bold text-orange-500">
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                      Mở lại tại POS
-                    </div>
-                  ) : null}
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-bold',
+                      opensAtPos ? 'text-orange-500' : 'text-slate-500'
+                    )}
+                  >
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    {opensAtPos ? 'Mở lại tại POS' : 'Xem chi tiết đơn'}
+                  </div>
                 </div>
 
                 <div className="text-right font-black text-slate-800">

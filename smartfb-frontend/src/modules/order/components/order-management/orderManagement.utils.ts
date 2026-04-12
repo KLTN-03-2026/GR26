@@ -25,10 +25,13 @@ export const formatOrderTime = (createdAt?: string, formatString = 'HH:mm') => {
 };
 
 /**
- * Đơn còn mở là đơn chưa kết thúc và có thể tiếp tục xử lý ở màn POS.
+ * Điều hướng của card order tại màn quản lý.
+ * Đơn đang mở quay về POS để xử lý tiếp, đơn đã đóng chuyển sang trang xem chi tiết.
  */
-export const isOrderOpenable = (status: OrderStatus): boolean => {
-  return status !== 'COMPLETED' && status !== 'CANCELLED';
+export const resolveOrderNavigationTarget = (
+  status: OrderStatus
+): 'pos' | 'detail' => {
+  return status === 'PENDING' || status === 'PROCESSING' ? 'pos' : 'detail';
 };
 
 interface BuildOrderPageSearchParamsOptions {

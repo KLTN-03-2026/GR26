@@ -13,6 +13,7 @@ import StaffDetailPage from '@pages/owner/StaffDetailPage';
 import StaffPage from '@pages/owner/StaffPage';
 import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
 import TablesPage from '@pages/owner/TablesPage';
+import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
@@ -175,6 +176,12 @@ export const staffRoutes: RouteConfigItem[] = [
     <Navigate to={ROUTES.POS_ORDER} replace />,
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER }
   ),
+  createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,
+  }),
+  createRoute(ROUTES.STAFF.RECIPES, 'Công thức', <RecipesPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+  }),
   createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,
   }),
@@ -204,6 +211,12 @@ export const posRoutes: RouteConfigItem[] = [
     path: ROUTES.POS_MANAGEMENT,
     pageTitle: 'Quản lý đơn hàng',
     element: <OrderManagementPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
+  },
+  {
+    path: ROUTES.POS_ORDER_DETAIL,
+    pageTitle: 'Chi tiết đơn hàng',
+    element: <OrderDetailPage />,
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
 ];

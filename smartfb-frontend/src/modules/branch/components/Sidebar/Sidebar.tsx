@@ -49,6 +49,7 @@ export const Sidebar: FC<SidebarProps> = ({
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
 
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
+  const branchFallbackLabel = isOwner ? 'Tất cả chi nhánh' : 'Chưa chọn chi nhánh';
   const userDisplayName = user?.fullName || user?.email || 'Người dùng';
   const userInitials = getUserInitials(userDisplayName);
 
@@ -116,7 +117,7 @@ export const Sidebar: FC<SidebarProps> = ({
             )}
           >
             <span className="flex-1 truncate text-left text-text-primary">
-              {selectedBranch?.name || 'Tất cả chi nhánh'}
+              {selectedBranch?.name || branchFallbackLabel}
             </span>
             <ChevronDown
               className={cn(

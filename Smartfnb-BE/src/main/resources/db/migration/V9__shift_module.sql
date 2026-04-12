@@ -52,29 +52,75 @@ CREATE INDEX idx_shift_schedule_tenant      ON shift_schedules(tenant_id, date);
 CREATE INDEX idx_shift_schedule_status      ON shift_schedules(branch_id, status)
     WHERE status IN ('SCHEDULED', 'CHECKED_IN');
 
--- Ca POS (phiên mở quầy — quản lý tiền mặt)
-CREATE TABLE pos_sessions (
-    id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id               UUID NOT NULL REFERENCES tenants(id)   ON DELETE CASCADE,
-    branch_id               UUID NOT NULL REFERENCES branches(id)  ON DELETE CASCADE,
-    opened_by_user_id       UUID NOT NULL REFERENCES users(id)     ON DELETE RESTRICT,
-    closed_by_user_id       UUID          REFERENCES users(id)     ON DELETE SET NULL,
-    shift_schedule_id       UUID          REFERENCES shift_schedules(id) ON DELETE SET NULL,
-    start_time              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    end_time                TIMESTAMP,
-    starting_cash           DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (starting_cash >= 0),
-    ending_cash_expected    DECIMAL(12,2),   -- Tính từ starting_cash + cash orders
-    ending_cash_actual      DECIMAL(12,2),   -- Tiền mặt kiểm đếm khi đóng ca
-    cash_difference         DECIMAL(12,2),   -- ending_actual - ending_expected (có thể âm)
-    note                    VARCHAR(500),
-    status                  VARCHAR(10) NOT NULL DEFAULT 'OPEN',
-    -- OPEN | CLOSED
-    CONSTRAINT chk_pos_session_status CHECK (status IN ('OPEN', 'CLOSED')),
-    CONSTRAINT chk_pos_end_after_start CHECK (end_time IS NULL OR end_time > start_time)
-);
-CREATE INDEX idx_pos_sessions_branch_status ON pos_sessions(branch_id, status);
-CREATE INDEX idx_pos_sessions_tenant        ON pos_sessions(tenant_id, start_time DESC);
-CREATE INDEX idx_pos_sessions_user          ON pos_sessions(opened_by_user_id);
+-- Ca POS đã được tạo từ V5 (order module).
+-- V9 chỉ nâng cấp schema cũ để tương thích shift module, không tạo lại bảng.
+
+ALTER TABLE pos_sessions
+    ADD COLUMN IF NOT EXISTS shift_schedule_id UUID REFERENCES shift_schedules(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS note VARCHAR(500);
+
+-- V5 dùng generated column cho cash_difference, nhưng code shift module
+-- cần ghi trực tiếp giá trị khi đóng ca nên phải chuyển về cột thường.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'pos_sessions'
+          AND column_name = 'cash_difference'
+          AND is_generated = 'ALWAYS'
+    ) THEN
+        ALTER TABLE pos_sessions DROP COLUMN cash_difference;
+        ALTER TABLE pos_sessions ADD COLUMN cash_difference DECIMAL(12,2);
+    END IF;
+END $$;
+
+UPDATE pos_sessions
+SET cash_difference = ending_cash_actual - ending_cash_expected
+WHERE cash_difference IS NULL
+  AND ending_cash_actual IS NOT NULL
+  AND ending_cash_expected IS NOT NULL;
+
+ALTER TABLE pos_sessions
+    ALTER COLUMN starting_cash SET DEFAULT 0,
+    ALTER COLUMN status SET DEFAULT 'OPEN';
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'chk_pos_session_status'
+    ) THEN
+        ALTER TABLE pos_sessions
+            ADD CONSTRAINT chk_pos_session_status
+            CHECK (status IN ('OPEN', 'CLOSED'));
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'chk_pos_end_after_start'
+    ) THEN
+        ALTER TABLE pos_sessions
+            ADD CONSTRAINT chk_pos_end_after_start
+            CHECK (end_time IS NULL OR end_time > start_time);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'chk_pos_starting_cash_non_negative'
+    ) THEN
+        ALTER TABLE pos_sessions
+            ADD CONSTRAINT chk_pos_starting_cash_non_negative
+            CHECK (starting_cash >= 0);
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_pos_sessions_branch_status ON pos_sessions(branch_id, status);
+CREATE INDEX IF NOT EXISTS idx_pos_sessions_tenant        ON pos_sessions(tenant_id, start_time DESC);
+CREATE INDEX IF NOT EXISTS idx_pos_sessions_user          ON pos_sessions(opened_by_user_id);
 
 -- =================================================================
 -- BUSINESS RULES:

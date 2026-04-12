@@ -14,6 +14,7 @@ interface SummaryCard {
 
 interface OrderManagementHeaderProps {
   isLoading: boolean;
+  canCreateTakeaway: boolean;
   searchQuery: string;
   activeTab: OrderStatus | 'ALL';
   summaryCards: SummaryCard[];
@@ -25,6 +26,7 @@ interface OrderManagementHeaderProps {
 
 export const OrderManagementHeader = ({
   isLoading,
+  canCreateTakeaway,
   searchQuery,
   activeTab,
   summaryCards,
@@ -45,13 +47,15 @@ export const OrderManagementHeader = ({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button
-              onClick={onCreateTakeaway}
-              className="h-12 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Tạo đơn mang về
-            </Button>
+            {canCreateTakeaway ? (
+              <Button
+                onClick={onCreateTakeaway}
+                className="h-12 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo đơn mang về
+              </Button>
+            ) : null}
 
             <Button
               variant="outline"
