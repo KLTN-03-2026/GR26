@@ -5,13 +5,21 @@ import { useToast } from '@shared/hooks/useToast';
 import { isAxiosError } from 'axios';
 import type { ApiResponse } from '@shared/types/api.types';
 
+interface UseSelectBranchOptions {
+  showSuccessToast?: boolean;
+  showErrorToast?: boolean;
+}
+
 /**
  * Hook đổi chi nhánh làm việc để backend cấp lại JWT chứa `branchId`.
+ *
+ * @param options - Cấu hình bật/tắt toast theo ngữ cảnh sử dụng
  */
-export const useSelectBranch = () => {
+export const useSelectBranch = (options: UseSelectBranchOptions = {}) => {
   const setAuthSession = useAuthStore((state) => state.setAuthSession);
   const currentUser = useAuthStore((state) => state.user);
   const { success, error } = useToast();
+  const { showSuccessToast = true, showErrorToast = true } = options;
 
   return useMutation({
     mutationFn: (branchId: string) => authService.selectBranch(branchId),
@@ -22,10 +30,16 @@ export const useSelectBranch = () => {
         phone: currentUser?.phone,
       });
 
-      success('Đổi chi nhánh thành công', 'Phiên làm việc đã chuyển sang chi nhánh mới.');
+      if (showSuccessToast) {
+        success('Đổi chi nhánh thành công', 'Phiên làm việc đã chuyển sang chi nhánh mới.');
+      }
     },
     onError: (err) => {
       if (isAxiosError<ApiResponse<unknown>>(err) && err.response) {
+        return;
+      }
+
+      if (!showErrorToast) {
         return;
       }
 

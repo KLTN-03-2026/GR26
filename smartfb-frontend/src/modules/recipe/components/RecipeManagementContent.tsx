@@ -14,6 +14,8 @@ import type {
   RecipeLineFormValues,
 } from "@modules/recipe/types/recipe.types";
 import { Button } from "@shared/components/ui/button";
+import { PERMISSIONS } from "@shared/constants/permissions";
+import { usePermission } from "@shared/hooks/usePermission";
 import { Input } from "@shared/components/ui/input";
 import {
   Select,
@@ -50,6 +52,7 @@ const DECIMAL_FORMATTER = new Intl.NumberFormat("vi-VN", {
  * Thành phần chính của màn quản lý công thức.
  */
 export const RecipeManagementContent = () => {
+  const { can } = usePermission();
   const {
     categoryOptions,
     debouncedSearchKeyword,
@@ -86,6 +89,7 @@ export const RecipeManagementContent = () => {
     setSelectedItemId,
     totalMenuItems,
   } = useRecipeManagement();
+  const canManageRecipe = can(PERMISSIONS.MENU_EDIT);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLine, setEditingLine] = useState<RecipeLine | null>(null);
 
@@ -414,17 +418,19 @@ export const RecipeManagementContent = () => {
                         <Soup className="h-4 w-4" />
                         Đồng bộ nguyên liệu
                       </Button>
-                      <Button
-                        onClick={() => setIsCreateDialogOpen(true)}
-                        disabled={
-                          !selectedItem ||
-                          isIngredientsLoading ||
-                          createIngredientOptions.length === 0
-                        }
-                      >
-                        <Plus className="h-4 w-4" />
-                        Thêm nguyên liệu
-                      </Button>
+                      {canManageRecipe ? (
+                        <Button
+                          onClick={() => setIsCreateDialogOpen(true)}
+                          disabled={
+                            !selectedItem ||
+                            isIngredientsLoading ||
+                            createIngredientOptions.length === 0
+                          }
+                        >
+                          <Plus className="h-4 w-4" />
+                          Thêm nguyên liệu
+                        </Button>
+                      ) : null}
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -499,17 +505,19 @@ export const RecipeManagementContent = () => {
                     Bắt đầu thêm nguyên liệu để hệ thống có thể dùng recipe cho
                     các luồng quản trị kho và bán hàng.
                   </p>
-                  <Button
-                    className="mt-4"
-                    onClick={() => setIsCreateDialogOpen(true)}
-                    disabled={
-                      isIngredientsLoading ||
-                      createIngredientOptions.length === 0
-                    }
-                  >
-                    <Plus className="h-4 w-4" />
-                    Tạo dòng công thức đầu tiên
-                  </Button>
+                  {canManageRecipe ? (
+                    <Button
+                      className="mt-4"
+                      onClick={() => setIsCreateDialogOpen(true)}
+                      disabled={
+                        isIngredientsLoading ||
+                        createIngredientOptions.length === 0
+                      }
+                    >
+                      <Plus className="h-4 w-4" />
+                      Tạo dòng công thức đầu tiên
+                    </Button>
+                  ) : null}
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -538,9 +546,11 @@ export const RecipeManagementContent = () => {
                         <TableHead className="hidden md:table-cell">
                           Trạng thái
                         </TableHead>
-                        <TableHead className="w-[92px] text-right md:w-[180px]">
-                          Thao tác
-                        </TableHead>
+                        {canManageRecipe ? (
+                          <TableHead className="w-[92px] text-right md:w-[180px]">
+                            Thao tác
+                          </TableHead>
+                        ) : null}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -583,30 +593,32 @@ export const RecipeManagementContent = () => {
                               {line.stockStatusLabel}
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => setEditingLine(line)}
-                                disabled={isUpdatingRecipe || isDeletingRecipe}
-                                aria-label={`Sửa nguyên liệu ${line.ingredientName}`}
-                                title="Sửa"
-                              >
-                                <PencilLine className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => void handleDeleteRecipe(line)}
-                                disabled={isUpdatingRecipe || isDeletingRecipe}
-                                aria-label={`Xóa nguyên liệu ${line.ingredientName}`}
-                                title="Xóa"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                          {canManageRecipe ? (
+                            <TableCell>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => setEditingLine(line)}
+                                  disabled={isUpdatingRecipe || isDeletingRecipe}
+                                  aria-label={`Sửa nguyên liệu ${line.ingredientName}`}
+                                  title="Sửa"
+                                >
+                                  <PencilLine className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => void handleDeleteRecipe(line)}
+                                  disabled={isUpdatingRecipe || isDeletingRecipe}
+                                  aria-label={`Xóa nguyên liệu ${line.ingredientName}`}
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          ) : null}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -618,32 +630,36 @@ export const RecipeManagementContent = () => {
         </section>
       </div>
 
-      <RecipeLineDialog
-        key={`recipe-create-${selectedItemId}`}
-        open={isCreateDialogOpen}
-        mode="create"
-        targetItemName={selectedItem?.name ?? "món đã chọn"}
-        ingredientOptions={createIngredientOptions}
-        isPending={isCreatingRecipe}
-        onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreateSubmit}
-      />
+      {canManageRecipe ? (
+        <>
+          <RecipeLineDialog
+            key={`recipe-create-${selectedItemId}`}
+            open={isCreateDialogOpen}
+            mode="create"
+            targetItemName={selectedItem?.name ?? "món đã chọn"}
+            ingredientOptions={createIngredientOptions}
+            isPending={isCreatingRecipe}
+            onOpenChange={setIsCreateDialogOpen}
+            onSubmit={handleCreateSubmit}
+          />
 
-      <RecipeLineDialog
-        key={`recipe-edit-${editingLine?.id ?? "empty"}`}
-        open={Boolean(editingLine)}
-        mode="edit"
-        targetItemName={selectedItem?.name ?? "món đã chọn"}
-        ingredientOptions={editIngredientOptions}
-        initialLine={editingLine}
-        isPending={isUpdatingRecipe}
-        onOpenChange={(open) => {
-          if (!open) {
-            setEditingLine(null);
-          }
-        }}
-        onSubmit={handleEditSubmit}
-      />
+          <RecipeLineDialog
+            key={`recipe-edit-${editingLine?.id ?? "empty"}`}
+            open={Boolean(editingLine)}
+            mode="edit"
+            targetItemName={selectedItem?.name ?? "món đã chọn"}
+            ingredientOptions={editIngredientOptions}
+            initialLine={editingLine}
+            isPending={isUpdatingRecipe}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditingLine(null);
+              }
+            }}
+            onSubmit={handleEditSubmit}
+          />
+        </>
+      ) : null}
     </>
   );
 };

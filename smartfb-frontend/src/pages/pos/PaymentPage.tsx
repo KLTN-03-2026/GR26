@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@modules/auth/stores/authStore';
@@ -15,11 +16,13 @@ import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
+import { queryKeys } from '@shared/constants/queryKeys';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currentRole = useAuthStore((state) => state.user?.role);
-  const { cart, tableContext, draftOrder, clearDraft } = useOrderStore();
+  const { cart, tableContext, draftOrder, clearDraftAndContext } = useOrderStore();
   const hasCreatedOrder = Boolean(draftOrder.orderId);
 
   const { subtotal, vatAmount, totalAmount } = useOrderPricing({
@@ -40,6 +43,28 @@ export default function PaymentPage() {
   const isProcessing = processCashPaymentMutation.isPending || isMockProcessing;
   const tableManagementRoute =
     currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
+
+  /**
+   * Sau khi thanh toán thành công cần xóa toàn bộ context active của bàn hiện tại
+   * và đánh dấu stale các query liên quan để màn bàn lấy lại trạng thái mới từ backend.
+   */
+  const finalizeSuccessfulPayment = () => {
+    const paidOrderId = draftOrder.orderId;
+    const paidTableId = tableContext?.tableId ?? null;
+
+    clearDraftAndContext();
+
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+
+    if (paidTableId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(paidTableId) });
+    }
+
+    if (paidOrderId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(paidOrderId) });
+    }
+  };
 
   useEffect(() => {
     if (!isSuccess) {
@@ -73,7 +98,7 @@ export default function PaymentPage() {
       window.setTimeout(() => {
         setIsMockProcessing(false);
         setIsSuccess(true);
-        clearDraft();
+        finalizeSuccessfulPayment();
       }, 1200);
       return;
     }
@@ -89,7 +114,7 @@ export default function PaymentPage() {
 
       toast.success('Thanh toán tiền mặt thành công');
       setIsSuccess(true);
-      clearDraft();
+      finalizeSuccessfulPayment();
     }).catch(() => {
       // Axios interceptor đã xử lý toast lỗi chung.
     });

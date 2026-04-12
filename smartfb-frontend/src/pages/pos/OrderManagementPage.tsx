@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { OrderManagementDetailPanel } from '@modules/order/components/order-management/OrderManagementDetailPanel';
+import { generatePath, useNavigate } from 'react-router-dom';
 import { OrderManagementHeader } from '@modules/order/components/order-management/OrderManagementHeader';
 import { OrderManagementList } from '@modules/order/components/order-management/OrderManagementList';
 import {
   buildOrderPageSearchParams,
   getOrderSummaryCards,
+  resolveOrderNavigationTarget,
 } from '@modules/order/components/order-management/orderManagement.utils';
-import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
+import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
+import { usePermission } from '@shared/hooks/usePermission';
 
 const OrderManagementPage = () => {
   const navigate = useNavigate();
-  const { orders, fetchOrders, isLoading, updateOrderStatus } = useOrderStore();
+  const { orders, fetchOrders, isLoading } = useOrderStore();
+  const { can } = usePermission();
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const canCreateOrder = can(PERMISSIONS.ORDER_CREATE);
+  const canUpdateOrder = can(PERMISSIONS.ORDER_UPDATE);
 
   useEffect(() => {
     void fetchOrders();
@@ -43,28 +46,23 @@ const OrderManagementPage = () => {
     });
   }, [activeTab, normalizedSearchQuery, orders]);
 
-  const selectedOrderSummary = useMemo(() => {
-    if (filteredOrders.length === 0) {
-      return null;
-    }
-
-    if (!selectedOrderId) {
-      return filteredOrders[0];
-    }
-
-    return filteredOrders.find((order) => order.id === selectedOrderId) ?? filteredOrders[0];
-  }, [filteredOrders, selectedOrderId]);
-
-  const selectedOrderQuery = useOrderDetail(selectedOrderSummary?.id ?? null);
-
   const summaryCards = useMemo(() => {
     return getOrderSummaryCards(orders);
   }, [orders]);
 
   /**
-   * Đơn chưa thanh toán cần mở lại đúng context tại POS để xem và xử lý tiếp cart hiện tại.
+   * Card order sẽ điều hướng theo trạng thái:
+   * đơn đang mở quay về POS, đơn đã đóng chuyển sang màn read-only.
    */
   const handleOpenOrder = (order: OrderListItemResponse) => {
+    const shouldOpenDetail =
+      resolveOrderNavigationTarget(order.status) === 'detail' || !canUpdateOrder;
+
+    if (shouldOpenDetail) {
+      navigate(generatePath(ROUTES.POS_ORDER_DETAIL, { orderId: order.id }));
+      return;
+    }
+
     const search = buildOrderPageSearchParams({
       orderId: order.id,
       tableId: order.tableId ?? undefined,
@@ -74,9 +72,6 @@ const OrderManagementPage = () => {
     navigate(`${ROUTES.POS_ORDER}?${search}`);
   };
 
-  /**
-   * CTA tạo đơn mới tại trang quản lý sẽ đi vào luồng mang về để nhân viên tạo cart mới nhanh hơn.
-   */
   const handleCreateTakeawayOrder = () => {
     const search = buildOrderPageSearchParams({
       freshTakeaway: true,
@@ -85,55 +80,28 @@ const OrderManagementPage = () => {
     navigate(`${ROUTES.POS_ORDER}?${search}`);
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    const reason = window.prompt('Lý do hủy đơn?');
-
-    if (!reason) {
-      return;
-    }
-
-    await updateOrderStatus(orderId, 'CANCELLED', reason);
-    void fetchOrders();
-    void selectedOrderQuery.refetch();
-  };
-
   return (
-    <div className="grid min-h-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-      <section className="flex min-h-0 min-w-0 flex-col gap-6">
-        <OrderManagementHeader
-          isLoading={isLoading}
-          searchQuery={searchQuery}
-          activeTab={activeTab}
-          summaryCards={summaryCards}
-          onRefresh={() => void fetchOrders()}
-          onCreateTakeaway={handleCreateTakeawayOrder}
-          onSearchChange={setSearchQuery}
-          onTabChange={setActiveTab}
-        />
-
-        <div className="min-h-0 flex-1">
-          <OrderManagementList
-            orders={filteredOrders}
-            isLoading={isLoading}
-            selectedOrderId={selectedOrderSummary?.id ?? null}
-            onOpenOrder={handleOpenOrder}
-            onSelectOrder={setSelectedOrderId}
-          />
-        </div>
-      </section>
-
-      <OrderManagementDetailPanel
-        selectedOrder={selectedOrderQuery.data ?? null}
-        isLoading={Boolean(selectedOrderSummary?.id) && selectedOrderQuery.isFetching}
-        onUpdateStatus={(orderId, status) => {
-          void updateOrderStatus(orderId, status).then(() => {
-            void fetchOrders();
-            void selectedOrderQuery.refetch();
-          });
-        }}
-        onCancelOrder={(orderId) => void handleCancelOrder(orderId)}
+    <section className="flex min-h-0 min-w-0 flex-col gap-6">
+      <OrderManagementHeader
+        isLoading={isLoading}
+        canCreateTakeaway={canCreateOrder}
+        searchQuery={searchQuery}
+        activeTab={activeTab}
+        summaryCards={summaryCards}
+        onRefresh={() => void fetchOrders()}
+        onCreateTakeaway={handleCreateTakeawayOrder}
+        onSearchChange={setSearchQuery}
+        onTabChange={setActiveTab}
       />
-    </div>
+
+      <div className="min-h-0 flex-1">
+        <OrderManagementList
+          orders={filteredOrders}
+          isLoading={isLoading}
+          onOpenOrder={handleOpenOrder}
+        />
+      </div>
+    </section>
   );
 };
 

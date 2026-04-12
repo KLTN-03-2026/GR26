@@ -20,6 +20,7 @@ import { MenuManagementLoadingState } from './MenuManagementLoadingState';
 export const MenuManagementContent = () => {
   const {
     activeFilterCount,
+    canManageMenu,
     categories,
     categoryManagementItems,
     configuringBranchMenu,
@@ -115,8 +116,12 @@ export const MenuManagementContent = () => {
                       ? 'Đang tìm món từ hệ thống...'
                       : 'Đang đồng bộ dữ liệu thực đơn...'
                   : isBranchMode
-                    ? `Đang quản lý giá bán và trạng thái phục vụ tại ${selectedBranchName}.`
-                    : 'Quản lý món ăn, danh mục '}
+                    ? canManageMenu
+                      ? `Đang quản lý giá bán và trạng thái phục vụ tại ${selectedBranchName}.`
+                      : `Đang xem giá bán và trạng thái phục vụ tại ${selectedBranchName}.`
+                    : canManageMenu
+                      ? 'Quản lý món ăn, danh mục và topping của hệ thống.'
+                      : 'Xem danh sách món ăn, danh mục và topping hiện có.'}
               </p>
             </div>
 
@@ -168,27 +173,31 @@ export const MenuManagementContent = () => {
                 )}
               </Button>
 
-              <CategoryManagementDialog
-                categories={categoryManagementItems}
-                isLoading={isCategoryLoading}
-                isError={isCategoryError}
-                isFetching={isCategoryFetching}
-                nextDisplayOrder={nextCategoryDisplayOrder}
-                triggerClassName="w-full sm:w-auto"
-                onRetry={onRefetchCategories}
-              />
-              <AddonManagementDialog
-                addons={rawAddons}
-                isLoading={isAddonLoading}
-                isError={isAddonError}
-                isFetching={isAddonFetching}
-                triggerClassName="w-full sm:w-auto"
-                onRetry={onRetryAddons}
-              />
-              <AddMenuDialog
-                categories={categoryManagementItems}
-                triggerClassName="w-full sm:w-auto"
-              />
+              {canManageMenu ? (
+                <>
+                  <CategoryManagementDialog
+                    categories={categoryManagementItems}
+                    isLoading={isCategoryLoading}
+                    isError={isCategoryError}
+                    isFetching={isCategoryFetching}
+                    nextDisplayOrder={nextCategoryDisplayOrder}
+                    triggerClassName="w-full sm:w-auto"
+                    onRetry={onRefetchCategories}
+                  />
+                  <AddonManagementDialog
+                    addons={rawAddons}
+                    isLoading={isAddonLoading}
+                    isError={isAddonError}
+                    isFetching={isAddonFetching}
+                    triggerClassName="w-full sm:w-auto"
+                    onRetry={onRetryAddons}
+                  />
+                  <AddMenuDialog
+                    categories={categoryManagementItems}
+                    triggerClassName="w-full sm:w-auto"
+                  />
+                </>
+              ) : null}
             </div>
           </div>
         </div>
@@ -201,7 +210,9 @@ export const MenuManagementContent = () => {
                   Đang áp dụng cấu hình theo chi nhánh: {selectedBranchName}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Giá hiển thị và công tắc bán trên từng card đang dùng cấu hình của chi nhánh này.
+                  {canManageMenu
+                    ? 'Giá hiển thị và công tắc bán trên từng card đang dùng cấu hình của chi nhánh này.'
+                    : 'Giá hiển thị và trạng thái bán trên từng card đang dùng cấu hình của chi nhánh này.'}
                 </p>
               </div>
 
@@ -216,7 +227,9 @@ export const MenuManagementContent = () => {
           </div>
         ) : (
           <div className="mb-4 rounded-3xl border border-dashed border-amber-200 bg-white/90 px-4 py-4 text-sm text-gray-600 shadow-sm">
-            Chọn một chi nhánh ở sidebar để thiết lập giá bán và trạng thái phục vụ riêng theo từng cơ sở.
+            {canManageMenu
+              ? 'Chọn một chi nhánh ở sidebar để thiết lập giá bán và trạng thái phục vụ riêng theo từng cơ sở.'
+              : 'Chọn một chi nhánh ở sidebar để xem giá bán và trạng thái phục vụ riêng theo từng cơ sở.'}
           </div>
         )}
 
@@ -225,7 +238,9 @@ export const MenuManagementContent = () => {
             <div className="text-center">
               <p className="font-medium text-text-secondary">Không tìm thấy món ăn nào</p>
               <p className="mt-1 text-sm text-text-secondary">
-                Thử điều chỉnh bộ lọc hoặc thêm món mới
+                {canManageMenu
+                  ? 'Thử điều chỉnh bộ lọc hoặc thêm món mới'
+                  : 'Thử điều chỉnh bộ lọc để xem thêm món phù hợp'}
               </p>
             </div>
           </div>
@@ -236,10 +251,11 @@ export const MenuManagementContent = () => {
                 <MenuCard
                   key={menu.id}
                   menu={menu}
+                  canManageMenu={canManageMenu}
                   onEdit={onEditMenu}
                   onDelete={onDeleteMenu}
                   onToggle={onToggleMenu}
-                  onConfigureBranch={isBranchMode ? onConfigureBranchMenu : undefined}
+                  onConfigureBranch={isBranchMode && canManageMenu ? onConfigureBranchMenu : undefined}
                   isBranchMode={isBranchMode}
                   isBranchLoading={isBranchMode && (isBranchConfigLoading || isBranchConfigFetching)}
                 />
@@ -259,21 +275,25 @@ export const MenuManagementContent = () => {
         )}
       </div>
 
-      <AddMenuDialog
-        categories={categoryManagementItems}
-        menu={editingMenu}
-        open={Boolean(editingMenu)}
-        triggerClassName="w-full sm:w-auto"
-        onOpenChange={onUpdateEditingMenuOpen}
-      />
-      <BranchMenuConfigDialog
-        open={Boolean(configuringBranchMenu)}
-        menu={configuringBranchMenu}
-        branchName={selectedBranchName}
-        isPending={isUpdatingBranchMenuItem}
-        onSubmit={onSubmitBranchConfig}
-        onOpenChange={onUpdateBranchConfigOpen}
-      />
+      {canManageMenu ? (
+        <>
+          <AddMenuDialog
+            categories={categoryManagementItems}
+            menu={editingMenu}
+            open={Boolean(editingMenu)}
+            triggerClassName="w-full sm:w-auto"
+            onOpenChange={onUpdateEditingMenuOpen}
+          />
+          <BranchMenuConfigDialog
+            open={Boolean(configuringBranchMenu)}
+            menu={configuringBranchMenu}
+            branchName={selectedBranchName}
+            isPending={isUpdatingBranchMenuItem}
+            onSubmit={onSubmitBranchConfig}
+            onOpenChange={onUpdateBranchConfigOpen}
+          />
+        </>
+      ) : null}
     </div>
   );
 };

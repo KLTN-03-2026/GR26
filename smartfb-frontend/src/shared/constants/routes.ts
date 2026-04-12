@@ -40,6 +40,8 @@ export const ROUTES = {
     DASHBOARD: '/pos/dashboard',
     TABLES: '/pos/tables',
     ORDERS: '/pos/orders',
+    MENU: '/pos/menu',
+    RECIPES: '/pos/recipes',
     INVENTORY: '/pos/inventory',
     MY_SHIFTS: '/pos/my-shifts',
   },
@@ -56,6 +58,7 @@ export const ROUTES = {
   // POS routes
   POS_SELECT_BRANCH: '/pos/select-branch',
   POS_ORDER: '/pos/order',
+  POS_ORDER_DETAIL: '/pos/orders/:orderId',
   POS_TABLE_MAP: '/pos/table-map',
   POS_PAYMENT: '/pos/payment',
   POS_MANAGEMENT: '/pos/management',

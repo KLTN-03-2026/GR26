@@ -27,7 +27,7 @@ const ORDER_PAGE_SIZE = 100;
 const fetchAllOrderPages = async (): Promise<OrderListItemResponse[]> => {
   const firstResponse = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
     params: {
-      page: 1,
+      page: 0,
       size: ORDER_PAGE_SIZE,
     },
   });

@@ -13,6 +13,7 @@ import { GpToggle } from "./GpToggle";
 import type { MenuItem } from "@modules/menu/types/menu.types";
 
 interface MenuCardProps {
+  canManageMenu?: boolean;
   menu: MenuItem;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -23,6 +24,7 @@ interface MenuCardProps {
 }
 
 export const MenuCard: FC<MenuCardProps> = ({
+  canManageMenu = true,
   menu,
   onEdit,
   onDelete,
@@ -78,38 +80,40 @@ export const MenuCard: FC<MenuCardProps> = ({
         )}
 
         {/* Action Menu - Top Right */}
-        <div className="absolute top-2 right-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isBranchMode && onConfigureBranch ? (
-                <DropdownMenuItem
-                  onClick={() => onConfigureBranch(menu)}
-                  disabled={isBranchLoading}
+        {canManageMenu ? (
+          <div className="absolute top-2 right-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
                 >
-                  Thiết lập chi nhánh
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isBranchMode && onConfigureBranch ? (
+                  <DropdownMenuItem
+                    onClick={() => onConfigureBranch(menu)}
+                    disabled={isBranchLoading}
+                  >
+                    Thiết lập chi nhánh
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem onClick={() => onEdit(menu.id)}>
+                  Chỉnh sửa
                 </DropdownMenuItem>
-              ) : null}
-              <DropdownMenuItem onClick={() => onEdit(menu.id)}>
-                Chỉnh sửa
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(menu.id)}
-                className="text-red-600"
-              >
-                Xóa
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenuItem
+                  onClick={() => onDelete(menu.id)}
+                  className="text-red-600"
+                >
+                  Xóa
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : null}
       </div>
 
       {/* Content Section */}
@@ -154,7 +158,7 @@ export const MenuCard: FC<MenuCardProps> = ({
           <GpToggle
             isAvailable={menu.isAvailable ?? true}
             onToggle={(isAvailable) => onToggle(menu, isAvailable)}
-            disabled={isBranchLoading}
+            disabled={isBranchLoading || !canManageMenu}
           />
         </div>
       </div>

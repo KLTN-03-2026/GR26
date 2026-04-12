@@ -72,11 +72,11 @@ export const menuConfig: MenuSection[] = [
           },
           { title: 'Đơn hàng', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT, roles: [ROLES.OWNER] },
           {
-            title: 'Order',
+            title: 'Đơn hàng',
             icon: ClipboardList,
-            path: ROUTES.POS_ORDER,
+            path: ROUTES.POS_MANAGEMENT,
             roles: [ROLES.STAFF],
-            requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
           },
           {
             title: 'Thanh toán',
@@ -99,6 +99,13 @@ export const menuConfig: MenuSection[] = [
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU, roles: [ROLES.OWNER] },
+          {
+            title: 'Thực đơn',
+            icon: ChefHat,
+            path: ROUTES.STAFF.MENU,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,
+          },
           { title: 'Kho', icon: Archive, path: ROUTES.OWNER.INVENTORY, roles: [ROLES.OWNER] },
           {
             title: 'Kho',
@@ -108,6 +115,13 @@ export const menuConfig: MenuSection[] = [
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,
           },
           { title: 'Công thức', icon: BookOpenCheck, path: ROUTES.OWNER.RECIPES, roles: [ROLES.OWNER] },
+          {
+            title: 'Công thức',
+            icon: BookOpenCheck,
+            path: ROUTES.STAFF.RECIPES,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+          },
         ],
       },
     ],

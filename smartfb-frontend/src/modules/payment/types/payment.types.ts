@@ -20,7 +20,7 @@ export interface ProcessCashPaymentRequest {
 }
 
 /**
- * Response payment backend trả về sau khi thanh toán thành công.
+ * Response payment backend trả về sau khi thanh toán hoặc khi truy vấn lại giao dịch.
  */
 export interface PaymentResponse {
   id: string;
@@ -33,4 +33,5 @@ export interface PaymentResponse {
   createdAt?: string | null;
 }
 
-export type ProcessCashPaymentApiResponse = ApiResponse<PaymentResponse>;
+export type PaymentApiResponse = ApiResponse<PaymentResponse>;
+export type ProcessCashPaymentApiResponse = PaymentApiResponse;

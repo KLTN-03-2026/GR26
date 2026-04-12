@@ -80,12 +80,12 @@ const BOTTOM_NAV_ITEMS: readonly BottomNavItem[] = [
     label: 'Order',
     icon: ClipboardList,
     ownerLabel: 'Đơn hàng',
-    staffLabel: 'Order',
+    staffLabel: 'Đơn hàng',
     ownerIcon: ClipboardList,
     staffIcon: ClipboardList,
     ownerPath: ROUTES.POS_MANAGEMENT,
-    staffPath: ROUTES.POS_ORDER,
-    staffPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
+    staffPath: ROUTES.POS_MANAGEMENT,
+    staffPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
   {
     label: 'Bàn',
@@ -208,6 +208,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
 
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
+  const branchFallbackLabel = isOwner ? 'Tất cả chi nhánh' : 'Chưa chọn chi nhánh';
 
   const toggleItem = (title: string) => {
     setExpandedItems((prev) => {
@@ -270,7 +271,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                 )}
               >
                 <span className="flex-1 truncate text-left text-text-primary">
-                  {selectedBranch?.name || 'Tất cả chi nhánh'}
+                  {selectedBranch?.name || branchFallbackLabel}
                 </span>
                 <ChevronDown
                   className={cn(
