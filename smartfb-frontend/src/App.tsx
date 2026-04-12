@@ -15,12 +15,14 @@ import {
   type RouteConfigItem,
 } from './routes';
 
+const EMPTY_PERMISSIONS: string[] = [];
+
 const renderProtectedRoutes = (
   routes: RouteConfigItem[],
   allowedRoles: typeof ROLES[keyof typeof ROLES][],
   layout: 'admin' | 'app'
 ) => {
-  return routes.map(({ path, element, pageTitle }) => {
+  return routes.map(({ path, element, pageTitle, requiredPermissions }) => {
     const wrappedElement =
       layout === 'admin' ? (
         <AdminLayout pageTitle={pageTitle}>{element}</AdminLayout>
@@ -33,7 +35,10 @@ const renderProtectedRoutes = (
         key={path}
         path={path}
         element={
-          <ProtectedRoute allowedRoles={allowedRoles}>
+          <ProtectedRoute
+            allowedRoles={allowedRoles}
+            requiredPermissions={requiredPermissions}
+          >
             {wrappedElement}
           </ProtectedRoute>
         }
@@ -52,7 +57,9 @@ const renderPosRouteElement = (route: RouteConfigItem) => {
 function App() {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const currentRole = useAuthStore((state) => state.user?.role);
+  const currentRole = useAuthStore((state) => state.user?.role ?? state.session?.role);
+  const permissions =
+    useAuthStore((state) => state.session?.permissions) ?? EMPTY_PERMISSIONS;
 
   if (!hasHydrated) {
     return (
@@ -63,7 +70,7 @@ function App() {
   }
 
   const fallbackRoute =
-    isAuthenticated && currentRole ? getRoleHomePage(currentRole) : ROUTES.LOGIN;
+    isAuthenticated && currentRole ? getRoleHomePage(currentRole, permissions) : ROUTES.LOGIN;
 
   return (
     <Routes>
@@ -85,7 +92,10 @@ function App() {
           key={route.path}
           path={route.path}
           element={
-            <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.STAFF]}>
+            <ProtectedRoute
+              allowedRoles={[ROLES.OWNER, ROLES.STAFF]}
+              requiredPermissions={route.requiredPermissions}
+            >
               {renderPosRouteElement(route)}
             </ProtectedRoute>
           }

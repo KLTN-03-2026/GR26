@@ -32,6 +32,18 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['staff', 'list', filters] as const,
     detail: (id: string) => ['staff', 'detail', id] as const,
   },
+
+  // Positions
+  positions: {
+    all: ['positions'] as const,
+    list: () => ['positions', 'list'] as const,
+  },
+
+  // Roles & permissions
+  roles: {
+    all: ['roles'] as const,
+    matrix: () => ['roles', 'matrix'] as const,
+  },
   
   // Menu
   menu: {
@@ -60,6 +72,16 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
     active: ['orders', 'active'] as const,
+    activeByTable: (tableId: string) => ['orders', 'active', 'table', tableId] as const,
+  },
+
+  // Payments & invoices
+  payments: {
+    all: ['payments'] as const,
+    detail: (id: string) => ['payments', 'detail', id] as const,
+    invoiceDetail: (id: string) => ['payments', 'invoice-detail', id] as const,
+    invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
+    orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
   },
   
   // Inventory

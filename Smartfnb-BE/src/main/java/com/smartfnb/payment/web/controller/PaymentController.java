@@ -53,7 +53,7 @@ public class PaymentController {
      * POST /api/v1/payments/cash
      */
     @PostMapping("/cash")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<PaymentResponse>> processCashPayment(
             @Valid @RequestBody ProcessCashPaymentRequest request) {
 
@@ -80,7 +80,7 @@ public class PaymentController {
      * POST /api/v1/payments/qr
      */
     @PostMapping("/qr")
-    @PreAuthorize("hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<ProcessQRPaymentResponse>> processQRPayment(
             @Valid @RequestBody ProcessQRPaymentRequest request) {
 
@@ -145,10 +145,10 @@ public class PaymentController {
      * - Optional: tìm kiếm theo invoice_number
      * - Pagination
      *
-     * GET /api/v1/payments/invoices/search?invoiceNumber=INV-XYZ&page=0&size=20
+     * GET /api/v1/payments/invoices?invoiceNumber=INV-XYZ&page=0&size=20
      */
-    @GetMapping("/invoices/search")
-    @PreAuthorize("hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'ADMIN')")
+    @GetMapping("/invoices")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_VIEW') or hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<SearchInvoiceResponse>> searchInvoices(
             @RequestParam(required = false) String invoiceNumber,
             @RequestParam(defaultValue = "0") Integer page,
@@ -185,7 +185,7 @@ public class PaymentController {
      * GET /api/v1/payments/invoices/{invoiceId}
      */
     @GetMapping("/invoices/{invoiceId}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_VIEW') or hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<InvoiceResponse>> getInvoice(
             @PathVariable UUID invoiceId) {
 
@@ -194,7 +194,7 @@ public class PaymentController {
 
         // Validate tenant access
         if (!invoice.getTenantId().equals(TenantContext.getCurrentTenantId())) {
-            throw new RuntimeException("Không có quyền truy cập Invoice này");
+            throw new com.smartfnb.shared.exception.SmartFnbException("ACCESS_DENIED", "Không có quyền truy cập Invoice này", 403);
         }
 
         InvoiceResponse response = mapToInvoiceResponse(invoice);
@@ -206,7 +206,7 @@ public class PaymentController {
      * GET /api/v1/payments/invoices/number/{invoiceNumber}
      */
     @GetMapping("/invoices/number/{invoiceNumber}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_VIEW') or hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<InvoiceResponse>> getInvoiceByNumber(
             @PathVariable String invoiceNumber) {
 
@@ -215,7 +215,7 @@ public class PaymentController {
 
         // Validate tenant access
         if (!invoice.getTenantId().equals(TenantContext.getCurrentTenantId())) {
-            throw new RuntimeException("Không có quyền truy cập Invoice này");
+            throw new com.smartfnb.shared.exception.SmartFnbException("ACCESS_DENIED", "Không có quyền truy cập Invoice này", 403);
         }
 
         InvoiceResponse response = mapToInvoiceResponse(invoice);
@@ -227,7 +227,7 @@ public class PaymentController {
      * GET /api/v1/payments/{paymentId}
      */
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_VIEW') or hasAnyRole('CASHIER', 'BRANCH_MANAGER', 'OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<PaymentResponse>> getPayment(
             @PathVariable UUID paymentId) {
 
@@ -236,7 +236,7 @@ public class PaymentController {
 
         // Validate tenant access
         if (!payment.getTenantId().equals(TenantContext.getCurrentTenantId())) {
-            throw new RuntimeException("Không có quyền truy cập Payment này");
+            throw new com.smartfnb.shared.exception.SmartFnbException("ACCESS_DENIED", "Không có quyền truy cập Payment này", 403);
         }
 
         PaymentResponse response = mapToPaymentResponse(payment);

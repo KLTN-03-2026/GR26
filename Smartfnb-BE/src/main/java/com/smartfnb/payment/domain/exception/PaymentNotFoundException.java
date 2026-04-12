@@ -1,5 +1,7 @@
 package com.smartfnb.payment.domain.exception;
 
+import com.smartfnb.shared.exception.SmartFnbException;
+
 import java.util.UUID;
 
 /**
@@ -8,8 +10,8 @@ import java.util.UUID;
  * @author SmartF&B Team
  * @since 2026-04-01
  */
-public class PaymentNotFoundException extends RuntimeException {
+public class PaymentNotFoundException extends SmartFnbException {
     public PaymentNotFoundException(UUID paymentId) {
-        super(String.format("Giao dịch thanh toán '%s' không tồn tại", paymentId));
+        super("PAYMENT_NOT_FOUND", String.format("Giao dịch thanh toán '%s' không tồn tại", paymentId), 404);
     }
 }

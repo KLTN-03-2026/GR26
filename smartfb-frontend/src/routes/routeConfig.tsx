@@ -11,15 +11,19 @@ import MenuPage from '@pages/owner/MenuPage';
 import RecipesPage from '@pages/owner/RecipesPage';
 import StaffDetailPage from '@pages/owner/StaffDetailPage';
 import StaffPage from '@pages/owner/StaffPage';
+import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
 import TablesPage from '@pages/owner/TablesPage';
+import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
+import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
+import type { AccessRequirement } from '@shared/utils/accessControl';
 import { Navigate } from 'react-router-dom';
 
-export interface RouteConfigItem {
+export interface RouteConfigItem extends AccessRequirement {
   path: string;
   pageTitle: string;
   element: ReactNode;
@@ -28,10 +32,16 @@ export interface RouteConfigItem {
 /**
  * Tạo cấu hình route cơ bản để tránh lặp object shape ở toàn file.
  */
-const createRoute = (path: string, pageTitle: string, element: ReactNode): RouteConfigItem => ({
+const createRoute = (
+  path: string,
+  pageTitle: string,
+  element: ReactNode,
+  accessRequirement?: AccessRequirement
+): RouteConfigItem => ({
   path,
   pageTitle,
   element,
+  ...accessRequirement,
 });
 
 /**
@@ -41,12 +51,14 @@ const createPlaceholderRoute = (
   path: string,
   pageTitle: string,
   title: string,
-  description: string
+  description: string,
+  accessRequirement?: AccessRequirement
 ): RouteConfigItem => {
   return createRoute(
     path,
     pageTitle,
-    <PagePlaceholder title={title} description={description} />
+    <PagePlaceholder title={title} description={description} />,
+    accessRequirement
   );
 };
 
@@ -102,6 +114,7 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.STAFF, 'Quản lý nhân viên', <StaffPage />),
   createRoute(ROUTES.OWNER.STAFF_NEW, 'Thêm nhân viên mới', <CreateStaffPage />),
   createRoute(ROUTES.OWNER.STAFF_DETAIL, 'Chi tiết nhân viên', <StaffDetailPage />),
+  createRoute(ROUTES.OWNER.STAFF_POSITIONS, 'Quản lý chức vụ', <StaffPositionsPage />),
   createPlaceholderRoute(
     ROUTES.OWNER.SCHEDULES,
     'Lịch làm việc',
@@ -148,25 +161,36 @@ export const staffRoutes: RouteConfigItem[] = [
     ROUTES.STAFF.DASHBOARD,
     'Dashboard Nhân viên',
     'Dashboard Nhân viên',
-    'Trang dashboard staff đang được tách riêng, route đã sẵn sàng theo đúng cấu trúc.'
+    'Trang dashboard staff đang được tách riêng, route đã sẵn sàng theo đúng cấu trúc.',
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD }
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.STAFF.TABLES,
     'Bàn',
-    'Bàn',
-    'Trang thao tác bàn cho nhân viên đang được chuẩn hóa về page riêng.'
+    <TablesPage />,
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES }
   ),
   createRoute(
     ROUTES.STAFF.ORDERS,
-    'Quản lý đơn hàng',
-    <Navigate to={ROUTES.POS_MANAGEMENT} replace />
+    'Order',
+    <Navigate to={ROUTES.POS_MANAGEMENT} replace />,
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT }
   ),
-  createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />),
+  createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,
+  }),
+  createRoute(ROUTES.STAFF.RECIPES, 'Công thức', <RecipesPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+  }),
+  createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,
+  }),
   createPlaceholderRoute(
     ROUTES.STAFF.MY_SHIFTS,
     'Ca làm của tôi',
     'Ca làm của tôi',
-    'Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule.'
+    'Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule.',
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS }
   ),
 ];
 
@@ -175,15 +199,24 @@ export const posRoutes: RouteConfigItem[] = [
     path: ROUTES.POS_ORDER,
     pageTitle: 'Đặt món',
     element: <OrderPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
   },
   {
     path: ROUTES.POS_PAYMENT,
     pageTitle: 'Thanh toán',
     element: <PaymentPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_PAYMENT,
   },
   {
     path: ROUTES.POS_MANAGEMENT,
     pageTitle: 'Quản lý đơn hàng',
     element: <OrderManagementPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
+  },
+  {
+    path: ROUTES.POS_ORDER_DETAIL,
+    pageTitle: 'Chi tiết đơn hàng',
+    element: <OrderDetailPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
 ];

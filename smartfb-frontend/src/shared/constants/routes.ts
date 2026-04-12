@@ -23,6 +23,7 @@ export const ROUTES = {
     STAFF: '/owner/staff',
     STAFF_NEW: '/owner/staff/new',
     STAFF_DETAIL: '/owner/staff/:id',
+    STAFF_POSITIONS: '/owner/staff/positions',
     SCHEDULES: '/owner/schedules',
     BRANCHES: '/owner/branches',
     BRANCHES_NEW: '/owner/branches/new',
@@ -34,13 +35,15 @@ export const ROUTES = {
     PACKAGES: '/owner/packages',
   },
 
-  // Staff routes - limited access
+  // Staff routes - POS namespace cho nhân viên
   STAFF: {
-    DASHBOARD: '/staff/dashboard',
-    TABLES: '/staff/tables',
-    ORDERS: '/staff/orders',
-    INVENTORY: '/staff/inventory',
-    MY_SHIFTS: '/staff/my-shifts',
+    DASHBOARD: '/pos/dashboard',
+    TABLES: '/pos/tables',
+    ORDERS: '/pos/orders',
+    MENU: '/pos/menu',
+    RECIPES: '/pos/recipes',
+    INVENTORY: '/pos/inventory',
+    MY_SHIFTS: '/pos/my-shifts',
   },
 
   // Shared routes (Owner + Staff)
@@ -55,6 +58,7 @@ export const ROUTES = {
   // POS routes
   POS_SELECT_BRANCH: '/pos/select-branch',
   POS_ORDER: '/pos/order',
+  POS_ORDER_DETAIL: '/pos/orders/:orderId',
   POS_TABLE_MAP: '/pos/table-map',
   POS_PAYMENT: '/pos/payment',
   POS_MANAGEMENT: '/pos/management',

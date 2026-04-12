@@ -8,6 +8,7 @@ export { useDeleteAddon } from './useDeleteAddon';
 export { useDeleteCategory } from './useDeleteCategory';
 export { useDeleteMenu } from './useDeleteMenu';
 export { useMenus } from './useMenus';
+export { useMenuManagement } from './useMenuManagement';
 export { useToggleMenu } from './useToggleMenu';
 export { useUpdateBranchMenuItem } from './useUpdateBranchMenuItem';
 export { useUpdateAddon } from './useUpdateAddon';

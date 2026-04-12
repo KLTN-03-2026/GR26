@@ -64,6 +64,8 @@ export interface CreateStaffRequest {
   dateOfBirth?: string;  // format: date (YYYY-MM-DD)
   gender?: StaffGender;  // MALE, FEMALE, OTHER
   address?: string;
+  password?: string;
+  posPin?: string;
 }
 
 // UpdateStaffRequest theo API spec

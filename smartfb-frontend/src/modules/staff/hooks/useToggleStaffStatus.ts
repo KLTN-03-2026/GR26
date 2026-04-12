@@ -1,8 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutationErrorMessage';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
 
+/**
+ * Hook đổi trạng thái nhân viên.
+ * Hiện backend mới hỗ trợ vô hiệu hóa, nên thao tác kích hoạt lại sẽ trả lỗi có chủ đích.
+ */
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
@@ -22,9 +27,8 @@ export const useToggleStaffStatus = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(variables.id) });
       success('Vô hiệu hoá nhân viên thành công', 'Nhân viên đã bị vô hiệu hoá');
     },
-    onError: (err: any) => {
-      const errorMessage = err.response?.data?.error?.message || err.message || 'Vui lòng thử lại sau';
-      error('Không thể cập nhật trạng thái', errorMessage);
+    onError: (err: unknown) => {
+      error('Không thể cập nhật trạng thái', getStaffMutationErrorMessage(err));
     },
   });
 };

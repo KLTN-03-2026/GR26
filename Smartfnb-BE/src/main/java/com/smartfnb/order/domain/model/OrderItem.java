@@ -44,4 +44,12 @@ public class OrderItem {
     public void updateStatus(OrderItemStatus status) {
         this.status = status;
     }
+
+    public void update(int quantity, BigDecimal unitPrice, String addons, String notes) {
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.addons = addons;
+        this.notes = notes;
+        this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+    }
 }

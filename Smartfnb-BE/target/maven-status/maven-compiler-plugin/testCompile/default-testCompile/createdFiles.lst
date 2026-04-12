@@ -1,4 +1,5 @@
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$ExceptionCases.class
+com\smartfnb\auth\application\command\RefreshTokenCommandHandlerTest.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$4.class
 com\smartfnb\order\infrastructure\websocket\OrderWebSocketIntegrationTest$5.class
 com\smartfnb\staff\application\command\UpdateStaffStatusCommandHandlerTest$IdempotencyBehavior.class

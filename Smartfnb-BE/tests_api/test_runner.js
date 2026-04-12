@@ -192,6 +192,33 @@ async function runTests() {
         let totalAmount = res.data.data.totalAmount;
         console.log("   ✅ Tạo Order thành công. Mã: " + orderId);
 
+        console.log("10b. Cập nhật Order (Sửa bàn, ghi chú và thêm món)");
+        res = await request(`/orders/${orderId}`, 'PUT', {
+            tableId: tableId,
+            notes: "Ghi chú đã cập nhật bởi Auto Test",
+            items: [
+                {
+                    id: res.data.data.items[0].id, // Giữ lại món cũ
+                    itemId: itemId,
+                    itemName: "Cà phê Auto",
+                    quantity: 3, // Tăng số lượng lên 3
+                    unitPrice: 20000
+                },
+                {
+                    itemId: itemId, // Thêm món mới (cùng loại hoặc loại khác đều được)
+                    itemName: "Bánh mì Test",
+                    quantity: 1,
+                    unitPrice: 15000
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order failed: " + JSON.stringify(res.data));
+        totalAmount = res.data.data.totalAmount;
+        console.log("   ✅ Cập nhật Order thành công. Tổng tiền mới: " + totalAmount);
+        if (totalAmount !== (3 * 20000 + 1 * 15000)) {
+            console.warn("   ⚠️ CẢNH BÁO: Tổng tiền sau cập nhật không khớp kỳ vọng! Thực tế: " + totalAmount);
+        }
+
         console.log("11. Cập nhật Order sang COMPLETED");
         res = await request(`/orders/${orderId}/status`, 'PUT', {
             newStatus: "COMPLETED",

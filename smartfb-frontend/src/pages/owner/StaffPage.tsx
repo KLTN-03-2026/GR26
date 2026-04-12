@@ -5,10 +5,12 @@ import { Users, CircleCheckBig, SlidersHorizontal } from 'lucide-react';
 import { ROUTES } from '@shared/constants/routes';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '@modules/staff/services/staffService';
+import { usePositions } from '@modules/staff/hooks/usePositions';
 import { useStaffFilters } from '@modules/staff/hooks/useStaffFilters';
+import { useVisibleStaff } from '@modules/staff/hooks/useVisibleStaff';
 import { StaffFilterBar } from '@modules/staff/components/StaffFilterBar';
 import { StaffTable } from '@modules/staff/components/StaffTable';
-import type { StaffSummary } from '@modules/staff/types/staff.types';
+import type { StaffStatus, StaffSummary } from '@modules/staff/types/staff.types';
 
 const StatCard = ({ icon, iconBg, label, value }: { icon: React.ReactNode; iconBg: string; label: string; value: string }) => (
   <div className="rounded-2xl border border-gray-200 p-4 bg-white shadow-sm">
@@ -22,6 +24,7 @@ const StatCard = ({ icon, iconBg, label, value }: { icon: React.ReactNode; iconB
 
 export default function StaffPage() {
   const navigate = useNavigate();
+  const { data: positionsData = [] } = usePositions();
 
   // Fetch staff list from API với pagination
   const { data: staffData, isLoading, refetch } = useQuery({
@@ -29,13 +32,18 @@ export default function StaffPage() {
     queryFn: () => staffService.getList({ page: 0, size: 100 }),
   });
   
-  const staffList = staffData?.content || [];
+  const staffList = useMemo(() => staffData?.content ?? [], [staffData]);
+  const visibleStaffList = useVisibleStaff(staffList);
 
   // Lấy danh sách unique position names từ staff list
-  const positions = useMemo(() => {
-    const unique = new Set(staffList.map(s => s.positionName).filter(Boolean));
-    return Array.from(unique).sort();
-  }, [staffList]);
+  const positions = useMemo(
+    () =>
+      positionsData.map((position) => ({
+        id: position.id,
+        name: position.name,
+      })),
+    [positionsData]
+  );
 
   const {
     filters,
@@ -47,10 +55,13 @@ export default function StaffPage() {
     clearFilters,
     updatePage,
     totalPages,
-  } = useStaffFilters(staffList);
+  } = useStaffFilters(visibleStaffList);
 
-  const totalStaff = staffList.length;
-  const activeStaff = useMemo(() => staffList.filter((s: StaffSummary) => s.status === 'ACTIVE').length, [staffList]);
+  const totalStaff = visibleStaffList.length;
+  const activeStaff = useMemo(
+    () => visibleStaffList.filter((s: StaffSummary) => s.status === 'ACTIVE').length,
+    [visibleStaffList]
+  );
   const inactiveStaff = totalStaff - activeStaff;
 
   const handleAddStaff = () => {
@@ -61,7 +72,7 @@ export default function StaffPage() {
     refetch();
   };
 
-  if (isLoading && staffList.length === 0) {
+  if (isLoading && visibleStaffList.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="spinner spinner-lg" />
@@ -71,6 +82,8 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      
+
       <div className="grid grid-cols-3 gap-4">
         <StatCard
           icon={<Users className="w-4 h-4 text-blue-600" />}
@@ -97,7 +110,9 @@ export default function StaffPage() {
           filters={filters}
           positions={positions}
           onSearchChange={(value) => updateFilter('keyword', value)}
-          onStatusChange={(value) => updateFilter('status', value === 'all' ? undefined : value as any)}
+          onStatusChange={(value) =>
+            updateFilter('status', value === 'all' ? undefined : (value as StaffStatus))
+          }
           onPositionChange={(value) => updateFilter('positionId', value === 'all' ? undefined : value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -111,7 +126,7 @@ export default function StaffPage() {
           totalItems={totalItems}
           onPageChange={updatePage}
           onRefresh={handleRefresh}
-          isLoading={isLoading && staffList.length === 0}
+          isLoading={isLoading && visibleStaffList.length === 0}
         />
       </div>
     </div>

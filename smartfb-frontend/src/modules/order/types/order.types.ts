@@ -75,6 +75,14 @@ export interface OrderItemCommand {
 }
 
 /**
+ * Một dòng món gửi lên API cập nhật đơn hàng.
+ * `id` là order item id hiện có trên backend, để `null/undefined` nếu là món mới.
+ */
+export interface UpdateOrderItemCommand extends OrderItemCommand {
+  id?: string | null;
+}
+
+/**
  * Payload tạo đơn hàng mới.
  */
 export interface PlaceOrderRequest {
@@ -82,6 +90,16 @@ export interface PlaceOrderRequest {
   source: OrderSource;
   notes?: string;
   items: OrderItemCommand[];
+}
+
+/**
+ * Payload cập nhật toàn bộ đơn hàng.
+ * Backend hiện dùng full update cho danh sách món.
+ */
+export interface UpdateOrderRequest {
+  tableId?: string;
+  notes?: string;
+  items: UpdateOrderItemCommand[];
 }
 
 /**
@@ -100,6 +118,19 @@ export interface CancelOrderRequest {
 }
 
 /**
+ * Bộ lọc FE dùng khi gọi API danh sách đơn hàng.
+ * `tableId` giúp POS dò order đang mở của một bàn trước khi lấy chi tiết đơn.
+ */
+export interface OrderListQueryParams {
+  status?: OrderStatus;
+  from?: string;
+  to?: string;
+  tableId?: string;
+  page?: number;
+  size?: number;
+}
+
+/**
  * Dòng món backend trả về trong chi tiết đơn.
  */
 export interface OrderItemResponse {
@@ -109,7 +140,10 @@ export interface OrderItemResponse {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  addons?: string | null;
+  /**
+   * Backend có thể trả JSON string, còn FE sẽ chuẩn hóa về mảng khi đi qua hook detail.
+   */
+  addons?: string | OrderAddonSelection[] | null;
   notes?: string | null;
   status?: string | null;
 }
@@ -136,5 +170,19 @@ export interface OrderResponse {
   branchId?: string;
 }
 
+/**
+ * Dòng dữ liệu rút gọn backend trả về ở API danh sách đơn hàng.
+ */
+export interface OrderListItemResponse {
+  id: string;
+  orderNumber: string;
+  tableId?: string | null;
+  tableName?: string | null;
+  status: OrderStatus;
+  totalAmount: number;
+  createdAt?: string;
+  staffName?: string | null;
+}
+
 export type OrderApiResponse = ApiResponse<OrderResponse>;
-export type OrderListApiResponse = ApiResponse<OrderResponse[]>;
+export type OrderListApiResponse = ApiResponse<OrderListItemResponse[]>;

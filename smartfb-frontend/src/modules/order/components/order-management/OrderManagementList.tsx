@@ -1,22 +1,20 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Clock, Loader2, Package } from 'lucide-react';
-import type { OrderResponse } from '@modules/order/types/order.types';
+import { ArrowUpRight, Clock, Loader2, Package } from 'lucide-react';
+import type { OrderListItemResponse } from '@modules/order/types/order.types';
 import { cn } from '@shared/utils/cn';
 import { OrderStatusBadge } from './OrderStatusBadge';
-import { formatOrderTime } from './orderManagement.utils';
+import { formatOrderTime, resolveOrderNavigationTarget } from './orderManagement.utils';
 
 interface OrderManagementListProps {
-  orders: OrderResponse[];
+  orders: OrderListItemResponse[];
   isLoading: boolean;
-  selectedOrderId: string | null;
-  onSelectOrder: (orderId: string) => void;
+  onOpenOrder: (order: OrderListItemResponse) => void;
 }
 
 export const OrderManagementList = ({
   orders,
   isLoading,
-  selectedOrderId,
-  onSelectOrder,
+  onOpenOrder,
 }: OrderManagementListProps) => {
   if (isLoading) {
     return (
@@ -39,67 +37,71 @@ export const OrderManagementList = ({
   return (
     <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
       <AnimatePresence mode="popLayout">
-        {orders.map((order) => (
-          <motion.button
-            layout
-            type="button"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            key={order.id}
-            onClick={() => onSelectOrder(order.id)}
-            className={cn(
-              'rounded-[32px] border bg-white p-5 text-left transition-all',
-              selectedOrderId === order.id
-                ? 'border-orange-500 shadow-xl shadow-orange-500/5'
-                : 'border-slate-100 hover:border-slate-300'
-            )}
-          >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div className="min-w-0 space-y-1">
-                <span className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
-                  {order.orderNumber}
+        {orders.map((order) => {
+          const navigationTarget = resolveOrderNavigationTarget(order.status);
+          const opensAtPos = navigationTarget === 'pos';
+
+          return (
+            <motion.button
+              layout
+              type="button"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              key={order.id}
+              onClick={() => onOpenOrder(order)}
+              className={cn(
+                'cursor-pointer rounded-[32px] border bg-white p-5 text-left transition-all hover:-translate-y-0.5',
+                'border-slate-100 hover:border-slate-300',
+                opensAtPos ? 'hover:border-orange-300' : 'hover:border-slate-300'
+              )}
+            >
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div className="min-w-0 space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+                    {order.orderNumber}
+                  </span>
+                  <h3 className="truncate text-lg font-black text-slate-800">
+                    {order.tableName || 'Mang đi'}
+                  </h3>
+                </div>
+                <OrderStatusBadge status={order.status} />
+              </div>
+
+              <div className="flex items-center gap-4 border-y border-slate-100 py-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold uppercase text-slate-500">
+                  {order.tableName ? 'Bàn' : 'POS'}
+                </div>
+                <span className="text-sm font-medium text-slate-600">
+                  {order.staffName || 'Chưa có thông tin nhân viên'}
                 </span>
-                <h3 className="truncate text-lg font-black text-slate-800">
-                  {order.tableName || 'Mang đi'}
-                </h3>
               </div>
-              <OrderStatusBadge status={order.status} />
-            </div>
 
-            <div className="flex items-center gap-4 border-y border-slate-100 py-4">
-              <div className="flex -space-x-2">
-                {order.items.slice(0, 3).map((item) => (
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-xs font-medium">{formatOrderTime(order.createdAt)}</span>
+                  </div>
+
                   <div
-                    key={item.id}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-slate-100 text-[10px] font-bold text-slate-500"
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-bold',
+                      opensAtPos ? 'text-orange-500' : 'text-slate-500'
+                    )}
                   >
-                    {item.quantity}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    {opensAtPos ? 'Mở lại tại POS' : 'Xem chi tiết đơn'}
                   </div>
-                ))}
-                {order.items.length > 3 && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-orange-100 text-[10px] font-bold text-orange-500">
-                    +{order.items.length - 3}
-                  </div>
-                )}
-              </div>
-              <span className="text-sm font-medium text-slate-600">
-                {order.items.length} sản phẩm
-              </span>
-            </div>
+                </div>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Clock className="h-4 w-4" />
-                <span className="text-xs font-medium">{formatOrderTime(order.createdAt)}</span>
+                <div className="text-right font-black text-slate-800">
+                  {order.totalAmount.toLocaleString('vi-VN')} ₫
+                </div>
               </div>
-
-              <div className="text-right font-black text-slate-800">
-                {order.totalAmount.toLocaleString('vi-VN')} ₫
-              </div>
-            </div>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </AnimatePresence>
     </div>
   );

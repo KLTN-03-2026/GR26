@@ -90,7 +90,10 @@ public class ProcessCashPaymentCommandHandler {
         Invoice savedInvoice = invoiceRepository.save(invoice);
         log.info("Đã tạo Invoice {} thành công", savedInvoice.getInvoiceNumber());
 
-        // 7. Publish InvoiceCreatedEvent
+        // 7. Gọi Order Module để chốt đơn
+        orderAdapter.completeOrder(order.id(), tenantId, branchId, command.cashierUserId());
+
+        // 8. Publish InvoiceCreatedEvent
         eventPublisher.publishEvent(new InvoiceCreatedEvent(
             savedInvoice.getId(),
             tenantId,

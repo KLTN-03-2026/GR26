@@ -22,10 +22,12 @@ public record AuthResponse(
         String userId,
         String tenantId,
         String role,
-        String branchId
+        String branchId,
+        String branchName,
+        String fullName
 ) {
     /**
-     * Tạo AuthResponse với tokenType mặc định là "Bearer".
+     * Tạo AuthResponse đầy đủ thông tin.
      *
      * @param accessToken  JWT access token
      * @param refreshToken JWT refresh token
@@ -37,15 +39,23 @@ public record AuthResponse(
      */
     public static AuthResponse of(String accessToken, String refreshToken,
                                   long expiresIn, String userId,
+                                  String tenantId, String role, 
+                                  String branchId, String branchName, String fullName) {
+        return new AuthResponse(accessToken, refreshToken, "Bearer",
+                expiresIn, userId, tenantId, role, branchId, branchName, fullName);
+    }
+    
+    public static AuthResponse of(String accessToken, String refreshToken,
+                                  long expiresIn, String userId,
                                   String tenantId, String role, String branchId) {
         return new AuthResponse(accessToken, refreshToken, "Bearer",
-                expiresIn, userId, tenantId, role, branchId);
+                expiresIn, userId, tenantId, role, branchId, null, null);
     }
     
     public static AuthResponse of(String accessToken, String refreshToken,
                                   long expiresIn, String userId,
                                   String tenantId, String role) {
         return new AuthResponse(accessToken, refreshToken, "Bearer",
-                expiresIn, userId, tenantId, role, null);
+                expiresIn, userId, tenantId, role, null, null, null);
     }
 }

@@ -17,15 +17,12 @@ let refreshRequestPromise: Promise<BackendAuthResponse> | null = null;
 /**
  * Tạo axios client với cấu hình base dùng chung cho toàn app.
  *
- * @returns Axios instance đã gắn baseURL, timeout và content-type mặc định
+ * @returns Axios instance đã gắn baseURL và timeout mặc định
  */
 const createApiClient = (): AxiosInstance => {
   return axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 };
 
@@ -110,6 +107,19 @@ const getApiErrorMessage = (responseData?: ApiResponse<unknown>): string | undef
   return responseData?.error?.message ?? responseData?.message;
 };
 
+/**
+ * Nhận diện payload multipart để tránh bị ép serialize sang JSON.
+ *
+ * Axios sẽ tự gắn boundary cho FormData ở browser nếu không bị header `Content-Type`
+ * mặc định ghi đè. Nếu vẫn giữ `application/json`, blob `data` sẽ bị biến thành object rỗng.
+ *
+ * @param payload - Dữ liệu request hiện tại
+ * @returns `true` nếu request đang gửi multipart/form-data
+ */
+const isFormDataPayload = (payload: unknown): payload is FormData => {
+  return typeof FormData !== 'undefined' && payload instanceof FormData;
+};
+
 // ============================================
 // 🔧 ĐÀO THU THIÊN SỬA - THÊM HEADER X-BRANCH-ID
 // ============================================
@@ -134,15 +144,11 @@ axiosInstance.interceptors.request.use(
       config.headers['X-Branch-Id'] = branchId;
     }
 
-    // Log debug để kiểm tra
-    console.log('🔍 Axios Request:', {
-      url: config.url,
-      method: config.method,
-      hasToken: !!accessToken,
-      hasBranchId: !!branchId,
-      branchId: branchId,
-      tenantId: tenantId
-    });
+    // Với multipart, để browser tự set boundary; nếu giữ JSON header mặc định
+    // Axios sẽ serialize FormData sai contract backend.
+    if (isFormDataPayload(config.data)) {
+      config.headers.delete('Content-Type');
+    }
 
     return config;
   },
@@ -155,7 +161,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
     if (
-      (error.response?.status === 401 || error.response?.status === 403) &&
+      (error.response?.status === 401  || error.response?.status === 403 )&& 
       originalRequest &&
       !originalRequest._retry &&
       isRefreshableRequest(originalRequest.url)

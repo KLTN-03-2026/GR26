@@ -22,6 +22,9 @@ export const PaymentSuccessState = ({
         <p className="mt-3 text-slate-500">
           Đơn hàng đã hoàn tất ở quầy. Bạn có thể quay lại để tạo đơn mới cho bàn tiếp theo.
         </p>
+        <p className="mt-2 text-sm font-medium text-slate-400">
+          Hệ thống sẽ tự quay về khu vực bàn sau vài giây.
+        </p>
 
         <div className="mt-8 flex justify-center gap-3">
           <Button

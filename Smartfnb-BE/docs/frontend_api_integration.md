@@ -38,7 +38,14 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
   {
     "accessToken": "ey...",
     "refreshToken": "ey...",
-    "user": { "id": "uuid", "fullName": "Nguyễn Văn A", "role": "OWNER" }
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "userId": "uuid",
+    "tenantId": "uuid",
+    "role": "OWNER",
+    "branchId": "uuid-chi-nhanh", // null nếu chưa chọn chi nhánh
+    "branchName": "Tên chi nhánh", // null nếu chưa chọn chi nhánh
+    "fullName": "Nguyễn Văn A"
   }
   ```
 
@@ -67,16 +74,18 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
   ```
 - **Response `data`:** Tương tự `login`.
 
-### 1.4 Làm mới Token (Refresh Token)
+- **Model Note:** Khi làm mới token, bạn CẦN gửi kèm `branchId` (chọn từ trước) để Backend duy trì context chi nhánh trong access token mới. Nếu không gửi, token sẽ không có quyền thao tác trên chi nhánh.
+- **Role Note:** Token mới được cấp SẼ VẪN CHỨA QUYỀN (`role`, `permissions`) hiện tại của Account trong DB.
 
 - **Method:** `POST /refresh`
 - **Request Body:**
   ```json
   {
-    "refreshToken": "ey..." // Token được lấy từ lúc login
+    "refreshToken": "ey...", // Token được lấy từ lúc login
+    "branchId": "uuid-chi-nhanh" // (Optional) Truyền ID chi nhánh đang làm việc để giữ branch context
   }
   ```
-- **Response `data`:** Cấp lại Access Token và Refresh Token mới.
+- **Response `data`:** Cấp lại Access Token và Refresh Token mới. (Role, FullName và thông tin Branch vẫn được trả ra tương tự như lúc Login).
 
 ### 1.5 Đổi Scope làm việc sang 1 Chi nhánh
 
@@ -88,7 +97,7 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
     "branchId": "uuid-cua-chi-nhanh"
   }
   ```
-- **Response `data`:** Trả về Token mới có chứa `branchId`. FE lưu lại token này để gọi các API POS tiếp theo.
+- **Response `data`:** Trả về Token mới có chứa đầy đủ thông tin `branchId`, `branchName` và `fullName`. FE lưu lại token này để gọi các API POS tiếp theo.
 
 ### 1.6 Quên mật khẩu (Flow 3 bước)
 
@@ -312,6 +321,8 @@ _(Yêu cầu URL luôn chứa `branchId` hiện tại của người thao tác)_
 
 ### 5.2 Quản lý Sơ đồ Bàn (Tables)
 
+> **Permission Note:** Các thao tác xem Sơ đồ Bàn yêu cầu quyền `TABLE_VIEW`. Các thao tác CRUD (Tạo, Sửa, Xóa, kéo thả) yêu cầu quyền `TABLE_EDIT`. (Hệ thống đã tự động cấp các quyền này cho các role cũ dựa trên `ORDER_VIEW` và `BRANCH_EDIT`).
+
 - `GET /tables` - Lấy array List trải phẳng các bàn (chứa `id`, `name`, `status`, `zoneId`, `positionX`, `positionY`, `shape`) -> Render giao diện Grid kéo thả.
 - `GET /tables/stats/occupied-count` - Widget: Đếm số bàn có khách (OCCUPIED).
 - `POST /tables` - Tạo Bàn (Thả bàn mới vào giao diện):
@@ -502,6 +513,42 @@ stompClient.connect(
 2. **Quầy (Checkout):** Subscribe `/topic/orders/{branchId}` + show hoàn tất → tính tiền → thanh toán.
 3. **Waiter:** Subscribe `/topic/orders/{branchId}` + show từng item trong order → phục vụ từng phần.
 4. **Quản lý:** Có thể không subscribe, chỉ query API `GET /api/v1/orders` định kỳ hoặc theo nhu cầu.
+
+### 6.7 Cập nhật thông tin đơn hàng (Sửa món/Bàn/Ghi chú)
+
+- **Method:** `PUT /{orderId}`
+- **Headers:** Bearer Token
+- **Mô tả:** Cho phép nhân viên sửa thông tin bàn, ghi chú hoặc thay đổi danh sách món ăn (thêm món, bớt món, đổi số lượng). 
+- **⚠️ Lưu ý quan trọng:** API này sử dụng cơ chế **đồng bộ toàn phần** danh sách món ăn.
+  - Những món có `id` trùng với món đang có trong đơn: Sẽ được cập nhật thông tin.
+  - Những món **không có id**: Sẽ được thêm mới vào đơn.
+  - Những món đang có trong đơn nhưng **không xuất hiện** trong request này: Sẽ bị **xoá hẳn** khỏi đơn hàng.
+- **Request Body:**
+  ```json
+  {
+    "tableId": "uuid-ban-moi",
+    "notes": "Ghi chú đã sửa",
+    "items": [
+      {
+        "id": "uuid-item-dang-co-trong-don", // Bắt buộc nếu muốn cập nhật món cũ
+        "itemId": "uuid-mon-an",
+        "itemName": "Cà phê Sữa Đá",
+        "quantity": 3,
+        "unitPrice": 35000,
+        "addons": "Ít đá",
+        "notes": "Làm nhanh"
+      },
+      {
+        "itemId": "uuid-mon-moi", // Thêm món mới vào đơn
+        "itemName": "Bánh mì quay",
+        "quantity": 1,
+        "unitPrice": 25000
+      }
+    ]
+  }
+  ```
+- **Response `data`:** Object OrderResponse với các thông tin và `totalAmount` đã được cập nhật.
+- **Broadcast WebSocket:** Tự động bắn event `OrderUpdatedEvent` để các màn hình khác (Bếp/Thu ngân) nhận được thông báo thay đổi.
 
 ---
 

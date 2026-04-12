@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 public class OrderController {
 
     private final PlaceOrderCommandHandler placeOrderCommandHandler;
+    private final UpdateOrderCommandHandler updateOrderCommandHandler;
     private final UpdateOrderStatusCommandHandler updateOrderStatusCommandHandler;
     private final CancelOrderCommandHandler cancelOrderCommandHandler;
     private final OrderQueryHandler orderQueryHandler;
@@ -64,6 +65,36 @@ public class OrderController {
         var result = placeOrderCommandHandler.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.ok(OrderResponse.from(result)));
+    }
+
+    /**
+     * Cập nhật thông tin đơn hàng (món ăn, ghi chú, bàn).
+     * Chỉ thực hiện khi đơn hàng chưa hoàn tất hoặc bị huỷ.
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ORDER_UPDATE') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateOrder(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateOrderRequest request) {
+
+        List<UpdateOrderCommand.UpdateOrderItemCommand> itemCommands = request.items().stream()
+                .map(item -> new UpdateOrderCommand.UpdateOrderItemCommand(
+                        item.id(), item.itemId(), item.itemName(), item.quantity(),
+                        item.unitPrice(), item.addons(), item.notes()
+                )).collect(Collectors.toList());
+
+        UpdateOrderCommand command = new UpdateOrderCommand(
+                id,
+                TenantContext.getCurrentTenantId(),
+                TenantContext.getCurrentBranchId(),
+                TenantContext.getCurrentUserId(),
+                request.tableId(),
+                request.notes(),
+                itemCommands
+        );
+
+        var result = updateOrderCommandHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok(OrderResponse.from(result)));
     }
 
     @PutMapping("/{id}/status")
@@ -118,6 +149,7 @@ public class OrderController {
             @RequestParam(defaultValue = "20") int size) {
 
         GetOrderListQuery query = new GetOrderListQuery(
+            TenantContext.getCurrentTenantId(),
             TenantContext.getCurrentBranchId(),
             status,
             from,

@@ -1,4 +1,4 @@
-import { RefreshCcw, Search } from 'lucide-react';
+import { Plus, RefreshCcw, Search } from 'lucide-react';
 import type { OrderStatus } from '@modules/order/types/order.types';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
@@ -14,20 +14,24 @@ interface SummaryCard {
 
 interface OrderManagementHeaderProps {
   isLoading: boolean;
+  canCreateTakeaway: boolean;
   searchQuery: string;
   activeTab: OrderStatus | 'ALL';
   summaryCards: SummaryCard[];
   onRefresh: () => void;
+  onCreateTakeaway: () => void;
   onSearchChange: (value: string) => void;
   onTabChange: (tab: OrderStatus | 'ALL') => void;
 }
 
 export const OrderManagementHeader = ({
   isLoading,
+  canCreateTakeaway,
   searchQuery,
   activeTab,
   summaryCards,
   onRefresh,
+  onCreateTakeaway,
   onSearchChange,
   onTabChange,
 }: OrderManagementHeaderProps) => {
@@ -42,15 +46,27 @@ export const OrderManagementHeader = ({
             </p>
           </div>
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="h-12 w-12 rounded-2xl border-slate-200"
-          >
-            <RefreshCcw className={cn('h-5 w-5', isLoading && 'animate-spin')} />
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {canCreateTakeaway ? (
+              <Button
+                onClick={onCreateTakeaway}
+                className="h-12 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo đơn mang về
+              </Button>
+            ) : null}
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="h-12 w-12 rounded-2xl border-slate-200"
+            >
+              <RefreshCcw className={cn('h-5 w-5', isLoading && 'animate-spin')} />
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center">

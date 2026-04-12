@@ -62,8 +62,9 @@ export const staffService = {
   /**
    * POST /api/v1/staff - Tạo nhân viên mới
    */
-  create: async (payload: CreateStaffRequest): Promise<{ id: string }> => {
-    const response = await api.post<ApiResponse<{ id: string }>>('/staff', payload);
+  create: async (payload: CreateStaffRequest): Promise<string> => {
+    const response = await api.post<ApiResponse<string>>('/staff', payload);
+
     return response.data.data;
   },
 
@@ -97,12 +98,8 @@ export const staffService = {
    * Sử dụng API update staff với status field
    */
   updateStatus: async (id: string, status: 'ACTIVE' | 'INACTIVE'): Promise<StaffDetail> => {
-    try {
-      await api.put<ApiResponse<void>>(`/staff/${id}`, { status });
-      const updatedStaff = await staffService.getById(id);
-      return updatedStaff;
-    } catch (error: any) {
-      throw error;
-    }
+    await api.put<ApiResponse<void>>(`/staff/${id}`, { status });
+    const updatedStaff = await staffService.getById(id);
+    return updatedStaff;
   },
 };

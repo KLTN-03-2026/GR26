@@ -4,6 +4,8 @@ import com.smartfnb.order.domain.model.Order;
 import com.smartfnb.order.domain.repository.OrderRepository;
 import com.smartfnb.order.infrastructure.persistence.OrderJpaEntity;
 import com.smartfnb.order.infrastructure.persistence.OrderJpaRepository;
+import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
+import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -12,8 +14,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 
 /**
  * Xử lý các query liên quan đến đơn hàng.
@@ -28,6 +36,8 @@ public class OrderQueryHandler {
 
     private final OrderJpaRepository orderJpaRepository;
     private final OrderRepository orderRepository;
+    private final TableJpaRepository tableJpaRepository;
+    private final StaffJpaRepository staffJpaRepository;
 
     /**
      * Lấy danh sách đơn hàng theo bộ lọc.
@@ -46,25 +56,56 @@ public class OrderQueryHandler {
             Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<OrderJpaEntity> orderPage;
+        Specification<OrderJpaEntity> spec = (root, cq, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("tenantId"), query.tenantId()));
+            predicates.add(cb.equal(root.get("branchId"), query.branchId()));
+            
+            if (query.status() != null && !query.status().isBlank()) {
+                predicates.add(cb.equal(root.get("status"), query.status()));
+            }
+            if (query.from() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), query.from().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()));
+            }
+            if (query.to() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), query.to().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()));
+            }
+            if (query.tableId() != null) {
+                predicates.add(cb.equal(root.get("tableId"), query.tableId()));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-        // Build query động theo filter
-        if (query.status() != null && !query.status().isBlank()) {
-            orderPage = orderJpaRepository.findByTenantIdAndBranchIdAndStatus(
-                query.branchId(),  // tenantId
-                query.branchId(),  // branchId
-                query.status(),
-                pageRequest
-            );
-        } else {
-            orderPage = orderJpaRepository.findByTenantIdAndBranchId(
-                query.branchId(),  // tenantId
-                query.branchId(),  // branchId
-                pageRequest
-            );
-        }
+        Page<OrderJpaEntity> orderPage = orderJpaRepository.findAll(spec, pageRequest);
 
-        return orderPage.map(this::toOrderListResult);
+        // Batch-lookup tên bàn và tên nhân viên để tránh N+1 query
+        List<OrderJpaEntity> orders = orderPage.getContent();
+
+        Set<UUID> tableIds = orders.stream()
+            .filter(o -> o.getTableId() != null)
+            .map(OrderJpaEntity::getTableId)
+            .collect(Collectors.toSet());
+
+        Set<UUID> userIds = orders.stream()
+            .filter(o -> o.getUserId() != null)
+            .map(OrderJpaEntity::getUserId)
+            .collect(Collectors.toSet());
+
+        Map<UUID, String> tableNameMap = tableIds.isEmpty() ? Map.of() :
+            tableJpaRepository.findAllById(tableIds).stream()
+                .collect(Collectors.toMap(
+                    t -> t.getId(),
+                    t -> t.getName()
+                ));
+
+        Map<UUID, String> staffNameMap = userIds.isEmpty() ? Map.of() :
+            staffJpaRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(
+                    s -> s.getId(),
+                    s -> s.getFullName()
+                ));
+
+        return orderPage.map(entity -> toOrderListResult(entity, tableNameMap, staffNameMap));
     }
 
     /**
@@ -88,9 +129,18 @@ public class OrderQueryHandler {
             });
     }
 
-    private OrderListResult toOrderListResult(OrderJpaEntity entity) {
-        String tableName = entity.getTableId() != null ? "Bàn " + entity.getTableId().toString().substring(0, 4) : "Takeaway";
-        String staffName = entity.getUserId() != null ? "Staff " + entity.getUserId().toString().substring(0, 4) : "Unknown";
+    private OrderListResult toOrderListResult(
+            OrderJpaEntity entity,
+            Map<UUID, String> tableNameMap,
+            Map<UUID, String> staffNameMap) {
+
+        String tableName = entity.getTableId() != null
+            ? tableNameMap.getOrDefault(entity.getTableId(), "Bàn không xác định")
+            : "Takeaway";
+
+        String staffName = entity.getUserId() != null
+            ? staffNameMap.getOrDefault(entity.getUserId(), "Nhân viên không xác định")
+            : "Unknown";
 
         // Chuyển LocalDateTime thành Instant
         Instant createdAtInstant = entity.getCreatedAt() != null
