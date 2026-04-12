@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@shared/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { cn } from '@shared/utils/cn';
 import { Plus } from 'lucide-react';
@@ -35,7 +42,6 @@ export const AddMenuDialog = ({
   triggerClassName,
 }: AddMenuDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [fileInputKey, setFileInputKey] = useState(0);
   const { mutateAsync: createMenu, isPending: isCreating } = useCreateMenu();
   const { mutateAsync: updateMenu, isPending: isUpdating } = useUpdateMenu();
   const { error } = useToast();
@@ -68,7 +74,6 @@ export const AddMenuDialog = ({
   useEffect(() => {
     if (dialogOpen) {
       form.reset(defaultValues);
-      setFileInputKey((currentKey) => currentKey + 1);
     }
   }, [defaultValues, dialogOpen, form]);
 
@@ -82,7 +87,6 @@ export const AddMenuDialog = ({
 
     if (!nextOpen) {
       form.reset(defaultValues);
-      setFileInputKey((currentKey) => currentKey + 1);
     }
 
     onOpenChange?.(nextOpen);
@@ -154,12 +158,16 @@ export const AddMenuDialog = ({
           <DialogTitle className="text-xl font-semibold">
             {isEditMode ? 'Chỉnh sửa món ăn' : 'Thêm món ăn mới'}
           </DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            {isEditMode
+              ? 'Cập nhật thông tin món ăn, bao gồm ảnh, giá bán và trạng thái đồng bộ.'
+              : 'Nhập thông tin món ăn và chọn ảnh nếu cần trước khi lưu vào thực đơn.'}
+          </DialogDescription>
         </DialogHeader>
         <MenuForm
           form={form}
           categories={categories}
           existingImageUrl={menu?.image}
-          fileInputKey={fileInputKey}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={isEditMode ? 'Lưu thay đổi' : 'Lưu món ăn'}

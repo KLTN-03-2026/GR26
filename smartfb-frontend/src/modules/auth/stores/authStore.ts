@@ -11,6 +11,10 @@ import {
   partializePersistedAuthState,
 } from '../utils/authStore.utils';
 
+/**
+ * Store xác thực dùng chung cho toàn app.
+ * Quản lý session, profile, user hiện tại và branch context đang thao tác.
+ */
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({

@@ -3,6 +3,11 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import type { StaffDetail } from '../types/staff.types';
 
+/**
+ * Hook lấy chi tiết một nhân viên theo `staffId`.
+ *
+ * @param staffId - ID nhân viên cần xem chi tiết
+ */
 export const useStaffDetail = (staffId: string) => {
   return useQuery({
     queryKey: queryKeys.staff.detail(staffId),

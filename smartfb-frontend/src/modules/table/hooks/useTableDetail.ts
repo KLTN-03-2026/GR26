@@ -3,6 +3,11 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { tableService } from '../services/tableService';
 import type { TableItem } from '../types/table.types'; 
 
+/**
+ * Hook lấy chi tiết bàn theo `tableId`.
+ *
+ * @param tableId - ID bàn cần tải chi tiết để hiển thị drawer hoặc dialog
+ */
 export const useTableDetail = (tableId: string) => {
   return useQuery<TableItem, Error>({
     queryKey: queryKeys.tables.detail(tableId),

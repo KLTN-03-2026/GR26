@@ -1,5 +1,5 @@
-import { type DragEvent, type FC, useEffect, useRef, useState } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import { type DragEvent, type FC, useEffect, useMemo, useRef, useState } from 'react';
+import { useWatch, type UseFormReturn } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/components/ui/form';
 import { Input } from '@shared/components/ui/input';
 import { NumericInput } from '@shared/components/common/NumericInput';
@@ -21,7 +21,6 @@ interface MenuFormProps {
   submitLabel: string;
   className?: string;
   existingImageUrl?: string;
-  fileInputKey?: number;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -44,32 +43,38 @@ export const MenuForm: FC<MenuFormProps> = ({
   submitLabel,
   className,
   existingImageUrl,
-  fileInputKey = 0,
 }) => {
   const selectableCategories = categories.filter((category) => category.id !== NO_MENU_CATEGORY_VALUE);
-  const selectedImageFile = form.watch('imageFile');
-  const [selectedImagePreviewUrl, setSelectedImagePreviewUrl] = useState<string | null>(null);
-  const [currentFileInputKey, setCurrentFileInputKey] = useState(fileInputKey);
+  const selectedImageFile = useWatch({
+    control: form.control,
+    name: 'imageFile',
+  });
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const hiddenFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setCurrentFileInputKey(fileInputKey);
-  }, [fileInputKey]);
-
-  useEffect(() => {
     if (!selectedImageFile) {
-      setSelectedImagePreviewUrl(null);
-      return;
+      if (hiddenFileInputRef.current) {
+        hiddenFileInputRef.current.value = '';
+      }
+    }
+  }, [selectedImageFile]);
+
+  const selectedImagePreviewUrl = useMemo(() => {
+    if (!selectedImageFile) {
+      return null;
     }
 
-    const nextPreviewUrl = URL.createObjectURL(selectedImageFile);
-    setSelectedImagePreviewUrl(nextPreviewUrl);
-
-    return () => {
-      URL.revokeObjectURL(nextPreviewUrl);
-    };
+    return URL.createObjectURL(selectedImageFile);
   }, [selectedImageFile]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreviewUrl) {
+        URL.revokeObjectURL(selectedImagePreviewUrl);
+      }
+    };
+  }, [selectedImagePreviewUrl]);
 
   const previewImageUrl = selectedImagePreviewUrl ?? existingImageUrl ?? '';
   const openFilePicker = () => {
@@ -172,115 +177,113 @@ export const MenuForm: FC<MenuFormProps> = ({
             <FormItem>
               <FormLabel>Ảnh món ăn</FormLabel>
               <FormControl>
-                <>
-                  <input
-                    key={currentFileInputKey}
-                    accept={menuImageUploadConstraints.accept}
-                    className="hidden"
-                    name={field.name}
-                    onBlur={field.onBlur}
-                    onChange={(event) => {
-                      const nextFile = event.target.files?.[0] ?? undefined;
-                      field.onChange(nextFile);
-                      setIsDraggingImage(false);
-                    }}
-                    ref={(element) => {
-                      hiddenFileInputRef.current = element;
-                      field.ref(element);
-                    }}
-                    type="file"
-                  />
-
-                  <div
-                    className={cn(
-                      'group relative overflow-hidden rounded-3xl border-2 border-dashed transition-all',
-                      'cursor-pointer bg-gradient-to-br from-slate-50 to-white',
-                      isDraggingImage
-                        ? 'border-amber-400 bg-amber-50/80 shadow-[0_0_0_4px_rgba(251,191,36,0.15)]'
-                        : 'border-slate-300 hover:border-amber-300 hover:bg-amber-50/40',
-                      previewImageUrl ? 'min-h-[18rem]' : 'min-h-[15rem]'
-                    )}
-                    onClick={openFilePicker}
-                    onDragEnter={(event: DragEvent<HTMLDivElement>) => {
-                      event.preventDefault();
-                      setIsDraggingImage(true);
-                    }}
-                    onDragLeave={(event: DragEvent<HTMLDivElement>) => {
-                      event.preventDefault();
-                      const nextTarget = event.relatedTarget;
-                      if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
-                        return;
-                      }
-                      setIsDraggingImage(false);
-                    }}
-                    onDragOver={(event: DragEvent<HTMLDivElement>) => {
-                      event.preventDefault();
-                      if (!isDraggingImage) {
-                        setIsDraggingImage(true);
-                      }
-                    }}
-                    onDrop={(event: DragEvent<HTMLDivElement>) => {
-                      event.preventDefault();
-                      setIsDraggingImage(false);
-                      const nextFile = event.dataTransfer.files?.[0];
-                      if (!nextFile) {
-                        return;
-                      }
-
-                      field.onChange(nextFile);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        openFilePicker();
-                      }
-                    }}
-                  >
-                    {previewImageUrl ? (
-                      <>
-                        <img
-                          alt="Xem trước ảnh món ăn"
-                          className="h-full min-h-[18rem] w-full object-cover"
-                          src={previewImageUrl}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent" />
-                        <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/18 backdrop-blur">
-                              <Upload className="h-5 w-5" />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold">Nhấn hoặc kéo thả để thay ảnh món ăn</p>
-                              <p className="text-xs text-white/80">
-                                {selectedImageFile
-                                  ? `${selectedImageFile.name} • ${formatFileSize(selectedImageFile.size)}`
-                                  : 'Giữ ảnh hiện tại hoặc chọn ảnh mới để thay thế'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex min-h-[15rem] flex-col items-center justify-center px-6 py-8 text-center">
-                        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-slate-100 text-slate-500 transition-colors group-hover:bg-amber-100 group-hover:text-amber-700">
-                          <Images className="h-10 w-10" />
-                        </div>
-                        <p className="text-xl font-semibold text-slate-800">
-                          Kéo thả ảnh vào đây hoặc nhấn để chọn ảnh
-                        </p>
-                        <p className="mt-3 text-sm text-slate-500">
-                          Định dạng hỗ trợ: {formatList}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Ảnh sẽ được tối ưu trước khi gửi, backend nhận tối đa 5MB
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </>
+                <input
+                  accept={menuImageUploadConstraints.accept}
+                  className="hidden"
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onChange={(event) => {
+                    const nextFile = event.target.files?.[0] ?? undefined;
+                    console.log( event.target.files?.[0] );
+                    
+                    field.onChange(nextFile);
+                    setIsDraggingImage(false);
+                  }}
+                  ref={(element) => {
+                    hiddenFileInputRef.current = element;
+                    field.ref(element);
+                  }}
+                  type="file"
+                />
               </FormControl>
+              <div
+                className={cn(
+                  'group relative overflow-hidden rounded-3xl border-2 border-dashed transition-all',
+                  'cursor-pointer bg-gradient-to-br from-slate-50 to-white',
+                  isDraggingImage
+                    ? 'border-amber-400 bg-amber-50/80 shadow-[0_0_0_4px_rgba(251,191,36,0.15)]'
+                    : 'border-slate-300 hover:border-amber-300 hover:bg-amber-50/40',
+                  previewImageUrl ? 'min-h-[18rem]' : 'min-h-[15rem]'
+                )}
+                onClick={openFilePicker}
+                onDragEnter={(event: DragEvent<HTMLDivElement>) => {
+                  event.preventDefault();
+                  setIsDraggingImage(true);
+                }}
+                onDragLeave={(event: DragEvent<HTMLDivElement>) => {
+                  event.preventDefault();
+                  const nextTarget = event.relatedTarget;
+                  if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+                    return;
+                  }
+                  setIsDraggingImage(false);
+                }}
+                onDragOver={(event: DragEvent<HTMLDivElement>) => {
+                  event.preventDefault();
+                  if (!isDraggingImage) {
+                    setIsDraggingImage(true);
+                  }
+                }}
+                onDrop={(event: DragEvent<HTMLDivElement>) => {
+                  event.preventDefault();
+                  setIsDraggingImage(false);
+                  const nextFile = event.dataTransfer.files?.[0];
+                  if (!nextFile) {
+                    return;
+                  }
+
+                  field.onChange(nextFile);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openFilePicker();
+                  }
+                }}
+              >
+                {previewImageUrl ? (
+                  <>
+                    <img
+                      alt="Xem trước ảnh món ăn"
+                      className="h-full min-h-[18rem] w-full object-cover"
+                      src={previewImageUrl}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/15 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/18 backdrop-blur">
+                          <Upload className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold">Nhấn hoặc kéo thả để thay ảnh món ăn</p>
+                          <p className="text-xs text-white/80">
+                            {selectedImageFile
+                              ? `${selectedImageFile.name} • ${formatFileSize(selectedImageFile.size)}`
+                              : 'Giữ ảnh hiện tại hoặc chọn ảnh mới để thay thế'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex min-h-[15rem] flex-col items-center justify-center px-6 py-8 text-center">
+                    <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-slate-100 text-slate-500 transition-colors group-hover:bg-amber-100 group-hover:text-amber-700">
+                      <Images className="h-10 w-10" />
+                    </div>
+                    <p className="text-xl font-semibold text-slate-800">
+                      Kéo thả ảnh vào đây hoặc nhấn để chọn ảnh
+                    </p>
+                    <p className="mt-3 text-sm text-slate-500">
+                      Định dạng hỗ trợ: {formatList}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Ảnh sẽ được tối ưu trước khi gửi, backend nhận tối đa 5MB
+                    </p>
+                  </div>
+                )}
+              </div>
               <div className="space-y-2 text-xs text-gray-500">
                 <p>Hỗ trợ JPG, PNG, WebP. Ảnh gốc tối đa 15MB và sẽ được tối ưu trên trình duyệt trước khi upload.</p>
                 {selectedImageFile ? (
@@ -298,7 +301,6 @@ export const MenuForm: FC<MenuFormProps> = ({
                   className="w-full"
                   onClick={() => {
                     form.setValue('imageFile', undefined, { shouldDirty: true, shouldValidate: true });
-                    setCurrentFileInputKey((previousKey) => previousKey + 1);
                   }}
                   type="button"
                   variant="outline"

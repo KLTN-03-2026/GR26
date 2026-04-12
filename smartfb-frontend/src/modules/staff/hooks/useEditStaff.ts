@@ -3,6 +3,10 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import type { UpdateStaffRequest } from '../types/staff.types';
 
+/**
+ * Hook cập nhật thông tin nhân viên.
+ * Sau khi lưu thành công sẽ refresh cả danh sách và bản ghi chi tiết của nhân viên vừa sửa.
+ */
 export const useEditStaff = () => {
   const queryClient = useQueryClient();
 
