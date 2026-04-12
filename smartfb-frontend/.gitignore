@@ -44,7 +44,7 @@ CLAUDE.md
 AGENTS.md
 
 # Internal docs you do not want to push
-docs/report/
+# docs/report/
 src/docs/reports/
 src/docs/plans/
 src/docs/dev-notes/

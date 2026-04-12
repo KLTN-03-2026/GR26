@@ -40,7 +40,6 @@ interface OrderCartPanelProps {
   onEditCartItem: (draftItemId: string) => void;
   onDeleteCartItem: (item: OrderDraftItem) => void;
   onChangeItemQuantity: (item: OrderDraftItem, delta: number) => void;
-  onSaveDraft: () => void;
   onCheckout: () => void;
   className?: string;
 }
@@ -61,7 +60,6 @@ export const OrderCartPanel = ({
   onEditCartItem,
   onDeleteCartItem,
   onChangeItemQuantity,
-  onSaveDraft,
   onCheckout,
   className,
 }: OrderCartPanelProps) => {
@@ -225,6 +223,11 @@ export const OrderCartPanel = ({
               được đồng bộ lại qua API trước khi tiếp tục thanh toán.
             </div>
           )}
+          {!hasPlacedOrder && cart.length > 0 && (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-700">
+              Món đầu tiên sẽ tự tạo đơn trên hệ thống, không còn lưu nháp cục bộ trên trình duyệt.
+            </div>
+          )}
           <div className="flex items-center justify-between text-slate-500">
             <span>Tạm tính</span>
             <span>{formatVND(subtotal)}</span>
@@ -249,17 +252,6 @@ export const OrderCartPanel = ({
               className="h-12 flex-1 rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
             >
               Hủy đơn đã tạo
-            </Button>
-          )}
-          {!hasPlacedOrder && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={cart.length === 0 || isSyncingDraft}
-              onClick={onSaveDraft}
-              className="h-12 flex-1 rounded-full border-slate-200"
-            >
-              Lưu nháp cục bộ
             </Button>
           )}
           <Button

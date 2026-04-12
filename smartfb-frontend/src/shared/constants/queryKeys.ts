@@ -72,6 +72,7 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
     active: ['orders', 'active'] as const,
+    activeByTable: (tableId: string) => ['orders', 'active', 'table', tableId] as const,
   },
 
   // Payments & invoices

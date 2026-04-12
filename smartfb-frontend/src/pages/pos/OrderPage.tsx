@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { PanelRightClose, PanelRightOpen, ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -19,9 +20,9 @@ import {
   mergeCartLineQuantity,
   ORDER_TAX_RATE,
   resolveOrderSource,
-  toDraftItemsFromOrder,
   toDialogMenuItem,
   toDraftItem,
+  toDraftItemsFromOrder,
   toOrderItemCommand,
   toUpdateOrderItemCommand,
 } from '@modules/order/components/order-page/orderPage.utils';
@@ -29,6 +30,7 @@ import { OrderItemDialog } from '@modules/order/components/OrderItemDialog';
 import { TemporaryInvoiceDialog } from '@modules/order/components/TemporaryInvoiceDialog';
 import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
 import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
+import { useTableActiveOrder } from '@modules/order/hooks/useTableActiveOrder';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import type {
@@ -40,6 +42,7 @@ import type {
 import { useZones } from '@modules/table/hooks/useZones';
 import { Button } from '@shared/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@shared/components/ui/sheet';
+import { queryKeys } from '@shared/constants/queryKeys';
 import { ROUTES } from '@shared/constants/routes';
 import { useDebounce } from '@shared/hooks/useDebounce';
 import { cn } from '@shared/utils/cn';
@@ -85,8 +88,43 @@ const resolveTableContextFromOrder = (
   };
 };
 
+const buildOrderRouteSearchParams = (
+  context: OrderTableContext | null | undefined,
+  orderId?: string | null
+) => {
+  const searchParams = new URLSearchParams();
+
+  if (orderId?.trim()) {
+    searchParams.set('orderId', orderId.trim());
+  }
+
+  if (context?.tableId?.trim()) {
+    searchParams.set('tableId', context.tableId.trim());
+  }
+
+  if (context?.tableName.trim()) {
+    searchParams.set('tableName', context.tableName.trim());
+  }
+
+  if (context?.zoneId?.trim()) {
+    searchParams.set('zoneId', context.zoneId.trim());
+  }
+
+  if (context?.branchName.trim()) {
+    searchParams.set('branchName', context.branchName.trim());
+  }
+
+  return searchParams;
+};
+
+/**
+ * FE dùng reason ngầm để backend biết đây là trường hợp đơn bị làm trống giỏ hàng.
+ */
+const AUTO_CANCEL_EMPTY_CART_REASON = 'AUTO_CANCEL_EMPTY_CART';
+
 export default function OrderPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -167,9 +205,37 @@ export default function OrderPage() {
     return isSameOrderContext(tableContext, nextTableContext);
   }, [nextTableContext, tableContext]);
 
+  const tableActiveOrderQuery = useTableActiveOrder(routeTableId, {
+    enabled: isRouteContextReady,
+  });
+  const resolvedActiveOrderId = useMemo(() => {
+    if (!routeTableId) {
+      return null;
+    }
+
+    /**
+     * Khi query theo bàn vẫn đang fetch, không tin dữ liệu cache cũ.
+     * Chỉ dùng `orderId` sau khi query của đúng `tableId` hiện tại đã ổn định.
+     */
+    if (tableActiveOrderQuery.isFetching) {
+      return null;
+    }
+
+    return tableActiveOrderQuery.data?.id ?? null;
+  }, [routeTableId, tableActiveOrderQuery.data?.id, tableActiveOrderQuery.isFetching]);
+
   const effectiveOrderId = useMemo(() => {
+    // Khi route đang mang `orderId`, luôn ưu tiên giá trị trên URL để tránh phụ thuộc state cũ.
     if (routeOrderId) {
       return routeOrderId;
+    }
+
+    if (routeTableId) {
+      /**
+       * Với route theo bàn, chỉ dùng order resolve từ chính `tableId` hiện tại.
+       * Không fallback sang `draftOrder.orderId` vì đó có thể là order của bàn trước.
+       */
+      return resolvedActiveOrderId;
     }
 
     if (isFreshTakeawayRoute) {
@@ -177,10 +243,16 @@ export default function OrderPage() {
     }
 
     return draftOrder.orderId;
-  }, [draftOrder.orderId, isFreshTakeawayRoute, routeOrderId]);
+  }, [
+    draftOrder.orderId,
+    isFreshTakeawayRoute,
+    routeOrderId,
+    routeTableId,
+    resolvedActiveOrderId,
+  ]);
 
   /**
-   * Nút tạo đơn mang về cần mở giỏ hàng trắng, không dùng lại draft takeaway cũ.
+   * Nút tạo đơn mang về cần mở giỏ hàng trắng, không dùng lại context cũ.
    * Sau khi reset xong sẽ dọn query param để refresh trang không bị clear lặp lại.
    */
   useEffect(() => {
@@ -251,19 +323,77 @@ export default function OrderPage() {
   const hasPlacedOrder = Boolean(draftOrder.orderId);
   const isPlacedOrderFinalized =
     draftOrder.status === 'COMPLETED' || draftOrder.status === 'CANCELLED';
-  const hasLoadingState =
-    menuQuery.isLoading || categoriesQuery.isLoading || addonsQuery.isLoading;
-  const hasErrorState =
-    menuQuery.isError || categoriesQuery.isError || addonsQuery.isError;
   const orderDetailQuery = useOrderDetail(effectiveOrderId, {
-    enabled: isRouteContextReady && !isFreshTakeawayRoute,
+    enabled:
+      isRouteContextReady &&
+      !isFreshTakeawayRoute &&
+      (!routeTableId || !tableActiveOrderQuery.isFetching),
   });
 
+  const isRecoveringExistingOrder =
+    (Boolean(routeTableId) && tableActiveOrderQuery.isFetching) ||
+    (Boolean(effectiveOrderId) && orderDetailQuery.isLoading && !draftOrder.orderId);
+  const hasLoadingState =
+    menuQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    addonsQuery.isLoading ||
+    isRecoveringExistingOrder;
+  const hasErrorState =
+    menuQuery.isError ||
+    categoriesQuery.isError ||
+    addonsQuery.isError ||
+    tableActiveOrderQuery.isError ||
+    (Boolean(effectiveOrderId) && orderDetailQuery.isError);
+
+  const clearActiveSelections = () => {
+    setActiveMenuItemId(null);
+    setActiveCartItemId(null);
+  };
+
+  const replaceOrderRoute = (
+    context: OrderTableContext | null | undefined,
+    orderId?: string | null
+  ) => {
+    const nextSearchParams = buildOrderRouteSearchParams(context, orderId);
+    const nextSearch = nextSearchParams.toString();
+
+    if (nextSearch === searchParams.toString()) {
+      return;
+    }
+
+    navigate(nextSearch ? `${ROUTES.POS_ORDER}?${nextSearch}` : ROUTES.POS_ORDER, {
+      replace: true,
+    });
+  };
+
+  const invalidateOrderRelatedQueries = (orderId?: string | null, tableId?: string | null) => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
+
+    if (tableId?.trim()) {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.activeByTable(tableId.trim()),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tables.detail(tableId.trim()),
+      });
+    }
+
+    if (orderId?.trim()) {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.detail(orderId.trim()),
+      });
+    }
+  };
+
   /**
-   * Đồng bộ đơn hàng từ backend về state local để tránh dùng dữ liệu cũ ở FE.
+   * Đồng bộ đơn hàng từ backend về state local để FE chỉ render theo dữ liệu thật của API.
    */
-  const applyOrderResponseToDraft = (order: OrderResponse) => {
-    setTableContext(resolveTableContextFromOrder(order, nextTableContext));
+  const applyOrderResponseToDraft = (order: OrderResponse): OrderTableContext => {
+    const resolvedContext = resolveTableContextFromOrder(order, nextTableContext);
+
+    setTableContext(resolvedContext);
     setDraftOrder({
       orderId: order.id,
       orderNumber: order.orderNumber,
@@ -271,38 +401,122 @@ export default function OrderPage() {
       createdAt: order.createdAt ?? new Date().toISOString(),
     });
     setCart(toDraftItemsFromOrder(order, menuItemsById));
+    replaceOrderRoute(resolvedContext, order.id);
+
+    return resolvedContext;
   };
 
   /**
-   * Với đơn đã tạo, mọi chỉnh sửa món phải gọi API update thay vì chỉ sửa local state.
+   * Tạo order ngay khi cart đang rỗng và người dùng thêm món đầu tiên.
    */
-  const syncPlacedOrder = async (
+  const createOrderFromCart = async (
     nextCart: OrderDraftItem[],
     successMessage: string
-  ): Promise<boolean> => {
-    if (!draftOrder.orderId) {
-      return false;
+  ): Promise<OrderResponse | null> => {
+    if (nextCart.length === 0) {
+      return null;
     }
 
-    if (nextCart.length === 0) {
-      toast.error('Đơn đã tạo phải còn ít nhất 1 món. Hãy dùng hủy đơn nếu cần.');
-      return false;
+    setSyncingDraft(true);
+
+    try {
+      const response = await orderService.placeOrder({
+        tableId: (tableContext?.tableId ?? nextTableContext.tableId) ?? undefined,
+        source: resolveOrderSource(tableContext?.tableId ?? nextTableContext.tableId),
+        items: nextCart.map(toOrderItemCommand),
+      });
+
+      if (!response.success) {
+        return null;
+      }
+
+      applyOrderResponseToDraft(response.data);
+      invalidateOrderRelatedQueries(
+        response.data.id,
+        response.data.tableId ?? nextTableContext.tableId
+      );
+      toast.success(successMessage);
+
+      return response.data;
+    } catch {
+      // Toast lỗi chung đã được axios interceptor xử lý.
+      return null;
+    } finally {
+      setSyncingDraft(false);
+    }
+  };
+
+  /**
+   * Với đơn đã tạo, mọi thay đổi tiếp theo phải gọi API update để backend luôn là source of truth.
+   */
+  const updatePlacedOrder = async (
+    nextCart: OrderDraftItem[],
+    successMessage: string
+  ): Promise<OrderResponse | null> => {
+    if (!draftOrder.orderId || nextCart.length === 0) {
+      return null;
     }
 
     setSyncingDraft(true);
 
     try {
       const response = await orderService.updateOrder(draftOrder.orderId, {
-        tableId: tableContext?.tableId ?? undefined,
+        tableId: (tableContext?.tableId ?? nextTableContext.tableId) ?? undefined,
         items: nextCart.map(toUpdateOrderItemCommand),
+      });
+
+      if (!response.success) {
+        return null;
+      }
+
+      applyOrderResponseToDraft(response.data);
+      invalidateOrderRelatedQueries(
+        response.data.id,
+        response.data.tableId ?? nextTableContext.tableId
+      );
+      toast.success(successMessage);
+
+      return response.data;
+    } catch {
+      // Toast lỗi chung đã được axios interceptor xử lý.
+      return null;
+    } finally {
+      setSyncingDraft(false);
+    }
+  };
+
+  /**
+   * Nếu giỏ hàng bị làm trống thì FE tự hủy order để không giữ lại order rỗng trên hệ thống.
+   */
+  const cancelCurrentOrder = async (
+    reason: string | undefined,
+    successMessage: string
+  ): Promise<boolean> => {
+    if (!draftOrder.orderId) {
+      clearDraft();
+      replaceOrderRoute(nextTableContext);
+      return true;
+    }
+
+    setSyncingDraft(true);
+
+    try {
+      const response = await orderService.cancelOrder(draftOrder.orderId, {
+        reason,
       });
 
       if (!response.success) {
         return false;
       }
 
-      applyOrderResponseToDraft(response.data);
+      const cancelledOrderId = draftOrder.orderId;
+      const cancelledTableId = tableContext?.tableId ?? nextTableContext.tableId ?? null;
+
+      clearDraft();
+      replaceOrderRoute(nextTableContext);
+      invalidateOrderRelatedQueries(cancelledOrderId, cancelledTableId);
       toast.success(successMessage);
+
       return true;
     } catch {
       // Toast lỗi chung đã được axios interceptor xử lý.
@@ -312,13 +526,17 @@ export default function OrderPage() {
     }
   };
 
+  const applyOrderResponseToDraftEffect = useEffectEvent((order: OrderResponse) => {
+    applyOrderResponseToDraft(order);
+  });
+
   useEffect(() => {
     if (!orderDetailQuery.data) {
       return;
     }
 
-    applyOrderResponseToDraft(orderDetailQuery.data);
-  }, [menuItemsById, nextTableContext, orderDetailQuery.data, setCart, setDraftOrder, setTableContext]);
+    applyOrderResponseToDraftEffect(orderDetailQuery.data);
+  }, [orderDetailQuery.data]);
 
   const handleOpenItemDialog = (menuItemId: string) => {
     if (isPlacedOrderFinalized) {
@@ -340,23 +558,32 @@ export default function OrderPage() {
     setActiveCartItemId(draftItemId);
   };
 
-  const handleDeleteCartItem = (item: OrderDraftItem) => {
+  const handleDeleteCartItem = async (item: OrderDraftItem) => {
     if (isPlacedOrderFinalized) {
       toast.error('Đơn đã kết thúc. Không thể xóa món trên đơn này.');
       return;
     }
 
+    const nextCart = cart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
+
     if (hasPlacedOrder) {
-      const nextCart = cart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
-      void syncPlacedOrder(nextCart, `Đã xóa ${item.name} khỏi đơn hàng`);
+      if (nextCart.length === 0) {
+        await cancelCurrentOrder(
+          AUTO_CANCEL_EMPTY_CART_REASON,
+          'Đã hủy đơn vì không còn món nào trong giỏ'
+        );
+        return;
+      }
+
+      await updatePlacedOrder(nextCart, `Đã xóa ${item.name} khỏi đơn hàng`);
       return;
     }
 
     removeFromCart(item.draftItemId);
-    toast.success(`Đã xóa ${item.name} khỏi đơn nháp`);
+    toast.success(`Đã xóa ${item.name} khỏi giỏ hàng`);
   };
 
-  const handleChangeItemQuantity = (item: OrderDraftItem, delta: number) => {
+  const handleChangeItemQuantity = async (item: OrderDraftItem, delta: number) => {
     if (isPlacedOrderFinalized) {
       toast.error('Đơn đã kết thúc. Không thể đổi số lượng món trên đơn này.');
       return;
@@ -365,12 +592,7 @@ export default function OrderPage() {
     const nextQuantity = item.quantity + delta;
 
     if (nextQuantity <= 0) {
-      if (hasPlacedOrder && cart.length === 1) {
-        toast.error('Đơn đã tạo phải còn ít nhất 1 món. Hãy dùng chức năng hủy đơn.');
-        return;
-      }
-
-      handleDeleteCartItem(item);
+      await handleDeleteCartItem(item);
       return;
     }
 
@@ -388,7 +610,8 @@ export default function OrderPage() {
             }
           : cartItem
       );
-      void syncPlacedOrder(nextCart, `Đã cập nhật số lượng ${item.name}`);
+
+      await updatePlacedOrder(nextCart, `Đã cập nhật số lượng ${item.name}`);
       return;
     }
 
@@ -434,37 +657,31 @@ export default function OrderPage() {
       matchedCartItem && !editingCartItem
         ? mergeCartLineQuantity(matchedCartItem, submittedDraftItem)
         : submittedDraftItem;
-    const previousItem = matchedCartItem;
-    const createdAtFallback = draftOrder.createdAt ?? new Date().toISOString();
+    const nextCart = matchedCartItem
+      ? cart.map((item) => (item.draftItemId === matchedCartItem.draftItemId ? nextDraftItem : item))
+      : [...cart, nextDraftItem];
 
     if (hasPlacedOrder) {
-      const nextCart = previousItem
-        ? cart.map((item) => (item.draftItemId === previousItem.draftItemId ? nextDraftItem : item))
-        : [...cart, nextDraftItem];
-
-      const isSynced = await syncPlacedOrder(
+      const syncedOrder = await updatePlacedOrder(
         nextCart,
-        previousItem ? 'Đã cập nhật món trên hệ thống' : 'Đã thêm món vào đơn hàng'
+        matchedCartItem ? 'Đã cập nhật món trên hệ thống' : 'Đã thêm món vào đơn hàng'
       );
 
-      if (!isSynced) {
+      if (!syncedOrder) {
         return;
       }
 
-      setActiveMenuItemId(null);
-      setActiveCartItemId(null);
+      clearActiveSelections();
       return;
     }
 
-    setDraftOrder({
-      createdAt: createdAtFallback,
-    });
-    upsertCartItem(nextDraftItem);
-    setActiveMenuItemId(null);
-    setActiveCartItemId(null);
-    toast.success(
-      previousItem ? 'Đã gộp số lượng món trong đơn nháp' : 'Đã thêm món vào đơn nháp'
-    );
+    const createdOrder = await createOrderFromCart(nextCart, 'Đã tạo đơn hàng với món đầu tiên');
+
+    if (!createdOrder) {
+      return;
+    }
+
+    clearActiveSelections();
   };
 
   const handleOpenInvoice = () => {
@@ -487,60 +704,36 @@ export default function OrderPage() {
       return;
     }
 
-    if (hasPlacedOrder) {
-      navigate(ROUTES.POS_PAYMENT);
+    if (draftOrder.orderId) {
+      const paymentSearchParams = buildOrderRouteSearchParams(
+        tableContext ?? nextTableContext,
+        draftOrder.orderId
+      );
+
+      navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
       return;
     }
 
-    setSyncingDraft(true);
+    const createdOrder = await createOrderFromCart(cart, 'Đã tạo đơn hàng trên hệ thống');
 
-    try {
-      const createdAtFallback = draftOrder.createdAt ?? new Date().toISOString();
-      const response = await orderService.placeOrder({
-        tableId: tableContext?.tableId ?? undefined,
-        source: resolveOrderSource(tableContext?.tableId),
-        items: cart.map(toOrderItemCommand),
-      });
-
-      if (response.success) {
-        applyOrderResponseToDraft(response.data);
-        setDraftOrder({
-          createdAt: createdAtFallback,
-        });
-        toast.success('Đã tạo đơn hàng trên hệ thống');
-        navigate(ROUTES.POS_PAYMENT);
-      }
-    } catch {
-      // Toast lỗi chung đã được axios interceptor xử lý.
-    } finally {
-      setSyncingDraft(false);
-    }
-  };
-
-  const handleSaveDraft = () => {
-    if (cart.length === 0) {
-      toast.error('Chưa có món để lưu nháp');
+    if (!createdOrder) {
       return;
     }
 
-    if (hasPlacedOrder) {
-      toast.success('Đơn đã được tạo trên hệ thống. Các thay đổi món sẽ đồng bộ qua API.');
-      return;
-    }
+    const paymentSearchParams = buildOrderRouteSearchParams(
+      resolveTableContextFromOrder(createdOrder, nextTableContext),
+      createdOrder.id
+    );
 
-    setDraftOrder({
-      createdAt: draftOrder.createdAt ?? new Date().toISOString(),
-    });
-    toast.success('Đã lưu đơn nháp cục bộ trên trình duyệt');
+    navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
   };
 
   const handleCancelPlacedOrder = async () => {
     if (!draftOrder.orderId) {
       clearDraft();
-      setTableContext(nextTableContext);
-      setActiveMenuItemId(null);
-      setActiveCartItemId(null);
-      toast.success('Đã xóa đơn nháp cục bộ của bàn hiện tại');
+      clearActiveSelections();
+      replaceOrderRoute(nextTableContext);
+      toast.success('Đã làm trống giỏ hàng hiện tại');
       return;
     }
 
@@ -554,23 +747,16 @@ export default function OrderPage() {
       return;
     }
 
-    setSyncingDraft(true);
+    const isCancelled = await cancelCurrentOrder(
+      reason.trim() || undefined,
+      'Đã hủy đơn và reset giỏ hàng của bàn hiện tại'
+    );
 
-    try {
-      const response = await orderService.cancelOrder(draftOrder.orderId, {
-        reason: reason.trim() || undefined,
-      });
-
-      if (response.success) {
-        clearDraft();
-        setTableContext(nextTableContext);
-        setActiveMenuItemId(null);
-        setActiveCartItemId(null);
-        toast.success('Đã hủy đơn và reset giỏ hàng của bàn hiện tại');
-      }
-    } finally {
-      setSyncingDraft(false);
+    if (!isCancelled) {
+      return;
     }
+
+    clearActiveSelections();
   };
 
   const checkoutButtonLabel = isSyncingDraft
@@ -600,7 +786,7 @@ export default function OrderPage() {
         <div className="max-w-md text-center">
           <p className="text-lg font-bold text-slate-800">Không thể tải dữ liệu order</p>
           <p className="mt-2 text-sm text-slate-500">
-            Kiểm tra lại API menu, category hoặc addon trước khi thao tác tạo đơn.
+            Kiểm tra lại API menu, category, addon hoặc dữ liệu order của bàn trước khi thao tác.
           </p>
         </div>
       </div>
@@ -653,9 +839,10 @@ export default function OrderPage() {
                       onOpenInvoice={handleOpenInvoice}
                       onCancelPlacedOrder={() => void handleCancelPlacedOrder()}
                       onEditCartItem={handleEditCartItem}
-                      onDeleteCartItem={handleDeleteCartItem}
-                      onChangeItemQuantity={handleChangeItemQuantity}
-                      onSaveDraft={handleSaveDraft}
+                      onDeleteCartItem={(item) => void handleDeleteCartItem(item)}
+                      onChangeItemQuantity={(item, delta) =>
+                        void handleChangeItemQuantity(item, delta)
+                      }
                       onCheckout={() => void handleCheckout()}
                       className="h-full rounded-none border-0 shadow-none xl:max-h-none"
                     />
@@ -703,28 +890,29 @@ export default function OrderPage() {
         {showCart ? (
           <div className="hidden xl:block xl:w-[400px] 2xl:w-[440px]" aria-hidden="true">
             <div className="xl:fixed xl:right-8 xl:top-20 2xl:right-10">
-                <OrderCartPanel
-                  cart={cart}
-                  tableContext={tableContext}
-                  draftOrder={draftOrder}
-                  currentUserName={currentUserName}
-                  hasPlacedOrder={hasPlacedOrder}
-                  isSyncingDraft={isSyncingDraft}
-                  isItemActionsDisabled={isSyncingDraft || isPlacedOrderFinalized}
-                  totalItemCount={totalItemCount}
-                  subtotal={subtotal}
-                  vatAmount={vatAmount}
+              <OrderCartPanel
+                cart={cart}
+                tableContext={tableContext}
+                draftOrder={draftOrder}
+                currentUserName={currentUserName}
+                hasPlacedOrder={hasPlacedOrder}
+                isSyncingDraft={isSyncingDraft}
+                isItemActionsDisabled={isSyncingDraft || isPlacedOrderFinalized}
+                totalItemCount={totalItemCount}
+                subtotal={subtotal}
+                vatAmount={vatAmount}
                 totalAmount={totalAmount}
                 checkoutButtonLabel={checkoutButtonLabel}
                 isCheckoutDisabled={isPlacedOrderFinalized}
                 onOpenInvoice={handleOpenInvoice}
                 onCancelPlacedOrder={() => void handleCancelPlacedOrder()}
                 onEditCartItem={handleEditCartItem}
-                onDeleteCartItem={handleDeleteCartItem}
-                onChangeItemQuantity={handleChangeItemQuantity}
-                onSaveDraft={handleSaveDraft}
+                onDeleteCartItem={(item) => void handleDeleteCartItem(item)}
+                onChangeItemQuantity={(item, delta) =>
+                  void handleChangeItemQuantity(item, delta)
+                }
                 onCheckout={() => void handleCheckout()}
-                className="xl:flex xl:w-[400px] 2xl:w-[440px] xl:h-[calc(100dvh-6rem)] xl:max-h-[calc(100dvh-6rem)]"
+                className="xl:flex xl:w-[400px] xl:h-[calc(100dvh-6rem)] xl:max-h-[calc(100dvh-6rem)] 2xl:w-[440px]"
               />
             </div>
           </div>
@@ -740,8 +928,7 @@ export default function OrderPage() {
         isSubmitting={isSyncingDraft}
         onOpenChange={(open) => {
           if (!open) {
-            setActiveMenuItemId(null);
-            setActiveCartItemId(null);
+            clearActiveSelections();
           }
         }}
         onSubmit={handleSubmitItem}

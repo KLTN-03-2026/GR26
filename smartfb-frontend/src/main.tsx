@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
 autoFixBranchId();
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <App />
@@ -59,5 +59,5 @@ createRoot(document.getElementById('root')!).render(
         />
       </QueryClientProvider>
     </BrowserRouter>
-  </StrictMode>
+  // </StrictMode>
 );

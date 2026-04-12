@@ -118,6 +118,19 @@ export interface CancelOrderRequest {
 }
 
 /**
+ * Bộ lọc FE dùng khi gọi API danh sách đơn hàng.
+ * `tableId` giúp POS dò order đang mở của một bàn trước khi lấy chi tiết đơn.
+ */
+export interface OrderListQueryParams {
+  status?: OrderStatus;
+  from?: string;
+  to?: string;
+  tableId?: string;
+  page?: number;
+  size?: number;
+}
+
+/**
  * Dòng món backend trả về trong chi tiết đơn.
  */
 export interface OrderItemResponse {

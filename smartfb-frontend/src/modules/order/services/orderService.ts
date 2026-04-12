@@ -5,6 +5,7 @@ import type {
   OrderApiResponse,
   OrderListApiResponse,
   OrderListItemResponse,
+  OrderListQueryParams,
   PlaceOrderRequest,
   UpdateOrderRequest,
   UpdateOrderStatusRequest,
@@ -16,7 +17,36 @@ interface PageResponse<T> {
   totalPages: number;
 }
 
+interface OrderRequestOptions {
+  signal?: AbortSignal;
+}
+
 const ORDER_PAGE_SIZE = 100;
+
+const buildOrderListParams = (
+  params?: OrderListQueryParams
+): Record<string, number | string | undefined> => {
+  return {
+    status: params?.status,
+    from: params?.from,
+    to: params?.to,
+    tableId: params?.tableId,
+    page: params?.page ?? 0,
+    size: params?.size ?? ORDER_PAGE_SIZE,
+  };
+};
+
+const fetchOrderPage = async (
+  params?: OrderListQueryParams,
+  options?: OrderRequestOptions
+): Promise<PageResponse<OrderListItemResponse>> => {
+  const response = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
+    params: buildOrderListParams(params),
+    signal: options?.signal,
+  });
+
+  return response.data.data;
+};
 
 /**
  * Lấy toàn bộ danh sách đơn hàng qua tất cả trang backend.
@@ -24,15 +54,11 @@ const ORDER_PAGE_SIZE = 100;
  * Backend hiện trả dữ liệu phân trang kiểu Spring nên FE cần lặp qua `totalPages`
  * để trang quản lý đơn hàng luôn nhìn thấy đầy đủ dữ liệu thay vì chỉ 20 đơn đầu.
  */
-const fetchAllOrderPages = async (): Promise<OrderListItemResponse[]> => {
-  const firstResponse = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
-    params: {
-      page: 0,
-      size: ORDER_PAGE_SIZE,
-    },
-  });
-
-  const firstPage = firstResponse.data.data;
+const fetchAllOrderPages = async (
+  params?: OrderListQueryParams,
+  options?: OrderRequestOptions
+): Promise<OrderListItemResponse[]> => {
+  const firstPage = await fetchOrderPage(params, options);
   const pages = Array.from(
     { length: Math.max(firstPage.totalPages - 1, 0) },
     (_, index) => index + 1
@@ -44,14 +70,13 @@ const fetchAllOrderPages = async (): Promise<OrderListItemResponse[]> => {
 
   const remainingPages = await Promise.all(
     pages.map(async (page) => {
-      const response = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
-        params: {
-          page,
-          size: ORDER_PAGE_SIZE,
-        },
-      });
+      const nextPage = await fetchOrderPage({
+        ...params,
+        page,
+        size: params?.size ?? ORDER_PAGE_SIZE,
+      }, options);
 
-      return response.data.data.content;
+      return nextPage.content;
     })
   );
 
@@ -107,8 +132,11 @@ export const orderService = {
    * Lấy danh sách đơn hàng cho trang quản lý.
    * FE chủ động gom tất cả trang để danh sách không bị cắt ở 20 bản ghi đầu.
    */
-  getOrders: async (): Promise<OrderListApiResponse> => {
-    const orders = await fetchAllOrderPages();
+  getOrders: async (
+    params?: OrderListQueryParams,
+    options?: OrderRequestOptions
+  ): Promise<OrderListApiResponse> => {
+    const orders = await fetchAllOrderPages(params, options);
 
     return {
       success: true,
