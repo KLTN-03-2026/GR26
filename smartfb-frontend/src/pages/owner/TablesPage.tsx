@@ -6,8 +6,8 @@ import { generatePath, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
-import { buildOpenOrdersByTableMap, useOpenOrdersByTable } from '@modules/order/hooks/useOpenOrdersByTable';
-import { useOrderStore } from '@modules/order/stores/orderStore';
+import { buildOpenOrdersByTableMap } from '@modules/order/hooks/useOpenOrdersByTable';
+import { orderService } from '@modules/order/services/orderService';
 import { useTableList } from '@modules/table/hooks/useTableList';
 import { useZones } from '@modules/table/hooks/useZones';
 import { useTableFilters } from '@modules/table/hooks/useTableFilters';
@@ -57,9 +57,7 @@ export default function TablesPage() {
   const navigate = useNavigate();
   const { can } = usePermission();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
-  const draftsByContext = useOrderStore((state) => state.draftsByContext);
   const { data: branches = [] } = useBranches();
-  const { openOrdersByTable, refetch: refetchOpenOrders } = useOpenOrdersByTable();
   const { data: tables = [], isLoading, isError, refetch, error } = useTableList();
   const {
     data: zones = [],
@@ -105,14 +103,6 @@ export default function TablesPage() {
     ? branchNameMap.get(currentBranchId) ?? 'Chi nhánh đang chọn'
     : 'Tất cả chi nhánh';
 
-  const localDraftTableIds = useMemo(() => {
-    return new Set(
-      Object.values(draftsByContext)
-        .map((draft) => draft.tableContext?.tableId)
-        .filter((tableId): tableId is string => Boolean(tableId))
-    );
-  }, [draftsByContext]);
-
   const tableDisplayData = useMemo<TableDisplayItem[]>(() => {
     return tables.map((table) => {
       const resolvedBranchName =
@@ -126,28 +116,14 @@ export default function TablesPage() {
         table.zoneName ??
         'Chưa có khu vực';
 
-      // Nếu FE còn giữ draft theo bàn thì ưu tiên hiển thị như bàn chưa thanh toán
-      // để tránh hiểu nhầm bàn đã trống trong khi giỏ hàng vẫn còn.
-      const resolvedUsageStatus =
-        table.usageStatus === 'available' && localDraftTableIds.has(table.id)
-          ? 'unpaid'
-          : table.usageStatus;
-
       return {
         ...table,
         branchName: resolvedBranchName,
         zoneName: resolvedZoneName,
-        usageStatus: resolvedUsageStatus,
+        usageStatus: table.usageStatus,
       };
     });
-  }, [
-    branchNameMap,
-    currentBranchId,
-    localDraftTableIds,
-    selectedBranchName,
-    tables,
-    zoneNameMap,
-  ]);
+  }, [branchNameMap, currentBranchId, selectedBranchName, tables, zoneNameMap]);
 
   // Dùng zoneId làm giá trị filter để bám đúng dữ liệu API.
   const areaOptions = zones.map((zone) => ({
@@ -252,7 +228,7 @@ export default function TablesPage() {
   };
 
   /**
-   * Giữ toàn bộ context của bàn trên URL để POS khôi phục đúng order/draft cả khi refresh.
+   * Giữ toàn bộ context của bàn trên URL để POS khôi phục đúng bàn đang thao tác sau khi refresh.
    */
   const navigateToOrderPage = (table: TableDisplayItem, orderId?: string) => {
     // Điều hướng bằng query params để trang order đọc lại được cả khi người dùng refresh.
@@ -317,40 +293,30 @@ export default function TablesPage() {
       return;
     }
 
-    if (table.usageStatus === 'available') {
+    if (canCreateOrder) {
       handleOpenOrderFromTable(table);
       return;
     }
 
-    const localDraftExists = localDraftTableIds.has(table.id);
-    const existingOpenOrder = openOrdersByTable.get(table.id);
+    try {
+      /**
+       * Chi fetch order khi user thật sự click vào bàn và cần mở theo `orderId`.
+       * Màn quản lý bàn không preload list order ngay lúc mount để tránh request thừa.
+       */
+      const response = await orderService.getOrders({ tableId: table.id });
+      const resolvedOpenOrder = buildOpenOrdersByTableMap(response.data).get(table.id);
 
-    if (existingOpenOrder) {
-      handleOpenOrderFromTable(table, existingOpenOrder.id);
-      return;
-    }
-
-    if (localDraftExists) {
-      if (!canCreateOrder) {
-        toast.error('Bạn không có quyền tiếp tục chỉnh sửa đơn nháp của bàn này.');
+      if (resolvedOpenOrder) {
+        handleOpenOrderFromTable(table, resolvedOpenOrder.id);
         return;
       }
-
-      // Với draft chỉ tồn tại ở local storage, mở lại theo context bàn để OrderPage tự restore giỏ hàng.
-      navigateToOrderPage(table);
-      return;
-    }
-
-    const refreshedOrdersResult = await refetchOpenOrders();
-    const refreshedOpenOrder = buildOpenOrdersByTableMap(refreshedOrdersResult.data ?? []).get(table.id);
-
-    if (refreshedOpenOrder) {
-      handleOpenOrderFromTable(table, refreshedOpenOrder.id);
+    } catch {
+      toast.error('Không thể kiểm tra đơn đang mở của bàn này. Vui lòng thử lại.');
       return;
     }
 
     const statusMessageMap: Record<TableUsageStatus, string> = {
-      available: '',
+      available: 'Bàn này hiện chưa có đơn đang mở.',
       occupied: 'Không tìm thấy đơn đang mở của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
       unpaid: 'Không tìm thấy đơn chờ thanh toán của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
       reserved: 'Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.',
