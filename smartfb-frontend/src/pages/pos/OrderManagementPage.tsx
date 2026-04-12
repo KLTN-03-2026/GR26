@@ -20,7 +20,6 @@ const OrderManagementPage = () => {
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const canCreateOrder = can(PERMISSIONS.ORDER_CREATE);
-  const canUpdateOrder = can(PERMISSIONS.ORDER_UPDATE);
 
   useEffect(() => {
     void fetchOrders();
@@ -56,7 +55,7 @@ const OrderManagementPage = () => {
    */
   const handleOpenOrder = (order: OrderListItemResponse) => {
     const shouldOpenDetail =
-      resolveOrderNavigationTarget(order.status) === 'detail' || !canUpdateOrder;
+      resolveOrderNavigationTarget(order.status) === 'detail' || !canCreateOrder;
 
     if (shouldOpenDetail) {
       navigate(generatePath(ROUTES.POS_ORDER_DETAIL, { orderId: order.id }));

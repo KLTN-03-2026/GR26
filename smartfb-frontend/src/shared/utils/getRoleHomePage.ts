@@ -10,6 +10,10 @@ const STAFF_HOME_CANDIDATES = [
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES,
   },
   {
+    path: ROUTES.POS_MANAGEMENT,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
+  },
+  {
     path: ROUTES.POS_ORDER,
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
   },
