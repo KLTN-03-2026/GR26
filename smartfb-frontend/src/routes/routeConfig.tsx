@@ -173,8 +173,8 @@ export const staffRoutes: RouteConfigItem[] = [
   createRoute(
     ROUTES.STAFF.ORDERS,
     'Order',
-    <Navigate to={ROUTES.POS_ORDER} replace />,
-    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER }
+    <Navigate to={ROUTES.POS_MANAGEMENT} replace />,
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT }
   ),
   createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,

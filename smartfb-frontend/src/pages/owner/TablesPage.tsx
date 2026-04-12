@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { LayoutGrid, Users, Coffee } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
@@ -24,7 +24,9 @@ import { CreateBulkTablesDialog } from '@modules/table/components/CreateBulkTabl
 import { ZoneManagementDialog } from '@modules/table/components/ZoneManagementDialog';
 
 import { Button } from '@shared/components/ui/button';
+import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
+import { usePermission } from '@shared/hooks/usePermission';
 import type {
   TableDisplayItem,
   TableUsageStatus,
@@ -53,6 +55,7 @@ const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: 
 
 export default function TablesPage() {
   const navigate = useNavigate();
+  const { can } = usePermission();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const draftsByContext = useOrderStore((state) => state.draftsByContext);
   const { data: branches = [] } = useBranches();
@@ -77,6 +80,8 @@ export default function TablesPage() {
     id: '',
     name: '',
   });
+  const canCreateOrder = can(PERMISSIONS.ORDER_CREATE);
+  const canViewOrder = can(PERMISSIONS.ORDER_VIEW);
 
   const { mutate: editTable } = useEditTable();
   const {
@@ -271,6 +276,41 @@ export default function TablesPage() {
     navigate(`${ROUTES.POS_ORDER}?${searchParams.toString()}`);
   };
 
+  const navigateToOrderDetailPage = (orderId: string) => {
+    navigate(generatePath(ROUTES.POS_ORDER_DETAIL, { orderId }));
+  };
+
+  /**
+   * Điều hướng từ bàn phải tách rõ:
+   * user mở được route POS thì vào luồng xử lý order,
+   * còn staff chỉ có quyền xem thì vào màn chi tiết order.
+   */
+  const handleOpenOrderFromTable = (table: TableDisplayItem, orderId?: string) => {
+    const normalizedOrderId = orderId?.trim();
+
+    if (normalizedOrderId) {
+      if (canCreateOrder) {
+        navigateToOrderPage(table, normalizedOrderId);
+        return;
+      }
+
+      if (canViewOrder) {
+        navigateToOrderDetailPage(normalizedOrderId);
+        return;
+      }
+
+      toast.error('Bạn không có quyền mở đơn hàng của bàn này.');
+      return;
+    }
+
+    if (!canCreateOrder) {
+      toast.error('Bạn không có quyền tạo đơn hàng tại bàn này.');
+      return;
+    }
+
+    navigateToOrderPage(table);
+  };
+
   const handleSelectTable = async (table: TableDisplayItem) => {
     if (table.usageStatus === 'reserved') {
       toast.error('Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.');
@@ -278,7 +318,7 @@ export default function TablesPage() {
     }
 
     if (table.usageStatus === 'available') {
-      navigateToOrderPage(table);
+      handleOpenOrderFromTable(table);
       return;
     }
 
@@ -286,11 +326,16 @@ export default function TablesPage() {
     const existingOpenOrder = openOrdersByTable.get(table.id);
 
     if (existingOpenOrder) {
-      navigateToOrderPage(table, existingOpenOrder.id);
+      handleOpenOrderFromTable(table, existingOpenOrder.id);
       return;
     }
 
     if (localDraftExists) {
+      if (!canCreateOrder) {
+        toast.error('Bạn không có quyền tiếp tục chỉnh sửa đơn nháp của bàn này.');
+        return;
+      }
+
       // Với draft chỉ tồn tại ở local storage, mở lại theo context bàn để OrderPage tự restore giỏ hàng.
       navigateToOrderPage(table);
       return;
@@ -300,7 +345,7 @@ export default function TablesPage() {
     const refreshedOpenOrder = buildOpenOrdersByTableMap(refreshedOrdersResult.data ?? []).get(table.id);
 
     if (refreshedOpenOrder) {
-      navigateToOrderPage(table, refreshedOpenOrder.id);
+      handleOpenOrderFromTable(table, refreshedOpenOrder.id);
       return;
     }
 

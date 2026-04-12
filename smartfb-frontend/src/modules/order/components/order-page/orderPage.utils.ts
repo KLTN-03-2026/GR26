@@ -158,50 +158,58 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
 };
 
+const toOrderAddonSelectionList = (payload: unknown): OrderAddonSelection[] => {
+  if (!Array.isArray(payload)) {
+    return [];
+  }
+
+  return payload.reduce<OrderAddonSelection[]>((accumulator, item) => {
+    if (!isObjectRecord(item)) {
+      return accumulator;
+    }
+
+    const addonId = typeof item.addonId === 'string' ? item.addonId : '';
+    const addonName = typeof item.addonName === 'string' ? item.addonName : '';
+    const extraPrice =
+      typeof item.extraPrice === 'number'
+        ? item.extraPrice
+        : Number(item.extraPrice ?? 0) || 0;
+    const quantity =
+      typeof item.quantity === 'number'
+        ? item.quantity
+        : Number(item.quantity ?? 0) || 0;
+
+    if (!addonId || !addonName || quantity <= 0) {
+      return accumulator;
+    }
+
+    accumulator.push({
+      addonId,
+      addonName,
+      extraPrice,
+      quantity,
+    });
+
+    return accumulator;
+  }, []);
+};
+
 /**
  * Parse chuỗi addons JSON từ backend về danh sách topping FE đang dùng.
  */
-export const parseAddonPayload = (payload?: string | null): OrderAddonSelection[] => {
+export const parseAddonPayload = (
+  payload?: string | OrderAddonSelection[] | null
+): OrderAddonSelection[] => {
   if (!payload) {
     return [];
   }
 
+  if (Array.isArray(payload)) {
+    return toOrderAddonSelectionList(payload);
+  }
+
   try {
-    const parsedPayload: unknown = JSON.parse(payload);
-
-    if (!Array.isArray(parsedPayload)) {
-      return [];
-    }
-
-    return parsedPayload.reduce<OrderAddonSelection[]>((accumulator, item) => {
-      if (!isObjectRecord(item)) {
-        return accumulator;
-      }
-
-      const addonId = typeof item.addonId === 'string' ? item.addonId : '';
-      const addonName = typeof item.addonName === 'string' ? item.addonName : '';
-      const extraPrice =
-        typeof item.extraPrice === 'number'
-          ? item.extraPrice
-          : Number(item.extraPrice ?? 0) || 0;
-      const quantity =
-        typeof item.quantity === 'number'
-          ? item.quantity
-          : Number(item.quantity ?? 0) || 0;
-
-      if (!addonId || !addonName || quantity <= 0) {
-        return accumulator;
-      }
-
-      accumulator.push({
-        addonId,
-        addonName,
-        extraPrice,
-        quantity,
-      });
-
-      return accumulator;
-    }, []);
+    return toOrderAddonSelectionList(JSON.parse(payload));
   } catch {
     return [];
   }

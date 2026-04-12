@@ -73,6 +73,15 @@ export const queryKeys = {
     detail: (id: string) => ['orders', 'detail', id] as const,
     active: ['orders', 'active'] as const,
   },
+
+  // Payments & invoices
+  payments: {
+    all: ['payments'] as const,
+    detail: (id: string) => ['payments', 'detail', id] as const,
+    invoiceDetail: (id: string) => ['payments', 'invoice-detail', id] as const,
+    invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
+    orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
+  },
   
   // Inventory
   inventory: {

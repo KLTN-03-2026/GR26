@@ -33,5 +33,73 @@ export interface PaymentResponse {
   createdAt?: string | null;
 }
 
+/**
+ * Tham số tìm kiếm invoice theo contract backend.
+ * FE dùng page/size để dò invoice khớp với order hiện tại.
+ */
+export interface SearchInvoicesParams {
+  invoiceNumber?: string;
+  page?: number;
+  size?: number;
+}
+
+/**
+ * Dòng invoice rút gọn trả về từ API search.
+ */
+export interface InvoiceSearchItemResponse {
+  id: string;
+  invoiceNumber: string;
+  orderId: string;
+  total: number;
+  issuedAt: string;
+}
+
+/**
+ * Kết quả search invoice có phân trang.
+ */
+export interface SearchInvoiceResponse {
+  items: InvoiceSearchItemResponse[];
+  totalItems: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/**
+ * Dòng món snapshot trong hóa đơn.
+ */
+export interface InvoiceItemResponse {
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+/**
+ * Chi tiết hóa đơn backend trả về sau khi thanh toán thành công.
+ */
+export interface InvoiceResponse {
+  id: string;
+  orderId: string;
+  paymentId: string;
+  invoiceNumber: string;
+  subtotal: number;
+  discount: number;
+  taxAmount: number;
+  total: number;
+  issuedAt: string;
+  items: InvoiceItemResponse[];
+}
+
+/**
+ * Dữ liệu tổng hợp FE cần để hiển thị block thanh toán trên order detail.
+ */
+export interface OrderInvoiceResponse {
+  invoice: InvoiceResponse;
+  payment: PaymentResponse | null;
+}
+
 export type PaymentApiResponse = ApiResponse<PaymentResponse>;
 export type ProcessCashPaymentApiResponse = PaymentApiResponse;
+export type SearchInvoiceApiResponse = ApiResponse<SearchInvoiceResponse>;
+export type InvoiceApiResponse = ApiResponse<InvoiceResponse>;

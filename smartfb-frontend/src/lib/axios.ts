@@ -161,7 +161,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
     if (
-      (error.response?.status === 401 || error.response?.status === 403) &&
+      (error.response?.status === 401  )&& 
       originalRequest &&
       !originalRequest._retry &&
       isRefreshableRequest(originalRequest.url)

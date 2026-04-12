@@ -127,7 +127,10 @@ export interface OrderItemResponse {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  addons?: string | null;
+  /**
+   * Backend có thể trả JSON string, còn FE sẽ chuẩn hóa về mảng khi đi qua hook detail.
+   */
+  addons?: string | OrderAddonSelection[] | null;
   notes?: string | null;
   status?: string | null;
 }
