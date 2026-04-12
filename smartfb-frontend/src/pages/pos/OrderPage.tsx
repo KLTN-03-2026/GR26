@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { PanelRightClose, PanelRightOpen, ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
@@ -9,10 +8,15 @@ import { useAddons } from '@modules/menu/hooks/useAddons';
 import { useCategories } from '@modules/menu/hooks/useCategories';
 import { useMenus } from '@modules/menu/hooks/useMenus';
 import type { MenuItem } from '@modules/menu/types/menu.types';
-import { OrderCartPanel } from '@modules/order/components/order-page/OrderCartPanel';
-import { OrderCategoryTabs } from '@modules/order/components/order-page/OrderCategoryTabs';
-import { OrderMenuGrid } from '@modules/order/components/order-page/OrderMenuGrid';
-import { OrderPageToolbar } from '@modules/order/components/order-page/OrderPageToolbar';
+import {
+  OrderItemDialog,
+  OrderCategoryTabs,
+  OrderMenuGrid,
+  OrderPageCartActions,
+  OrderPageCartSidebar,
+  OrderPageToolbar,
+  TemporaryInvoiceDialog,
+} from '@modules/order/components';
 import {
   calculateLineTotal,
   getSafeAddons,
@@ -26,11 +30,11 @@ import {
   toOrderItemCommand,
   toUpdateOrderItemCommand,
 } from '@modules/order/components/order-page/orderPage.utils';
-import { OrderItemDialog } from '@modules/order/components/OrderItemDialog';
-import { TemporaryInvoiceDialog } from '@modules/order/components/TemporaryInvoiceDialog';
-import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
-import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
-import { useTableActiveOrder } from '@modules/order/hooks/useTableActiveOrder';
+import {
+  useOrderDetail,
+  useOrderPricing,
+  useTableActiveOrder,
+} from '@modules/order/hooks';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import type {
@@ -39,88 +43,17 @@ import type {
   OrderResponse,
   OrderTableContext,
 } from '@modules/order/types/order.types';
+import {
+  AUTO_CANCEL_EMPTY_CART_REASON,
+  buildOrderRouteSearchParams,
+  isSameOrderContext,
+  resolveTableContextFromOrder,
+} from '@modules/order/utils';
 import { useZones } from '@modules/table/hooks/useZones';
-import { Button } from '@shared/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@shared/components/ui/sheet';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { ROUTES } from '@shared/constants/routes';
 import { useDebounce } from '@shared/hooks/useDebounce';
 import { cn } from '@shared/utils/cn';
-
-/**
- * So sánh context hiện tại với context đọc từ URL để biết khi nào store đã đồng bộ xong.
- */
-const isSameOrderContext = (
-  currentContext: OrderTableContext | null,
-  nextContext: OrderTableContext
-): boolean => {
-  return (
-    currentContext?.tableId === nextContext.tableId &&
-    currentContext?.tableName === nextContext.tableName &&
-    currentContext?.zoneId === nextContext.zoneId &&
-    currentContext?.zoneName === nextContext.zoneName &&
-    currentContext?.branchId === nextContext.branchId &&
-    currentContext?.branchName === nextContext.branchName
-  );
-};
-
-/**
- * Dựng lại context bàn/mang về từ chi tiết đơn hàng để POS mở đúng cart đang thao tác.
- */
-const resolveTableContextFromOrder = (
-  order: OrderResponse,
-  fallbackContext: OrderTableContext
-): OrderTableContext => {
-  if (order.source === 'IN_STORE' && order.tableId) {
-    return {
-      ...fallbackContext,
-      tableId: order.tableId,
-      tableName: order.tableName?.trim() || fallbackContext.tableName,
-    };
-  }
-
-  return {
-    ...fallbackContext,
-    tableId: null,
-    tableName: '',
-    zoneId: undefined,
-    zoneName: '',
-  };
-};
-
-const buildOrderRouteSearchParams = (
-  context: OrderTableContext | null | undefined,
-  orderId?: string | null
-) => {
-  const searchParams = new URLSearchParams();
-
-  if (orderId?.trim()) {
-    searchParams.set('orderId', orderId.trim());
-  }
-
-  if (context?.tableId?.trim()) {
-    searchParams.set('tableId', context.tableId.trim());
-  }
-
-  if (context?.tableName.trim()) {
-    searchParams.set('tableName', context.tableName.trim());
-  }
-
-  if (context?.zoneId?.trim()) {
-    searchParams.set('zoneId', context.zoneId.trim());
-  }
-
-  if (context?.branchName.trim()) {
-    searchParams.set('branchName', context.branchName.trim());
-  }
-
-  return searchParams;
-};
-
-/**
- * FE dùng reason ngầm để backend biết đây là trường hợp đơn bị làm trống giỏ hàng.
- */
-const AUTO_CANCEL_EMPTY_CART_REASON = 'AUTO_CANCEL_EMPTY_CART';
 
 export default function OrderPage() {
   const navigate = useNavigate();
@@ -768,6 +701,28 @@ export default function OrderPage() {
       : hasPlacedOrder
         ? 'Tiếp tục thanh toán'
         : 'Tạo đơn và thanh toán';
+  const cartPanelProps = {
+    cart,
+    tableContext,
+    draftOrder,
+    currentUserName,
+    hasPlacedOrder,
+    isSyncingDraft,
+    isItemActionsDisabled: isSyncingDraft || isPlacedOrderFinalized,
+    totalItemCount,
+    subtotal,
+    vatAmount,
+    totalAmount,
+    checkoutButtonLabel,
+    isCheckoutDisabled: isPlacedOrderFinalized,
+    onOpenInvoice: handleOpenInvoice,
+    onCancelPlacedOrder: () => void handleCancelPlacedOrder(),
+    onEditCartItem: handleEditCartItem,
+    onDeleteCartItem: (item: OrderDraftItem) => void handleDeleteCartItem(item),
+    onChangeItemQuantity: (item: OrderDraftItem, delta: number) =>
+      void handleChangeItemQuantity(item, delta),
+    onCheckout: () => void handleCheckout(),
+  };
 
   if (hasLoadingState) {
     return (
@@ -800,72 +755,18 @@ export default function OrderPage() {
           'grid min-h-[calc(100vh-10rem)] grid-cols-1 gap-6 xl:items-start',
           showCart && 'xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_440px]'
         )}
-      >
+        >
         <section className="min-h-0 space-y-5">
           <OrderPageToolbar
             cartActions={
-              <div className="flex flex-wrap gap-2">
-                <Sheet open={isCartSheetOpen} onOpenChange={setIsCartSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="gap-2 xl:hidden">
-                      <ShoppingCart className="h-4 w-4" />
-                      Giỏ hàng
-                      {totalItemCount > 0 ? ` (${totalItemCount})` : ''}
-                    </Button>
-                  </SheetTrigger>
-
-                  <SheetContent
-                    side="right"
-                    className="w-[calc(100vw-1rem)] max-w-md overflow-y-auto border-l bg-white p-0"
-                  >
-                    <SheetHeader className="sr-only">
-                      <SheetTitle>Giỏ hàng hiện tại</SheetTitle>
-                    </SheetHeader>
-
-                    <OrderCartPanel
-                      cart={cart}
-                      tableContext={tableContext}
-                      draftOrder={draftOrder}
-                      currentUserName={currentUserName}
-                      hasPlacedOrder={hasPlacedOrder}
-                      isSyncingDraft={isSyncingDraft}
-                      isItemActionsDisabled={isSyncingDraft || isPlacedOrderFinalized}
-                      totalItemCount={totalItemCount}
-                      subtotal={subtotal}
-                      vatAmount={vatAmount}
-                      totalAmount={totalAmount}
-                      checkoutButtonLabel={checkoutButtonLabel}
-                      isCheckoutDisabled={isPlacedOrderFinalized}
-                      onOpenInvoice={handleOpenInvoice}
-                      onCancelPlacedOrder={() => void handleCancelPlacedOrder()}
-                      onEditCartItem={handleEditCartItem}
-                      onDeleteCartItem={(item) => void handleDeleteCartItem(item)}
-                      onChangeItemQuantity={(item, delta) =>
-                        void handleChangeItemQuantity(item, delta)
-                      }
-                      onCheckout={() => void handleCheckout()}
-                      className="h-full rounded-none border-0 shadow-none xl:max-h-none"
-                    />
-                  </SheetContent>
-                </Sheet>
-
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCart((prev) => !prev)}
-                  className="hidden gap-2 xl:inline-flex"
-                >
-                  {showCart ? (
-                    <>
-                      <PanelRightClose className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      <PanelRightOpen className="h-4 w-4" />
-                      {totalItemCount > 0 ? ` (${totalItemCount})` : ''}
-                    </>
-                  )}
-                </Button>
-              </div>
+              <OrderPageCartActions
+                showCart={showCart}
+                totalItemCount={totalItemCount}
+                isCartSheetOpen={isCartSheetOpen}
+                onCartSheetOpenChange={setIsCartSheetOpen}
+                onToggleCart={() => setShowCart((prev) => !prev)}
+                cartPanelProps={cartPanelProps}
+              />
             }
             searchKeyword={searchKeyword}
             tableName={tableContext?.tableName || 'Mang đi'}
@@ -887,36 +788,7 @@ export default function OrderPage() {
           <OrderMenuGrid items={filteredItems as MenuItem[]} onSelectItem={handleOpenItemDialog} />
         </section>
 
-        {showCart ? (
-          <div className="hidden xl:block xl:w-[400px] 2xl:w-[440px]" aria-hidden="true">
-            <div className="xl:fixed xl:right-8 xl:top-20 2xl:right-10">
-              <OrderCartPanel
-                cart={cart}
-                tableContext={tableContext}
-                draftOrder={draftOrder}
-                currentUserName={currentUserName}
-                hasPlacedOrder={hasPlacedOrder}
-                isSyncingDraft={isSyncingDraft}
-                isItemActionsDisabled={isSyncingDraft || isPlacedOrderFinalized}
-                totalItemCount={totalItemCount}
-                subtotal={subtotal}
-                vatAmount={vatAmount}
-                totalAmount={totalAmount}
-                checkoutButtonLabel={checkoutButtonLabel}
-                isCheckoutDisabled={isPlacedOrderFinalized}
-                onOpenInvoice={handleOpenInvoice}
-                onCancelPlacedOrder={() => void handleCancelPlacedOrder()}
-                onEditCartItem={handleEditCartItem}
-                onDeleteCartItem={(item) => void handleDeleteCartItem(item)}
-                onChangeItemQuantity={(item, delta) =>
-                  void handleChangeItemQuantity(item, delta)
-                }
-                onCheckout={() => void handleCheckout()}
-                className="xl:flex xl:w-[400px] xl:h-[calc(100dvh-6rem)] xl:max-h-[calc(100dvh-6rem)] 2xl:w-[440px]"
-              />
-            </div>
-          </div>
-        ) : null}
+        <OrderPageCartSidebar showCart={showCart} cartPanelProps={cartPanelProps} />
       </div>
 
       <OrderItemDialog

@@ -4,6 +4,10 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
 
+/**
+ * Hook đổi trạng thái nhân viên.
+ * Hiện backend mới hỗ trợ vô hiệu hóa, nên thao tác kích hoạt lại sẽ trả lỗi có chủ đích.
+ */
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();

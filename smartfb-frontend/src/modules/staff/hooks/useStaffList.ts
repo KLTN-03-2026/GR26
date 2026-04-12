@@ -3,6 +3,11 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import type { StaffFilters } from '../types/staff.types';
 
+/**
+ * Hook lấy danh sách nhân viên theo bộ lọc hiện tại.
+ *
+ * @param filters - Bộ lọc, phân trang và keyword tìm kiếm gửi lên API
+ */
 export const useStaffList = (filters?: StaffFilters) => {
   return useQuery({
     queryKey: queryKeys.staff.list(filters),

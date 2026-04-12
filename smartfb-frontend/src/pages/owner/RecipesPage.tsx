@@ -1,4 +1,4 @@
-import { RecipeManagementContent } from '@modules/recipe/components/RecipeManagementContent';
+import { RecipeManagementContent } from '@modules/recipe/components';
 
 export default function RecipesPage() {
   return <RecipeManagementContent />;

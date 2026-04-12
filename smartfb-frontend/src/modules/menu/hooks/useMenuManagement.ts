@@ -4,35 +4,37 @@ import { useBranches } from '@modules/branch/hooks/useBranches';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useDebounce } from '@shared/hooks/useDebounce';
 import { PERMISSIONS } from '@shared/constants/permissions';
-import {
-  useAddons,
-  useBranchMenuItems,
-  useCategories,
-  useDeleteMenu,
-  useMenus,
-  useToggleMenu,
-  useUpdateBranchMenuItem,
-} from './index';
-import {
-  DEFAULT_PAGE_SIZE,
-  NO_MENU_CATEGORY_LABEL,
-  NO_MENU_CATEGORY_VALUE,
-} from '../constants/menu.constants';
+import { DEFAULT_PAGE_SIZE } from '../constants/menu.constants';
+import { useAddons } from './useAddons';
+import { useBranchMenuItems } from './useBranchMenuItems';
+import { useCategories } from './useCategories';
+import { useDeleteMenu } from './useDeleteMenu';
+import { useMenus } from './useMenus';
+import { useToggleMenu } from './useToggleMenu';
+import { useUpdateBranchMenuItem } from './useUpdateBranchMenuItem';
 import type {
-  MenuCategoryInfo,
   MenuFilters,
   MenuItem,
   MenuPaginationState,
-  MenuStatus,
   UpdateBranchMenuItemPayload,
 } from '../types/menu.types';
-
-const DEFAULT_MENU_FILTERS: MenuFilters = {
-  search: '',
-  categories: [],
-  statuses: [],
-  sortBy: 'newest',
-};
+import {
+  DEFAULT_MENU_FILTERS,
+  buildBranchConfigMap,
+  buildCategoryCountMap,
+  buildCategoryManagementItems,
+  buildFilterCategories,
+  buildGlobalMenuItems,
+  buildMenuCategoryMap,
+  buildMenuQueryParams,
+  buildMenuStatusCounts,
+  buildNextCategoryDisplayOrder,
+  countActiveMenuFilters,
+  filterAndSortMenus,
+  mergeBranchMenuItems,
+  paginateMenuItems,
+  resolveSelectedBranchName,
+} from '../utils';
 
 /**
  * Hook gom toàn bộ state và business logic cho màn quản lý thực đơn.
@@ -55,12 +57,9 @@ export const useMenuManagement = () => {
   const selectedBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const isBranchMode = Boolean(selectedBranchId);
 
-  const menuQueryParams = useMemo(
-    () => ({
-      search: debouncedSearch || undefined,
-    }),
-    [debouncedSearch]
-  );
+  const menuQueryParams = useMemo(() => {
+    return buildMenuQueryParams(debouncedSearch);
+  }, [debouncedSearch]);
 
   const { data, isLoading, isError, refetch, isFetching } = useMenus(menuQueryParams);
   const {
@@ -98,71 +97,42 @@ export const useMenuManagement = () => {
    * Map danh mục theo ID để card món ăn hiển thị đúng tên từ backend.
    */
   const categoryMap = useMemo(() => {
-    return new Map(rawCategories.map((category) => [category.id, category]));
+    return buildMenuCategoryMap(rawCategories);
   }, [rawCategories]);
 
   /**
    * Dữ liệu món ăn ở chế độ global, chưa ghép cấu hình riêng theo chi nhánh.
    */
   const globalMenuItems = useMemo<MenuItem[]>(() => {
-    return rawMenuItems.map((menu) => ({
-      ...menu,
-      categoryName:
-        categoryMap.get(menu.category)?.name ??
-        menu.categoryName ??
-        NO_MENU_CATEGORY_LABEL,
-    }));
+    return buildGlobalMenuItems({
+      rawMenuItems,
+      categoryMap,
+    });
   }, [categoryMap, rawMenuItems]);
 
   /**
    * Map cấu hình món ăn theo item ID để ghép giá/trạng thái khi đang thao tác trong chi nhánh.
    */
   const branchConfigMap = useMemo(() => {
-    return new Map(branchMenuConfigs.map((config) => [config.itemId, config]));
+    return buildBranchConfigMap(branchMenuConfigs);
   }, [branchMenuConfigs]);
 
   const selectedBranchName = useMemo(() => {
-    if (!selectedBranchId) {
-      return '';
-    }
-
-    return branches.find((branch) => branch.id === selectedBranchId)?.name ?? 'chi nhánh đang chọn';
+    return resolveSelectedBranchName({
+      branches,
+      selectedBranchId,
+    });
   }, [branches, selectedBranchId]);
 
   /**
    * Ghép menu global với cấu hình branch để UI luôn hiển thị đúng giá bán và trạng thái phục vụ.
    */
   const menuItems = useMemo<MenuItem[]>(() => {
-    if (!selectedBranchId) {
-      return globalMenuItems;
-    }
-
-    return globalMenuItems.map((menu) => {
-      const branchConfig = branchConfigMap.get(menu.id);
-
-      if (!branchConfig) {
-        return {
-          ...menu,
-          branchId: selectedBranchId,
-          branchName: selectedBranchName,
-          usesBranchPrice: false,
-        };
-      }
-
-      const isGloballyActive = menu.isActive ?? menu.isAvailable ?? true;
-
-      return {
-        ...menu,
-        price: branchConfig.effectivePrice,
-        basePrice: branchConfig.basePrice,
-        branchPrice: branchConfig.branchPrice,
-        effectivePrice: branchConfig.effectivePrice,
-        isAvailable: branchConfig.isAvailable,
-        status: isGloballyActive && branchConfig.isAvailable ? 'selling' : 'hidden',
-        branchId: selectedBranchId,
-        branchName: selectedBranchName,
-        usesBranchPrice: branchConfig.branchPrice !== null,
-      };
+    return mergeBranchMenuItems({
+      globalMenuItems,
+      branchConfigMap,
+      selectedBranchId,
+      selectedBranchName,
     });
   }, [branchConfigMap, globalMenuItems, selectedBranchId, selectedBranchName]);
 
@@ -170,123 +140,63 @@ export const useMenuManagement = () => {
    * Gom số lượng món theo từng danh mục để tái sử dụng cho filter và dialog quản lý danh mục.
    */
   const categoryCountMap = useMemo(() => {
-    const nextCategoryCountMap = new Map<string, number>();
-
-    menuItems.forEach((menu) => {
-      const currentCount = nextCategoryCountMap.get(menu.category) ?? 0;
-      nextCategoryCountMap.set(menu.category, currentCount + 1);
-    });
-
-    return nextCategoryCountMap;
+    return buildCategoryCountMap(menuItems);
   }, [menuItems]);
 
   /**
    * Danh mục thật từ backend, có kèm số món để hiển thị trong dialog quản lý.
    */
-  const categoryManagementItems = useMemo<MenuCategoryInfo[]>(() => {
-    return rawCategories
-      .map((category) => ({
-        ...category,
-        count: categoryCountMap.get(category.id) ?? 0,
-      }))
-      .sort((left, right) => {
-        const orderDiff =
-          (left.displayOrder ?? Number.MAX_SAFE_INTEGER) -
-          (right.displayOrder ?? Number.MAX_SAFE_INTEGER);
-
-        if (orderDiff !== 0) {
-          return orderDiff;
-        }
-
-        return left.name.localeCompare(right.name, 'vi');
-      });
+  const categoryManagementItems = useMemo(() => {
+    return buildCategoryManagementItems({
+      rawCategories,
+      categoryCountMap,
+    });
   }, [categoryCountMap, rawCategories]);
 
   /**
    * Danh sách danh mục hiển thị trong bộ lọc, có bổ sung nhóm "chưa phân loại" khi cần.
    */
-  const categories = useMemo<MenuCategoryInfo[]>(() => {
-    const mappedCategories = categoryManagementItems.map((category) => ({
-      ...category,
-    }));
-    const uncategorizedCount = categoryCountMap.get(NO_MENU_CATEGORY_VALUE) ?? 0;
-
-    if (uncategorizedCount > 0) {
-      mappedCategories.push({
-        id: NO_MENU_CATEGORY_VALUE,
-        name: NO_MENU_CATEGORY_LABEL,
-        count: uncategorizedCount,
-      });
-    }
-
-    return mappedCategories;
+  const categories = useMemo(() => {
+    return buildFilterCategories({
+      categoryManagementItems,
+      categoryCountMap,
+    });
   }, [categoryCountMap, categoryManagementItems]);
 
   /**
    * Thứ tự gợi ý cho danh mục mới để backend có thể render ổn định nếu chưa tự sinh order.
    */
   const nextCategoryDisplayOrder = useMemo(() => {
-    return rawCategories.reduce((maxOrder, category) => {
-      return Math.max(maxOrder, category.displayOrder ?? 0);
-    }, -1) + 1;
+    return buildNextCategoryDisplayOrder(rawCategories);
   }, [rawCategories]);
 
   /**
    * Đếm số món theo trạng thái để chip filter hiển thị số liệu thực tế.
    */
-  const statusCounts = useMemo<Partial<Record<MenuStatus, number>>>(() => {
-    return menuItems.reduce<Partial<Record<MenuStatus, number>>>((acc, menu) => {
-      acc[menu.status] = (acc[menu.status] ?? 0) + 1;
-      return acc;
-    }, {});
+  const statusCounts = useMemo(() => {
+    return buildMenuStatusCounts(menuItems);
   }, [menuItems]);
 
   const activeFilterCount = useMemo(() => {
-    return [
-      filters.search ? 1 : 0,
-      filters.categories.length > 0 ? 1 : 0,
-      filters.statuses.length > 0 ? 1 : 0,
-      filters.sortBy !== 'newest' ? 1 : 0,
-    ].reduce((total, current) => total + current, 0);
+    return countActiveMenuFilters(filters);
   }, [filters]);
 
   /**
    * Tất cả lọc/sort được xử lý ở module để page không còn business logic trong render.
    */
   const filteredAndSortedMenus = useMemo(() => {
-    let result = [...menuItems];
-
-    if (filters.categories.length > 0) {
-      result = result.filter((menu) => filters.categories.includes(menu.category));
-    }
-
-    if (filters.statuses.length > 0) {
-      result = result.filter((menu) => filters.statuses.includes(menu.status));
-    }
-
-    switch (filters.sortBy) {
-      case 'newest':
-        result.sort((left, right) => right.createdAt - left.createdAt);
-        break;
-      case 'price-asc':
-        result.sort((left, right) => left.price - right.price);
-        break;
-      case 'price-desc':
-        result.sort((left, right) => right.price - left.price);
-        break;
-    }
-
-    return result;
+    return filterAndSortMenus({
+      menuItems,
+      filters,
+    });
   }, [filters, menuItems]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedMenus.length / pagination.pageSize));
-  const currentPage = Math.min(pagination.page, totalPages);
-
-  const paginatedMenus = useMemo(() => {
-    const startIndex = (currentPage - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    return filteredAndSortedMenus.slice(startIndex, endIndex);
-  }, [currentPage, filteredAndSortedMenus, pagination.pageSize]);
+  const { currentPage, totalPages, paginatedMenus } = useMemo(() => {
+    return paginateMenuItems({
+      items: filteredAndSortedMenus,
+      pagination,
+    });
+  }, [filteredAndSortedMenus, pagination]);
 
   const handleFiltersChange = (nextFilters: MenuFilters) => {
     setFilters(nextFilters);

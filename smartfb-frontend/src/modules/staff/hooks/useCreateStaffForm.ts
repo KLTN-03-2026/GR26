@@ -71,6 +71,10 @@ const resolveDefaultBranchId = (
   return '';
 };
 
+/**
+ * Hook điều phối toàn bộ form tạo nhân viên.
+ * Bao gồm sinh mã nhân viên, validate FE, tạo user, gán vai trò và gán chi nhánh khi submit.
+ */
 export const useCreateStaffForm = () => {
   const navigate = useNavigate();
   const { error, success } = useToast();

@@ -7,7 +7,7 @@ import { MenuCard } from '@modules/menu/components/MenuCard/MenuCard';
 import { MenuCardGrid } from '@modules/menu/components/MenuCard/MenuCardGrid';
 import { MenuFilterBar } from '@modules/menu/components/MenuFilterBar/MenuFilterBar';
 import { MenuPagination } from '@modules/menu/components/MenuPagination/MenuPagination';
-import { useMenuManagement } from '@modules/menu/hooks/useMenuManagement';
+import { useMenuManagement } from '@modules/menu/hooks';
 import { Button } from '@shared/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@shared/components/ui/sheet';
 import { MenuManagementErrorState } from './MenuManagementErrorState';

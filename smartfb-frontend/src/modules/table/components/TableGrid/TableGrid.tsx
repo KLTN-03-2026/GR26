@@ -1,5 +1,8 @@
 // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-import type { TableDisplayItem } from '@modules/table/types/table.types';
+import type {
+  TableDisplayItem,
+  TableStatus,
+} from '@modules/table/types/table.types';
 import { TableCard } from './TableCard';
 import { LayoutGrid, Plus } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
@@ -9,7 +12,7 @@ interface TableGridProps {
   onSelectTable: (table: TableDisplayItem) => void;
   onEdit: (table: TableDisplayItem) => void;
   onDelete: (id: string, name: string) => void;
-  onToggleStatus: (id: string, currentStatus: string) => void;
+  onToggleStatus: (id: string, currentStatus: TableStatus) => void;
   onViewDetail: (id: string) => void;
   onAddTable?: () => void;
 }

@@ -11,7 +11,10 @@ import {
   Square,
   Users,
 } from 'lucide-react';
-import type { TableDisplayItem } from '@modules/table/types/table.types';
+import type {
+  TableDisplayItem,
+  TableStatus,
+} from '@modules/table/types/table.types';
 import { Button } from '@shared/components/ui/button';
 import {
   DropdownMenu,
@@ -25,7 +28,7 @@ interface TableCardProps {
   onSelectTable: (table: TableDisplayItem) => void;
   onEdit: (table: TableDisplayItem) => void;
   onDelete: (id: string, name: string) => void;
-  onToggleStatus: (id: string, currentStatus: string) => void;
+  onToggleStatus: (id: string, currentStatus: TableStatus) => void;
   onViewDetail: (id: string) => void;
 }
 

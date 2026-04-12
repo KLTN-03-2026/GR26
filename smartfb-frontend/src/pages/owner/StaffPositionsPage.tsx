@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BriefcaseBusiness, ShieldCheck, Plus, Search } from "lucide-react";
-import { PositionFormDialog } from "@modules/staff/components/PositionFormDialog";
-import { PositionTable } from "@modules/staff/components/PositionTable";
-import { PositionToggleDialog } from "@modules/staff/components/PositionToggleDialog";
-import { RolePermissionManager } from "@modules/staff/components/RolePermissionManager";
+import {
+  PositionFormDialog,
+  PositionTable,
+  PositionToggleDialog,
+  RolePermissionManager,
+} from "@modules/staff/components";
 import { usePositionFilters } from "@modules/staff/hooks/usePositionFilters";
 import { usePositions } from "@modules/staff/hooks/usePositions";
 import { useRolesMatrix } from "@modules/staff/hooks/useRolesMatrix";

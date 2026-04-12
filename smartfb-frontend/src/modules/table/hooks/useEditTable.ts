@@ -4,6 +4,10 @@ import { useToast } from '@shared/hooks/useToast';
 import { tableService } from '../services/tableService';
 import type { UpdateTablePayload, TableItem } from '../types/table.types';
 
+/**
+ * Hook cập nhật thông tin bàn.
+ * Sau khi lưu sẽ refresh cả danh sách bàn lẫn cache chi tiết của bàn vừa chỉnh sửa.
+ */
 export const useEditTable = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();

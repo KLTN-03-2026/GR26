@@ -1,5 +1,8 @@
 import { X, Users, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff, Circle, Square } from 'lucide-react';
-import type { TableDisplayItem } from '@modules/table/types/table.types';
+import type {
+  TableDisplayItem,
+  TableStatus,
+} from '@modules/table/types/table.types';
 import { Button } from '@shared/components/ui/button';
 
 interface TableDetailDrawerProps {
@@ -10,7 +13,7 @@ interface TableDetailDrawerProps {
   onClose: () => void;
   onRetry?: () => void;
   onEdit: (table: TableDisplayItem) => void;
-  onToggleStatus: (id: string, currentStatus: string) => void;
+  onToggleStatus: (id: string, currentStatus: TableStatus) => void;
 }
 
 const getStatusBadge = (status: string, usageStatus: string) => {
