@@ -36,9 +36,12 @@ export const OrderPageCartActions = ({
     <div className="flex flex-wrap gap-2">
       <Sheet open={isCartSheetOpen} onOpenChange={onCartSheetOpenChange}>
         <SheetTrigger asChild>
-          <Button variant="outline" className="gap-2 xl:hidden">
+          <Button
+            variant="outline"
+            className="h-11 gap-2 rounded-full border-slate-200 px-4 text-slate-700 xl:hidden"
+          >
             <ShoppingCart className="h-4 w-4" />
-            Giỏ hàng
+            Xem giỏ hàng
             {totalItemCount > 0 ? ` (${totalItemCount})` : ''}
           </Button>
         </SheetTrigger>
@@ -61,13 +64,17 @@ export const OrderPageCartActions = ({
       <Button
         variant="outline"
         onClick={onToggleCart}
-        className="hidden gap-2 xl:inline-flex"
+        className="hidden h-11 gap-2 rounded-2xl border-slate-200 px-4 text-slate-700 xl:inline-flex"
       >
         {showCart ? (
-          <PanelRightClose className="h-4 w-4" />
+          <>
+            <PanelRightClose className="h-4 w-4" />
+              {totalItemCount > 0 ? ` (${totalItemCount})` : ''}
+          </>
         ) : (
           <>
             <PanelRightOpen className="h-4 w-4" />
+            
             {totalItemCount > 0 ? ` (${totalItemCount})` : ''}
           </>
         )}
