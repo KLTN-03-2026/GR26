@@ -13,6 +13,10 @@ import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import ShiftRegistrationPage from '@pages/staff/ShiftRegistrationPage';
+import SuppliersPage from '@pages/owner/SuppliersPage';
+import SupplierDetailPage from '@pages/owner/SupplierDetailPage';
+import StaffSupplierListPage from '@pages/staff/SupplierListPage';
+import OrderManagementPage from '@pages/pos/OrderManagementPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { ROUTES } from '@shared/constants/routes';
 
@@ -186,13 +190,13 @@ export const ownerRoutes: RouteConfigItem[] = [
   },
   {
     path: ROUTES.OWNER.SUPPLIERS,
-    pageTitle: 'Nhà cung cấp',
-    element: (
-      <PagePlaceholder
-        title="Nhà cung cấp"
-        description="Page nhà cung cấp sẽ được thêm riêng ở bước triển khai module supplier."
-      />
-    ),
+    pageTitle: 'Quản lý nhà cung cấp',
+    element: <SuppliersPage />,
+  },
+  {
+    path: `${ROUTES.OWNER.SUPPLIERS}/:id`,
+    pageTitle: 'Chi tiết nhà cung cấp',
+    element: <SupplierDetailPage />,
   },
   {
     path: ROUTES.OWNER.REPORTS,
@@ -271,6 +275,11 @@ export const staffRoutes: RouteConfigItem[] = [
     path: ROUTES.STAFF.SHIFT_REGISTRATION,
     pageTitle: 'Đăng ký ca làm',
     element: <ShiftRegistrationPage />,
+  },
+  {
+    path: ROUTES.STAFF.SUPPLIERS,
+    pageTitle: 'Tra cứu nhà cung cấp',
+    element: <StaffSupplierListPage />,
   },
 ];
 

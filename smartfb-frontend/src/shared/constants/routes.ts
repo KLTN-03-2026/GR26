@@ -43,6 +43,7 @@ export const ROUTES = {
     ORDERS: '/staff/orders',
     MY_SHIFTS: '/staff/my-shifts',
     SHIFT_REGISTRATION: '/staff/shifts/registration',
+    SUPPLIERS: '/staff/suppliers',
   },
 
   // Shared routes (Owner + Staff)

@@ -104,11 +104,12 @@ export const menuConfig: MenuSection[] = [
     items: [
       {
         title: 'Kinh doanh',
-        roles: [ROLES.OWNER],
+        roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Chi nhánh', icon: Store, path: ROUTES.OWNER.BRANCHES, roles: [ROLES.OWNER] },
           { title: 'Khuyến mãi', icon: Ticket, path: ROUTES.OWNER.PROMOTIONS, roles: [ROLES.OWNER] },
           { title: 'Nhà cung cấp', icon: Truck, path: ROUTES.OWNER.SUPPLIERS, roles: [ROLES.OWNER] },
+          { title: 'Nhà cung cấp (Staff)', icon: Truck, path: ROUTES.STAFF.SUPPLIERS, roles: [ROLES.STAFF] },
           { title: 'Báo cáo', icon: Newspaper, path: ROUTES.OWNER.REPORTS, roles: [ROLES.OWNER] },
         ],
       },
