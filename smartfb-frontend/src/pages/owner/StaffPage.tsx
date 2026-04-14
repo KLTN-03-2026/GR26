@@ -24,15 +24,17 @@ export default function StaffPage() {
   const navigate = useNavigate();
 
   // Fetch staff list from service
-  const { data: staffList = [], isLoading } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: queryKeys.staff.all,
     queryFn: () => staffService.getList(),
   });
 
+  const staffList = response?.data ?? [];
+
   const {
     filters,
     pagination,
-    roles,
+    positions,
     staff,
     totalItems,
     hasActiveFilters,
@@ -89,11 +91,11 @@ export default function StaffPage() {
       <div className="bg-white p-4 space-y-4 rounded-2xl">
         <StaffFilterBar
           filters={filters}
-          roles={roles}
+          positions={positions}
           branches={branches}
           onSearchChange={(value) => updateFilter('search', value)}
           onStatusChange={(value) => updateFilter('status', value)}
-          onRoleChange={(value) => updateFilter('role', value)}
+          onPositionChange={(value) => updateFilter('positionId', value)}
           onBranchChange={(value) => updateFilter('branchId', value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}

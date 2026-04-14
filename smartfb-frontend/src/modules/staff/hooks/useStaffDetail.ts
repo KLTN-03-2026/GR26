@@ -1,35 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
-import { staffDetailMock } from '@modules/staff/data/staffDetailMock';
-import { staffShiftScheduleMock } from '@modules/staff/data/shiftScheduleMock';
-import { staffActivityLogsMock } from '@modules/staff/data/staffActivityLogsMock';
+import { staffService } from '../services/staffService';
+import { shiftService } from '../services/shiftService';
 
 /**
- * Hook lấy chi tiết nhân viên theo ID.
- * Hiện tại dùng mock data, sẽ thay bằng API call sau.
- *
+ * Hook lấy chi tiết nhân viên theo ID từ API thực tế.
+ * 
  * @param staffId - ID nhân viên cần lấy thông tin
- * @returns Query result với thông tin chi tiết nhân viên
  */
 export const useStaffDetail = (staffId: string) => {
   return useQuery({
     queryKey: queryKeys.staff.detail(staffId),
     queryFn: async () => {
-      // TODO: Thay bằng API call thực tế
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Mock: trả về cùng 1 staff cho mọi ID
-      if (staffId !== staffDetailMock.id) {
-        throw new Error('Staff not found');
-      }
+      const staffRes = await staffService.getById(staffId);
+      
+      // Lấy thêm lịch làm việc (nếu cần mockup logs thì để rỗng trước)
+      // Backend có thể gộp hoặc tách, ở đây tách theo pattern cũ
+      const scheduleRes = await shiftService.getSchedule({ branchId: staffRes.data.branchId, date: new Date().toISOString() });
 
       return {
-        staff: staffDetailMock,
-        shifts: staffShiftScheduleMock,
-        activityLogs: staffActivityLogsMock,
+        staff: staffRes.data,
+        shifts: scheduleRes.data || [],
+        activityLogs: [], // Sẽ được bổ sung khi có API audit trail
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 phút
+    staleTime: 5 * 60 * 1000,
+    enabled: !!staffId,
   });
 };

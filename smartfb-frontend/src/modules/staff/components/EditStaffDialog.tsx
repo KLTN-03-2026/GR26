@@ -18,7 +18,9 @@ import {
 } from "@shared/components/ui/select";
 import { useEditStaff } from "../hooks/useEditStaff";
 import type { StaffDetailFull } from "../data/staffDetailMock";
-import type { EditStaffFormData } from "../types/staff.types";
+import type { EditStaffFormData, StaffStatus, StaffShiftType } from "../types/staff.types";
+import { positionService } from "../services/positionService";
+import { useQuery } from "@tanstack/react-query";
 
 interface EditStaffDialogProps {
   open: boolean;
@@ -27,34 +29,19 @@ interface EditStaffDialogProps {
   onSuccess?: () => void;
 }
 
-type StaffRole = 'manager' | 'chef' | 'waiter' | 'cashier' | 'staff';
-type StaffDepartment = 'Quản lý' | 'Phục vụ' | 'Bếp' | 'Tính tiền' | 'Khác';
-type StaffShiftType = 'full-time' | 'part-time';
-
-const ROLES: { value: StaffRole; label: string }[] = [
-  { value: 'manager', label: 'Quản lý' },
-  { value: 'chef', label: 'Đầu bếp' },
-  { value: 'waiter', label: 'Phục vụ' },
-  { value: 'cashier', label: 'Thu ngân' },
-  { value: 'staff', label: 'Nhân viên' },
-];
-
-const DEPARTMENTS: { value: StaffDepartment; label: string }[] = [
-  { value: 'Quản lý', label: 'Quản lý' },
-  { value: 'Phục vụ', label: 'Phục vụ' },
-  { value: 'Bếp', label: 'Bếp' },
-  { value: 'Tính tiền', label: 'Tính tiền' },
-  { value: 'Khác', label: 'Khác' },
-];
-
 const SHIFT_TYPES: { value: StaffShiftType; label: string }[] = [
   { value: 'full-time', label: 'Toàn thời gian' },
   { value: 'part-time', label: 'Bán thời gian' },
 ];
 
+const STATUSES: { value: StaffStatus; label: string }[] = [
+  { value: 'active', label: 'Đang làm' },
+  { value: 'inactive', label: 'Đã nghỉ' },
+];
+
 /**
  * Dialog chỉnh sửa thông tin nhân viên
- * Đáp ứng PB08 AC3: Chỉnh sửa nhân viên
+ * Đã cập nhật theo Module 4 Spec (fullName, positionId, status)
  */
 export const EditStaffDialog = ({
   open,
@@ -64,19 +51,25 @@ export const EditStaffDialog = ({
 }: EditStaffDialogProps) => {
   const { mutate: updateStaff, isPending } = useEditStaff();
   
+  // Lấy danh sách chức vụ từ service
+  const { data: posResponse } = useQuery({
+    queryKey: ['staff', 'positions'],
+    queryFn: () => positionService.getList(),
+  });
+  const positions = posResponse?.data || [];
+  
   const [formData, setFormData] = useState<EditStaffFormData>({
-    firstName: staff.firstName,
-    lastName: staff.lastName,
+    fullName: staff.fullName,
     email: staff.email,
     phone: staff.phone,
     identityId: staff.identityId,
     dateOfBirth: staff.dateOfBirth,
     address: staff.address,
     city: staff.city,
-    role: staff.role,
-    department: staff.department,
+    positionId: staff.positionId,
     salary: staff.salary,
     shiftType: staff.shiftType,
+    status: staff.status,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,8 +77,7 @@ export const EditStaffDialog = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.firstName.trim()) newErrors.firstName = 'Họ là bắt buộc';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Tên là bắt buộc';
+    if (!formData.fullName.trim()) newErrors.fullName = 'Họ tên là bắt buộc';
     if (!formData.phone.trim()) newErrors.phone = 'Số điện thoại là bắt buộc';
     else if (!/^(0[1-9][0-9]{8})$/.test(formData.phone)) {
       newErrors.phone = 'Số điện thoại phải có 10 số';
@@ -127,31 +119,18 @@ export const EditStaffDialog = ({
 
         <div className="space-y-4">
           {/* Họ Tên */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                Họ <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="firstName"
-                value={formData.firstName}
-                onChange={(e) => handleChange('firstName', e.target.value)}
-                className="mt-1"
-              />
-              {errors.firstName && <p className="text-red-600 text-xs mt-1">{errors.firstName}</p>}
-            </div>
-            <div>
-              <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                Tên <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="lastName"
-                value={formData.lastName}
-                onChange={(e) => handleChange('lastName', e.target.value)}
-                className="mt-1"
-              />
-              {errors.lastName && <p className="text-red-600 text-xs mt-1">{errors.lastName}</p>}
-            </div>
+          <div>
+            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+              Họ và tên <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="fullName"
+              value={formData.fullName}
+              onChange={(e) => handleChange('fullName', e.target.value)}
+              className="mt-1"
+              placeholder="VD: Nguyễn Văn A"
+            />
+            {errors.fullName && <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>}
           </div>
 
           {/* Email & Phone */}
@@ -237,43 +216,43 @@ export const EditStaffDialog = ({
             </div>
           </div>
 
-          {/* Role & Department */}
+          {/* Position & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="role" className="text-sm font-medium text-gray-700">
-                Vị trí <span className="text-red-500">*</span>
+              <Label htmlFor="position" className="text-sm font-medium text-gray-700">
+                Chức vụ <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.role}
-                onValueChange={(value) => handleChange('role', value as StaffRole)}
+                value={formData.positionId}
+                onValueChange={(value) => handleChange('positionId', value)}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Chọn chức vụ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLES.map(role => (
-                    <SelectItem key={role.value} value={role.value}>
-                      {role.label}
+                  {positions.map(pos => (
+                    <SelectItem key={pos.id} value={pos.id}>
+                      {pos.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="department" className="text-sm font-medium text-gray-700">
-                Phòng ban <span className="text-red-500">*</span>
+              <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                Trạng thái <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={formData.department}
-                onValueChange={(value) => handleChange('department', value as StaffDepartment)}
+                value={formData.status}
+                onValueChange={(value) => handleChange('status', value as StaffStatus)}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DEPARTMENTS.map(dept => (
-                    <SelectItem key={dept.value} value={dept.value}>
-                      {dept.label}
+                  {STATUSES.map(s => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

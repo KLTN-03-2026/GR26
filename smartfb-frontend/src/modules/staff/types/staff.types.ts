@@ -1,32 +1,29 @@
 /**
  * Types cho module Staff Management
- * Dựa trên đặc tả PB08 - Quản lý nhân viên
+ * Dựa trên đặc tả Module 4: Quản lý Nhân sự (Staff & Role)
  */
 
 export type StaffStatus = 'active' | 'inactive';
-export type StaffRole = 'manager' | 'chef' | 'waiter' | 'cashier' | 'staff';
-export type StaffDepartment = 'Quản lý' | 'Phục vụ' | 'Bếp' | 'Tính tiền' | 'Khác';
 export type StaffShiftType = 'full-time' | 'part-time';
 
 /**
- * Filter cho danh sách nhân viên (PB09)
+ * Filter cho danh sách nhân viên
  */
 export type StaffFilters = {
   search: string;
   status: StaffStatus | 'all';
-  role: StaffRole | 'all';
+  positionId: string | 'all';
   branchId: string | 'all';
 };
 
 export type StaffListItem = {
   id: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
   status: StaffStatus;
-  role: StaffRole;
-  department: StaffDepartment;
+  positionId: string;
+  positionName: string;
   branchId: string;
   branchName: string;
   hireDate: string;
@@ -34,6 +31,7 @@ export type StaffListItem = {
   attendanceRate: number;
   salary: number;
   salaryDisplay: string;
+  posPin?: string;
 };
 
 export type PaginationState = {
@@ -44,8 +42,7 @@ export type PaginationState = {
 
 // Form data types
 export type CreateStaffFormData = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
   identityId: string;
@@ -53,28 +50,24 @@ export type CreateStaffFormData = {
   address: string;
   city: string;
   branchId: string;
-  branchName: string;
-  role: StaffRole;
-  department: StaffDepartment;
+  positionId: string;
   shiftType: StaffShiftType;
   salary: number;
   hireDate: string;
-  pinPos: string;
+  posPin: string;
   status: StaffStatus;
 };
 
-// EditStaffFormData - chỉ giữ các field cần thiết
 export type EditStaffFormData = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
   identityId: string;
   dateOfBirth: string;
   address: string;
   city: string;
-  role: StaffRole;
-  department: StaffDepartment;
+  positionId: string;
   salary: number;
   shiftType: StaffShiftType;
+  status: StaffStatus;
 };

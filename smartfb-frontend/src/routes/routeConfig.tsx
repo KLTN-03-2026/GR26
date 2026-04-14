@@ -4,9 +4,15 @@ import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import BranchesPage from '@pages/owner/BranchesPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
 import MenuPage from '@pages/owner/MenuPage';
+import StaffPage from '@pages/owner/StaffPage';
+import StaffDetailPage from '@pages/owner/StaffDetailPage';
+import CreateStaffPage from '@pages/owner/CreateStaffPage';
+import PositionsPage from '@pages/owner/PositionsPage';
+import PermissionsPage from '@pages/owner/PermissionsPage';
+import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
-import OrderManagementPage from '@pages/pos/OrderManagementPage';
+import ShiftRegistrationPage from '@pages/staff/ShiftRegistrationPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { ROUTES } from '@shared/constants/routes';
 
@@ -131,22 +137,27 @@ export const ownerRoutes: RouteConfigItem[] = [
   {
     path: ROUTES.OWNER.STAFF,
     pageTitle: 'Quản lý nhân viên',
-    element: (
-      <PagePlaceholder
-        title="Quản lý nhân viên"
-        description="Module nhân sự đang được chuẩn bị để tách page và hook riêng."
-      />
-    ),
+    element: <StaffPage />,
+  },
+  {
+    path: ROUTES.OWNER.STAFF_NEW,
+    pageTitle: 'Thêm nhân viên mới',
+    element: <CreateStaffPage />,
+  },
+  {
+    path: ROUTES.OWNER.STAFF_POSITIONS,
+    pageTitle: 'Quản lý chức vụ',
+    element: <PositionsPage />,
+  },
+  {
+    path: ROUTES.OWNER.STAFF_PERMISSIONS,
+    pageTitle: 'Phân quyền',
+    element: <PermissionsPage />,
   },
   {
     path: ROUTES.OWNER.SCHEDULES,
     pageTitle: 'Lịch làm việc',
-    element: (
-      <PagePlaceholder
-        title="Lịch làm việc"
-        description="Page lịch làm việc đang được dựng lại để bám đúng structure role-based pages."
-      />
-    ),
+    element: <ShiftManagementPage />,
   },
   {
     path: ROUTES.OWNER.BRANCHES,
@@ -255,6 +266,11 @@ export const staffRoutes: RouteConfigItem[] = [
         description="Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule."
       />
     ),
+  },
+  {
+    path: ROUTES.STAFF.SHIFT_REGISTRATION,
+    pageTitle: 'Đăng ký ca làm',
+    element: <ShiftRegistrationPage />,
   },
 ];
 

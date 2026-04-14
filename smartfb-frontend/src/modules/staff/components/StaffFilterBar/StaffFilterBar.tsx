@@ -6,24 +6,28 @@ import { FilterDropdown } from './FilterDropdown';
 
 interface StaffFilterBarProps {
   filters: StaffFilters;
-  roles: string[];
+  positions: { id: string; name: string }[];
   branches: { id: string; name: string }[];
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
+  onPositionChange: (value: string) => void;
   onBranchChange: (value: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
   onAddStaff: () => void;
 }
 
+/**
+ * Thanh filter cho danh sách nhân viên
+ * Đã cập nhật theo Module 4 Spec (positionId)
+ */
 export const StaffFilterBar = ({
   filters,
-  roles,
+  positions,
   branches,
   onSearchChange,
   onStatusChange,
-  onRoleChange,
+  onPositionChange,
   onBranchChange,
   onClearFilters,
   hasActiveFilters,
@@ -32,7 +36,7 @@ export const StaffFilterBar = ({
   const statusLabel = filters.status === 'active' ? 'Đang làm' 
     : filters.status === 'inactive' ? 'Đã nghỉ' 
     : '';
-  const roleLabel = filters.role === 'all' ? null : filters.role;
+  const positionLabel = positions.find(p => p.id === filters.positionId)?.name;
   const branchLabel = branches.find(b => b.id === filters.branchId)?.name;
 
   const statusOptions = [
@@ -40,13 +44,9 @@ export const StaffFilterBar = ({
     { value: 'inactive', label: 'Đã nghỉ' },
   ];
 
-  const roleOptions = roles.map((role) => ({
-    value: role,
-    label: role === 'manager' ? 'Quản lý' 
-      : role === 'chef' ? 'Đầu bếp'
-      : role === 'waiter' ? 'Phục vụ'
-      : role === 'cashier' ? 'Thu ngân'
-      : 'Nhân viên',
+  const positionOptions = positions.map((p) => ({
+    value: p.id,
+    label: p.name,
   }));
 
   const branchOptions = branches.map((branch) => ({
@@ -76,10 +76,10 @@ export const StaffFilterBar = ({
             defaultLabel="Trạng thái"
           />
           <FilterDropdown
-            value={filters.role}
-            onChange={onRoleChange}
-            options={roleOptions}
-            defaultLabel="Vị trí"
+            value={filters.positionId}
+            onChange={onPositionChange}
+            options={positionOptions}
+            defaultLabel="Chức vụ"
           />
         </div>
         <button
@@ -98,8 +98,8 @@ export const StaffFilterBar = ({
           {branchLabel && filters.branchId !== 'all' && (
             <FilterTag label={branchLabel} onRemove={() => onBranchChange('all')} />
           )}
-          {roleLabel && (
-            <FilterTag label={roleLabel} onRemove={() => onRoleChange('all')} />
+          {positionLabel && filters.positionId !== 'all' && (
+            <FilterTag label={positionLabel} onRemove={() => onPositionChange('all')} />
           )}
           {filters.status !== 'all' && (
             <FilterTag label={statusLabel} onRemove={() => onStatusChange('all')} />

@@ -6,13 +6,13 @@ const PAGE_SIZE = 10;
 
 /**
  * Hook quản lý filter, search, và pagination cho danh sách nhân viên
- * Đáp ứng PB09: Tìm kiếm và lọc nhân viên
+ * Đã cập nhật theo Module 4 Spec (fullName, positionId)
  */
 export const useStaffFilters = (staff: StaffDetail[]) => {
   const [filters, setFilters] = useState<StaffFilters>({
     search: '',
     status: 'all',
-    role: 'all',
+    positionId: 'all',
     branchId: 'all',
   });
 
@@ -22,16 +22,15 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     total: 0,
   });
 
-  // Lấy danh sách unique roles từ staff
-  const roles = useMemo(() => {
-    const unique = new Set(staff.map(s => s.role).filter(Boolean));
-    return Array.from(unique).sort();
-  }, [staff]);
-
-  // Lấy danh sách unique branchIds từ staff
-  const branchIds = useMemo(() => {
-    const unique = new Set(staff.map(s => s.branchId).filter(Boolean));
-    return Array.from(unique);
+  // Lấy danh sách unique positions từ staff
+  const positions = useMemo(() => {
+    const unique = new Map<string, string>();
+    staff.forEach(s => {
+      if (s.positionId && s.positionName) {
+        unique.set(s.positionId, s.positionName);
+      }
+    });
+    return Array.from(unique.entries()).map(([id, name]) => ({ id, name }));
   }, [staff]);
 
   // Filter và search staff
@@ -40,7 +39,7 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
       // Search by name or phone
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        const fullName = `${member.firstName} ${member.lastName}`.toLowerCase();
+        const fullName = member.fullName.toLowerCase();
         const matchName = fullName.includes(searchLower);
         const matchPhone = member.phone?.toLowerCase().includes(searchLower);
         if (!matchName && !matchPhone) return false;
@@ -51,8 +50,8 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
         return false;
       }
 
-      // Filter by role
-      if (filters.role !== 'all' && member.role !== filters.role) {
+      // Filter by position
+      if (filters.positionId !== 'all' && member.positionId !== filters.positionId) {
         return false;
       }
 
@@ -98,7 +97,7 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
   }, []);
 
   const clearFilters = useCallback(() => {
-    setFilters({ search: '', status: 'all', role: 'all', branchId: 'all' });
+    setFilters({ search: '', status: 'all', positionId: 'all', branchId: 'all' });
     setPagination({ page: 1, pageSize: PAGE_SIZE, total: 0 });
   }, []);
 
@@ -108,14 +107,13 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
 
   // Check if có active filters
   const hasActiveFilters = useMemo(() => {
-    return filters.search !== '' || filters.status !== 'all' || filters.role !== 'all' || filters.branchId !== 'all';
+    return filters.search !== '' || filters.status !== 'all' || filters.positionId !== 'all' || filters.branchId !== 'all';
   }, [filters]);
 
   return {
     filters,
     pagination,
-    roles,
-    branchIds,
+    positions,
     staff: paginatedStaff,
     totalItems,
     hasActiveFilters,

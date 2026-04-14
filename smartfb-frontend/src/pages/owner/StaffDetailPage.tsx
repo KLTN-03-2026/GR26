@@ -66,9 +66,7 @@ export default function StaffDetailPage() {
         </button>
         <ChevronRight className="w-4 h-4" />
         <span className="text-gray-900 font-medium">
-          {data?.staff.firstName && data?.staff.lastName
-            ? `${data.staff.firstName} ${data.staff.lastName}`
-            : "Chi tiết nhân viên"}
+          {data?.staff.fullName || "Chi tiết nhân viên"}
         </span>
       </div>
 

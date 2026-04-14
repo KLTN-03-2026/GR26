@@ -22,6 +22,7 @@ interface StaffRowProps {
 
 /**
  * Row hiển thị thông tin một nhân viên trong bảng
+ * Đã cập nhật theo Module 4 Spec (fullName, positionName)
  */
 export const StaffRow = ({ staff }: StaffRowProps) => {
   const navigate = useNavigate();
@@ -57,19 +58,6 @@ export const StaffRow = ({ staff }: StaffRowProps) => {
     setOpen(false);
   };
 
-  const fullName = `${staff.firstName} ${staff.lastName}`;
-
-  const getRoleDisplayName = (role: string) => {
-    const roleMap: Record<string, string> = {
-      manager: 'Quản lý',
-      chef: 'Đầu bếp',
-      waiter: 'Phục vụ',
-      cashier: 'Thu ngân',
-      staff: 'Nhân viên',
-    };
-    return roleMap[role] || role;
-  };
-
   return (
     <>
       <TableRow
@@ -77,7 +65,7 @@ export const StaffRow = ({ staff }: StaffRowProps) => {
         onClick={handleRowClick}
       >
         <TableCell className="font-medium text-gray-900 truncate">
-          {fullName}
+          {staff.fullName}
         </TableCell>
         <TableCell className="text-gray-600 text-sm truncate">
           {staff.email}
@@ -87,7 +75,7 @@ export const StaffRow = ({ staff }: StaffRowProps) => {
         </TableCell>
         <TableCell className="text-sm">
           <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-            {getRoleDisplayName(staff.role)}
+            {staff.positionName}
           </span>
         </TableCell>
         <TableCell className="text-sm">
@@ -140,7 +128,7 @@ export const StaffRow = ({ staff }: StaffRowProps) => {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         staffId={staff.id}
-        staffName={fullName}
+        staffName={staff.fullName}
       />
       {showEditDialog && staffDetail && (
         <EditStaffDialog
@@ -154,7 +142,7 @@ export const StaffRow = ({ staff }: StaffRowProps) => {
         open={showToggleDialog}
         onOpenChange={setShowToggleDialog}
         staffId={staff.id}
-        staffName={fullName}
+        staffName={staff.fullName}
         currentStatus={staff.status}
         onSuccess={() => setShowToggleDialog(false)}
       />

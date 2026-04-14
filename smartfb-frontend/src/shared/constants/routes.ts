@@ -23,6 +23,8 @@ export const ROUTES = {
     STAFF: '/owner/staff',
     STAFF_NEW: '/owner/staff/new',
     STAFF_DETAIL: '/owner/staff/:id',
+    STAFF_POSITIONS: '/owner/staff/positions',
+    STAFF_PERMISSIONS: '/owner/staff/permissions',
     SCHEDULES: '/owner/schedules',
     BRANCHES: '/owner/branches',
     BRANCHES_NEW: '/owner/branches/new',
@@ -40,6 +42,7 @@ export const ROUTES = {
     TABLES: '/staff/tables',
     ORDERS: '/staff/orders',
     MY_SHIFTS: '/staff/my-shifts',
+    SHIFT_REGISTRATION: '/staff/shifts/registration',
   },
 
   // Shared routes (Owner + Staff)

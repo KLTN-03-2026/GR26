@@ -9,42 +9,29 @@ interface StaffInfoCardProps {
 
 /**
  * Card hiển thị thông tin chi tiết nhân viên
- * Đáp ứng PB08: Xem thông tin chi tiết nhân viên
+ * Đã cập nhật theo Module 4 Spec (fullName, positionName)
  */
 export const StaffInfoCard = ({ staff, onEdit }: StaffInfoCardProps) => {
-  // Map role sang tiếng Việt
-  const getRoleDisplayName = (role: string) => {
-    const roleMap: Record<string, string> = {
-      manager: 'Quản lý',
-      chef: 'Đầu bếp',
-      waiter: 'Phục vụ',
-      cashier: 'Thu ngân',
-      staff: 'Nhân viên',
-    };
-    return roleMap[role] || role;
-  };
-
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex justify-between items-start flex-wrap gap-4">
         <div className="flex gap-4">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             {staff.avatar ? (
-              <img src={staff.avatar} alt={staff.firstName} className="w-full h-full rounded-full object-cover" />
+              <img src={staff.avatar} alt={staff.fullName} className="w-full h-full rounded-full object-cover" />
             ) : (
               <UserCircle className="w-12 h-12 text-white" />
             )}
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              {staff.firstName} {staff.lastName}
+              {staff.fullName}
             </h2>
-            <p className="text-gray-500 mt-1">{getRoleDisplayName(staff.role)}</p>
+            <p className="text-gray-500 mt-1">{staff.positionName}</p>
             <div className="flex gap-2 mt-2 flex-wrap">
               <span className={`badge ${staff.status === 'active' ? 'badge-completed' : 'badge-warning'}`}>
                 {staff.status === 'active' ? 'Đang làm' : 'Đã nghỉ'}
               </span>
-              <span className="badge badge-info">{staff.department}</span>
               <span className="badge badge-secondary">{staff.shiftType === 'full-time' ? 'Toàn thời gian' : 'Bán thời gian'}</span>
             </div>
           </div>
@@ -64,7 +51,7 @@ export const StaffInfoCard = ({ staff, onEdit }: StaffInfoCardProps) => {
         <InfoItem icon={Calendar} label="Ngày vào làm" value={new Date(staff.hireDate).toLocaleDateString('vi-VN')} />
         <InfoItem icon={CreditCard} label="Lương" value={`${staff.salary.toLocaleString('vi-VN')}đ`} />
         <InfoItem icon={MapPin} label="Địa chỉ" value={`${staff.address}, ${staff.city}`} />
-        <InfoItem icon={Home} label="Quản lý trực tiếp" value={staff.manager?.name || 'Chưa phân công'} />
+        <InfoItem icon={Home} label="Quản lý trực tiếp" value={staff.manager?.fullName || 'Chưa phân công'} />
       </div>
     </div>
   );
