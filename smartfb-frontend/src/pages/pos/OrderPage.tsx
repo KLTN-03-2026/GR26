@@ -65,9 +65,9 @@ const OrderPage: React.FC = () => {
   const total = subtotal + tax;
 
   const handlePlaceOrder = async () => {
-    const success = await placeOrder();
-    if (success) {
-      navigate(ROUTES.POS_PAYMENT);
+    const orderId = await placeOrder();
+    if (orderId) {
+      navigate(ROUTES.POS_PAYMENT.replace(':orderId', orderId));
     }
   };
 

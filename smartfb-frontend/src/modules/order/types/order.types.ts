@@ -4,6 +4,10 @@ export type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
 
 export type OrderSource = 'POS' | 'WEB' | 'MOBILE';
 
+export type PaymentMethod = 'CASH' | 'VIETQR' | 'MOMO' | 'ZALOPAY';
+
+export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+
 export interface OrderItemCommand {
   itemId: string;
   itemName: string;
@@ -58,6 +62,15 @@ export interface CashPaymentRequest {
   amount: number;
 }
 
+export interface PaymentResponse {
+  id: string;
+  orderId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+}
+
 export interface QRPaymentData {
   qrCode: string;
   orderId: string;
@@ -65,4 +78,5 @@ export interface QRPaymentData {
   qrImage?: string;
 }
 
+export type PaymentApiResponse = ApiResponse<PaymentResponse>;
 export type QRPaymentApiResponse = ApiResponse<QRPaymentData>;

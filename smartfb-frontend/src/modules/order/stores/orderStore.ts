@@ -28,7 +28,7 @@ interface OrderState {
   clearCart: () => void;
   
   fetchOrders: () => Promise<void>;
-  placeOrder: (tableId?: string, notes?: string) => Promise<boolean>;
+  placeOrder: (tableId?: string, notes?: string) => Promise<string | null>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
 }
 
@@ -111,15 +111,16 @@ export const useOrderStore = create<OrderState>()(
         set({ isLoading: true });
         try {
           const response = await orderService.placeOrder(payload);
-          if (response.success) {
+          if (response.success && response.data) {
             toast.success('Đặt món thành công!');
+            const orderId = response.data.id;
             clearCart();
-            return true;
+            return orderId;
           }
-          return false;
+          return null;
         } catch (error) {
           console.error('Order failed:', error);
-          return false;
+          return null;
         } finally {
           set({ isLoading: false });
         }

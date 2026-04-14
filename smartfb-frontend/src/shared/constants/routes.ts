@@ -59,6 +59,6 @@ export const ROUTES = {
   POS_SELECT_BRANCH: '/pos/select-branch',
   POS_ORDER: '/pos/order',
   POS_TABLE_MAP: '/pos/table-map',
-  POS_PAYMENT: '/pos/payment',
+  POS_PAYMENT: '/pos/payment/:orderId',
   POS_MANAGEMENT: '/pos/management',
 } as const;
