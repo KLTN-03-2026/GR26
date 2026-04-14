@@ -32,15 +32,15 @@ export interface RecipeMenuListResult {
 }
 
 /**
- * Option nguyên liệu lấy từ dữ liệu tồn kho hiện có.
- * Backend chưa có catalog ingredient riêng nên FE tạm dùng nguồn này.
+ * Option nguyên liệu dùng cho dialog công thức.
+ * FE ưu tiên đọc từ catalog `INGREDIENT`, còn số lượng tồn chỉ là dữ liệu tham chiếu nếu có.
  */
 export interface RecipeIngredientOption {
   itemId: string;
   itemName: string;
   unit: string;
   branchIds: string[];
-  quantity: number;
+  quantity: number | null;
 }
 
 /**

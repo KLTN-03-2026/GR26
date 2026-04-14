@@ -5,6 +5,7 @@ import { useBranches } from '@modules/branch/hooks/useBranches';
 import { useAdjustStock } from '@modules/inventory/hooks/useAdjustStock';
 import { useImportStock } from '@modules/inventory/hooks/useImportStock';
 import { useInventoryBalances } from '@modules/inventory/hooks/useInventoryBalances';
+import { useInventoryIngredientOptions } from '@modules/inventory/hooks/useInventoryIngredientOptions';
 import { useRecordWaste } from '@modules/inventory/hooks/useRecordWaste';
 import type {
   AdjustStockPayload,
@@ -36,6 +37,10 @@ export const useInventoryManagement = () => {
   const { mutateAsync: selectBranch, isPending: isSelectingBranch } = useSelectBranch();
   const { data: branchList = [] } = useBranches();
   const { data, isLoading, isError, refetch, isFetching } = useInventoryBalances();
+  const {
+    data: ingredientOptions = [],
+    refetch: refetchIngredientOptions,
+  } = useInventoryIngredientOptions();
   const { mutate: importStock, isPending: isImporting } = useImportStock();
   const { mutate: adjustStock, isPending: isAdjusting } = useAdjustStock();
   const { mutate: recordWaste, isPending: isRecordingWaste } = useRecordWaste();
@@ -70,7 +75,7 @@ export const useInventoryManagement = () => {
   const actionBranchId = isOwner ? (selectedFilterBranchId ?? currentBranchId) : currentBranchId;
   const resolvedActionBranchId = activeActionBranchId ?? actionBranchId;
 
-  const itemOptions = useMemo<InventoryItemOption[]>(() => {
+  const stockItemOptions = useMemo<InventoryItemOption[]>(() => {
     const seen = new Set<string>();
     const balancesForActions = resolvedActionBranchId
       ? balances.filter((balance) => balance.branchId === resolvedActionBranchId)
@@ -205,6 +210,7 @@ export const useInventoryManagement = () => {
       return;
     }
 
+    void refetchIngredientOptions();
     setActiveActionBranchId(actionBranchId);
     setSelectedItemId(undefined);
     setIsImportDialogOpen(true);
@@ -264,7 +270,7 @@ export const useInventoryManagement = () => {
     isLoading,
     isRecordingWaste,
     isWasteDialogOpen,
-    itemOptions,
+    importItemOptions: ingredientOptions,
     lowStockCount,
     actionHint,
     onAdjustSubmit: handleAdjustSubmit,
@@ -316,6 +322,7 @@ export const useInventoryManagement = () => {
       setFilters((prev) => ({ ...prev, lowStockOnly: value }));
       setCurrentPage(1);
     },
+    stockItemOptions,
     onWasteSubmit: handleWasteSubmit,
     pageSize: INVENTORY_PAGE_SIZE,
     paginatedBalances,

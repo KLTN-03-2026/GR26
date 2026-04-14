@@ -6,15 +6,17 @@ import {
   PrinterCheck,
   ReceiptText,
   Trash2,
-  X,
 } from "lucide-react";
+import { OrderStatusBadge } from "@modules/order/components/order-management/OrderStatusBadge";
 import type {
   OrderDraftItem,
+  OrderStatus,
   OrderTableContext,
 } from "@modules/order/types/order.types";
 import { Button } from "@shared/components/ui/button";
-import { formatVND } from "@shared/utils/formatCurrency";
 import { cn } from "@shared/utils/cn";
+import { formatVND } from "@shared/utils/formatCurrency";
+import { formatDateTime } from "@shared/utils/formatDate";
 import { getCartItemSummary } from "./orderPage.utils";
 
 interface OrderCartPanelProps {
@@ -24,6 +26,7 @@ interface OrderCartPanelProps {
     orderNumber: string | null;
     createdAt: string | null;
     orderId: string | null;
+    status: OrderStatus;
   };
   currentUserName: string;
   hasPlacedOrder: boolean;
@@ -46,10 +49,12 @@ interface OrderCartPanelProps {
 
 export const OrderCartPanel = ({
   cart,
+  draftOrder,
   currentUserName,
   hasPlacedOrder,
   isSyncingDraft,
   isItemActionsDisabled = false,
+  totalItemCount,
   subtotal,
   vatAmount,
   totalAmount,
@@ -63,6 +68,10 @@ export const OrderCartPanel = ({
   onCheckout,
   className,
 }: OrderCartPanelProps) => {
+  const createdAtLabel = draftOrder.createdAt
+    ? formatDateTime(draftOrder.createdAt)
+    : "";
+
   return (
     <aside
       className={cn(
@@ -70,46 +79,48 @@ export const OrderCartPanel = ({
         className,
       )}
     >
-      <div className="space-y-4 border-b border-slate-100 bg-[linear-gradient(180deg,#fff9f4_0%,#ffffff_100%)] p-3">
+      <div className="space-y-5 border-b border-slate-100 bg-[linear-gradient(180deg,#fff9f4_0%,#ffffff_100%)] p-5">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3"></div>
 
-
-        <div className="flex flex-wrap gap-3 justify-between items-center">
-          <div className="rounded-[20px] bg-white/80 px-3 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-              Thu ngân
-            </p>
-            <p className="mt-1 line-clamp-1 text-sm font-bold text-slate-700">
-              {currentUserName}
-            </p>
-          </div>
-          <div className="flex gap-2">
+          <div className="flex justify-between items-center">
+            <div className="rounded-[22px] border border-white/80 bg-white/90 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Thu ngân
+              </p>
+              <p className="mt-2 line-clamp-2 text-sm font-bold text-slate-900">
+                {currentUserName}
+              </p>
+            </div>
+            <div className="col-span-2 rounded-[22px] border border-white/80 bg-white/90 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                Thời gian
+              </p>
+              <p className="mt-2 text-sm font-bold text-slate-900">
+                {createdAtLabel}
+              </p>
+            </div>
             <Button
               type="button"
               variant="outline"
               onClick={onOpenInvoice}
-              className="h-11  w-fit rounded-full border-orange-200 text-orange-500 hover:bg-orange-50"
+              className="h-11 rounded-full border-orange-200 px-4 text-orange-600 hover:bg-orange-50"
             >
-              <PrinterCheck />
+              <PrinterCheck className="h-4 w-4" />
             </Button>
-            {hasPlacedOrder && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancelPlacedOrder}
-                disabled={isSyncingDraft}
-                className="h-11   w-fit rounded-full border-rose-200 text-rose-500 hover:bg-rose-50"
-              >
-                <X size={24} />
-              </Button>
-            )}
           </div>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex items-center justify-between px-5 pb-3 pt-4 text-sm text-slate-500">
-          <p className="font-bold text-slate-800">Danh sách món đã chọn</p>
-          <p>{cart.length} dòng món</p>
+          <div>
+            <p className="font-bold text-slate-800">Danh sách món đã chọn</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {totalItemCount} món / {cart.length} dòng món
+            </p>
+          </div>
+    
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
@@ -133,14 +144,6 @@ export const OrderCartPanel = ({
                   className="rounded-[24px] border border-[#efe2d5] bg-white p-4 shadow-[0_14px_30px_rgba(191,144,101,0.08)]"
                 >
                   <div className="flex items-start gap-4">
-                    {/* <div className="hidden h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[20px] bg-slate-100 sm:block">
-                      <img
-                        src={item.image || DEFAULT_MENU_IMAGE}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div> */}
-
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <button
@@ -203,7 +206,7 @@ export const OrderCartPanel = ({
                           className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:border-orange-200 hover:text-orange-500"
                         >
                           <PencilLine className="h-4 w-4" />
-                          Chỉnh món
+                
                         </button>
                       </div>
                     </div>
@@ -216,29 +219,20 @@ export const OrderCartPanel = ({
       </div>
 
       <div className="space-y-5 border-t border-slate-100 p-5">
-        <div className="space-y-3 text-sm">
-          {hasPlacedOrder && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
-              Đơn này đã được tạo trên hệ thống. Mọi thay đổi món ở màn này sẽ
-              được đồng bộ lại qua API trước khi tiếp tục thanh toán.
+        <div className="space-y-4 text-sm">
+          <div className="rounded-[24px] border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center justify-between text-slate-500">
+              <span>Tạm tính</span>
+              <span>{formatVND(subtotal)}</span>
             </div>
-          )}
-          {!hasPlacedOrder && cart.length > 0 && (
-            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-700">
-              Món đầu tiên sẽ tự tạo đơn trên hệ thống, không còn lưu nháp cục bộ trên trình duyệt.
+            <div className="mt-3 flex items-center justify-between text-slate-500">
+              <span>VAT (8%)</span>
+              <span>{formatVND(vatAmount)}</span>
             </div>
-          )}
-          <div className="flex items-center justify-between text-slate-500">
-            <span>Tạm tính</span>
-            <span>{formatVND(subtotal)}</span>
-          </div>
-          <div className="flex items-center justify-between text-slate-500">
-            <span>VAT (8%)</span>
-            <span>{formatVND(vatAmount)}</span>
-          </div>
-          <div className="flex items-center justify-between pt-2 text-2xl font-black text-slate-900">
-            <span>Tổng cộng</span>
-            <span className="text-orange-500">{formatVND(totalAmount)}</span>
+            <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 text-2xl font-black text-slate-900">
+              <span>Tổng cộng</span>
+              <span className="text-orange-500">{formatVND(totalAmount)}</span>
+            </div>
           </div>
         </div>
 

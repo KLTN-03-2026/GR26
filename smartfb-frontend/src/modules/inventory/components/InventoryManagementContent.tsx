@@ -20,6 +20,7 @@ export const InventoryManagementContent = () => {
     currentPage,
     filteredBalances,
     filters,
+    importItemOptions,
     isActionLocked,
     isAdjustDialogOpen,
     isAdjusting,
@@ -30,7 +31,6 @@ export const InventoryManagementContent = () => {
     isRecordingWaste,
     isSelectingBranch,
     isWasteDialogOpen,
-    itemOptions,
     lowStockCount,
     onAdjustSubmit,
     onImportSubmit,
@@ -51,6 +51,7 @@ export const InventoryManagementContent = () => {
     resolveBranchName,
     selectedBranchName,
     selectedItemId,
+    stockItemOptions,
     totalItems,
     totalPages,
     visibleBranchCount,
@@ -153,7 +154,7 @@ export const InventoryManagementContent = () => {
         mode="import"
         open={isImportDialogOpen}
         onOpenChange={onSelectImportDialogOpen}
-        itemOptions={itemOptions}
+        itemOptions={importItemOptions}
         selectedBranchName={selectedBranchName}
         defaultItemId={selectedItemId}
         isPending={isImporting}
@@ -164,7 +165,7 @@ export const InventoryManagementContent = () => {
         mode="adjust"
         open={isAdjustDialogOpen}
         onOpenChange={onSelectAdjustDialogOpen}
-        itemOptions={itemOptions}
+        itemOptions={stockItemOptions}
         selectedBranchName={selectedBranchName}
         defaultItemId={selectedItemId}
         isPending={isAdjusting}
@@ -175,7 +176,7 @@ export const InventoryManagementContent = () => {
         mode="waste"
         open={isWasteDialogOpen}
         onOpenChange={onSelectWasteDialogOpen}
-        itemOptions={itemOptions}
+        itemOptions={stockItemOptions}
         selectedBranchName={selectedBranchName}
         defaultItemId={selectedItemId}
         isPending={isRecordingWaste}

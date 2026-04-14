@@ -77,3 +77,13 @@ export interface InventoryItemOption {
   itemName: string;
   unit: string | null;
 }
+
+/**
+ * Dữ liệu nguyên liệu ở mức danh mục `items`.
+ * Khác với `InventoryBalance` là chưa chắc đã có tồn kho tại chi nhánh hiện tại.
+ */
+export interface InventoryCatalogItem {
+  id: string;
+  name: string;
+  unit: string | null;
+}
