@@ -25,6 +25,8 @@ export const ROUTES = {
     STAFF_DETAIL: '/owner/staff/:id',
     STAFF_POSITIONS: '/owner/staff/positions',
     SCHEDULES: '/owner/schedules',
+    SHIFT_TEMPLATE_DETAIL: '/owner/schedules/:id',
+    SHIFT_TEMPLATE_NEW: '/owner/schedules/new',
     BRANCHES: '/owner/branches',
     BRANCHES_NEW: '/owner/branches/new',
     BRANCHES_DETAIL: '/owner/branches/:id',

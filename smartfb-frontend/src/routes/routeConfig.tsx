@@ -17,6 +17,8 @@ import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
+import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
+import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -115,11 +117,20 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.STAFF_NEW, 'Thêm nhân viên mới', <CreateStaffPage />),
   createRoute(ROUTES.OWNER.STAFF_DETAIL, 'Chi tiết nhân viên', <StaffDetailPage />),
   createRoute(ROUTES.OWNER.STAFF_POSITIONS, 'Quản lý chức vụ', <StaffPositionsPage />),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.OWNER.SCHEDULES,
     'Lịch làm việc',
-    'Lịch làm việc',
-    'Page lịch làm việc đang được dựng lại để bám đúng structure role-based pages.'
+    <ShiftManagementPage />
+  ),
+  createRoute(
+    ROUTES.OWNER.SHIFT_TEMPLATE_NEW,
+    'Thêm ca mẫu',
+    <ShiftManagementPage />
+  ),
+  createRoute(
+    ROUTES.OWNER.SHIFT_TEMPLATE_DETAIL,
+    'Chi tiết ca mẫu',
+    <ShiftTemplateDetailPage />
   ),
   createRoute(ROUTES.OWNER.BRANCHES, 'Quản lý chi nhánh', <BranchesPage />),
   createRoute(ROUTES.OWNER.BRANCHES_NEW, 'Tạo chi nhánh mới', <CreateBranchPage />),

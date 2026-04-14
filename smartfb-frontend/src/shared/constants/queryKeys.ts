@@ -10,7 +10,7 @@ export const queryKeys = {
     me: ['auth', 'me'] as const,
     permissions: ['auth', 'permissions'] as const,
   },
-  
+
   // Branches
   branches: {
     all: ['branches'] as const,
@@ -25,7 +25,7 @@ export const queryKeys = {
     detail: (id: string) => ['tables', 'detail', id] as const,
     zones: ['tables', 'zones'] as const,
   },
-  
+
   // Staff
   staff: {
     all: ['staff'] as const,
@@ -44,7 +44,7 @@ export const queryKeys = {
     all: ['roles'] as const,
     matrix: () => ['roles', 'matrix'] as const,
   },
-  
+
   // Menu
   menu: {
     all: ['menu'] as const,
@@ -65,7 +65,7 @@ export const queryKeys = {
     ingredients: ['recipes', 'ingredients'] as const,
     detail: (itemId: string) => ['recipes', 'detail', itemId] as const,
   },
-  
+
   // Orders
   orders: {
     all: ['orders'] as const,
@@ -83,7 +83,7 @@ export const queryKeys = {
     invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
     orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
   },
-  
+
   // Inventory
   inventory: {
     balances: {
@@ -105,21 +105,36 @@ export const queryKeys = {
       list: (filters?: Record<string, unknown>) => ['inventory', 'stock-entries', 'list', filters] as const,
     },
   },
-  
+
   // Vouchers
   vouchers: {
     all: ['vouchers'] as const,
     list: (filters?: Record<string, unknown>) => ['vouchers', 'list', filters] as const,
     detail: (id: string) => ['vouchers', 'detail', id] as const,
   },
-  
+
   // Suppliers
   suppliers: {
     all: ['suppliers'] as const,
     list: (filters?: Record<string, unknown>) => ['suppliers', 'list', filters] as const,
     detail: (id: string) => ['suppliers', 'detail', id] as const,
   },
-  
+
+  // Shifts
+  shifts: {
+    templates: {
+      all: ['shifts', 'templates'] as const,
+      detail: (id: string) => ['shifts', 'templates', id] as const,
+    },
+    schedules: {
+      all: ['shifts', 'schedules'] as const,
+      list: (filters?: Record<string, unknown>) => ['shifts', 'schedules', 'list', filters] as const,
+      detail: (id: string) => ['shifts', 'schedules', 'detail', id] as const,
+      my: (startDate: string, endDate: string) => ['shifts', 'schedules', 'my', { startDate, endDate }] as const,
+    },
+    register: ['shifts', 'register'] as const,
+  },
+
   // Reports
   reports: {
     revenue: (filters?: Record<string, unknown>) => ['reports', 'revenue', filters] as const,
