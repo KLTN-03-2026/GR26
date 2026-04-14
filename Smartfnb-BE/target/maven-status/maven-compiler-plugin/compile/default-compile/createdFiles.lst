@@ -78,6 +78,7 @@ com\smartfnb\payment\application\command\ProcessQRPaymentCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommandHandler.class
 com\smartfnb\shift\infrastructure\persistence\ShiftTemplateJpaRepository.class
 com\smartfnb\order\application\command\UpdateOrderCommand$UpdateOrderItemCommand.class
+com\smartfnb\inventory\application\command\UpdateThresholdCommand.class
 com\smartfnb\menu\application\dto\UpdateMenuItemRequest.class
 com\smartfnb\staff\application\command\DeactivateStaffCommand.class
 com\smartfnb\staff\infrastructure\persistence\StaffJpaEntity.class
@@ -121,6 +122,7 @@ com\smartfnb\supplier\web\controller\PurchaseOrderController$CancelRequest.class
 com\smartfnb\supplier\application\query\GetPurchaseOrderDetailQueryHandler$PurchaseOrderDetailResult$ItemResult.class
 com\smartfnb\auth\infrastructure\persistence\PlanRepository.class
 com\smartfnb\plan\infrastructure\persistence\SubscriptionJpaRepository.class
+com\smartfnb\inventory\application\command\UpdateThresholdCommandHandler.class
 com\smartfnb\staff\infrastructure\persistence\StaffUserRoleJpaRepository.class
 com\smartfnb\menu\domain\exception\AddonNotFoundException.class
 com\smartfnb\order\domain\event\OrderCompletedEvent.class
@@ -131,6 +133,7 @@ com\smartfnb\order\application\dto\CreateTableRequest.class
 com\smartfnb\staff\application\command\UpdatePositionCommandHandler.class
 com\smartfnb\menu\infrastructure\persistence\AddonJpaEntity.class
 com\smartfnb\shift\application\command\RegisterShiftCommand.class
+com\smartfnb\inventory\application\query\GetProductionBatchesQueryHandler.class
 com\smartfnb\auth\application\command\ForgotPasswordCommandHandler.class
 com\smartfnb\payment\infrastructure\persistence\OrderAdapter.class
 com\smartfnb\menu\infrastructure\persistence\CategoryJpaEntity.class
@@ -140,6 +143,7 @@ com\smartfnb\payment\infrastructure\external\QRCodeProvider$QRCodeResponse.class
 com\smartfnb\supplier\infrastructure\persistence\PurchaseOrderItemJpaEntity.class
 com\smartfnb\auth\infrastructure\persistence\UserJpaEntity$UserJpaEntityBuilder.class
 com\smartfnb\menu\application\dto\UpdateCategoryRequest.class
+com\smartfnb\inventory\application\command\RecordProductionBatchCommandHandler.class
 com\smartfnb\payment\infrastructure\external\QRCodeProvider.class
 com\smartfnb\auth\infrastructure\persistence\UserRepository.class
 com\smartfnb\order\application\dto\CancelOrderRequest.class
@@ -159,6 +163,7 @@ com\smartfnb\order\infrastructure\persistence\TableJpaRepository.class
 com\smartfnb\menu\domain\exception\MenuItemNotFoundException.class
 com\smartfnb\order\web\controller\TableZoneController.class
 com\smartfnb\inventory\application\query\result\InventoryBalanceResult.class
+com\smartfnb\inventory\application\command\RecordProductionBatchCommand.class
 com\smartfnb\payment\domain\model\Invoice.class
 com\smartfnb\menu\infrastructure\persistence\BranchItemJpaEntity$BranchItemId.class
 com\smartfnb\plan\infrastructure\persistence\SubscriptionJpaEntity.class
@@ -203,6 +208,7 @@ com\smartfnb\staff\application\command\CreateRoleCommand.class
 com\smartfnb\inventory\infrastructure\event\PurchaseOrderReceivedEventHandler.class
 com\smartfnb\inventory\application\command\AdjustStockCommandHandler.class
 com\smartfnb\payment\infrastructure\persistence\InvoiceRepositoryImpl.class
+com\smartfnb\inventory\infrastructure\persistence\ProductionBatchJpaEntity.class
 com\smartfnb\payment\domain\exception\PaymentNotFoundException.class
 com\smartfnb\payment\application\command\ProcessCashPaymentCommand.class
 com\smartfnb\shift\application\command\CheckOutCommandHandler.class
@@ -241,6 +247,7 @@ com\smartfnb\menu\application\dto\AddonResponse.class
 com\smartfnb\auth\application\command\LoginCommand.class
 com\smartfnb\rbac\infrastructure\persistence\PermissionJpaEntity.class
 com\smartfnb\shift\application\command\OpenPosSessionCommand.class
+com\smartfnb\inventory\infrastructure\persistence\ProductionBatchJpaRepository.class
 com\smartfnb\staff\infrastructure\persistence\RolePermissionJpaEntity.class
 com\smartfnb\payment\infrastructure\persistence\InvoiceSpecifications.class
 com\smartfnb\branch\infrastructure\persistence\BranchUserJpaRepository.class
@@ -260,6 +267,7 @@ com\smartfnb\payment\domain\repository\InvoiceRepository.class
 com\smartfnb\menu\infrastructure\persistence\RecipeJpaRepository.class
 com\smartfnb\auth\infrastructure\persistence\PlanJpaEntity$PlanJpaEntityBuilder.class
 com\smartfnb\staff\application\query\GetStaffListQueryHandler.class
+com\smartfnb\inventory\web\controller\dto\UpdateThresholdRequest.class
 com\smartfnb\staff\application\query\RolePermissionMatrixResult.class
 com\smartfnb\menu\domain\event\CategoryDeactivatedEvent.class
 com\smartfnb\inventory\infrastructure\persistence\AuditLogJpaEntity.class
@@ -327,6 +335,7 @@ com\smartfnb\shift\domain\exception\ShiftTemplateNotFoundException.class
 com\smartfnb\plan\domain\FeatureFlag.class
 com\smartfnb\supplier\domain\event\PurchaseOrderReceivedEvent.class
 com\smartfnb\order\application\command\PlaceOrderCommand$OrderItemCommand.class
+com\smartfnb\inventory\application\query\result\InventoryTransactionResult.class
 com\smartfnb\order\domain\model\OrderItemStatus.class
 com\smartfnb\order\infrastructure\persistence\TableZoneJpaEntity.class
 com\smartfnb\branch\infrastructure\persistence\BranchUserJpaEntity$BranchUserJpaEntityBuilder.class
@@ -335,7 +344,6 @@ com\smartfnb\payment\infrastructure\persistence\PaymentRepositoryImpl.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleJpaEntity$UserRoleJpaEntityBuilder.class
 com\smartfnb\staff\infrastructure\persistence\StaffAuditLogJpaRepository.class
 com\smartfnb\staff\infrastructure\persistence\UserRoleJpaEntity.class
-com\smartfnb\inventory\web\controller\InventoryController.class
 com\smartfnb\order\infrastructure\websocket\OrderStatusBroadcaster.class
 com\smartfnb\order\infrastructure\persistence\OrderStatusLogJpaRepository.class
 com\smartfnb\payment\domain\model\PaymentStatus.class
@@ -353,6 +361,7 @@ com\smartfnb\order\domain\repository\OrderRepository.class
 com\smartfnb\plan\application\SubscriptionService.class
 com\smartfnb\rbac\infrastructure\persistence\RolePermissionJpaEntity.class
 com\smartfnb\inventory\application\query\GetInventoryQueryHandler.class
+com\smartfnb\inventory\web\controller\dto\RecordProductionBatchRequest.class
 com\smartfnb\shift\application\command\OpenPosSessionCommandHandler.class
 com\smartfnb\supplier\application\query\GetPurchaseOrderDetailQueryHandler.class
 com\smartfnb\order\domain\exception\TableZoneNotFoundException.class
@@ -370,6 +379,7 @@ com\smartfnb\staff\application\command\CreatePositionCommand.class
 com\smartfnb\supplier\domain\event\PurchaseOrderReceivedEvent$ReceivedItem.class
 com\smartfnb\menu\infrastructure\persistence\CategoryJpaRepository.class
 com\smartfnb\staff\application\query\RolePermissionMatrixResult$PermissionInfo.class
+com\smartfnb\inventory\web\controller\dto\ProductionBatchResponse.class
 com\smartfnb\order\application\dto\UpdateOrderRequest$UpdateOrderItemRequest.class
 com\smartfnb\shared\config\AuditConfig.class
 com\smartfnb\supplier\application\command\CreateSupplierCommandHandler.class
@@ -434,6 +444,7 @@ com\smartfnb\payment\infrastructure\persistence\InvoiceJpaRepository.class
 com\smartfnb\staff\web\dto\CreateStaffRequest.class
 com\smartfnb\branch\infrastructure\persistence\BranchUserId.class
 com\smartfnb\supplier\web\controller\PurchaseOrderController.class
+com\smartfnb\inventory\application\query\GetTransactionHistoryQueryHandler.class
 com\smartfnb\supplier\web\controller\SupplierController.class
 com\smartfnb\shift\application\command\DeleteShiftTemplateCommand.class
 com\smartfnb\rbac\infrastructure\persistence\RolePermissionId.class

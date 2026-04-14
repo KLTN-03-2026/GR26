@@ -84,4 +84,15 @@ public interface InventoryBalanceJpaRepository
                        @Param("unit") String unit,
                        @Param("quantity") BigDecimal quantity,
                        @Param("minLevel") BigDecimal minLevel);
+
+    /**
+     * Cập nhật ngưỡng cảnh báo tồn kho (min_level).
+     */
+    @Modifying
+    @Query("UPDATE InventoryBalanceJpaEntity b SET b.minLevel = :minLevel, b.updatedAt = CURRENT_TIMESTAMP " +
+           "WHERE b.id = :id AND b.tenantId = :tenantId AND b.branchId = :branchId")
+    int updateThreshold(@Param("id") UUID id, 
+                        @Param("tenantId") UUID tenantId, 
+                        @Param("branchId") UUID branchId, 
+                        @Param("minLevel") BigDecimal minLevel);
 }
