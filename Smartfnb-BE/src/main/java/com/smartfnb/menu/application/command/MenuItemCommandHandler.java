@@ -65,7 +65,8 @@ public class MenuItemCommandHandler {
         entity.setTenantId(tenantId);
         entity.setCategoryId(request.categoryId());
         entity.setName(request.name());
-        entity.setType("SELLABLE");
+        // type bất biến sau khi tạo — default SELLABLE nếu không truyền
+        entity.setType(request.type() != null ? request.type() : "SELLABLE");
         entity.setBasePrice(request.basePrice());
         entity.setUnit(request.unit());
         entity.setImageUrl(imageUrl);
@@ -73,7 +74,7 @@ public class MenuItemCommandHandler {
         entity.setIsSyncDelivery(Boolean.TRUE.equals(request.isSyncDelivery()));
 
         MenuItemJpaEntity saved = menuItemJpaRepository.save(entity);
-        log.info("Đã tạo món ăn {} - '{}'", saved.getId(), saved.getName());
+        log.info("Đã tạo item {} - '{}' (type={})", saved.getId(), saved.getName(), saved.getType());
 
         return MenuItemResponse.from(saved);
     }

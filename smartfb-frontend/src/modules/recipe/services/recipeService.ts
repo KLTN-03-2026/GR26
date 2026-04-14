@@ -43,6 +43,12 @@ interface BackendInventoryBalanceResponse {
   updatedAt: string;
 }
 
+interface BackendIngredientCatalogResponse {
+  id: string;
+  name: string;
+  unit: string | null;
+}
+
 interface BackendCategoryResponse {
   id: string;
   name: string;
@@ -61,6 +67,9 @@ interface BackendRecipeResponse {
 }
 
 const INVENTORY_PAGE_SIZE = 100;
+
+// Type `INGREDIENT` là catalog nguyên liệu tenant dùng chung cho kho và công thức.
+const INGREDIENT_ITEM_TYPE = 'INGREDIENT';
 
 /**
  * Lấy toàn bộ dữ liệu phân trang để FE có đủ dữ liệu cho filter client-side.
@@ -126,48 +135,69 @@ const mapMenuCategory = (category: BackendCategoryResponse): RecipeMenuCategory 
   };
 };
 
+interface InventoryReferenceSnapshot {
+  branchIds: string[];
+  quantity: number | null;
+  unit: string;
+}
+
 /**
- * Gộp nhiều dòng tồn kho cùng item thành một option nguyên liệu duy nhất.
- * Dùng tổng quantity để chủ quán có cảm nhận sơ bộ về lượng hàng đang có.
+ * Gộp tồn kho theo item để giữ dữ liệu tham chiếu cho màn công thức.
  */
-const mapIngredientOptions = (
+const mapInventoryReferenceByItem = (
   balances: BackendInventoryBalanceResponse[]
-): RecipeIngredientOption[] => {
-  const optionMap = new Map<string, RecipeIngredientOption>();
+): Map<string, InventoryReferenceSnapshot> => {
+  const referenceMap = new Map<string, InventoryReferenceSnapshot>();
 
   balances.forEach((balance) => {
-    const itemName = balance.itemName?.trim();
-
-    if (!itemName) {
-      return;
-    }
-
     const quantity = Number(balance.quantity);
-    const currentOption = optionMap.get(balance.itemId);
+    const currentReference = referenceMap.get(balance.itemId);
 
-    if (!currentOption) {
-      optionMap.set(balance.itemId, {
-        itemId: balance.itemId,
-        itemName,
-        unit: balance.unit ?? '',
+    if (!currentReference) {
+      referenceMap.set(balance.itemId, {
         branchIds: [balance.branchId],
         quantity: Number.isFinite(quantity) ? quantity : 0,
+        unit: balance.unit ?? '',
       });
       return;
     }
 
-    currentOption.quantity += Number.isFinite(quantity) ? quantity : 0;
+    currentReference.quantity = (currentReference.quantity ?? 0) + (Number.isFinite(quantity) ? quantity : 0);
 
-    if (!currentOption.branchIds.includes(balance.branchId)) {
-      currentOption.branchIds.push(balance.branchId);
+    if (!currentReference.branchIds.includes(balance.branchId)) {
+      currentReference.branchIds.push(balance.branchId);
     }
 
-    if (!currentOption.unit && balance.unit) {
-      currentOption.unit = balance.unit;
+    if (!currentReference.unit && balance.unit) {
+      currentReference.unit = balance.unit;
     }
   });
 
-  return Array.from(optionMap.values()).sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
+  return referenceMap;
+};
+
+/**
+ * Ghép catalog nguyên liệu với tồn kho tham chiếu để recipe vừa tạo được ngay, vừa vẫn nhìn được tồn nếu có.
+ */
+const mapIngredientOptions = (
+  ingredients: BackendIngredientCatalogResponse[],
+  balances: BackendInventoryBalanceResponse[]
+): RecipeIngredientOption[] => {
+  const inventoryReferenceMap = mapInventoryReferenceByItem(balances);
+
+  return ingredients
+    .map((ingredient) => {
+      const inventoryReference = inventoryReferenceMap.get(ingredient.id);
+
+      return {
+        itemId: ingredient.id,
+        itemName: ingredient.name,
+        unit: ingredient.unit ?? inventoryReference?.unit ?? '',
+        branchIds: inventoryReference?.branchIds ?? [],
+        quantity: inventoryReference?.quantity ?? null,
+      };
+    })
+    .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
 };
 
 /**
@@ -184,6 +214,40 @@ const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
     unit: line.unit ?? '',
     availableQuantity: null,
   };
+};
+
+/**
+ * Lấy catalog nguyên liệu cấp tenant để tạo công thức ngay cả khi item chưa nhập kho.
+ */
+const fetchAllIngredientCatalogPages = async (): Promise<BackendIngredientCatalogResponse[]> => {
+  return fetchAllPages<BackendIngredientCatalogResponse>('/menu/items', {
+    type: INGREDIENT_ITEM_TYPE,
+  });
+};
+
+/**
+ * Lấy toàn bộ snapshot tồn kho hiện có để enrich phần tồn tham chiếu.
+ */
+const fetchAllInventoryBalancePages = async (): Promise<BackendInventoryBalanceResponse[]> => {
+  return fetchAllPages<BackendInventoryBalanceResponse>('/inventory');
+};
+
+/**
+ * Catalog là nguồn chính của recipe; tồn kho chỉ là dữ liệu bổ sung nếu lấy được.
+ */
+const fetchRecipeIngredientOptions = async (): Promise<RecipeIngredientOption[]> => {
+  const [catalogResult, balancesResult] = await Promise.allSettled([
+    fetchAllIngredientCatalogPages(),
+    fetchAllInventoryBalancePages(),
+  ]);
+
+  if (catalogResult.status !== 'fulfilled') {
+    throw catalogResult.reason;
+  }
+
+  const balances = balancesResult.status === 'fulfilled' ? balancesResult.value : [];
+
+  return mapIngredientOptions(catalogResult.value, balances);
 };
 
 /**
@@ -223,11 +287,10 @@ export const recipeService = {
   },
 
   /**
-   * Lấy danh sách nguyên liệu khả dụng dựa trên dữ liệu tồn kho hiện có.
+   * Lấy danh sách nguyên liệu từ catalog `INGREDIENT` và ghép tồn kho tham chiếu nếu có.
    */
   getIngredientOptions: async (): Promise<RecipeIngredientOption[]> => {
-    const balances = await fetchAllPages<BackendInventoryBalanceResponse>('/inventory');
-    return mapIngredientOptions(balances);
+    return fetchRecipeIngredientOptions();
   },
 
   /**

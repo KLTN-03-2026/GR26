@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * DTO response trả về thông tin món ăn.
+ * DTO response trả về thông tin item (SELLABLE | INGREDIENT | SUB_ASSEMBLY).
  * Không expose tenantId nội bộ.
  *
  * @author SmartF&B Team
@@ -15,16 +15,22 @@ import java.util.UUID;
  */
 public record MenuItemResponse(
 
-        /** ID món ăn */
+        /** ID item */
         UUID id,
 
         /** ID danh mục */
         UUID categoryId,
 
-        /** Tên món ăn */
+        /** Tên item */
         String name,
 
-        /** Giá bán mặc định */
+        /**
+         * Loại item: SELLABLE | INGREDIENT | SUB_ASSEMBLY.
+         * FE dùng để phân biệt nguyên liệu với món bán.
+         */
+        String type,
+
+        /** Giá bán mặc định (chủ yếu dùng cho SELLABLE) */
         BigDecimal basePrice,
 
         /** Đơn vị tính */
@@ -46,7 +52,7 @@ public record MenuItemResponse(
     /**
      * Factory method tạo response từ JPA entity.
      *
-     * @param entity JPA entity món ăn
+     * @param entity JPA entity item
      * @return DTO response
      */
     public static MenuItemResponse from(MenuItemJpaEntity entity) {
@@ -54,6 +60,7 @@ public record MenuItemResponse(
                 entity.getId(),
                 entity.getCategoryId(),
                 entity.getName(),
+                entity.getType(),
                 entity.getBasePrice(),
                 entity.getUnit(),
                 entity.getImageUrl(),

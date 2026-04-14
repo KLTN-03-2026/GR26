@@ -110,7 +110,8 @@ export const useRecipeManagement = () => {
   });
 
   /**
-   * Map nguyên liệu theo itemId để enrich tên và tồn kho cho từng dòng công thức.
+   * Map nguyên liệu theo itemId để enrich tên và tồn kho tham chiếu cho từng dòng công thức.
+   * Nếu nguyên liệu chưa nhập kho thì `availableQuantity` sẽ là `null`, nhưng vẫn được phép tạo recipe.
    */
   const ingredientMap = useMemo(() => {
     return new Map((ingredientsQuery.data ?? []).map((ingredient) => [ingredient.itemId, ingredient]));

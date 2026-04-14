@@ -116,10 +116,14 @@ public class OrderWebSocketEventHandler {
             event.orderId(),
             event.orderNumber(),
             null, // tableId - không có trong event
+            null, // tableName
+            null, // userId
+            null, // staffName
             null, // source
             "PENDING", // status vừa tạo
             null, null, null, null, // subtotal, discount, tax, total
             null, // notes
+            null, // createdAt
             null, // completedAt
             java.util.List.of() // items
         );
@@ -133,9 +137,10 @@ public class OrderWebSocketEventHandler {
             event.orderId(),
             event.orderNumber(),
             null, // tableId
+            null, null, null, // tableName, userId, staffName
             null, // source
             event.newStatus(), // trạng thái mới
-            null, null, null, null, null, null, java.util.List.of()
+            null, null, null, null, null, null, null, java.util.List.of()
         );
     }
 
@@ -147,11 +152,12 @@ public class OrderWebSocketEventHandler {
             event.orderId(),
             event.orderNumber(),
             null,
+            null, null, null, // tableName, userId, staffName
             null,
             "COMPLETED",
             null, null, null,
             event.totalAmount(),
-            null, null,
+            null, null, null,
             java.util.List.of()
         );
     }
@@ -164,9 +170,10 @@ public class OrderWebSocketEventHandler {
             event.orderId(),
             event.orderNumber(),
             null,
+            null, null, null, // tableName, userId, staffName
             null,
             "CANCELLED",
-            null, null, null, null, null, null,
+            null, null, null, null, null, null, null,
             java.util.List.of()
         );
     }

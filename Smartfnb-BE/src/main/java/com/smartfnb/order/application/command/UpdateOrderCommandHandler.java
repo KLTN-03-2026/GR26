@@ -5,6 +5,7 @@ import com.smartfnb.order.domain.exception.OrderNotFoundException;
 import com.smartfnb.order.domain.model.Order;
 import com.smartfnb.order.domain.model.OrderItem;
 import com.smartfnb.order.domain.repository.OrderRepository;
+import com.smartfnb.order.infrastructure.external.MenuInventoryAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,6 +29,7 @@ public class UpdateOrderCommandHandler {
 
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MenuInventoryAdapter inventoryAdapter;
 
     /**
      * Handle cập nhật đơn hàng.
@@ -55,6 +57,9 @@ public class UpdateOrderCommandHandler {
                         .notes(item.notes())
                         .build())
                 .collect(Collectors.toList());
+
+        // Kiểm tra tồn kho trước khi update (để tránh order món hết hàng hoặc bán lố tồn kho)
+        inventoryAdapter.checkStock(command.branchId(), domainItems);
 
         order.update(command.tableId(), command.notes(), domainItems);
 

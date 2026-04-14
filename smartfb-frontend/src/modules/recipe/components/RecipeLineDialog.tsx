@@ -90,7 +90,7 @@ export const RecipeLineDialog = ({
         itemName: initialLine.ingredientName,
         unit: initialLine.unit,
         branchIds: [],
-        quantity: initialLine.availableQuantity ?? 0,
+        quantity: initialLine.availableQuantity,
       },
       ...ingredientOptions,
     ];
@@ -163,7 +163,7 @@ export const RecipeLineDialog = ({
               onValueChange={handleIngredientChange}
             >
               <SelectTrigger id="recipe-ingredient">
-                <SelectValue placeholder="Chọn nguyên liệu từ kho" />
+                <SelectValue placeholder="Chọn nguyên liệu từ danh mục" />
               </SelectTrigger>
               <SelectContent>
                 {resolvedIngredientOptions.map((ingredient) => (
@@ -175,7 +175,9 @@ export const RecipeLineDialog = ({
             </Select>
             {selectedIngredient ? (
               <p className="text-xs text-gray-500">
-                Tồn khả dụng tham chiếu: {selectedIngredient.quantity.toLocaleString('vi-VN')} {selectedIngredient.unit || 'đơn vị'}
+                {selectedIngredient.quantity === null
+                  ? 'Nguyên liệu này chưa có dữ liệu tồn kho tham chiếu. Bạn vẫn có thể thêm vào công thức.'
+                  : `Tồn khả dụng tham chiếu: ${selectedIngredient.quantity.toLocaleString('vi-VN')} ${selectedIngredient.unit || 'đơn vị'}`}
               </p>
             ) : null}
           </div>
@@ -233,7 +235,7 @@ export const RecipeLineDialog = ({
 
           {resolvedIngredientOptions.length === 0 ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              Chưa có nguyên liệu khả dụng từ dữ liệu tồn kho. Hãy nhập kho trước hoặc bổ sung API catalog nguyên liệu từ backend.
+              Chưa có nguyên liệu nào trong danh mục `INGREDIENT`. Hãy tạo nguyên liệu trước rồi quay lại cấu hình công thức.
             </div>
           ) : null}
         </div>

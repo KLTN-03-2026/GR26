@@ -4,6 +4,8 @@ import type {
   AdjustStockPayload,
   ImportStockPayload,
   InventoryBalance,
+  InventoryCatalogItem,
+  InventoryItemOption,
   InventoryListResult,
   WasteRecordPayload,
 } from '../types/inventory.types';
@@ -28,7 +30,52 @@ interface BackendInventoryBalanceResponse {
   updatedAt: string;
 }
 
+interface BackendIngredientCatalogResponse {
+  id: string;
+  name: string;
+  unit: string | null;
+}
+
 const INVENTORY_PAGE_SIZE = 100;
+
+/**
+ * Tải toàn bộ các trang từ backend để FE có thể thao tác filter client-side nhất quán.
+ */
+const fetchAllPages = async <T>(
+  url: string,
+  params?: Record<string, string | number | undefined>,
+): Promise<T[]> => {
+  const firstResponse = await api.get<ApiResponse<BackendPageResponse<T>>>(url, {
+    params: {
+      ...params,
+      page: 0,
+      size: INVENTORY_PAGE_SIZE,
+    },
+  });
+
+  const firstPage = firstResponse.data.data;
+  const pages = Array.from({ length: Math.max(firstPage.totalPages - 1, 0) }, (_, index) => index + 1);
+
+  if (pages.length === 0) {
+    return firstPage.content;
+  }
+
+  const remainingPages = await Promise.all(
+    pages.map(async (page) => {
+      const response = await api.get<ApiResponse<BackendPageResponse<T>>>(url, {
+        params: {
+          ...params,
+          page,
+          size: INVENTORY_PAGE_SIZE,
+        },
+      });
+
+      return response.data.data.content;
+    }),
+  );
+
+  return [firstPage.content, ...remainingPages].flat();
+};
 
 /**
  * Chuyển response tồn kho từ backend sang model frontend.
@@ -48,42 +95,43 @@ const mapInventoryBalance = (balance: BackendInventoryBalanceResponse): Inventor
 };
 
 /**
+ * Chuyển item danh mục nguyên liệu sang option dùng cho form nhập kho.
+ */
+const mapInventoryItemOption = (item: InventoryCatalogItem): InventoryItemOption => {
+  return {
+    itemId: item.id,
+    itemName: item.name,
+    unit: item.unit,
+  };
+};
+
+/**
  * Lấy toàn bộ các trang tồn kho để frontend filter đầy đủ theo từ khóa và chi nhánh.
  */
 const fetchAllInventoryPages = async (): Promise<InventoryBalance[]> => {
-  const firstResponse = await api.get<ApiResponse<BackendPageResponse<BackendInventoryBalanceResponse>>>('/inventory', {
-    params: {
-      page: 0,
-      size: INVENTORY_PAGE_SIZE,
-    },
+  const balances = await fetchAllPages<BackendInventoryBalanceResponse>('/inventory');
+  return balances.map(mapInventoryBalance);
+};
+
+/**
+ * Lấy catalog nguyên liệu cấp tenant.
+ * Dùng cho thao tác nhập kho lần đầu trước khi item có balance ở chi nhánh.
+ */
+const fetchAllIngredientCatalogPages = async (): Promise<InventoryCatalogItem[]> => {
+  const ingredients = await fetchAllPages<BackendIngredientCatalogResponse>('/menu/items', {
+    type: 'INGREDIENT',
   });
 
-  const firstPage = firstResponse.data.data;
-  const pages = Array.from({ length: Math.max(firstPage.totalPages - 1, 0) }, (_, index) => index + 1);
-
-  if (pages.length === 0) {
-    return firstPage.content.map(mapInventoryBalance);
-  }
-
-  const remainingPages = await Promise.all(
-    pages.map(async (page) => {
-      const response = await api.get<ApiResponse<BackendPageResponse<BackendInventoryBalanceResponse>>>('/inventory', {
-        params: {
-          page,
-          size: INVENTORY_PAGE_SIZE,
-        },
-      });
-
-      return response.data.data.content.map(mapInventoryBalance);
-    }),
-  );
-
-  return [firstPage.content.map(mapInventoryBalance), ...remainingPages].flat();
+  return ingredients.map((item) => ({
+    id: item.id,
+    name: item.name,
+    unit: item.unit,
+  }));
 };
 
 /**
  * Service gọi API inventory.
- * Backend hiện chỉ có các endpoint xem tồn kho, nhập kho, điều chỉnh và hao hụt.
+ * FE hiện dùng nhóm endpoint xem tồn kho, catalog nguyên liệu, nhập kho, điều chỉnh và hao hụt.
  */
 export const inventoryService = {
   /**
@@ -101,6 +149,17 @@ export const inventoryService = {
         last_page: 1,
       },
     };
+  },
+
+  /**
+   * Lấy danh mục nguyên liệu toàn tenant để form nhập kho chọn item nguồn.
+   */
+  getIngredientOptions: async (): Promise<InventoryItemOption[]> => {
+    const ingredients = await fetchAllIngredientCatalogPages();
+
+    return ingredients
+      .map(mapInventoryItemOption)
+      .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
   },
 
   /**
