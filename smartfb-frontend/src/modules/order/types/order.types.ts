@@ -52,3 +52,17 @@ export interface OrderResponse {
 
 export type OrderApiResponse = ApiResponse<OrderResponse>;
 export type OrderListApiResponse = ApiResponse<OrderResponse[]>;
+
+export interface CashPaymentRequest {
+  orderId: string;
+  amountReceived: number;
+}
+
+export interface QRPaymentResponse {
+  qrCode: string;
+  paymentUrl: string;
+  amount: number;
+  reference: string;
+}
+
+export type QRPaymentApiResponse = ApiResponse<QRPaymentResponse>;

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Status } from '@shared/types/common.types';
 
 /**
@@ -6,9 +7,26 @@ import { Status } from '@shared/types/common.types';
 export type MenuStatus = 'selling' | 'hidden' | 'pending';
 
 /**
- * Danh mục món ăn
+ * Danh mục món ăn (Dùng cho POS)
  */
-export type MenuCategory = 'ca-phe' | 'tra-trai-cay' | 'banh-ngot' | 'da-ep' | 'sua-hat' | 'khac';
+export interface MenuItemCategory {
+  id: string;
+  name: string;
+  icon?: React.ReactNode;
+  count?: number;
+}
+
+/**
+ * DTO response từ backend cho Category
+ */
+export interface CategoryResponse {
+  id: string;
+  name: string;
+  description?: string;
+  displayOrder?: number;
+  isActive: boolean;
+  createdAt: string;
+}
 
 /**
  * Tùy chọn sắp xếp
@@ -26,18 +44,19 @@ export type GpMarginFilter = 'above-50' | 'below-50' | 'all';
 export interface MenuItem {
   id: string;
   name: string;
-  category: MenuCategory;
+  category: string;           // ID của danh mục
   price: number;              // Giá bán
   cost?: number;              // Giá vốn (dùng để tính GP%)
-  gpPercent: number;          // Lợi nhuận gộp %
+  gpPercent?: number;         // Lợi nhuận gộp %
   image: string;              // URL ảnh
   status: MenuStatus;
   tags?: MenuTag[];           // Tags: mới, hot, bestseller
-  soldCount: number;          // Số lượng đã bán
+  soldCount?: number;         // Số lượng đã bán
   createdAt: number;          // Timestamp
   description?: string;
   ingredients?: string[];     // Thành phần
   isAvailable?: boolean;      // Sẵn sàng để bán (toggle)
+  unit?: string;              // Đơn vị tính
 }
 
 /**
@@ -50,7 +69,7 @@ export type MenuTag = 'moi' | 'hot' | 'bestseller' | 'recommend';
  */
 export interface MenuFilters {
   search: string;
-  categories: MenuCategory[];
+  categories: string[];
   statuses: MenuStatus[];
   priceRange: [number, number];
   gpMargin: GpMarginFilter;
@@ -86,29 +105,21 @@ export interface MenuListParams extends Record<string, unknown>  {
  */
 export interface CreateMenuPayload {
   name: string;
-  category: MenuCategory;
-  price: number;
-  cost?: number;
+  categoryId: string;
+  basePrice: number;
   description?: string;
-  ingredients?: string[];
-  image?: string;
-  tags?: MenuTag[];
+  imageUrl?: string;
+  unit?: string;
 }
 
 /**
  * Payload cho cập nhật món ăn
  */
 export interface UpdateMenuPayload extends Partial<CreateMenuPayload> {
-  status?: MenuStatus;
-  isAvailable?: boolean;
+  isActive?: boolean;
 }
 
 /**
- * Category info
+ * Category info (Legacy, used in some places)
  */
-export interface MenuCategoryInfo {
-  id: MenuCategory;
-  name: string;
-  icon?: string;
-  count?: number;
-}
+export interface MenuCategoryInfo extends MenuItemCategory {}

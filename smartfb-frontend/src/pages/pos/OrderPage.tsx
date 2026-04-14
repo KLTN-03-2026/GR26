@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
@@ -8,38 +8,25 @@ import {
   ShoppingCart, 
   ChevronRight, 
   Coffee, 
-  IceCream, 
-  Cake, 
-  Milk, 
-  GlassWater
+  Loader2,
+  RefreshCcw
 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
+import { Button } from '@shared/components/ui/button';
+import { Input } from '@shared/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/shared/constants/routes';
-import { useOrderStore } from '@/modules/order/stores/orderStore';
-
-const CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: <ShoppingCart className="w-5 h-5" /> },
-  { id: 'ca-phe', name: 'Cà phê', icon: <Coffee className="w-5 h-5" /> },
-  { id: 'tra-trai-cay', name: 'Trà trái cây', icon: <IceCream className="w-5 h-5" /> },
-  { id: 'banh-ngot', name: 'Bánh ngọt', icon: <Cake className="w-5 h-5" /> },
-  { id: 'da-ep', name: 'Đá ép', icon: <GlassWater className="w-5 h-5" /> },
-  { id: 'sua-hat', name: 'Sữa hạt', icon: <Milk className="w-5 h-5" /> },
-];
-
-const MOCK_MENU_ITEMS = [
-  { id: '1', name: 'Cà phê Muối', price: 35000, category: 'ca-phe', image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: '2', name: 'Trà Đào Cam Sả', price: 45000, category: 'tra-trai-cay', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: '3', name: 'Bánh Tiramisu', price: 55000, category: 'banh-ngot', image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: '4', name: 'Nước Ép Cam', price: 40000, category: 'da-ep', image: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: '5', name: 'Sữa Hạnh Nhân', price: 45000, category: 'sua-hat', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=200&h=200&auto=format&fit=crop' },
-  { id: '6', name: 'Cà phê Đen Đá', price: 25000, category: 'ca-phe', image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=200&h=200&auto=format&fit=crop' },
-];
+import { ROUTES } from '@shared/constants/routes';
+import { useOrderStore } from '@modules/order/stores/orderStore';
+import { menuService } from '@modules/menu/services/menuService';
+import type { MenuItem, MenuItemCategory } from '@modules/menu/types/menu.types';
+import toast from 'react-hot-toast';
 
 const OrderPage: React.FC = () => {
+  const [categories, setCategories] = useState<MenuItemCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const { 
     cart, 
@@ -47,17 +34,45 @@ const OrderPage: React.FC = () => {
     removeFromCart, 
     updateQuantity, 
     placeOrder,
-    isLoading 
+    isLoading: isPlacingOrder 
   } = useOrderStore();
   
   const navigate = useNavigate();
 
-  const filteredItems = useMemo(() => {
-    return MOCK_MENU_ITEMS.filter(item => {
-      const matchCategory = selectedCategory === 'all' || item.category === selectedCategory;
-      const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchSearch;
-    });
+  // Fetch both categories and menu items
+  const fetchData = async () => {
+    setIsPageLoading(true);
+    setError(null);
+    try {
+      const [catRes, itemRes] = await Promise.all([
+        menuService.getCategories(),
+        menuService.getList({
+          category: selectedCategory === 'all' ? undefined : selectedCategory,
+          search: searchQuery || undefined,
+          pageSize: 100
+        })
+      ]);
+      
+      setCategories([
+        { id: 'all', name: 'Tất cả', icon: <ShoppingCart className="w-5 h-5" /> },
+        ...catRes.data.map(c => ({
+          id: c.id,
+          name: c.name,
+          icon: <Coffee className="w-5 h-5" />
+        }))
+      ]);
+      setMenuItems(itemRes.data);
+    } catch (err) {
+      console.error('Menu load error:', err);
+      setError('Không thể tải dữ liệu. Vui lòng thử lại.');
+      toast.error('Lỗi khi tải dữ liệu thực đơn');
+    } finally {
+      setIsPageLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [selectedCategory, searchQuery]);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -65,6 +80,7 @@ const OrderPage: React.FC = () => {
   const total = subtotal + tax;
 
   const handlePlaceOrder = async () => {
+    if (cart.length === 0) return;
     const success = await placeOrder();
     if (success) {
       navigate(ROUTES.POS_PAYMENT);
@@ -74,21 +90,30 @@ const OrderPage: React.FC = () => {
   return (
     <div className="flex h-[calc(100vh-2rem)] gap-4 overflow-hidden">
       <aside className="w-64 flex flex-col gap-2 bg-white rounded-3xl p-4 shadow-sm border border-slate-100">
-        <h2 className="px-4 py-2 text-lg font-bold text-slate-800">Danh mục</h2>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 ${
-              selectedCategory === cat.id 
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            {cat.icon}
-            <span className="font-medium">{cat.name}</span>
-          </button>
-        ))}
+        <div className="flex items-center justify-between px-4 py-2">
+          <h2 className="text-lg font-bold text-slate-800">Danh mục</h2>
+          <Button variant="ghost" size="sm" onClick={() => fetchData()} className="h-8 w-8 p-0">
+            <RefreshCcw className="w-4 h-4 text-slate-400" />
+          </Button>
+        </div>
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1">
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 text-left ${
+                selectedCategory === cat.id 
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <div className={selectedCategory === cat.id ? 'text-white' : 'text-orange-500'}>
+                {cat.icon || <Coffee className="w-5 h-5" />}
+              </div>
+              <span className="font-medium truncate">{cat.name}</span>
+            </button>
+          ))}
+        </div>
       </aside>
 
       <main className="flex-1 flex flex-col gap-4 overflow-hidden">
@@ -105,39 +130,73 @@ const OrderPage: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AnimatePresence mode="popLayout">
-              {filteredItems.map(item => (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  key={item.id}
-                  className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100 group hover:border-orange-500 transition-colors"
-                >
-                  <div className="aspect-square rounded-2xl overflow-hidden mb-3">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  </div>
-                  <div className="px-1">
-                    <h3 className="font-bold text-slate-800 line-clamp-1">{item.name}</h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-orange-500 font-bold">
-                        {item.price.toLocaleString('vi-VN')} ₫
-                      </span>
-                      <Button 
-                        size="icon" 
-                        onClick={() => addToCart(item)}
-                        className="rounded-xl w-10 h-10 bg-slate-900 hover:bg-orange-500"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </Button>
+          {isPageLoading ? (
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
+              <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
+              <p className="font-medium animate-pulse">Đang tải thực đơn...</p>
+            </div>
+          ) : error ? (
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
+              <RefreshCcw className="w-12 h-12 opacity-20" />
+              <p className="font-medium">{error}</p>
+              <Button onClick={() => fetchData()} variant="outline" className="rounded-xl">Thử lại</Button>
+            </div>
+          ) : menuItems.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
+              <Search className="w-12 h-12 opacity-20" />
+              <p className="font-medium">Không tìm thấy món ăn phù hợp</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+              <AnimatePresence mode="popLayout">
+                {menuItems.map(item => (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    key={item.id}
+                    className="bg-white rounded-3xl p-3 shadow-sm border border-slate-100 group hover:border-orange-500 transition-colors"
+                  >
+                    <div className="aspect-square rounded-2xl overflow-hidden mb-3 relative">
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      />
+                      {!item.isAvailable && (
+                        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="text-white font-black text-xs uppercase tracking-widest px-3 py-1 bg-red-500 rounded-full">Hết hàng</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                    <div className="px-1">
+                      <h3 className="font-bold text-slate-800 line-clamp-1">{item.name}</h3>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-orange-500 font-bold">
+                          {item.price.toLocaleString('vi-VN')} ₫
+                        </span>
+                        <Button 
+                          size="icon" 
+                          disabled={!item.isAvailable}
+                          onClick={() => addToCart({ 
+                            id: item.id, 
+                            name: item.name, 
+                            price: item.price, 
+                            category: item.category, 
+                            image: item.image 
+                          })}
+                          className={`rounded-xl w-10 h-10 ${item.isAvailable ? 'bg-slate-900 hover:bg-orange-500' : 'bg-slate-100 text-slate-400'}`}
+                        >
+                          <Plus className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </main>
 
@@ -213,11 +272,20 @@ const OrderPage: React.FC = () => {
             </div>
             <Button 
               onClick={handlePlaceOrder}
-              disabled={isLoading || cart.length === 0}
+              disabled={isPlacingOrder || cart.length === 0}
               className="h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 text-lg font-bold shadow-lg shadow-orange-200 mt-4"
             >
-              {isLoading ? 'Đang xử lý...' : 'Thanh toán'}
-              {!isLoading && <ChevronRight className="ml-2 w-5 h-5" />}
+              {isPlacingOrder ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Đang xử lý...
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  Đặt món & Thanh toán
+                  <ChevronRight className="ml-1 w-5 h-5" />
+                </div>
+              )}
             </Button>
           </div>
         )}

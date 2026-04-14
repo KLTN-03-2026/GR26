@@ -21,6 +21,7 @@ interface OrderState {
   cart: CartItem[];
   orders: OrderResponse[];
   isLoading: boolean;
+  lastOrder: OrderResponse | null;
   
   addToCart: (item: any) => void;
   removeFromCart: (id: string) => void;
@@ -30,6 +31,7 @@ interface OrderState {
   fetchOrders: () => Promise<void>;
   placeOrder: (tableId?: string, notes?: string) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  resetLastOrder: () => void;
 }
 
 export const useOrderStore = create<OrderState>()(
@@ -38,6 +40,7 @@ export const useOrderStore = create<OrderState>()(
       cart: [],
       orders: [],
       isLoading: false,
+      lastOrder: null,
 
       addToCart: (item) => {
         set((state) => {
@@ -113,12 +116,14 @@ export const useOrderStore = create<OrderState>()(
           const response = await orderService.placeOrder(payload);
           if (response.success) {
             toast.success('Đặt món thành công!');
+            set({ lastOrder: response.data });
             clearCart();
             return true;
           }
           return false;
         } catch (error) {
           console.error('Order failed:', error);
+          toast.error('Đặt món thất bại. Vui lòng thử lại.');
           return false;
         } finally {
           set({ isLoading: false });
@@ -134,16 +139,20 @@ export const useOrderStore = create<OrderState>()(
               orders: state.orders.map((o) => 
                 o.id === orderId ? { ...o, status } : o
               ),
+              // Nếu đang thanh toán đơn này thì cập nhật luôn
+              lastOrder: state.lastOrder?.id === orderId ? { ...state.lastOrder, status } : state.lastOrder
             }));
           }
         } catch (error) {
           console.error('Update status failed:', error);
         }
       },
+
+      resetLastOrder: () => set({ lastOrder: null }),
     }),
     {
       name: 'smartfb-order-storage',
-      partialize: (state) => ({ cart: state.cart }),
+      partialize: (state) => ({ cart: state.cart, lastOrder: state.lastOrder }),
     }
   )
 );
