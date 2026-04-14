@@ -75,15 +75,17 @@ function App() {
       {renderProtectedRoutes(ownerRoutes, [ROLES.OWNER], 'app')}
       {renderProtectedRoutes(staffRoutes, [ROLES.STAFF], 'app')}
       
-      {/* POS Routes - Custom full-screen layout */}
+      {/* POS Routes - Custom full-screen layout protected for Owner & Staff */}
       {posRoutes.map(({ path, element }) => (
         <Route
           key={path}
           path={path}
           element={
-            <div className="min-h-screen bg-[#faf7f2] p-4 font-sans antialiased text-slate-900 overflow-hidden">
-              {element}
-            </div>
+            <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.STAFF]}>
+              <div className="min-h-screen bg-[#faf7f2] p-4 font-sans antialiased text-slate-900 overflow-hidden">
+                {element}
+              </div>
+            </ProtectedRoute>
           }
         />
       ))}

@@ -11,10 +11,10 @@ import {
   Loader2, 
   RefreshCcw 
 } from 'lucide-react';
-import { useOrderStore } from '@/modules/order/stores/orderStore';
-import type { OrderStatus } from '@/modules/order/types/order.types';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
+import { useOrderStore } from '@modules/order/stores/orderStore';
+import type { OrderStatus } from '@modules/order/types/order.types';
+import { Button } from '@shared/components/ui/button';
+import { Input } from '@shared/components/ui/input';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -38,9 +38,24 @@ const OrderManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleFetch = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    setError(null);
+    try {
+      await fetchOrders();
+    } catch {
+      setError('Không thể tải danh sách đơn hàng. Vui lòng thử lại.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    handleFetch();
+  }, []);
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -77,11 +92,11 @@ const OrderManagementPage: React.FC = () => {
             <Button 
               variant="outline" 
               size="icon" 
-              onClick={() => fetchOrders()}
-              disabled={isLoading}
-              className="rounded-2xl w-12 h-12"
+              onClick={() => handleFetch(true)}
+              disabled={isLoading || isRefreshing}
+              className="rounded-2xl w-12 h-12 hover:bg-white hover:shadow-sm"
             >
-              <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCcw className={`w-5 h-5 ${(isLoading || isRefreshing) ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
@@ -114,10 +129,16 @@ const OrderManagementPage: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          {isLoading ? (
+          {(isLoading && !isRefreshing) ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
-              <Loader2 className="w-12 h-12 animate-spin" />
-              <p className="font-bold">Đang tải danh sách...</p>
+              <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
+              <p className="font-bold animate-pulse">Đang tải danh sách...</p>
+            </div>
+          ) : error ? (
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 bg-white rounded-[32px] border border-slate-100">
+              <RefreshCcw className="w-12 h-12 opacity-20" />
+              <p className="text-lg font-medium">{error}</p>
+              <Button onClick={() => handleFetch(true)} variant="outline" className="rounded-xl">Thử lại</Button>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 bg-white rounded-[32px] border border-dashed border-slate-200">

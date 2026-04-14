@@ -59,6 +59,19 @@ export const menuConfig: MenuSection[] = [
     ],
   },
   {
+    title: 'Bán hàng (POS)',
+    items: [
+      {
+        title: 'Bán hàng',
+        roles: [ROLES.OWNER, ROLES.STAFF],
+        children: [
+          { title: 'Đặt món', icon: ChefHat, path: ROUTES.POS_ORDER, roles: [ROLES.OWNER, ROLES.STAFF] },
+          { title: 'Quản lý POS', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT, roles: [ROLES.OWNER, ROLES.STAFF] },
+        ],
+      },
+    ],
+  },
+  {
     title: 'Thực đơn & Kho',
     items: [
       {
