@@ -39,22 +39,24 @@ public class MenuItemController {
     private final RecipeQueryHandler recipeQueryHandler;
 
     /**
-     * Lấy danh sách món ăn — hỗ trợ tìm kiếm fuzzy bằng pg_trgm.
+     * Lấy danh sách item — hỗ trợ filter theo type và tìm kiếm fuzzy bằng pg_trgm.
      *
-     * @param keyword từ khóa tìm kiếm (tùy chọn — dùng pg_trgm similarity)
+     * @param keyword từ khóa tìm kiếm (tùy chọn — dùng pg_trgm similarity, chỉ SELLABLE)
+     * @param type    loại item: SELLABLE (mặc định) | INGREDIENT | SUB_ASSEMBLY
      * @param page    số trang (mặc định 0)
      * @param size    số bản ghi mỗi trang (mặc định 20)
-     * @return danh sách món ăn
+     * @return danh sách item
      */
     @GetMapping
     @PreAuthorize("hasPermission(null, 'MENU_VIEW')")
-    @Operation(summary = "Danh sách món ăn (hỗ trợ tìm kiếm pg_trgm)")
+    @Operation(summary = "Danh sách item (SELLABLE | INGREDIENT | SUB_ASSEMBLY)")
     public ResponseEntity<ApiResponse<PageResponse<MenuItemResponse>>> listMenuItems(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        PageResponse<MenuItemResponse> result = menuItemQueryHandler.listMenuItems(keyword, page, size);
+        PageResponse<MenuItemResponse> result = menuItemQueryHandler.listMenuItems(keyword, type, page, size);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 

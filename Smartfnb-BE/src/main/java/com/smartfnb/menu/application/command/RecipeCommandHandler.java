@@ -3,6 +3,7 @@ package com.smartfnb.menu.application.command;
 import com.smartfnb.menu.application.dto.CreateRecipeRequest;
 import com.smartfnb.menu.application.dto.RecipeResponse;
 import com.smartfnb.menu.domain.exception.MenuItemNotFoundException;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
 import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository;
 import com.smartfnb.menu.infrastructure.persistence.RecipeJpaEntity;
 import com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository;
@@ -50,7 +51,7 @@ public class RecipeCommandHandler {
                 request.ingredientItemId(), request.targetItemId(), tenantId);
 
         // Verify món ăn đích tồn tại trong tenant
-        menuItemJpaRepository
+        MenuItemJpaEntity targetItem = menuItemJpaRepository
                 .findByIdAndTenantIdAndDeletedAtIsNull(request.targetItemId(), tenantId)
                 .orElseThrow(() -> new MenuItemNotFoundException(request.targetItemId()));
 
@@ -73,7 +74,12 @@ public class RecipeCommandHandler {
         RecipeJpaEntity saved = recipeJpaRepository.save(entity);
         log.info("Đã thêm nguyên liệu vào công thức, recipe ID: {}", saved.getId());
 
-        return RecipeResponse.from(saved);
+        MenuItemJpaEntity ingredientItem = menuItemJpaRepository
+                .findById(request.ingredientItemId())
+                .orElse(null);
+        String ingredientName = ingredientItem != null ? ingredientItem.getName() : "Chưa xác định";
+
+        return RecipeResponse.from(saved, targetItem.getName(), ingredientName);
     }
 
     /**
@@ -109,7 +115,12 @@ public class RecipeCommandHandler {
         RecipeJpaEntity saved = recipeJpaRepository.save(entity);
         log.info("Đã cập nhật công thức {} thành công", recipeId);
 
-        return RecipeResponse.from(saved);
+        String targetName = menuItemJpaRepository.findById(entity.getTargetItemId())
+                .map(MenuItemJpaEntity::getName).orElse("Chưa xác định");
+        String ingredientName = menuItemJpaRepository.findById(entity.getIngredientItemId())
+                .map(MenuItemJpaEntity::getName).orElse("Chưa xác định");
+
+        return RecipeResponse.from(saved, targetName, ingredientName);
     }
 
     /**

@@ -3,7 +3,10 @@ package com.smartfnb.inventory.web.controller;
 import com.smartfnb.inventory.application.command.*;
 import com.smartfnb.inventory.application.query.GetInventoryQuery;
 import com.smartfnb.inventory.application.query.GetInventoryQueryHandler;
+import com.smartfnb.inventory.application.query.GetProductionBatchesQueryHandler;
+import com.smartfnb.inventory.application.query.GetTransactionHistoryQueryHandler;
 import com.smartfnb.inventory.application.query.result.InventoryBalanceResult;
+import com.smartfnb.inventory.application.query.result.InventoryTransactionResult;
 import com.smartfnb.inventory.web.controller.dto.*;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.web.ApiResponse;
@@ -13,11 +16,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +53,10 @@ public class InventoryController {
     private final AdjustStockCommandHandler   adjustStockCommandHandler;
     private final WasteRecordCommandHandler   wasteRecordCommandHandler;
     private final GetInventoryQueryHandler    getInventoryQueryHandler;
+    private final GetTransactionHistoryQueryHandler getTransactionHistoryQueryHandler;
+    private final com.smartfnb.inventory.application.command.RecordProductionBatchCommandHandler recordProductionBatchCommandHandler;
+    private final GetProductionBatchesQueryHandler getProductionBatchesQueryHandler;
+    private final UpdateThresholdCommandHandler updateThresholdCommandHandler;
 
     // ============================== S-13: NHẬP KHO ==============================
 
@@ -192,5 +202,151 @@ public class InventoryController {
      */
     private boolean isOwner(String role) {
         return role != null && (role.equals("OWNER") || role.equals("SUPER_ADMIN"));
+    }
+
+    // ============================== LỊCH SỬ GIAO DỊCH KHO ==============================
+
+    /**
+     * Lấy lịch sử giao dịch kho có filter và phân trang.
+     * Enrich sẵn tên ngô liệu và tên nhân viên để FE không cần gọi thêm API.
+     * Chỉ trả dữ liệu chi nhánh đang làm việc (branchId từ JWT).
+     *
+     * @param type filter loại giao dịch (tùy chọn): IMPORT|SALE_DEDUCT|WASTE|ADJUSTMENT|PRODUCTION_IN|PRODUCTION_OUT
+     * @param from lọc từ thời điểm (tùy chọn, ISO-8601)
+     * @param to   lọc đến thời điểm (tùy chọn, ISO-8601)
+     * @param page trang (mặc định 0)
+     * @param size số bản ghi mỗi trang (mặc định 20, tối đa 100)
+     * @return trang lịch sử giao dịch
+     */
+    @GetMapping("/transactions")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW')")
+    @Operation(
+        summary = "Lịch sử giao dịch kho",
+        description = "Lấy lịch sử biến động kho có filter type và khoảng thời gian. " +
+                      "Enrich sẵn tên ngô liệu và nhân viên. Yêu cầu quyền INVENTORY_VIEW."
+    )
+    public ResponseEntity<ApiResponse<PageResponse<InventoryTransactionResult>>> getTransactionHistory(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Instant from,
+            @RequestParam(required = false) Instant to,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        log.debug("API lịch sử giao dịch kho: type={}, from={}, to={}", type, from, to);
+
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+        UUID branchId = TenantContext.getCurrentBranchId();
+
+        Page<InventoryTransactionResult> result = getTransactionHistoryQueryHandler.handle(
+                tenantId, branchId, type, from, to, page, size
+        );
+
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(result)));
+    }
+
+    // ============================== MẺ SẢN XUẤT BÁN THÀNH PHẨM ==============================
+
+    /**
+     * Ghi nhận một mẻ sản xuất bán thành phẩm.
+     * Khi API này được gọi:
+     *   - Nguyên liệu đầu vào bị trừ theo công thức (FIFO)
+     *   - Tồn kho bán thành phẩm tăng theo actualOutputQuantity
+     *   - Giao dịch kho được ghi đầy đủ
+     * Nhân viên bắt buộc nhập actualOutputQuantity (sản lượng thực tế).
+     *
+     * @param request thông tin mẻ sản xuất
+     * @return ID của mẻ sản xuất vừa tạo
+     */
+    @PostMapping("/production-batches")
+    @PreAuthorize("hasAuthority('INVENTORY_IMPORT') or hasRole('SUPER_ADMIN')")
+    @Operation(
+        summary = "Ghi nhận mẻ sản xuất bán thành phẩm",
+        description = "Trừ nguyên liệu đầu vào, tăng tồn kho bán thành phẩm theo sản lượng thực tế. " +
+                      "Bắt buộc nhập actualOutputQuantity. Yêu cầu quyền INVENTORY_IMPORT."
+    )
+    public ResponseEntity<ApiResponse<UUID>> recordProductionBatch(
+            @Valid @RequestBody RecordProductionBatchRequest request) {
+
+        log.info("API ghi nhận mẻ sản xuất: subAssembly={}, actual={}",
+                request.subAssemblyItemId(), request.actualOutputQuantity());
+
+        com.smartfnb.inventory.application.command.RecordProductionBatchCommand command =
+                new com.smartfnb.inventory.application.command.RecordProductionBatchCommand(
+                        TenantContext.requireCurrentTenantId(),
+                        TenantContext.getCurrentBranchId(),
+                        TenantContext.getCurrentUserId(),
+                        request.subAssemblyItemId(),
+                        request.expectedOutputQuantity(),
+                        request.actualOutputQuantity(),
+                        request.unit(),
+                        request.note()
+                );
+
+        UUID batchId = recordProductionBatchCommandHandler.handle(command);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(batchId));
+    }
+
+    /**
+     * Lấy danh sách mẻ sản xuất theo chi nhánh, phân trang.
+     *
+     * @param page trang (mặc định 0)
+     * @param size số bản ghi mỗi trang (mặc định 20, tối đa 100)
+     * @return trang mẻ sản xuất
+     */
+    @GetMapping("/production-batches")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Danh sách mẻ sản xuất bán thành phẩm",
+               description = "Trả về lịch sử các mẻ sản xuất. Enrich sẵn tên bán thành phẩm và nhân viên.")
+    public ResponseEntity<ApiResponse<PageResponse<ProductionBatchResponse>>> listProductionBatches(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+        UUID branchId = TenantContext.getCurrentBranchId();
+
+        Page<ProductionBatchResponse> result =
+                getProductionBatchesQueryHandler.handleList(tenantId, branchId, page, size);
+
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(result)));
+    }
+
+    /**
+     * Lấy chi tiết một mẻ sản xuất theo ID.
+     *
+     * @param id ID mẻ sản xuất
+     * @return chi tiết mẻ sản xuất
+     */
+    @GetMapping("/production-batches/{id}")
+    @PreAuthorize("hasAuthority('INVENTORY_VIEW') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Chi tiết mẻ sản xuất bán thành phẩm")
+    public ResponseEntity<ApiResponse<ProductionBatchResponse>> getProductionBatch(
+            @PathVariable UUID id) {
+
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+        ProductionBatchResponse result = getProductionBatchesQueryHandler.handleGet(id, tenantId);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    // ============================== S-14: UPDATE THRESHOLD ==============================
+
+    /**
+     * Cập nhật ngưỡng cảnh báo tồn kho (minLevel).
+     */
+    @PatchMapping("/balances/{id}/threshold")
+    @PreAuthorize("hasAuthority('INVENTORY_MANAGE')")
+    @Operation(summary = "Cập nhật định mức tồn tối thiểu", description = "Cho phép quản lý thay đổi mức min_level để cảnh báo sắp hết hàng.")
+    public ResponseEntity<ApiResponse<Void>> updateThreshold(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateThresholdRequest request) {
+
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+        UUID branchId = TenantContext.getCurrentBranchId();
+
+        UpdateThresholdCommand command = new UpdateThresholdCommand(
+                tenantId, branchId, id, request.minLevel()
+        );
+        updateThresholdCommandHandler.handle(command);
+
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 }

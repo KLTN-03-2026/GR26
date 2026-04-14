@@ -53,11 +53,19 @@ public class InventoryDomainService {
      * @param itemName   tên nguyên liệu (để gửi alert)
      * @param needed     số lượng cần xuất
      * @param orderId    orderId tham chiếu
+     * @param transactionType SALE_DEDUCT hoặc PRODUCTION_OUT
+     * @param referenceId     orderId hoặc productionBatchId
+     * @param referenceType   ORDER hoặc PRODUCTION
+     * @param userId          người thực hiện (có thể null nếu là system)
      * @throws InsufficientStockException nếu tổng quantity_remaining < needed
      */
     public void deductFifo(UUID tenantId, UUID branchId,
                             UUID itemId, String itemName,
-                            BigDecimal needed, UUID orderId) {
+                            BigDecimal needed,
+                            String transactionType,
+                            UUID referenceId,
+                            String referenceType,
+                            UUID userId) {
 
         log.info("Bắt đầu FIFO deduct: item={}, needed={}, branch={}", itemId, needed, branchId);
 
@@ -84,10 +92,11 @@ public class InventoryDomainService {
             stockBatchJpaRepository.save(batch);
 
             // Ghi inventory_transaction cho mỗi batch bị trừ
-            InventoryTransactionJpaEntity tx = InventoryTransactionJpaEntity.forSaleDeduct(
+            InventoryTransactionJpaEntity tx = InventoryTransactionJpaEntity.forFifoDeduct(
                 tenantId, branchId, itemId,
                 batch.getId(), consumeFromBatch,
-                batch.getCostPerUnit(), orderId
+                batch.getCostPerUnit(),
+                transactionType, referenceId, referenceType, userId
             );
             inventoryTransactionJpaRepository.save(tx);
 

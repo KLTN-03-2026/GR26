@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class MenuInventoryAdapter {
 
     private final InventoryCheckService inventoryCheckService;
+    private final com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository inventoryBalanceJpaRepository;
 
     public void checkStock(UUID branchId, List<OrderItem> items) {
         log.info("Kiểm tra tồn kho qua MenuInventoryAdapter cho chi nhánh {}", branchId);
@@ -39,15 +40,18 @@ public class MenuInventoryAdapter {
                         Integer::sum
                 ));
 
-        // Mock StockProvider cho module Inventory chưa hoàn thiện
+        // Real StockProvider reading from Inventory
         InventoryCheckService.StockProvider stockProvider = (bId, ingredientId) -> {
-            log.debug("Mocking số lượng tồn kho cho nguyên liệu {} -> 1000", ingredientId);
-            return new BigDecimal("1000.0");
+            return inventoryBalanceJpaRepository.findByBranchIdAndItemId(bId, ingredientId)
+                    .map(com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaEntity::getQuantity)
+                    .orElse(BigDecimal.ZERO);
         };
 
-        // Mock IngredientNameProvider
+        // Real IngredientNameProvider
         InventoryCheckService.IngredientNameProvider nameProvider = (ingredientId) -> {
-            return "Nguyên liệu " + ingredientId.toString().substring(0, 5);
+            return inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, ingredientId)
+                    .map(com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaEntity::getItemName)
+                    .orElse("Nguyên liệu " + ingredientId.toString().substring(0, 5));
         };
 
         inventoryCheckService.assertSufficientStock(branchId, orderLines, stockProvider, nameProvider);

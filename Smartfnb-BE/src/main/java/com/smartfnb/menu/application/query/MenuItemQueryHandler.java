@@ -37,27 +37,30 @@ public class MenuItemQueryHandler {
     private final BranchItemJpaRepository branchItemJpaRepository;
 
     /**
-     * Lấy danh sách món ăn, hỗ trợ tìm kiếm pg_trgm.
+     * Lấy danh sách item theo type, hỗ trợ tìm kiếm pg_trgm (chỉ áp dụng cho SELLABLE).
      *
      * @param keyword  từ khóa tìm kiếm (null = lấy tất cả)
+     * @param type     loại item: SELLABLE (mặc định) | INGREDIENT | SUB_ASSEMBLY
      * @param page     trang (0-indexed)
      * @param size     số bản ghi mỗi trang
-     * @return trang danh sách món ăn
+     * @return trang danh sách item
      */
-    public PageResponse<MenuItemResponse> listMenuItems(String keyword, int page, int size) {
+    public PageResponse<MenuItemResponse> listMenuItems(String keyword, String type, int page, int size) {
         UUID tenantId = TenantContext.requireCurrentTenantId();
+        // Mặc định SELLABLE để tương thích ngược với POS flow
+        String resolvedType = (type != null && !type.isBlank()) ? type.toUpperCase() : "SELLABLE";
         Pageable pageable = PageRequest.of(page, Math.min(size, 100),
                 Sort.by("name").ascending());
 
         Page<MenuItemResponse> result;
-        if (keyword != null && !keyword.isBlank()) {
-            // Dùng pg_trgm native query cho fuzzy search
+        if (keyword != null && !keyword.isBlank() && "SELLABLE".equals(resolvedType)) {
+            // Fuzzy search chỉ hỗ trợ SELLABLE (POS use case)
             result = menuItemJpaRepository
                     .searchByNameTrgm(tenantId, keyword.trim(), pageable)
                     .map(MenuItemResponse::from);
         } else {
             result = menuItemJpaRepository
-                    .findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, "SELLABLE", pageable)
+                    .findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, resolvedType, pageable)
                     .map(MenuItemResponse::from);
         }
 

@@ -176,7 +176,7 @@ public class OrderController {
             TenantContext.getCurrentBranchId()
         );
 
-        Order order = orderQueryHandler.handle(query);
-        return ResponseEntity.ok(ApiResponse.ok(OrderResponse.from(order)));
+        OrderResponse response = orderQueryHandler.handle(query);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

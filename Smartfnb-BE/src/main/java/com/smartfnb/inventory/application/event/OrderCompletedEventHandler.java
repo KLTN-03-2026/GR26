@@ -78,7 +78,10 @@ public class OrderCompletedEventHandler {
                             recipe.getIngredientItemId(),
                             "Nguyên liệu #" + recipe.getIngredientItemId(),  // tên resolve sau
                             needed,
-                            event.orderId()
+                            "SALE_DEDUCT",
+                            event.orderId(),
+                            "ORDER",
+                            null  // System deducted
                         );
                     } catch (com.smartfnb.inventory.domain.exception
                              .InsufficientStockException e) {

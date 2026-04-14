@@ -238,9 +238,9 @@ async function runTests() {
         console.log("   ✅ Thanh toán thành công. PaymentId: " + paymentId);
 
         console.log("13. Truy vấn Hóa đơn (Invoices)");
-        res = await request('/payments/invoices/search', 'GET', null, currentToken);
+        res = await request('/payments/invoices', 'GET', null, currentToken);
         if (res.status !== 200) throw new Error("Search invoices failed: " + JSON.stringify(res.data));
-        console.log(`   ✅ Truy vấn hóa đơn thành công. Có ${res.data.data.totalElements} hóa đơn trong chi nhánh.`);
+        console.log(`   ✅ Truy vấn hóa đơn thành công. Có ${res.data.data.totalElements ?? 0} hóa đơn trong chi nhánh.`);
 
         // --- S-13 & S-14: INVENTORY ---
         console.log("\n--- BẮT ĐẦU TEST S-13 & S-14 (INVENTORY) ---");
@@ -264,7 +264,7 @@ async function runTests() {
             costPerUnit: 10000
         }, currentToken);
         if (failRes.status === 200 || failRes.status === 201) throw new Error("Expected validation error but succeeded!");
-        console.log("   ✅ Server từ chối request sai thành công: " + (failRes.data.message || JSON.stringify(failRes.data.errors)));
+        console.log("   ✅ Server từ chối request sai thành công: " + (failRes.data.error?.message || "Lỗi validation"));
 
         console.log("16. [Đúng] Điều chỉnh kho (Adjust Stock) -> Tồn kho = 45");
         res = await request('/inventory/adjust', 'POST', {
@@ -307,6 +307,87 @@ async function runTests() {
                 console.log("   ✅ Cân bằng kho (Balance) tính toán chính xác!");
             }
         }
+
+        console.log("\n--- BẮT ĐẦU TEST S-14 (SẢN XUẤT BÁN THÀNH PHẨM & CẢNH BÁO KHO) ---");
+        
+        console.log("19a. Tạo Catalog Mới: Nguyên Liệu & Bán Thành Phẩm");
+        // Nguyên liệu đầu vào
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Hạt Cafe Thô",
+            basePrice: 0,
+            unit: "kg",
+            type: "INGREDIENT"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create ingredient failed: " + JSON.stringify(res.data));
+        const ingredientId = res.data.data.id;
+        
+        // Bán thành phẩm đầu ra
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Cốt Cafe Phin",
+            basePrice: 0,
+            unit: "Lít",
+            type: "SUB_ASSEMBLY"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create sub-assembly failed: " + JSON.stringify(res.data));
+        const subAssemblyId = res.data.data.id;
+        console.log("   ✅ Thuần thục tạo Ingredient: " + ingredientId + " và SubAssembly: " + subAssemblyId);
+
+        console.log("19b. Nhập kho nguyên liệu đầu vào (50 kg)");
+        res = await request('/inventory/import', 'POST', {
+            itemId: ingredientId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 50,
+            costPerUnit: 150000,
+            note: "Nhập phục vụ pha cốt"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import ingredient failed");
+        
+        console.log("19c. Tạo công thức (Recipe) cho Cốt Cafe Phin (1 Lít cần 0.5 kg hạt)");
+        res = await request('/menu/recipes', 'POST', {
+            targetItemId: subAssemblyId,
+            ingredientItemId: ingredientId,
+            quantity: 0.5,
+            unit: "kg"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create recipe failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Gán recipe cho cấu phần thành công");
+
+        console.log("19d. Tạo mẻ sản xuất (Production Batch)");
+        // kỳ vọng output: 10 Lít => cần 5kg hạt => thực tế ra 9.5 Lít (hao hụt tay nghề)
+        res = await request('/inventory/production-batches', 'POST', {
+            subAssemblyItemId: subAssemblyId,
+            expectedOutputQuantity: 10,
+            actualOutputQuantity: 9.5,
+            unit: "Lít",
+            producedBy: "00000000-0000-0000-0000-000000000000",
+            note: "Mẻ pha cốt buổi sáng"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create batch failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Ghi nhận mẻ sản xuất (Production IN/OUT) thành công");
+
+        console.log("19e. Xem Lịch sử giao dịch kho (Audit Trail)");
+        res = await request('/inventory/transactions', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get transactions failed");
+        // Sẽ có PRODUCTION_OUT cho nguyên liệu và PRODUCTION_IN cho bán thành phẩm
+        const txList = res.data.data.content;
+        const hasProdIn = txList.some(t => t.type === 'PRODUCTION_IN');
+        const hasProdOut = txList.some(t => t.type === 'PRODUCTION_OUT');
+        if (!hasProdIn || !hasProdOut) throw new Error("Không bắt được giao dịch PRODUCTION_IN/OUT");
+        console.log(`   ✅ Bắt được ${txList.length} giao dịch, trong đó bao gồm xuất/nhập phục vụ Mẻ Sản Xuất.`);
+
+        console.log("19f. Set Ngưỡng Tồn Thấp (Threshold)");
+        // Lấy lại danh sách inventory để kiếm balanceId của SubAssembly
+        res = await request('/inventory', 'GET', null, currentToken);
+        const subAssemblyBalance = res.data.data.content.find(i => i.itemId === subAssemblyId);
+        if (!subAssemblyBalance) throw new Error("Không tìm thấy inventory balance của bán thành phẩm");
+
+        res = await request(`/inventory/balances/${subAssemblyBalance.id}/threshold`, 'PATCH', {
+            minLevel: 15.0
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update threshold failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Cập nhật Threshold (minLevel) mượt mà!");
 
         console.log("\n--- BẮT ĐẦU TEST S-15 (STAFF) ---");
         

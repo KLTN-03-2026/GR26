@@ -1,5 +1,6 @@
 package com.smartfnb.order.application.query;
 
+import com.smartfnb.order.application.dto.OrderResponse;
 import com.smartfnb.order.domain.model.Order;
 import com.smartfnb.order.domain.repository.OrderRepository;
 import com.smartfnb.order.infrastructure.persistence.OrderJpaEntity;
@@ -113,12 +114,12 @@ public class OrderQueryHandler {
      * Kiểm tra tenant và branch để đảm bảo phân quyền.
      *
      * @param query query chứa orderId và context
-     * @return thông tin chi tiết đơn hàng
+     * @return thông tin chi tiết đơn hàng (OrderResponse có map sẵn tên bàn và nhân viên)
      */
-    public Order handle(GetOrderByIdQuery query) {
+    public OrderResponse handle(GetOrderByIdQuery query) {
         log.info("Lấy chi tiết đơn hàng: {}", query.orderId());
 
-        return orderRepository.findByIdAndTenantIdAndBranchId(
+        Order order = orderRepository.findByIdAndTenantIdAndBranchId(
                 query.orderId(),
                 query.tenantId(),
                 query.branchId()
@@ -127,6 +128,26 @@ public class OrderQueryHandler {
                 log.warn("Không tìm thấy đơn hàng {} hoặc không thuộc scope", query.orderId());
                 return new com.smartfnb.order.domain.exception.OrderNotFoundException(query.orderId());
             });
+
+        String tableName = null;
+        if (order.getTableId() != null) {
+            tableName = tableJpaRepository.findById(order.getTableId())
+                .map(t -> t.getName())
+                .orElse("Bàn không xác định");
+        } else {
+            tableName = "Takeaway";
+        }
+
+        String staffName = null;
+        if (order.getUserId() != null) {
+            staffName = staffJpaRepository.findById(order.getUserId())
+                .map(s -> s.getFullName())
+                .orElse("Nhân viên không xác định");
+        } else {
+            staffName = "Unknown";
+        }
+
+        return OrderResponse.from(order, tableName, staffName);
     }
 
     private OrderListResult toOrderListResult(

@@ -117,23 +117,32 @@ public class InventoryTransactionJpaEntity {
     }
 
     /**
-     * Factory method tạo giao dịch xuất kho do bán hàng (FIFO).
+     * Factory method tạo giao dịch xuất kho FIFO chung.
+     * Sử dụng cho cả SALE_DEDUCT (xuất bán) và PRODUCTION_OUT (xuất sản xuất).
+     *
+     * @param transactionType SALE_DEDUCT | PRODUCTION_OUT
+     * @param referenceType   ORDER | PRODUCTION
+     * @param userId          ID người thực hiện (nếu có, null cho system)
      */
-    public static InventoryTransactionJpaEntity forSaleDeduct(UUID tenantId, UUID branchId,
+    public static InventoryTransactionJpaEntity forFifoDeduct(UUID tenantId, UUID branchId,
                                                                UUID itemId, UUID batchId,
                                                                BigDecimal quantity,
                                                                BigDecimal costPerUnit,
-                                                               UUID orderId) {
+                                                               String transactionType,
+                                                               UUID referenceId,
+                                                               String referenceType,
+                                                               UUID userId) {
         InventoryTransactionJpaEntity tx = new InventoryTransactionJpaEntity();
         tx.tenantId = tenantId;
         tx.branchId = branchId;
         tx.itemId = itemId;
         tx.batchId = batchId;
-        tx.type = "SALE_DEDUCT";
+        tx.type = transactionType;
         tx.quantity = quantity.negate();          // Số âm = xuất kho
         tx.costPerUnit = costPerUnit;
-        tx.referenceId = orderId;
-        tx.referenceType = "ORDER";
+        tx.referenceId = referenceId;
+        tx.referenceType = referenceType;
+        tx.userId = userId;
         tx.createdAt = Instant.now();
         return tx;
     }
@@ -172,6 +181,37 @@ public class InventoryTransactionJpaEntity {
         tx.type = "ADJUSTMENT";
         tx.quantity = quantity;
         tx.referenceType = "MANUAL";
+        tx.note = note;
+        tx.createdAt = Instant.now();
+        return tx;
+    }
+
+    /**
+     * Factory method tạo giao dịch nhập kho bán thành phẩm do sản xuất (PRODUCTION_IN).
+     * Ghi nhận khi một mẻ sản xuất hoàn tất — actualOutput được cộng vào tồn kho.
+     *
+     * @param tenantId        ID tenant
+     * @param branchId        ID chi nhánh
+     * @param subAssemblyId   ID bán thành phẩm đầu ra
+     * @param producedBy      ID nhân viên thực hiện
+     * @param actualOutput    Sản lượng thực tế (dương — nhập vào kho)
+     * @param note            Ghi chú mẻ sản xuất
+     * @param referenceId     ID của mẻ sản xuất (ProductionBatch ID)
+     * @return entity transaction
+     */
+    public static InventoryTransactionJpaEntity forProductionIn(UUID tenantId, UUID branchId,
+                                                                 UUID subAssemblyId, UUID producedBy,
+                                                                 BigDecimal actualOutput, String note,
+                                                                 UUID referenceId) {
+        InventoryTransactionJpaEntity tx = new InventoryTransactionJpaEntity();
+        tx.tenantId = tenantId;
+        tx.branchId = branchId;
+        tx.itemId = subAssemblyId;
+        tx.userId = producedBy;
+        tx.type = "PRODUCTION_IN";
+        tx.quantity = actualOutput;          // Số dương = nhập kho
+        tx.referenceId = referenceId;
+        tx.referenceType = "PRODUCTION";
         tx.note = note;
         tx.createdAt = Instant.now();
         return tx;
