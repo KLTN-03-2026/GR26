@@ -86,8 +86,7 @@ public class RecordProductionBatchCommandHandler {
         String recipeSnapshot = buildRecipeSnapshot(recipes);
 
         // 4. Lưu production_batch trước để có ID làm reference cho transaction
-        ProductionBatchJpaEntity batch = new ProductionBatchJpaEntity();
-        batch.setTenantId(command.tenantId());
+        ProductionBatchJpaEntity batch = new ProductionBatchJpaEntity(command.tenantId());
         batch.setBranchId(command.branchId());
         batch.setSubAssemblyItemId(command.subAssemblyItemId());
         batch.setRecipeSnapshot(recipeSnapshot);
@@ -95,10 +94,9 @@ public class RecordProductionBatchCommandHandler {
         batch.setActualOutput(command.actualOutputQuantity());
         batch.setUnit(command.unit());
         batch.setProducedBy(command.producedBy());
-        batch.setProducedAt(Instant.now());
+        batch.setProducedAt(java.time.LocalDateTime.now());
         batch.setNote(command.note());
         batch.setStatus("CONFIRMED");
-        batch.setCreatedAt(Instant.now());
 
         ProductionBatchJpaEntity savedBatch = productionBatchJpaRepository.save(batch);
 

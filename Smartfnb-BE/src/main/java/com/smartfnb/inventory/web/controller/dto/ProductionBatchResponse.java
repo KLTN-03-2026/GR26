@@ -3,7 +3,7 @@ package com.smartfnb.inventory.web.controller.dto;
 import com.smartfnb.inventory.infrastructure.persistence.ProductionBatchJpaEntity;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -37,10 +37,10 @@ public record ProductionBatchResponse(
         String unit,
         UUID producedBy,
         String staffName,
-        Instant producedAt,
+        LocalDateTime producedAt,
         String note,
         String status,
-        Instant createdAt
+        LocalDateTime createdAt
 ) {
 
     /**
