@@ -1,6 +1,8 @@
 package com.smartfnb.inventory.application.event;
 
 import com.smartfnb.inventory.domain.service.InventoryDomainService;
+import com.smartfnb.menu.infrastructure.persistence.AddonJpaEntity;
+import com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository;
 import com.smartfnb.menu.infrastructure.persistence.RecipeJpaEntity;
 import com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository;
 import com.smartfnb.order.domain.event.OrderCompletedEvent;
@@ -43,6 +45,8 @@ public class OrderCompletedEventHandler {
     /** Repository công thức chế biến — từ Menu module (cross-module read) */
     private final RecipeJpaRepository recipeJpaRepository;
 
+    private final AddonJpaRepository addonJpaRepository;
+
     /**
      * Lắng nghe sự kiện đơn hàng hoàn tất và trừ kho theo FIFO.
      *
@@ -61,9 +65,8 @@ public class OrderCompletedEventHandler {
                     recipeJpaRepository.findByTargetItemId(orderItem.menuItemId());
 
                 if (recipes.isEmpty()) {
-                    log.debug("Món {} không có công thức nguyên liệu — bỏ qua trừ kho",
+                    log.debug("Món {} không có công thức nguyên liệu — bỏ qua trừ kho cho món chính",
                         orderItem.menuItemId());
-                    continue;
                 }
 
                 for (RecipeJpaEntity recipe : recipes) {
@@ -89,6 +92,39 @@ public class OrderCompletedEventHandler {
                         // Ghi cảnh báo để xử lý thủ công (business rule: chấp nhận lỗi kho)
                         log.warn("Không đủ kho khi trừ FIFO: orderId={}, ingredient={}, lý do={}",
                             event.orderId(), recipe.getIngredientItemId(), e.getMessage());
+                    }
+                }
+
+                // Xử lý trừ kho cho Topping/Addon (Nếu có)
+                if (orderItem.addons() != null && !orderItem.addons().isEmpty()) {
+                    for (OrderCompletedEvent.CompletedAddonItem addonItem : orderItem.addons()) {
+                        try {
+                            AddonJpaEntity addonEntity = addonJpaRepository.findById(addonItem.addonId())
+                                .orElse(null);
+
+                            if (addonEntity != null && addonEntity.getItemId() != null) {
+                                // Số lượng cần trừ = quantity của orderItem * quantity của addon * định lượng 1 addon
+                                BigDecimal neededAddon = BigDecimal.valueOf((long) orderItem.quantity() * addonItem.quantity())
+                                        .multiply(addonEntity.getItemQuantity());
+
+                                inventoryDomainService.deductFifo(
+                                    event.tenantId(),
+                                    event.branchId(),
+                                    addonEntity.getItemId(),
+                                    "Addon #" + addonEntity.getItemId(), // Tên sẽ được resolve sau
+                                    neededAddon,
+                                    "SALE_DEDUCT",
+                                    event.orderId(),
+                                    "ORDER_ADDON",
+                                    null
+                                );
+                            }
+                        } catch (com.smartfnb.inventory.domain.exception.InsufficientStockException e) {
+                            log.warn("Không đủ kho khi trừ FIFO cho addon: orderId={}, addon_item={}, lý do={}",
+                                event.orderId(), addonItem.addonId(), e.getMessage());
+                        } catch (Exception e) {
+                            log.error("Lỗi chưa xác định khi trừ addon kho: addonId={}, lỗi={}", addonItem.addonId(), e.getMessage());
+                        }
                     }
                 }
             }

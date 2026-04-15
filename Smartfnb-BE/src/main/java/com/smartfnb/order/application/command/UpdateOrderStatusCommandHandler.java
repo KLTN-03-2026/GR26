@@ -5,6 +5,10 @@ import com.smartfnb.order.domain.repository.OrderRepository;
 import com.smartfnb.order.domain.exception.OrderNotFoundException;
 import com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaEntity;
 import com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaRepository;
+import com.smartfnb.order.domain.event.OrderCompletedEvent.CompletedAddonItem;
+import com.smartfnb.order.domain.event.OrderCompletedEvent.CompletedOrderItem;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,7 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +28,7 @@ public class UpdateOrderStatusCommandHandler {
     private final OrderRepository orderRepository;
     private final OrderStatusLogJpaRepository statusLogRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public Order handle(UpdateOrderStatusCommand command) {
@@ -66,10 +73,21 @@ public class UpdateOrderStatusCommandHandler {
         ));
 
         if ("COMPLETED".equalsIgnoreCase(command.newStatus())) {
-             List<com.smartfnb.order.domain.event.OrderCompletedEvent.CompletedOrderItem> completedItems = 
+             List<CompletedOrderItem> completedItems = 
                 savedOrder.getItems().stream()
-                .map(item -> new com.smartfnb.order.domain.event.OrderCompletedEvent.CompletedOrderItem(
-                    item.getItemId(), item.getQuantity(), item.getUnitPrice()))
+                .map(item -> {
+                    List<CompletedAddonItem> parsedAddons = Collections.emptyList();
+                    if (item.getAddons() != null && !item.getAddons().trim().isEmpty() && !item.getAddons().equals("null")) {
+                        try {
+                            parsedAddons = objectMapper.readValue(item.getAddons(), new TypeReference<List<CompletedAddonItem>>() {});
+                            log.debug("Đã parse {} addons cho order_item {}", parsedAddons.size(), item.getId());
+                        } catch (Exception e) {
+                            log.warn("Không thể parse addons JSON cho order_item {}: {}", item.getId(), e.getMessage());
+                        }
+                    }
+                    return new CompletedOrderItem(
+                        item.getItemId(), item.getQuantity(), item.getUnitPrice(), parsedAddons);
+                })
                 .toList();
                 
             eventPublisher.publishEvent(new com.smartfnb.order.domain.event.OrderCompletedEvent(

@@ -26,6 +26,12 @@ public record OrderCompletedEvent(
     public record CompletedOrderItem(
         UUID menuItemId,
         int quantity,
-        BigDecimal unitPrice
+        BigDecimal unitPrice,
+        List<CompletedAddonItem> addons
+    ) {}
+
+    public record CompletedAddonItem(
+        UUID addonId,
+        int quantity
     ) {}
 }
