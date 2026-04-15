@@ -23,7 +23,16 @@ public record AddonResponse(
         BigDecimal extraPrice,
 
         /** Trạng thái kích hoạt */
-        Boolean isActive
+        Boolean isActive,
+
+        /** ID item kho liên kết */
+        UUID itemId,
+
+        /** Định lượng tiêu hao */
+        BigDecimal itemQuantity,
+
+        /** Đơn vị tính */
+        String itemUnit
 ) {
 
     /**
@@ -37,7 +46,10 @@ public record AddonResponse(
                 entity.getId(),
                 entity.getName(),
                 entity.getExtraPrice(),
-                entity.getIsActive()
+                entity.getIsActive(),
+                entity.getItemId(),
+                entity.getItemQuantity(),
+                entity.getItemUnit()
         );
     }
 }

@@ -592,8 +592,88 @@ async function runTests() {
         if (res.status !== 200) throw new Error("Cancel PO failed: " + JSON.stringify(res.data));
         console.log("   ✅ Huỷ Purchase Order thành công.");
 
+        console.log("\n--- BẮT ĐẦU TEST S-HOTFIX (ADDON/TOPPING INVENTORY DEDUCTION) ---");
+        
+        console.log("38. Tạo INGREDIENT: Tóp Mỡ (Đầu vào Addon)");
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Tóp Mỡ Thô",
+            basePrice: 0,
+            unit: "g",
+            type: "INGREDIENT"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create ingredient failed");
+        const topMoId = res.data.data.id;
+        console.log("   ✅ Tạo Ingredient Tóp Mỡ: " + topMoId);
+
+        console.log("39. Nhập kho Tóp Mỡ: 1000g");
+        res = await request('/inventory/import', 'POST', {
+            itemId: topMoId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 1000,
+            costPerUnit: 100,
+            note: "Nhập Tóp Mỡ cho Addon"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import ingredient failed");
+        console.log("   ✅ Nhập kho 1000g Tóp Mỡ thành công");
+
+        console.log("40. Tạo Addon: Thêm Tóp Mỡ, link tới Tóp Mỡ (50g / addon)");
+        res = await request('/menu/addons', 'POST', {
+            name: "Thêm Tóp Mỡ",
+            extraPrice: 10000,
+            itemId: topMoId,
+            itemQuantity: 50,
+            itemUnit: "g"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create addon failed: " + JSON.stringify(res.data));
+        const addonId = res.data.data.id;
+        console.log("   ✅ Tạo Addon thành công, link kho OK. ID: " + addonId);
+
+        console.log("41. Tạo Order với Addon (Mua 2 món chính, mỗi món kẹp 1 addon)");
+        res = await request('/orders', 'POST', {
+            tableId: tableId,
+            source: "IN_STORE",
+            notes: "Test Addon Deduction",
+            items: [
+                {
+                    itemId: itemId, 
+                    itemName: "Cà phê Auto (Test Addon)",
+                    quantity: 2, 
+                    unitPrice: 20000,
+                    addons: JSON.stringify([{ addonId: addonId, quantity: 1 }]) // Addon JSON passed
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create order with addon failed: " + JSON.stringify(res.data));
+        const addonOrderId = res.data.data.id;
+        console.log("   ✅ Tạo Order có Addon thành công. Mã: " + addonOrderId);
+
+        console.log("42. Chuyển Đơn hàng sang COMPLETED (Trigger Event Trừ Kho)");
+        res = await request(`/orders/${addonOrderId}/status`, 'PUT', {
+            newStatus: "COMPLETED",
+            reason: ""
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order to COMPLETED failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Complete Order thành công (Trừ kho ngầm qua FIFO event).");
+
+        console.log("43. Kiểm tra Tồn kho của Tóp Mỡ sau khi bán");
+        // Wait briefly for async event to process
+        await new Promise(r => setTimeout(r, 1500)); 
+        res = await request('/inventory', 'GET', null, currentToken);
+        const topMoBalance = res.data.data.content.find(i => i.itemId === topMoId);
+        if (!topMoBalance) throw new Error("Không tìm thấy inventory của Tóp Mỡ");
+        
+        console.log(`   🔎 Số lượng tồn kho Tóp Mỡ hiện tại: ${topMoBalance.quantity}`);
+        // Kì vọng: nhập 1000g, order có 2 món chính, số lượng addon = 2 x 1 x 50g = 100g.
+        // Trừ đi 100g, còn lại 900g.
+        if (Number(topMoBalance.quantity) !== 900) {
+             throw new Error("   ⚠️ CẢNH BÁO: Số dư Tóp Mỡ KHÔNG KHỚP! Thực tế: " + topMoBalance.quantity + ", Kì vọng: 900. Lỗi Deduction Addon!");
+        } else {
+             console.log("   ✅ Kho Addon được Deduction CHÍNH XÁC (Đã trừ đi chính xác 100g)!");
+        }
+
         console.log("\n==========================================");
-        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-17) HOẠT ĐỘNG HOÀN HẢO!");
+        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-17 & Addon Fix) HOẠT ĐỘNG HOÀN HẢO!");
         console.log("==========================================");
 
     } catch (e) {
