@@ -27,7 +27,7 @@ public interface ShiftTemplateJpaRepository
      */
     @Query("SELECT COUNT(t) > 0 FROM ShiftTemplateJpaEntity t " +
            "WHERE t.branchId = :branchId AND t.name = :name " +
-           "AND (:excludeId IS NULL OR t.id <> :excludeId)")
+           "AND (CAST(:excludeId AS uuid) IS NULL OR t.id <> :excludeId)")
     boolean existsByBranchIdAndNameExcluding(
             @Param("branchId") UUID branchId,
             @Param("name") String name,

@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
@@ -101,6 +102,22 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail("FILE_TOO_LARGE",
                         "Ảnh không được vượt quá 5MB"));
+    }
+
+    /**
+     * Xử lý lỗi JSON không hợp lệ hoặc dữ liệu không map được (ví dụ sai định dạng thời gian).
+     *
+     * @param ex exception khi parse JSON
+     * @return ResponseEntity 400 Bad Request
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMessageNotReadableException(
+            HttpMessageNotReadableException ex) {
+        log.warn("Dữ liệu đầu vào không đúng định dạng: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail("INVALID_FORMAT",
+                        "Dữ liệu gửi lên không đúng định dạng. Vui lòng kiểm tra lại."));
     }
 
     /**
