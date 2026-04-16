@@ -1,6 +1,9 @@
-# TÀI LIỆU TÍCH HỢP API FRONTEND (SMARTF&B S-01 -> S-10)
+# TÀI LIỆU TÍCH HỢP API FRONTEND (SMARTF&B S-01 -> S-18)
 
 Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án, bao gồm Method, Request Body, Query Params, Headers và cấu trúc Response chuẩn.
+
+> **📊 NEW S-18: REPORT API** — Báo cáo doanh thu & sản phẩm  
+> Xem chi tiết tại [S18_FRONTEND_INTEGRATION.md](./S18_FRONTEND_INTEGRATION.md)
 
 > **💡 Quy tắc chung:**
 >
@@ -202,6 +205,7 @@ Tài liệu cung cấp chi tiết toàn bộ Endpoints hiện có trong dự án
 - **Response `data`:** Object MenuItem với `imageUrl` là URL đầy đủ tới ảnh.
 
 **Ví dụ curl:**
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/menu/items \
   -H "Authorization: Bearer <token>" \
@@ -210,23 +214,32 @@ curl -X POST http://localhost:8080/api/v1/menu/items \
 ```
 
 **Ví dụ JavaScript (FormData):**
+
 ```javascript
 const formData = new FormData();
-formData.append('data', new Blob([JSON.stringify({
-  name: 'Cà phê Sữa Đá',
-  basePrice: 35000,
-  unit: 'Ly',
-  isSyncDelivery: false
-})], { type: 'application/json' }));
+formData.append(
+  "data",
+  new Blob(
+    [
+      JSON.stringify({
+        name: "Cà phê Sữa Đá",
+        basePrice: 35000,
+        unit: "Ly",
+        isSyncDelivery: false,
+      }),
+    ],
+    { type: "application/json" },
+  ),
+);
 
 if (imageFile) {
-  formData.append('image', imageFile); // File từ <input type="file">
+  formData.append("image", imageFile); // File từ <input type="file">
 }
 
-const res = await fetch('/api/v1/menu/items', {
-  method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` },
-  body: formData
+const res = await fetch("/api/v1/menu/items", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${token}` },
+  body: formData,
   // KHÔNG set Content-Type — browser tự set boundary
 });
 ```
@@ -250,18 +263,20 @@ const res = await fetch('/api/v1/menu/items', {
 #### `DELETE /items/{id}` — Xóa món (soft delete)
 
 #### Lỗi có thể nhận:
-| errorCode | Mô tả |
-|-----------|-------|
-| `INVALID_IMAGE` | Sai định dạng ảnh (chỉ JPEG/PNG/WebP) |
-| `FILE_TOO_LARGE` | Ảnh vượt quá 5MB |
-| `DUPLICATE_MENU_ITEM_NAME` | Tên món đã tồn tại trong tenant |
+
+| errorCode                  | Mô tả                                 |
+| -------------------------- | ------------------------------------- |
+| `INVALID_IMAGE`            | Sai định dạng ảnh (chỉ JPEG/PNG/WebP) |
+| `FILE_TOO_LARGE`           | Ảnh vượt quá 5MB                      |
+| `DUPLICATE_MENU_ITEM_NAME` | Tên món đã tồn tại trong tenant       |
 
 #### Xem ảnh món ăn (Public — không cần JWT):
+
 ```
 GET /api/v1/files/{filename}
 ```
-`imageUrl` trong response là URL đầy đủ, FE dùng trực tiếp làm src của `<img>`.
 
+`imageUrl` trong response là URL đầy đủ, FE dùng trực tiếp làm src của `<img>`.
 
 ### 4.3 Giá món riêng cho từng Chi Nhánh (Branch Items)
 
@@ -518,7 +533,7 @@ stompClient.connect(
 
 - **Method:** `PUT /{orderId}`
 - **Headers:** Bearer Token
-- **Mô tả:** Cho phép nhân viên sửa thông tin bàn, ghi chú hoặc thay đổi danh sách món ăn (thêm món, bớt món, đổi số lượng). 
+- **Mô tả:** Cho phép nhân viên sửa thông tin bàn, ghi chú hoặc thay đổi danh sách món ăn (thêm món, bớt món, đổi số lượng).
 - **⚠️ Lưu ý quan trọng:** API này sử dụng cơ chế **đồng bộ toàn phần** danh sách món ăn.
   - Những món có `id` trùng với món đang có trong đơn: Sẽ được cập nhật thông tin.
   - Những món **không có id**: Sẽ được thêm mới vào đơn.
@@ -561,6 +576,7 @@ stompClient.connect(
 ## 🏭 8. MODULE KHO NGUYÊN LIỆU (INVENTORY) - S-13 & S-14 - Prefix: `/api/v1/inventory`
 
 > **Phân quyền cần có trong JWT:**
+>
 > - `INVENTORY_VIEW` — OWNER, ADMIN, BRANCH_MANAGER
 > - `INVENTORY_IMPORT` — OWNER, ADMIN, BRANCH_MANAGER
 > - `INVENTORY_ADJUST` — OWNER, ADMIN
@@ -576,11 +592,11 @@ Tạo lô hàng nhập mới (`StockBatch`). Tự động cộng vào `inventory
   ```json
   {
     "itemId": "uuid-nguyen-lieu",
-    "supplierId": "uuid-nha-cung-cap",   // Tùy chọn
-    "quantity": 100.5,                    // Bắt buộc, > 0
-    "costPerUnit": 12000.0,              // Bắt buộc, >= 0
+    "supplierId": "uuid-nha-cung-cap", // Tùy chọn
+    "quantity": 100.5, // Bắt buộc, > 0
+    "costPerUnit": 12000.0, // Bắt buộc, >= 0
     "expiresAt": "2026-06-30T00:00:00Z", // Tùy chọn (hạn sử dụng lô hàng)
-    "note": "Nhập từ kho Hà Nội"        // Tùy chọn
+    "note": "Nhập từ kho Hà Nội" // Tùy chọn
   }
   ```
 - **Response `data`:** UUID của `StockBatch` vừa tạo.
@@ -599,8 +615,8 @@ Set lại số lượng tuyệt đối cho tồn kho. **Bắt buộc** phải tr
   ```json
   {
     "itemId": "uuid-nguyen-lieu",
-    "newQuantity": 85.5,            // Giá trị tuyệt đối mới (>= 0)
-    "reason": "Kiểm kê cuối tháng phát hiện thừa/thiếu"  // Bắt buộc
+    "newQuantity": 85.5, // Giá trị tuyệt đối mới (>= 0)
+    "reason": "Kiểm kê cuối tháng phát hiện thừa/thiếu" // Bắt buộc
   }
   ```
 - **Response:** `200 OK` với `data: null` (không có data trả về)
@@ -616,14 +632,20 @@ Ghi nhận nguyên liệu bị hỏng, rơi vỡ, hết hạn... Hệ thống gi
   ```json
   {
     "itemId": "uuid-nguyen-lieu",
-    "quantity": 2.5,               // Số lượng hao hụt (> 0)
-    "reason": "Hết hạn sử dụng"    // Bắt buộc
+    "quantity": 2.5, // Số lượng hao hụt (> 0)
+    "reason": "Hết hạn sử dụng" // Bắt buộc
   }
   ```
 - **Response:** `200 OK` với `data: null`
 - **Nếu lỗi không đủ kho:** `422 Unprocessable Entity`
   ```json
-  { "success": false, "error": { "code": "INSUFFICIENT_STOCK", "message": "Nguyên liệu '...' không đủ. Cần 2.5000, hiện còn 1.0000" } }
+  {
+    "success": false,
+    "error": {
+      "code": "INSUFFICIENT_STOCK",
+      "message": "Nguyên liệu '...' không đủ. Cần 2.5000, hiện còn 1.0000"
+    }
+  }
   ```
 
 ### 8.4 Xem Tồn Kho Theo Chi Nhánh (S-14)
@@ -643,9 +665,9 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
         "itemId": "uuid-nguyen-lieu",
         "itemName": "Cà phê Arabica",
         "unit": "g",
-        "quantity": 850.5000,
-        "minLevel": 500.0000,
-        "isLowStock": false,    // true nếu quantity <= minLevel
+        "quantity": 850.5,
+        "minLevel": 500.0,
+        "isLowStock": false, // true nếu quantity <= minLevel
         "updatedAt": "2026-04-03T09:00:00Z"
       }
     ],
@@ -660,17 +682,18 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
 
 ### 8.5 Cơ Chế Tự Động (Không Cần FE Gọi)
 
-| Sự kiện | Trigger | Kết quả |
-|---------|---------|---------|
-| `OrderCompletedEvent` | Đơn hàng chuyển COMPLETED | Tự động trừ kho theo công thức (FIFO) |
-| `LowStockAlertEvent` | Tồn kho <= min_level | Broadcast cảnh báo (Phase 2: gửi notification) |
-| `StockImportedEvent` | Nhập kho mới | Report module cập nhật báo cáo kho |
+| Sự kiện               | Trigger                   | Kết quả                                        |
+| --------------------- | ------------------------- | ---------------------------------------------- |
+| `OrderCompletedEvent` | Đơn hàng chuyển COMPLETED | Tự động trừ kho theo công thức (FIFO)          |
+| `LowStockAlertEvent`  | Tồn kho <= min_level      | Broadcast cảnh báo (Phase 2: gửi notification) |
+| `StockImportedEvent`  | Nhập kho mới              | Report module cập nhật báo cáo kho             |
 
 ---
 
 ## 👨‍💼 9. MODULE QUẢN LÝ NHÂN VIÊN (STAFF) - S-15 - Prefix: `/api/v1/staff`
 
 > **Phân quyền (JWT Role):**
+>
 > - `OWNER`, `ADMIN` — Toàn quyền (tạo, sửa, xóa, khóa/mở khóa, gán roles)
 > - `BRANCH_MANAGER` — Chỉ xem danh sách và chi tiết
 
@@ -696,17 +719,17 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
 - **Request Body:**
   ```json
   {
-    "fullName": "Nguyễn Văn A",       // Bắt buộc
-    "phone": "0987654321",             // Tùy chọn, duy nhất trong tenant
-    "email": "nva@coffee.vn",          // Tùy chọn
-    "positionId": "uuid-chuc-vu",      // Tùy chọn
-    "employeeCode": "NV001",           // Tùy chọn, max 50 ký tự
-    "hireDate": "2026-01-15",          // Tùy chọn
-    "dateOfBirth": "1998-05-20",       // Tùy chọn
-    "gender": "MALE",                  // Tùy chọn: MALE | FEMALE | OTHER
-    "address": "123 Đường ABC, Q1",    // Tùy chọn
-    "password": "Password123!",        // Tùy chọn, mật khẩu để nhân viên đăng nhập email (8-255 ký tự)
-    "posPin": "123456"                 // Tùy chọn, mã PIN 4-6 số để nhân viên đăng nhập nhanh POS
+    "fullName": "Nguyễn Văn A", // Bắt buộc
+    "phone": "0987654321", // Tùy chọn, duy nhất trong tenant
+    "email": "nva@coffee.vn", // Tùy chọn
+    "positionId": "uuid-chuc-vu", // Tùy chọn
+    "employeeCode": "NV001", // Tùy chọn, max 50 ký tự
+    "hireDate": "2026-01-15", // Tùy chọn
+    "dateOfBirth": "1998-05-20", // Tùy chọn
+    "gender": "MALE", // Tùy chọn: MALE | FEMALE | OTHER
+    "address": "123 Đường ABC, Q1", // Tùy chọn
+    "password": "Password123!", // Tùy chọn, mật khẩu để nhân viên đăng nhập email (8-255 ký tự)
+    "posPin": "123456" // Tùy chọn, mã PIN 4-6 số để nhân viên đăng nhập nhanh POS
   }
   ```
 - **Response `data`:** UUID của nhân viên vừa tạo
@@ -724,55 +747,57 @@ Danh sách phân trang. **OWNER** thấy tất cả chi nhánh trong tenant. **C
 
 > **⚠️ PHÂN BIỆT RÕ: Khóa (PATCH) vs Xóa mềm (DELETE)**
 >
-> | Hành động | Endpoint | Kết quả |
-> |-----------|----------|---------|
-> | **Khóa/Mở khóa** | `PATCH /staff/{id}/status` | Chỉ thay đổi `status`. Nhân viên vẫn tồn tại, tìm được với `?status=INACTIVE` |
-> | **Xóa mềm** | `DELETE /staff/{id}` | Set `deleted_at`, nhân viên **ẩn hoàn toàn** khỏi mọi query, **không thể khôi phục qua API** |
+> | Hành động        | Endpoint                   | Kết quả                                                                                      |
+> | ---------------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+> | **Khóa/Mở khóa** | `PATCH /staff/{id}/status` | Chỉ thay đổi `status`. Nhân viên vẫn tồn tại, tìm được với `?status=INACTIVE`                |
+> | **Xóa mềm**      | `DELETE /staff/{id}`       | Set `deleted_at`, nhân viên **ẩn hoàn toàn** khỏi mọi query, **không thể khôi phục qua API** |
 
 - **Method:** `PATCH /api/v1/staff/{id}/status`
 - **Quyền:** `OWNER`, `ADMIN`
 - **Request Body:**
   ```json
   {
-    "status": "INACTIVE",                          // Bắt buộc: ACTIVE | INACTIVE
-    "reason": "Nhân viên xin nghỉ phép dài hạn"  // Bắt buộc, max 500 ký tự
+    "status": "INACTIVE", // Bắt buộc: ACTIVE | INACTIVE
+    "reason": "Nhân viên xin nghỉ phép dài hạn" // Bắt buộc, max 500 ký tự
   }
   ```
 - **Response:** `200 OK` với `data: null`
 - **Idempotent:** Gửi status trùng trạng thái hiện tại → `200 OK` không làm gì (không lỗi)
 - **Lỗi có thể nhận:**
 
-  | errorCode | HTTP | Mô tả |
-  |-----------|------|-------|
-  | `STAFF_NOT_FOUND` | 404 | Không tìm thấy nhân viên (đã bị xóa mềm hoặc không thuộc tenant) |
+  | errorCode         | HTTP | Mô tả                                                            |
+  | ----------------- | ---- | ---------------------------------------------------------------- |
+  | `STAFF_NOT_FOUND` | 404  | Không tìm thấy nhân viên (đã bị xóa mềm hoặc không thuộc tenant) |
 
 **Ví dụ — Khóa nhân viên:**
+
 ```javascript
 await fetch(`/api/v1/staff/${staffId}/status`, {
-  method: 'PATCH',
+  method: "PATCH",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
-    status: 'INACTIVE',
-    reason: 'Nhân viên vi phạm nội quy, đang xử lý kỷ luật'
-  })
+    status: "INACTIVE",
+    reason: "Nhân viên vi phạm nội quy, đang xử lý kỷ luật",
+  }),
 });
 ```
 
 **Ví dụ — Mở khóa nhân viên:**
+
 ```javascript
 await fetch(`/api/v1/staff/${staffId}/status`, {
-  method: 'PATCH',
+  method: "PATCH",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
-    status: 'ACTIVE',
-    reason: 'Xử lý kỷ luật xong, nhân viên quay lại làm việc'
-  })
+    status: "ACTIVE",
+    reason: "Xử lý kỷ luật xong, nhân viên quay lại làm việc",
+  }),
 });
 ```
 
@@ -783,7 +808,7 @@ await fetch(`/api/v1/staff/${staffId}/status`, {
 - **Request Body:**
   ```json
   {
-    "reason": "Nhân viên nghỉ việc chính thức"  // Bắt buộc, max 500 ký tự
+    "reason": "Nhân viên nghỉ việc chính thức" // Bắt buộc, max 500 ký tự
   }
   ```
 - **Response:** `200 OK` với `data: null`
@@ -806,13 +831,13 @@ await fetch(`/api/v1/staff/${staffId}/status`, {
 
 ## 📊 🚀 TỔNG LỊCH PHÁT HÀNH (TIMELINE)
 
-| Sprint       | Module                                           | Status              |
-| ------------ | ------------------------------------------------ | ------------------- |
-| S-01 to S-08 | Auth, Branch, Menu, Table, Subscription, RBAC    | ✅ Hoàn thành        |
-| S-09         | Inventory (cơ bản)                               | ✅ Hoàn thành        |
-| S-10         | Order Realtime WebSocket                         | ✅ Hoàn thành        |
-| S-11 & S-12  | Payment & Invoice                                | ✅ Hoàn thành        |
-| **S-13**     | **Inventory — Nhập kho & FIFO**                  | ✅ **COMPLETED**     |
-| **S-14**     | **Inventory — Điều chỉnh, Hao hụt, Cảnh báo**   | ✅ **COMPLETED**     |
-| **S-15**     | **Staff Management — Bug Fix: PATCH /status**    | ✅ **COMPLETED**     |
-| S-16+        | Shift, Report, Supplier modules                  | 📅 Sắp tới           |
+| Sprint       | Module                                        | Status           |
+| ------------ | --------------------------------------------- | ---------------- |
+| S-01 to S-08 | Auth, Branch, Menu, Table, Subscription, RBAC | ✅ Hoàn thành    |
+| S-09         | Inventory (cơ bản)                            | ✅ Hoàn thành    |
+| S-10         | Order Realtime WebSocket                      | ✅ Hoàn thành    |
+| S-11 & S-12  | Payment & Invoice                             | ✅ Hoàn thành    |
+| **S-13**     | **Inventory — Nhập kho & FIFO**               | ✅ **COMPLETED** |
+| **S-14**     | **Inventory — Điều chỉnh, Hao hụt, Cảnh báo** | ✅ **COMPLETED** |
+| **S-15**     | **Staff Management — Bug Fix: PATCH /status** | ✅ **COMPLETED** |
+| S-16+        | Shift, Report, Supplier modules               | 📅 Sắp tới       |
