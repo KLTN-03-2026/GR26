@@ -56,3 +56,6 @@ src/docs/dev-notes/
 
 ai-service/storage/models/*
 ai-service/lightning_logs/*
+
+Smartfnb-BE/target/
+*.class

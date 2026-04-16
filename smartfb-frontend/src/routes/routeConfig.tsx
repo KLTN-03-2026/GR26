@@ -19,6 +19,7 @@ import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
 import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
+import VouchersPage from '@pages/owner/VouchersPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -135,12 +136,7 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.BRANCHES, 'Quản lý chi nhánh', <BranchesPage />),
   createRoute(ROUTES.OWNER.BRANCHES_NEW, 'Tạo chi nhánh mới', <CreateBranchPage />),
   createRoute(ROUTES.OWNER.BRANCHES_DETAIL, 'Chi tiết chi nhánh', <BranchDetailPage />),
-  createPlaceholderRoute(
-    ROUTES.OWNER.PROMOTIONS,
-    'Khuyến mãi',
-    'Khuyến mãi',
-    'Trang khuyến mãi đang dùng placeholder để hoàn chỉnh hệ route trước.'
-  ),
+  createRoute(ROUTES.OWNER.PROMOTIONS, 'Quản lý voucher', <VouchersPage />),
   createPlaceholderRoute(
     ROUTES.OWNER.SUPPLIERS,
     'Nhà cung cấp',
