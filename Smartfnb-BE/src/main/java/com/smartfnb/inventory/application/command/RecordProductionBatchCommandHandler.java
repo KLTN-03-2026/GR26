@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -104,13 +105,45 @@ public class RecordProductionBatchCommandHandler {
 
         // 5. Trừ nguyên liệu đầu vào theo FIFO
         for (RecipeJpaEntity recipe : recipes) {
-            BigDecimal needed = recipe.getQuantity().multiply(command.expectedOutputQuantity());
+
+            // ---------------------------------------------------------------
+            // FIX BUG: Author: HOÀNG | 16/04/2026
+            // Bug cũ (dòng bên dưới — đã comment):
+            //   BigDecimal needed = recipe.getQuantity().multiply(command.expectedOutputQuantity());
+            //   → Diễn giải sai: "recipe.quantity là lượng nguyên liệu cho 1 đơn vị đầu ra"
+            //   → Ví dụ: 1000g × 2000ml = 2,000,000g (sai hoàn toàn)
+            //
+            // Fix đúng:
+            //   Nếu recipe có baseOutputQuantity (sản lượng chuẩn của 1 mẻ):
+            //     scaleFactor = expectedOutputQuantity / baseOutputQuantity
+            //     needed      = recipe.quantity × scaleFactor
+            //   Ví dụ: scaleFactor = 2000 / 2000 = 1.0 → needed = 1000 × 1.0 = 1000g (đúng)
+            //          scaleFactor = 4000 / 2000 = 2.0 → needed = 1000 × 2.0 = 2000g (đúng)
+            //
+            //   Nếu recipe không có baseOutputQuantity (recipe SELLABLE hoặc dữ liệu cũ chưa migrate):
+            //     scaleFactor = 1 (fallback an toàn — giữ nguyên định lượng)
+            // ---------------------------------------------------------------
+            BigDecimal scaleFactor;
+            BigDecimal baseOutputQty = recipe.getBaseOutputQuantity();
+            if (baseOutputQty != null && baseOutputQty.compareTo(BigDecimal.ZERO) > 0) {
+                scaleFactor = command.expectedOutputQuantity()
+                        .divide(baseOutputQty, 10, RoundingMode.HALF_UP);
+            } else {
+                // Fallback: recipe cũ chưa có baseOutputQuantity — scale = 1 (không nhân thêm)
+                log.warn("Recipe {} không có baseOutputQuantity — dùng scaleFactor=1 (fallback). " +
+                         "Hãy cập nhật lại công thức SUB_ASSEMBLY để tính đúng lượng nguyên liệu.",
+                         recipe.getId());
+                scaleFactor = BigDecimal.ONE;
+            }
+
+            BigDecimal needed = recipe.getQuantity().multiply(scaleFactor);
+
             String ingredientName = menuItemJpaRepository.findById(recipe.getIngredientItemId())
                     .map(MenuItemJpaEntity::getName)
                     .orElse("Nguyên liệu #" + recipe.getIngredientItemId());
 
-            log.debug("Trừ nguyên liệu đầu vào: {} × {} = {} {}",
-                    ingredientName, command.expectedOutputQuantity(), needed, recipe.getUnit());
+            log.debug("Trừ nguyên liệu đầu vào: {} × scaleFactor({}) = {} {}",
+                    ingredientName, scaleFactor, needed, recipe.getUnit());
 
             inventoryDomainService.deductFifo(
                     command.tenantId(),

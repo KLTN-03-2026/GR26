@@ -1,6 +1,7 @@
 package com.smartfnb.menu.application.command;
 
 import com.smartfnb.menu.application.dto.CreateRecipeRequest;
+import com.smartfnb.menu.application.dto.UpdateRecipeRequest;
 import com.smartfnb.menu.application.dto.RecipeResponse;
 import com.smartfnb.menu.domain.exception.MenuItemNotFoundException;
 import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
@@ -71,6 +72,13 @@ public class RecipeCommandHandler {
         entity.setQuantity(request.quantity());
         entity.setUnit(request.unit());
 
+        // FIX BUG: Author: HOÀNG | 16/04/2026
+        // Lưu sản lượng đầu ra chuẩn để handler tính đúng scaleFactor khi ghi nhận mẻ sản xuất.
+        // Với recipe SUB_ASSEMBLY: baseOutputQuantity phải được nhập từ FE.
+        // Với recipe SELLABLE: để null, handler sẽ dùng scaleFactor = 1.
+        entity.setBaseOutputQuantity(request.baseOutputQuantity());
+        entity.setBaseOutputUnit(request.baseOutputUnit());
+
         RecipeJpaEntity saved = recipeJpaRepository.save(entity);
         log.info("Đã thêm nguyên liệu vào công thức, recipe ID: {}", saved.getId());
 
@@ -85,14 +93,16 @@ public class RecipeCommandHandler {
     /**
      * Cập nhật định lượng nguyên liệu trong công thức.
      *
+     * <p>FIX BUG: Author: HOÀNG | 16/04/2026 — đổi signature nhận UpdateRecipeRequest
+     * thay vì từng param rời để có thể xử lý thêm baseOutputQuantity và baseOutputUnit.</p>
+     *
      * @param recipeId ID dòng công thức cần cập nhật
-     * @param quantity định lượng mới
-     * @param unit     đơn vị mới
+     * @param request  DTO chứa quantity, unit, baseOutputQuantity, baseOutputUnit
      * @return DTO response sau cập nhật
      * @throws SmartFnbException nếu không tìm thấy hoặc định lượng không hợp lệ
      */
     @Transactional
-    public RecipeResponse updateRecipe(UUID recipeId, BigDecimal quantity, String unit) {
+    public RecipeResponse updateRecipe(UUID recipeId, UpdateRecipeRequest request) {
         UUID tenantId = TenantContext.requireCurrentTenantId();
 
         log.info("Cập nhật công thức {} cho tenant {}", recipeId, tenantId);
@@ -102,14 +112,25 @@ public class RecipeCommandHandler {
                 .orElseThrow(() -> new SmartFnbException("RECIPE_NOT_FOUND",
                         "Không tìm thấy công thức với ID: " + recipeId));
 
+        BigDecimal quantity = request.quantity();
         if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
             throw new SmartFnbException("INVALID_QUANTITY",
                     "Định lượng nguyên liệu phải lớn hơn 0");
         }
 
         entity.setQuantity(quantity);
-        if (unit != null) {
-            entity.setUnit(unit);
+        if (request.unit() != null) {
+            entity.setUnit(request.unit());
+        }
+
+        // FIX BUG: Author: HOÀNG | 16/04/2026
+        // Cập nhật sản lượng chuẩn nếu request có gửi lên (null = giữ nguyên giá trị cũ).
+        // Cho phép sửa lại các recipe SUB_ASSEMBLY đã lưu sai baseOutputQuantity trước khi có fix này.
+        if (request.baseOutputQuantity() != null) {
+            entity.setBaseOutputQuantity(request.baseOutputQuantity());
+        }
+        if (request.baseOutputUnit() != null) {
+            entity.setBaseOutputUnit(request.baseOutputUnit());
         }
 
         RecipeJpaEntity saved = recipeJpaRepository.save(entity);
