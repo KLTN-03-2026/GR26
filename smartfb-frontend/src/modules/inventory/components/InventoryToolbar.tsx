@@ -1,4 +1,4 @@
-import { PackagePlus, Search, ShieldAlert, SlidersHorizontal } from 'lucide-react';
+import { FlaskConical, Hammer, PackagePlus, Search, ShieldAlert } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
@@ -12,6 +12,8 @@ import {
 
 interface InventoryToolbarProps {
   search: string;
+  searchLabel: string;
+  searchPlaceholder: string;
   branchId: string;
   lowStockOnly: boolean;
   branchOptions: Array<{ id: string; name: string }>;
@@ -19,6 +21,11 @@ interface InventoryToolbarProps {
   canImport: boolean;
   canAdjust: boolean;
   canWaste: boolean;
+  canRecordProduction?: boolean;
+  canCreateItem: boolean;
+  createItemLabel: string;
+  importActionLabel?: string;
+  productionActionLabel?: string;
   isActionLocked: boolean;
   isSwitchingBranch: boolean;
   actionHint?: string | null;
@@ -28,6 +35,8 @@ interface InventoryToolbarProps {
   onOpenImport: () => void;
   onOpenAdjust: () => void;
   onOpenWaste: () => void;
+  onOpenProduction?: () => void;
+  onOpenCreateIngredient: () => void;
 }
 
 /**
@@ -35,6 +44,8 @@ interface InventoryToolbarProps {
  */
 export const InventoryToolbar = ({
   search,
+  searchLabel,
+  searchPlaceholder,
   branchId,
   lowStockOnly,
   branchOptions,
@@ -42,6 +53,11 @@ export const InventoryToolbar = ({
   canImport,
   canAdjust,
   canWaste,
+  canRecordProduction = false,
+  canCreateItem,
+  createItemLabel,
+  importActionLabel = 'Nhập kho',
+  productionActionLabel = 'Ghi nhận sản xuất',
   isActionLocked,
   isSwitchingBranch,
   actionHint,
@@ -49,23 +65,24 @@ export const InventoryToolbar = ({
   onBranchChange,
   onLowStockChange,
   onOpenImport,
-  onOpenAdjust,
+  onOpenAdjust: _onOpenAdjust,
   onOpenWaste,
+  onOpenProduction,
+  onOpenCreateIngredient,
 }: InventoryToolbarProps) => {
   return (
     <div className="space-y-4 rounded-card border border-border bg-card p-4 shadow-card">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        {/* <div className="grid flex-1 gap-3 md:grid-cols-[minmax(0,1.4fr)_220px_220px]"> */}
-        <div className=" flex gap-3 flex-wrap ">
+        <div className=" flex gap-3 flex-wrap  items-end ">
           <div className="space-y-1 w-xs max-w-md">
-            <Label htmlFor="inventory-search">Tìm nguyên liệu</Label>
+            <Label htmlFor="inventory-search">{searchLabel}</Label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
               <Input
                 id="inventory-search"
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Tìm theo tên nguyên liệu"
+                placeholder={searchPlaceholder}
                 className="pl-9"
               />
             </div>
@@ -91,11 +108,12 @@ export const InventoryToolbar = ({
             ) : null}
           </div>
 
-          <div className="space-y-1 w-fit">
+          <div className="space-y-1 text-nowrap w-fit">
             <Label htmlFor="inventory-stock-filter">Trạng thái</Label>
             <Select
               value={lowStockOnly ? 'low-stock' : 'all'}
               onValueChange={onLowStockChange}
+              
             >
               <SelectTrigger id="inventory-stock-filter" className="w-fit">
                 <SelectValue placeholder="Chọn trạng thái" />
@@ -106,15 +124,18 @@ export const InventoryToolbar = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
+ 
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* {hasActiveFilters && (
-            <Button type="button" variant="outline" onClick={onClearFilters}>
-              <RotateCcw className="h-4 w-4" />
-              Xóa lọc
+          {canCreateItem && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onOpenCreateIngredient}
+            >
+              <FlaskConical className="h-4 w-4" />
+              {createItemLabel}
             </Button>
-          )} */}
+          )}
 
           {canWaste && (
             <Button
@@ -128,27 +149,29 @@ export const InventoryToolbar = ({
             </Button>
           )}
 
-          {canAdjust && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onOpenAdjust}
-              disabled={isActionLocked || isSwitchingBranch}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Điều chỉnh kho
-            </Button>
-          )}
-
           {canImport && (
-            <Button
-              type="button"
-              onClick={onOpenImport}
-              disabled={isActionLocked || isSwitchingBranch}
-            >
-              <PackagePlus className="h-4 w-4" />
-              Nhập kho
-            </Button>
+            <>
+              {canRecordProduction && onOpenProduction ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onOpenProduction}
+                  disabled={isActionLocked || isSwitchingBranch}
+                >
+                  <Hammer className="h-4 w-4" />
+                  {productionActionLabel}
+                </Button>
+              ) : null}
+
+              <Button
+                type="button"
+                onClick={onOpenImport}
+                disabled={isActionLocked || isSwitchingBranch}
+              >
+                <PackagePlus className="h-4 w-4" />
+                {importActionLabel}
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -167,4 +190,3 @@ export const InventoryToolbar = ({
     </div>
   );
 };
-// https://auth.openai.com/mfa-challenge/email-otp

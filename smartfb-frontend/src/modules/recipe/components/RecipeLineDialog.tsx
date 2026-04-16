@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import {
+  SearchableCombobox,
+  type SearchableComboboxOption,
+} from '@shared/components/common/SearchableCombobox';
 import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
@@ -10,13 +14,6 @@ import {
 } from '@shared/components/ui/dialog';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@shared/components/ui/select';
 import type {
   RecipeIngredientOption,
   RecipeLine,
@@ -88,6 +85,8 @@ export const RecipeLineDialog = ({
       {
         itemId: initialLine.ingredientItemId,
         itemName: initialLine.ingredientName,
+        itemType: initialLine.ingredientType === 'UNKNOWN' ? 'INGREDIENT' : initialLine.ingredientType,
+        itemTypeLabel: initialLine.ingredientTypeLabel,
         unit: initialLine.unit,
         branchIds: [],
         quantity: initialLine.availableQuantity,
@@ -100,17 +99,26 @@ export const RecipeLineDialog = ({
     return resolvedIngredientOptions.find((option) => option.itemId === formValues.ingredientItemId) ?? null;
   }, [formValues.ingredientItemId, resolvedIngredientOptions]);
 
-  const dialogTitle = mode === 'create' ? 'Thêm nguyên liệu vào công thức' : 'Cập nhật định lượng';
+  const ingredientComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
+    return resolvedIngredientOptions.map((ingredient) => ({
+      value: ingredient.itemId,
+      label: ingredient.itemName,
+      description: `${ingredient.itemTypeLabel}${ingredient.unit ? ` • ${ingredient.unit}` : ''}`,
+      keywords: [ingredient.itemId, ingredient.itemTypeLabel, ingredient.unit],
+    }));
+  }, [resolvedIngredientOptions]);
+
+  const dialogTitle = mode === 'create' ? 'Thêm thành phần vào công thức' : 'Cập nhật định lượng';
 
   const dialogDescription =
     mode === 'create'
-      ? `Thiết lập định lượng nguyên liệu cho món ${targetItemName}.`
-      : `Chỉnh sửa lượng dùng cho món ${targetItemName}.`;
+      ? `Thiết lập định lượng thành phần cho ${targetItemName}.`
+      : `Chỉnh sửa lượng dùng cho ${targetItemName}.`;
 
   const handleIngredientChange = (value: string) => {
     const nextIngredient = ingredientOptions.find((option) => option.itemId === value) ?? null;
 
-    // Đồng bộ đơn vị mặc định từ nguyên liệu để giảm thao tác nhập tay.
+    // Đồng bộ đơn vị mặc định từ thành phần để giảm thao tác nhập tay.
     setFormValues((currentValues) => ({
       ...currentValues,
       ingredientItemId: value,
@@ -123,7 +131,7 @@ export const RecipeLineDialog = ({
     const parsedQuantity = Number(formValues.quantity);
 
     if (!formValues.ingredientItemId.trim()) {
-      setFormError('Vui lòng chọn nguyên liệu');
+      setFormError('Vui lòng chọn thành phần');
       return;
     }
 
@@ -156,29 +164,28 @@ export const RecipeLineDialog = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="recipe-ingredient">Nguyên liệu</Label>
-            <Select
+            <Label htmlFor="recipe-ingredient">Thành phần</Label>
+            <SearchableCombobox
+              id="recipe-ingredient"
               disabled={isPending || mode === 'edit' || resolvedIngredientOptions.length === 0}
               value={formValues.ingredientItemId}
+              options={ingredientComboboxOptions}
+              placeholder="Chọn nguyên liệu hoặc bán thành phẩm"
+              searchPlaceholder="Tìm thành phần theo tên, loại hoặc đơn vị"
+              emptyMessage="Không tìm thấy thành phần phù hợp."
               onValueChange={handleIngredientChange}
-            >
-              <SelectTrigger id="recipe-ingredient">
-                <SelectValue placeholder="Chọn nguyên liệu từ danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                {resolvedIngredientOptions.map((ingredient) => (
-                  <SelectItem key={ingredient.itemId} value={ingredient.itemId}>
-                    {ingredient.itemName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             {selectedIngredient ? (
-              <p className="text-xs text-gray-500">
-                {selectedIngredient.quantity === null
-                  ? 'Nguyên liệu này chưa có dữ liệu tồn kho tham chiếu. Bạn vẫn có thể thêm vào công thức.'
-                  : `Tồn khả dụng tham chiếu: ${selectedIngredient.quantity.toLocaleString('vi-VN')} ${selectedIngredient.unit || 'đơn vị'}`}
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500">
+                  Loại thành phần: {selectedIngredient.itemTypeLabel}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {selectedIngredient.quantity === null
+                    ? 'Thành phần này chưa có dữ liệu tồn kho tham chiếu. Bạn vẫn có thể thêm vào công thức.'
+                    : `Tồn khả dụng tham chiếu: ${selectedIngredient.quantity.toLocaleString('vi-VN')} ${selectedIngredient.unit || 'đơn vị'}`}
+                </p>
+              </div>
             ) : null}
           </div>
 
@@ -229,13 +236,13 @@ export const RecipeLineDialog = ({
 
           {mode === 'edit' ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Backend hiện chỉ hỗ trợ sửa định lượng và đơn vị. Muốn đổi nguyên liệu, hãy xóa dòng hiện tại rồi tạo dòng mới.
+              Backend hiện chỉ hỗ trợ sửa định lượng và đơn vị. Muốn đổi thành phần, hãy xóa dòng hiện tại rồi tạo dòng mới.
             </div>
           ) : null}
 
           {resolvedIngredientOptions.length === 0 ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              Chưa có nguyên liệu nào trong danh mục `INGREDIENT`. Hãy tạo nguyên liệu trước rồi quay lại cấu hình công thức.
+              Chưa có item `INGREDIENT` hoặc `SUB_ASSEMBLY` nào khả dụng để đưa vào công thức. Hãy tạo dữ liệu trước rồi quay lại cấu hình.
             </div>
           ) : null}
         </div>

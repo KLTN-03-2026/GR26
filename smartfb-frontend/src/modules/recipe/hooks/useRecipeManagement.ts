@@ -6,6 +6,7 @@ import type {
   CreateRecipePayload,
   RecipeIngredientOption,
   RecipeLine,
+  RecipeTargetItemType,
   UpdateRecipePayload,
 } from '@modules/recipe/types/recipe.types';
 import { queryKeys } from '@shared/constants/queryKeys';
@@ -15,6 +16,7 @@ import type { ApiResponse } from '@shared/types/api.types';
 
 const RECIPE_MENU_PAGE_SIZE = 10;
 const ALL_CATEGORY_VALUE = 'all';
+const DEFAULT_TARGET_ITEM_TYPE: RecipeTargetItemType = 'SELLABLE';
 
 /**
  * Hook gom toàn bộ state và thao tác cho màn quản lý công thức.
@@ -24,18 +26,26 @@ export const useRecipeManagement = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
+  const [targetItemType, setTargetItemType] = useState<RecipeTargetItemType>(DEFAULT_TARGET_ITEM_TYPE);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_VALUE);
-  const [selectedItemIdState, setSelectedItemId] = useState<string>('');
+  const [selectedItemIds, setSelectedItemIds] = useState<Record<RecipeTargetItemType, string>>({
+    SELLABLE: '',
+    SUB_ASSEMBLY: '',
+  });
   const debouncedSearchKeyword = useDebounce(searchKeyword.trim(), 300);
+  const selectedItemIdState = selectedItemIds[targetItemType];
+  const effectiveCategoryId = targetItemType === 'SELLABLE' ? selectedCategoryId : ALL_CATEGORY_VALUE;
 
   const menuItemsQuery = useInfiniteQuery({
     queryKey: queryKeys.recipes.menuItems({
+      type: targetItemType,
       keyword: debouncedSearchKeyword || 'all',
       size: RECIPE_MENU_PAGE_SIZE,
     }),
     queryFn: ({ pageParam }) =>
       recipeService.getMenuItems({
+        type: targetItemType,
         keyword: debouncedSearchKeyword || undefined,
         page: pageParam,
         size: RECIPE_MENU_PAGE_SIZE,
@@ -71,12 +81,12 @@ export const useRecipeManagement = () => {
    * Lọc theo danh mục ở FE do backend hiện chưa hỗ trợ category param cho /menu/items.
    */
   const menuItems = useMemo(() => {
-    if (selectedCategoryId === ALL_CATEGORY_VALUE) {
+    if (targetItemType !== 'SELLABLE' || effectiveCategoryId === ALL_CATEGORY_VALUE) {
       return loadedMenuItems;
     }
 
-    return loadedMenuItems.filter((item) => item.categoryId === selectedCategoryId);
-  }, [loadedMenuItems, selectedCategoryId]);
+    return loadedMenuItems.filter((item) => item.categoryId === effectiveCategoryId);
+  }, [effectiveCategoryId, loadedMenuItems, targetItemType]);
 
   const categoryOptions = useMemo(() => {
     return [
@@ -127,6 +137,8 @@ export const useRecipeManagement = () => {
       return {
         ...line,
         ingredientName: ingredient?.itemName ?? line.ingredientName,
+        ingredientType: ingredient?.itemType ?? line.ingredientType,
+        ingredientTypeLabel: ingredient?.itemTypeLabel ?? line.ingredientTypeLabel,
         unit: line.unit || ingredient?.unit || '',
         availableQuantity: ingredient?.quantity ?? null,
       };
@@ -141,7 +153,7 @@ export const useRecipeManagement = () => {
     mutationFn: (payload: CreateRecipePayload) => recipeService.createRecipe(payload),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.detail(variables.targetItemId) });
-      success('Thêm công thức thành công', 'Đã thêm nguyên liệu vào công thức món bán');
+      success('Thêm công thức thành công', 'Đã thêm thành phần vào công thức');
     },
     onError: (err) => {
       if (isAxiosError<ApiResponse<unknown>>(err) && err.response) {
@@ -161,7 +173,7 @@ export const useRecipeManagement = () => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.detail(selectedItemId) });
       }
 
-      success('Cập nhật công thức thành công', 'Định lượng nguyên liệu đã được cập nhật');
+      success('Cập nhật công thức thành công', 'Định lượng thành phần đã được cập nhật');
     },
     onError: (err) => {
       if (isAxiosError<ApiResponse<unknown>>(err) && err.response) {
@@ -180,7 +192,7 @@ export const useRecipeManagement = () => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.recipes.detail(selectedItemId) });
       }
 
-      success('Xóa công thức thành công', 'Nguyên liệu đã được gỡ khỏi công thức');
+      success('Xóa công thức thành công', 'Thành phần đã được gỡ khỏi công thức');
     },
     onError: (err) => {
       if (isAxiosError<ApiResponse<unknown>>(err) && err.response) {
@@ -193,8 +205,8 @@ export const useRecipeManagement = () => {
   });
 
   /**
-   * Trả về danh sách nguyên liệu hợp lệ cho dialog.
-   * Mặc định sẽ loại bỏ các nguyên liệu đã có để tránh tạo bản ghi trùng.
+   * Trả về danh sách thành phần hợp lệ cho dialog.
+   * Mặc định sẽ loại bỏ các item đã có để tránh tạo bản ghi trùng.
    */
   const getSelectableIngredients = useCallback(
     (currentIngredientItemId?: string): RecipeIngredientOption[] => {
@@ -204,9 +216,14 @@ export const useRecipeManagement = () => {
           .map((line) => line.ingredientItemId)
       );
 
-      return (ingredientsQuery.data ?? []).filter((ingredient) => !usedIngredientIds.has(ingredient.itemId));
+      return (ingredientsQuery.data ?? []).filter((ingredient) => {
+        const isSelectedTargetItem =
+          ingredient.itemId === selectedItemId && ingredient.itemId !== currentIngredientItemId;
+
+        return !usedIngredientIds.has(ingredient.itemId) && !isSelectedTargetItem;
+      });
     },
-    [ingredientsQuery.data, recipeLines]
+    [ingredientsQuery.data, recipeLines, selectedItemId]
   );
 
   return {
@@ -236,10 +253,17 @@ export const useRecipeManagement = () => {
     selectedCategoryId,
     selectedItem,
     selectedItemId,
+    targetItemType,
     totalMenuItems,
     setSearchKeyword,
     setSelectedCategoryId,
-    setSelectedItemId,
+    setSelectedItemId: (itemId: string) => {
+      setSelectedItemIds((prev) => ({
+        ...prev,
+        [targetItemType]: itemId,
+      }));
+    },
+    setTargetItemType,
     onCreateRecipe: createRecipeMutation.mutateAsync,
     onDeleteRecipe: deleteRecipeMutation.mutateAsync,
     onLoadMoreMenuItems: () => menuItemsQuery.fetchNextPage(),

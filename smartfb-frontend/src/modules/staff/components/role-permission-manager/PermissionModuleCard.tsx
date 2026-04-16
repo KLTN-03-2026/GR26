@@ -87,11 +87,11 @@ export const PermissionModuleCard = ({
                     onSelect={(event) => event.preventDefault()}
                     className="items-start px-3 py-2"
                   >
-                    <div className="space-y-1">
+                    <div className={` space-y-1  `  }>
                       <p className="font-medium text-text-primary">
                         {permission.description}
                       </p>
-                      <p className="text-xs text-text-secondary">{permission.id}</p>
+                      {/* <p className="text-xs text-text-secondary">{permission.id}</p> */}
                     </div>
                   </DropdownMenuCheckboxItem>
                 );
@@ -137,7 +137,7 @@ export const PermissionModuleCard = ({
                   <p className="font-medium text-text-primary">
                     {permission.description}
                   </p>
-                  <p className="text-xs text-text-secondary">{permission.id}</p>
+                  {/* <p className="text-xs text-text-secondary">{permission.id}</p> */}
                 </div>
               </label>
             ))}

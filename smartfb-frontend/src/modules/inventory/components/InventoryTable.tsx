@@ -14,6 +14,7 @@ import type { InventoryBalance } from '../types/inventory.types';
 
 interface InventoryTableProps {
   balances: InventoryBalance[];
+  itemLabel: string;
   totalItems: number;
   currentPage: number;
   totalPages: number;
@@ -26,6 +27,8 @@ interface InventoryTableProps {
   onWasteItem: (itemId: string, branchId: string) => void;
   resolveBranchName: (branchId: string) => string;
 }
+
+const capitalizeLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 const formatQuantity = (value: number, unit: string | null) => {
   const formattedValue = new Intl.NumberFormat('vi-VN', {
@@ -57,6 +60,7 @@ const renderStockBadge = (balance: InventoryBalance) => {
  */
 export const InventoryTable = ({
   balances,
+  itemLabel,
   totalItems,
   currentPage,
   totalPages,
@@ -69,10 +73,14 @@ export const InventoryTable = ({
   onWasteItem,
   resolveBranchName,
 }: InventoryTableProps) => {
+  const itemLabelTitle = capitalizeLabel(itemLabel);
+
   if (balances.length === 0) {
     return (
       <div className="rounded-card border border-dashed border-border bg-card px-6 py-12 text-center">
-        <p className="text-lg font-semibold text-text-primary">Chưa có dữ liệu tồn kho phù hợp</p>
+        <p className="text-lg font-semibold text-text-primary">
+          Chưa có dữ liệu tồn kho {itemLabel} phù hợp
+        </p>
         <p className="mt-2 text-sm text-text-secondary">
           Thử đổi bộ lọc để xem nhanh toàn chuỗi hoặc chọn một dòng tồn kho cụ thể để thao tác theo chi nhánh.
         </p>
@@ -85,7 +93,7 @@ export const InventoryTable = ({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-cream">
-            <TableHead>Nguyên liệu</TableHead>
+            <TableHead>{itemLabelTitle}</TableHead>
             <TableHead>Chi nhánh</TableHead>
             <TableHead>Tồn hiện tại</TableHead>
             <TableHead>Mức tối thiểu</TableHead>
@@ -101,7 +109,7 @@ export const InventoryTable = ({
             <TableRow key={balance.id}>
               <TableCell>
                 <p className="font-semibold text-text-primary">
-                  {balance.itemName?.trim() || 'Chưa có tên nguyên liệu'}
+                  {balance.itemName?.trim() || `Chưa có tên ${itemLabel}`}
                 </p>
               </TableCell>
               <TableCell>{resolveBranchName(balance.branchId)}</TableCell>
@@ -121,7 +129,7 @@ export const InventoryTable = ({
                       className="h-8 w-8"
                       onClick={() => onWasteItem(balance.itemId, balance.branchId)}
                       disabled={isActionPending}
-                      aria-label={`Ghi hao hụt cho ${balance.itemName?.trim() || 'nguyên liệu này'}`}
+                      aria-label={`Ghi hao hụt cho ${balance.itemName?.trim() || itemLabel}`}
                       title="Ghi hao hụt"
                     >
                       <ShieldAlert className="h-4 w-4" />
@@ -135,7 +143,7 @@ export const InventoryTable = ({
                       className="h-8 w-8"
                       onClick={() => onAdjustItem(balance.itemId, balance.branchId)}
                       disabled={isActionPending}
-                      aria-label={`Điều chỉnh kho cho ${balance.itemName?.trim() || 'nguyên liệu này'}`}
+                      aria-label={`Điều chỉnh kho cho ${balance.itemName?.trim() || itemLabel}`}
                       title="Điều chỉnh kho"
                     >
                       <PencilLine className="h-4 w-4" />

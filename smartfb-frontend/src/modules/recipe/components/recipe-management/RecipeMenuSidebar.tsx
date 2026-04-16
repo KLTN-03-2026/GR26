@@ -3,7 +3,9 @@ import { Search } from 'lucide-react';
 import type {
   RecipeMenuCategory,
   RecipeMenuItem,
+  RecipeTargetItemType,
 } from '@modules/recipe/types/recipe.types';
+import { RECIPE_TARGET_TYPE_LABELS } from '@modules/recipe/types/recipe.types';
 import { formatRecipeNumber } from '@modules/recipe/utils';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
@@ -17,12 +19,14 @@ import {
 import { cn } from '@shared/utils/cn';
 
 interface RecipeMenuSidebarProps {
+  targetItemType: RecipeTargetItemType;
   searchKeyword: string;
   debouncedSearchKeyword: string;
   selectedCategoryId: string;
   selectedItemId: string;
   categoryOptions: RecipeMenuCategory[];
   menuItems: RecipeMenuItem[];
+  canFilterByCategory: boolean;
   hasMoreMenuItems: boolean;
   isCategoriesError: boolean;
   isLoadingMoreMenuItems: boolean;
@@ -33,12 +37,14 @@ interface RecipeMenuSidebarProps {
 }
 
 export const RecipeMenuSidebar = ({
+  targetItemType,
   searchKeyword,
   debouncedSearchKeyword,
   selectedCategoryId,
   selectedItemId,
   categoryOptions,
   menuItems,
+  canFilterByCategory,
   hasMoreMenuItems,
   isCategoriesError,
   isLoadingMoreMenuItems,
@@ -47,9 +53,22 @@ export const RecipeMenuSidebar = ({
   onSelectItemId,
   onLoadMoreMenuItems,
 }: RecipeMenuSidebarProps) => {
+  const targetItemTypeLabel = RECIPE_TARGET_TYPE_LABELS[targetItemType];
+  const targetItemTypeDescription = targetItemType === 'SELLABLE' ? 'món bán' : 'bán thành phẩm';
+  const searchPlaceholder =
+    targetItemType === 'SELLABLE'
+      ? 'Ví dụ: Bạc xỉu, Trà đào...'
+      : 'Ví dụ: Kem cheese, Cốt cà phê phin...';
+  const priceLabel = targetItemType === 'SELLABLE' ? 'Giá bán' : 'Giá tham chiếu';
+
   return (
     <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-2xl font-semibold text-gray-900">Danh sách món</h2>
+      <div className="space-y-1">
+        <h2 className="text-2xl font-semibold text-gray-900">Danh sách {targetItemTypeLabel.toLowerCase()}</h2>
+        <p className="text-sm text-slate-500">
+          Chọn {targetItemTypeDescription} để xem và chỉnh công thức.
+        </p>
+      </div>
 
       <div className="grid gap-3">
         <div className="space-y-2">
@@ -66,31 +85,37 @@ export const RecipeMenuSidebar = ({
               value={searchKeyword}
               onChange={(event) => onSearchKeywordChange(event.target.value)}
               className="pl-9"
-              placeholder="Ví dụ: Bạc xỉu, Trà đào..."
+              placeholder={searchPlaceholder}
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">Danh mục</p>
-          <Select value={selectedCategoryId} onValueChange={onCategoryChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Chọn danh mục" />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {isCategoriesError ? (
-            <p className="text-xs text-amber-700">
-              Không tải được danh mục. Hệ thống đang giữ bộ lọc mặc định.
-            </p>
-          ) : null}
-        </div>
+        {canFilterByCategory ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-slate-700">Danh mục</p>
+            <Select value={selectedCategoryId} onValueChange={onCategoryChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn danh mục" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isCategoriesError ? (
+              <p className="text-xs text-amber-700">
+                Không tải được danh mục. Hệ thống đang giữ bộ lọc mặc định.
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            Bán thành phẩm hiện không dùng bộ lọc danh mục menu. Bạn có thể tìm trực tiếp theo tên.
+          </div>
+        )}
       </div>
 
       {debouncedSearchKeyword ? (
@@ -103,17 +128,17 @@ export const RecipeMenuSidebar = ({
 
       <div className="overflow-hidden rounded-xl border border-slate-200">
         <div className="grid grid-cols-[minmax(0,1fr)_88px] border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-          <span>Tên món</span>
-          <span className="text-right">Giá bán</span>
+          <span>Tên item</span>
+          <span className="text-right">{priceLabel}</span>
         </div>
 
         <div className="max-h-[38rem] overflow-y-auto">
           {menuItems.length === 0 ? (
             <div className="px-4 py-6 text-sm text-slate-500">
-              <p>Chưa có món phù hợp trong phần dữ liệu đã tải.</p>
+              <p>Chưa có item phù hợp trong phần dữ liệu đã tải.</p>
               {hasMoreMenuItems ? (
                 <p className="mt-1">
-                  Bạn có thể bấm tải thêm để tìm tiếp theo danh mục đang chọn.
+                  Bạn có thể bấm tải thêm để tìm tiếp theo bộ lọc đang chọn.
                 </p>
               ) : null}
             </div>
@@ -151,10 +176,10 @@ export const RecipeMenuSidebar = ({
         className="w-full"
       >
         {isLoadingMoreMenuItems
-          ? 'Đang tải thêm món...'
+          ? 'Đang tải thêm item...'
           : hasMoreMenuItems
-            ? 'Tải thêm 10 món'
-            : 'Đã tải hết món'}
+            ? 'Tải thêm 10 item'
+            : 'Đã tải hết item'}
       </Button>
     </aside>
   );

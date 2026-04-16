@@ -1,50 +1,272 @@
 """
 Endpoint dự báo tiêu thụ nguyên liệu.
 Chỉ ĐỌC từ bảng forecast_results — KHÔNG chạy model realtime.
+Response time target: < 200ms.
 """
 
-from fastapi import APIRouter, Depends
+import time
+from collections import defaultdict
+from datetime import date, datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_tenant, get_db
+from app.api.deps import get_current_tenant, get_db, verify_branch_access
+from app.core.logging import get_logger
 from app.core.security import TokenPayload
+from app.schemas.forecast import (
+    DayForecast,
+    ForecastResponse,
+    ForecastSummary,
+    IngredientForecast,
+)
+from app.utils import model_io
+from app.utils.stock_calculator import calc_suggested_order_date, get_urgency
 
 router = APIRouter(prefix="/forecast", tags=["Forecast"])
+logger = get_logger(__name__)
+
+# SQL lấy toàn bộ forecast cho 1 chi nhánh từ hôm nay trở đi
+_SQL_BRANCH_FORECAST = text("""
+    SELECT
+        asr.ingredient_id,
+        i.name                       AS ingredient_name,
+        i.unit,
+        fr.forecast_date,
+        fr.predicted_qty,
+        fr.stockout_date,
+        fr.suggested_qty,
+        COALESCE(ib.quantity, 0.0)   AS current_stock
+    FROM forecast_results fr
+    JOIN ai_series_registry asr ON asr.id = fr.series_id
+    JOIN items i ON i.id::text = asr.ingredient_id
+    LEFT JOIN inventory_balances ib
+        ON ib.item_id::text = asr.ingredient_id
+        AND ib.branch_id::text = :branch_id
+        AND ib.tenant_id::text = :tenant_id
+    WHERE asr.branch_id::text = :branch_id
+      AND fr.forecast_date >= :today
+    ORDER BY i.name ASC, fr.forecast_date ASC
+""")
+
+# SQL lấy forecast cho 1 nguyên liệu cụ thể
+_SQL_INGREDIENT_FORECAST = text("""
+    SELECT
+        asr.ingredient_id,
+        i.name                       AS ingredient_name,
+        i.unit,
+        fr.forecast_date,
+        fr.predicted_qty,
+        fr.stockout_date,
+        fr.suggested_qty,
+        COALESCE(ib.quantity, 0.0)   AS current_stock
+    FROM forecast_results fr
+    JOIN ai_series_registry asr ON asr.id = fr.series_id
+    JOIN items i ON i.id::text = asr.ingredient_id
+    LEFT JOIN inventory_balances ib
+        ON ib.item_id::text = asr.ingredient_id
+        AND ib.branch_id::text = :branch_id
+        AND ib.tenant_id::text = :tenant_id
+    WHERE asr.branch_id::text = :branch_id
+      AND asr.ingredient_id = :ingredient_id
+      AND fr.forecast_date >= :today
+    ORDER BY fr.forecast_date ASC
+""")
 
 
-@router.get("/{branch_id}")
-async def get_branch_forecast(
-    branch_id: str,
-    db: AsyncSession = Depends(get_db),
-    tenant: TokenPayload = Depends(get_current_tenant),
-) -> dict:
+def _rows_to_ingredient_forecasts(rows: list) -> list[IngredientForecast]:
     """
-    Lấy kết quả dự báo 7 ngày tới của tất cả nguyên liệu tại chi nhánh.
-    Kết quả đọc từ bảng forecast_results (đã tính sẵn bởi predict job).
+    Chuyển đổi danh sách rows DB thành list[IngredientForecast].
+
+    Nhóm theo ingredient_id, tính urgency và suggested_order_date từ stockout_date.
+    """
+    # Nhóm rows theo ingredient_id
+    grouped: dict[str, dict] = defaultdict(lambda: {
+        "ingredient_name": "",
+        "unit": "",
+        "current_stock": 0.0,
+        "stockout_date": None,
+        "suggested_qty": 0.0,
+        "forecast_days": [],
+    })
+
+    for row in rows:
+        ing_id = str(row.ingredient_id)
+        g = grouped[ing_id]
+        g["ingredient_name"] = row.ingredient_name
+        g["unit"] = row.unit
+        # Lấy current_stock và stockout_date từ row đầu tiên của ingredient
+        if not g["forecast_days"]:
+            g["current_stock"] = float(row.current_stock)
+            g["stockout_date"] = row.stockout_date
+            g["suggested_qty"] = float(row.suggested_qty) if row.suggested_qty else 0.0
+        g["forecast_days"].append(DayForecast(
+            forecast_date=row.forecast_date,
+            predicted_qty=float(row.predicted_qty),
+        ))
+
+    result: list[IngredientForecast] = []
+    for ing_id, g in grouped.items():
+        stockout: date | None = g["stockout_date"]
+        result.append(IngredientForecast(
+            ingredient_id=ing_id,
+            ingredient_name=g["ingredient_name"],
+            unit=g["unit"],
+            current_stock=g["current_stock"],
+            forecast_days=g["forecast_days"],
+            stockout_date=stockout,
+            suggested_order_qty=g["suggested_qty"],
+            suggested_order_date=calc_suggested_order_date(stockout),
+            urgency=get_urgency(stockout),
+            is_fallback=False,  # Không lưu trong DB — mặc định False
+        ))
+
+    return result
+
+
+@router.get("/{branch_id}/summary", response_model=ForecastSummary)
+async def get_branch_forecast_summary(
+    branch_id: str = Depends(verify_branch_access),
+    tenant: TokenPayload = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_db),
+) -> ForecastSummary:
+    """
+    Lấy tổng quan dự báo cho dashboard — chỉ đếm theo urgency, không có chi tiết.
+    Load nhanh hơn endpoint full forecast.
 
     Args:
-        branch_id: ID của chi nhánh cần lấy dự báo
+        branch_id: ID chi nhánh (đã verify thuộc tenant)
 
     Returns:
-        ForecastResponse với danh sách nguyên liệu và dự báo từng ngày
+        ForecastSummary với urgent_count, warning_count, ok_count
     """
-    # TODO: implement trong sprint predict
-    raise NotImplementedError("Endpoint chưa implement — chờ predict_service")
+    # Lấy 1 row per ingredient cho hôm nay để tính urgency
+    sql = text("""
+        SELECT DISTINCT ON (asr.ingredient_id)
+            fr.stockout_date
+        FROM forecast_results fr
+        JOIN ai_series_registry asr ON asr.id = fr.series_id
+        WHERE asr.branch_id = :branch_id
+          AND fr.forecast_date = :today
+        ORDER BY asr.ingredient_id, fr.forecast_date
+    """)
+
+    result = await db.execute(sql, {
+        "branch_id": branch_id,
+        "today": date.today(),
+    })
+    rows = result.fetchall()
+
+    urgency_counts = {"critical": 0, "warning": 0, "ok": 0}
+    for row in rows:
+        u = get_urgency(row.stockout_date)
+        urgency_counts[u] += 1
+
+    total = len(rows)
+    return ForecastSummary(
+        branch_id=branch_id,
+        generated_at=datetime.now(),
+        urgent_count=urgency_counts["critical"],
+        warning_count=urgency_counts["warning"],
+        ok_count=urgency_counts["ok"],
+        total_ingredients=total,
+    )
 
 
-@router.get("/{branch_id}/{ingredient_id}")
+@router.get("/{branch_id}/{ingredient_id}", response_model=IngredientForecast)
 async def get_ingredient_forecast(
-    branch_id: str,
     ingredient_id: str,
-    db: AsyncSession = Depends(get_db),
+    branch_id: str = Depends(verify_branch_access),
     tenant: TokenPayload = Depends(get_current_tenant),
-) -> dict:
+    db: AsyncSession = Depends(get_db),
+) -> IngredientForecast:
     """
     Lấy dự báo 7 ngày của 1 nguyên liệu cụ thể tại chi nhánh.
 
     Args:
-        branch_id: ID chi nhánh
-        ingredient_id: ID nguyên liệu cụ thể
+        branch_id: ID chi nhánh (đã verify thuộc tenant)
+        ingredient_id: UUID nguyên liệu cần xem dự báo
+
+    Returns:
+        IngredientForecast cho nguyên liệu đó
+
+    Raises:
+        HTTPException 404: Không có dự báo cho nguyên liệu này
     """
-    # TODO: implement trong sprint predict
-    raise NotImplementedError("Endpoint chưa implement — chờ predict_service")
+    result = await db.execute(_SQL_INGREDIENT_FORECAST, {
+        "branch_id": branch_id,
+        "ingredient_id": ingredient_id,
+        "tenant_id": tenant.tenant_id,
+        "today": date.today(),
+    })
+    rows = result.fetchall()
+
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không có dự báo cho nguyên liệu {ingredient_id} tại chi nhánh {branch_id}",
+        )
+
+    forecasts = _rows_to_ingredient_forecasts(rows)
+    return forecasts[0]
+
+
+@router.get("/{branch_id}", response_model=ForecastResponse)
+async def get_branch_forecast(
+    response: Response,
+    branch_id: str = Depends(verify_branch_access),
+    tenant: TokenPayload = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_db),
+) -> ForecastResponse:
+    """
+    Lấy kết quả dự báo 7 ngày tới của tất cả nguyên liệu tại chi nhánh.
+    Kết quả đọc từ bảng forecast_results — predict job đã tính sẵn mỗi đêm.
+
+    Args:
+        branch_id: ID chi nhánh (đã verify thuộc tenant)
+
+    Returns:
+        ForecastResponse với danh sách nguyên liệu và dự báo từng ngày.
+        ingredients=[] nếu predict job chưa chạy hoặc chưa có data.
+    """
+    t_start = time.perf_counter()
+
+    # Lấy metadata train để biết last_trained_at
+    metadata = model_io.get_train_metadata(tenant.tenant_id)
+    last_trained_at: datetime | None = None
+    if metadata and metadata.get("trained_at"):
+        try:
+            last_trained_at = datetime.fromisoformat(metadata["trained_at"])
+        except (ValueError, TypeError):
+            pass
+
+    # Lấy tên chi nhánh từ bảng branches
+    branch_sql = text("SELECT name FROM branches WHERE id::text = :branch_id LIMIT 1")
+    branch_result = await db.execute(branch_sql, {"branch_id": branch_id})
+    branch_row = branch_result.fetchone()
+    branch_name = branch_row[0] if branch_row else branch_id
+
+    # Lấy forecast data
+    result = await db.execute(_SQL_BRANCH_FORECAST, {
+        "branch_id": branch_id,
+        "tenant_id": tenant.tenant_id,
+        "today": date.today(),
+    })
+    rows = result.fetchall()
+
+    ingredients = _rows_to_ingredient_forecasts(rows)
+
+    elapsed_ms = (time.perf_counter() - t_start) * 1000
+    logger.info("forecast %s: %.0fms (%d ingredients)", branch_id, elapsed_ms, len(ingredients))
+
+    # Cache 5 phút — FE không cần real-time, forecast job chạy hàng đêm
+    response.headers["Cache-Control"] = "max-age=300"
+
+    return ForecastResponse(
+        branch_id=branch_id,
+        branch_name=branch_name,
+        generated_at=datetime.now(),
+        last_trained_at=last_trained_at,
+        ingredients=ingredients,
+    )
