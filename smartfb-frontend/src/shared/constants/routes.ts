@@ -40,6 +40,8 @@ export const ROUTES = {
   // Staff routes - POS namespace cho nhân viên
   STAFF: {
     DASHBOARD: '/pos/dashboard',
+    STAFF: '/pos/staff',
+    STAFF_POSITIONS: '/pos/staff/positions',
     TABLES: '/pos/tables',
     ORDERS: '/pos/orders',
     MENU: '/pos/menu',

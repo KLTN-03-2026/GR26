@@ -33,5 +33,8 @@ async def get_branch_events(
     Returns:
         List[dict] với keys: event_type, start_date, end_date
     """
-    # TODO: implement trong sprint event
-    raise NotImplementedError
+    # Placeholder — chưa implement. Trả về list rỗng để không block train/predict.
+    logger.debug(
+        "get_branch_events chưa implement: tenant=%s branch=%s", tenant_id, branch_id
+    )
+    return []

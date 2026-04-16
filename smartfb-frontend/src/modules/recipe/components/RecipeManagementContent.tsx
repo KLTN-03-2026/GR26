@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Boxes, ChefHat } from 'lucide-react';
 
 import { RecipeLineDialog } from '@modules/recipe/components/RecipeLineDialog';
 import {
@@ -10,7 +11,9 @@ import { useRecipeManagement } from '@modules/recipe/hooks';
 import type {
   RecipeLine,
   RecipeLineFormValues,
+  RecipeTargetItemType,
 } from '@modules/recipe/types/recipe.types';
+import { RECIPE_TARGET_TYPE_LABELS } from '@modules/recipe/types/recipe.types';
 import {
   buildRecipeFormulaSummary,
   buildRecipeInsights,
@@ -18,6 +21,24 @@ import {
 import { Button } from '@shared/components/ui/button';
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { usePermission } from '@shared/hooks/usePermission';
+import { Tabs, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
+
+const RECIPE_TARGET_TYPE_OPTIONS: Array<{
+  type: RecipeTargetItemType;
+  icon: typeof ChefHat;
+  description: string;
+}> = [
+  {
+    type: 'SELLABLE',
+    icon: ChefHat,
+    description: 'Quản lý công thức cho món bán trực tiếp phục vụ khách.',
+  },
+  {
+    type: 'SUB_ASSEMBLY',
+    icon: Boxes,
+    description: 'Quản lý công thức cho bán thành phẩm dùng trong sơ chế, pha cốt hoặc topping nền.',
+  },
+];
 
 /**
  * Thành phần chính của màn quản lý công thức.
@@ -55,14 +76,18 @@ export const RecipeManagementContent = () => {
     selectedCategoryId,
     selectedItem,
     selectedItemId,
+    targetItemType,
     setSearchKeyword,
     setSelectedCategoryId,
     setSelectedItemId,
+    setTargetItemType,
     totalMenuItems,
   } = useRecipeManagement();
   const canManageRecipe = can(PERMISSIONS.MENU_EDIT);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLine, setEditingLine] = useState<RecipeLine | null>(null);
+  const selectedTargetTypeLabel = RECIPE_TARGET_TYPE_LABELS[targetItemType];
+  const canFilterByCategory = targetItemType === 'SELLABLE';
 
   /**
    * Với thao tác tạo mới, loại bỏ các nguyên liệu đã nằm trong công thức hiện tại.
@@ -121,7 +146,7 @@ export const RecipeManagementContent = () => {
 
   const handleDeleteRecipe = async (line: RecipeLine) => {
     const shouldDelete = window.confirm(
-      `Bạn có chắc muốn xóa nguyên liệu ${line.ingredientName} khỏi công thức hiện tại không?`,
+      `Bạn có chắc muốn xóa thành phần ${line.ingredientName} khỏi công thức hiện tại không?`,
     );
 
     if (!shouldDelete) {
@@ -136,10 +161,10 @@ export const RecipeManagementContent = () => {
       <div className="flex h-72 items-center justify-center rounded-2xl border border-border bg-white">
         <div className="text-center">
           <p className="text-base font-semibold text-gray-900">
-            Đang tải danh sách món bán
+            Đang tải danh sách item đích
           </p>
           <p className="mt-2 text-sm text-gray-500">
-            Hệ thống đang đồng bộ dữ liệu công thức từ backend.
+            Hệ thống đang đồng bộ dữ liệu công thức theo loại item đang chọn.
           </p>
         </div>
       </div>
@@ -150,7 +175,7 @@ export const RecipeManagementContent = () => {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
         <p className="text-lg font-semibold text-red-700">
-          Không thể tải danh sách món bán
+          Không thể tải danh sách item đích
         </p>
         <p className="mt-2 text-sm text-red-600">
           Kiểm tra quyền `MENU_VIEW` hoặc tình trạng backend rồi thử lại.
@@ -166,11 +191,12 @@ export const RecipeManagementContent = () => {
     return (
       <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-6 py-12 text-center">
         <p className="text-lg font-semibold text-gray-900">
-          Chưa có món bán để cấu hình công thức
+          Chưa có {targetItemType === 'SELLABLE' ? 'món bán' : 'bán thành phẩm'} để cấu hình công thức
         </p>
         <p className="mt-2 text-sm text-gray-600">
-          Hãy tạo món trong thực đơn trước, sau đó quay lại màn công thức để
-          thêm định lượng nguyên liệu.
+          {targetItemType === 'SELLABLE'
+            ? 'Hãy tạo món trong thực đơn trước, sau đó quay lại màn công thức để thêm thành phần.'
+            : 'Hãy tạo bán thành phẩm trước, sau đó quay lại màn công thức để cấu hình định lượng.'}
         </p>
       </div>
     );
@@ -178,14 +204,46 @@ export const RecipeManagementContent = () => {
 
   return (
     <>
+      <div className="mb-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-slate-900">Quản lý công thức</h1>
+          <p className="text-sm text-slate-600">
+            Trang này hỗ trợ cấu hình công thức cho cả món bán và bán thành phẩm, theo đúng contract backend hiện tại.
+          </p>
+        </div>
+
+        <Tabs value={targetItemType} onValueChange={(value) => setTargetItemType(value as RecipeTargetItemType)}>
+          <TabsList>
+            {RECIPE_TARGET_TYPE_OPTIONS.map((option) => {
+              const Icon = option.icon;
+
+              return (
+                <TabsTrigger key={option.type} value={option.type} className="gap-2">
+                  <Icon className="h-4 w-4" />
+                  {RECIPE_TARGET_TYPE_LABELS[option.type]}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
+
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {
+            RECIPE_TARGET_TYPE_OPTIONS.find((option) => option.type === targetItemType)?.description
+          }
+        </div>
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
         <RecipeMenuSidebar
+          targetItemType={targetItemType}
           searchKeyword={searchKeyword}
           debouncedSearchKeyword={debouncedSearchKeyword}
           selectedCategoryId={selectedCategoryId}
           selectedItemId={selectedItemId}
           categoryOptions={categoryOptions}
           menuItems={menuItems}
+          canFilterByCategory={canFilterByCategory}
           hasMoreMenuItems={hasMoreMenuItems}
           isCategoriesError={isCategoriesError}
           isLoadingMoreMenuItems={isLoadingMoreMenuItems}
@@ -199,7 +257,7 @@ export const RecipeManagementContent = () => {
           {!hasVisibleMenuItems ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
               <p className="text-lg font-semibold text-slate-900">
-                Chưa có món phù hợp với bộ lọc hiện tại
+                Chưa có {selectedTargetTypeLabel.toLowerCase()} phù hợp với bộ lọc hiện tại
               </p>
             </div>
           ) : (
@@ -245,7 +303,7 @@ export const RecipeManagementContent = () => {
             key={`recipe-create-${selectedItemId}`}
             open={isCreateDialogOpen}
             mode="create"
-            targetItemName={selectedItem?.name ?? "món đã chọn"}
+            targetItemName={selectedItem?.name ?? selectedTargetTypeLabel.toLowerCase()}
             ingredientOptions={createIngredientOptions}
             isPending={isCreatingRecipe}
             onOpenChange={setIsCreateDialogOpen}
@@ -256,7 +314,7 @@ export const RecipeManagementContent = () => {
             key={`recipe-edit-${editingLine?.id ?? "empty"}`}
             open={Boolean(editingLine)}
             mode="edit"
-            targetItemName={selectedItem?.name ?? "món đã chọn"}
+            targetItemName={selectedItem?.name ?? selectedTargetTypeLabel.toLowerCase()}
             ingredientOptions={editIngredientOptions}
             initialLine={editingLine}
             isPending={isUpdatingRecipe}

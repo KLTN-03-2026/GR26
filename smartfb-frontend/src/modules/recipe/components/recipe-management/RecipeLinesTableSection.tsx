@@ -43,6 +43,12 @@ const RECIPE_STOCK_STATUS_CLASSNAME: Record<
   unknown: 'bg-slate-100 text-slate-600',
 };
 
+const RECIPE_COMPONENT_TYPE_CLASSNAME: Record<RecipeLineInsight['ingredientType'], string> = {
+  INGREDIENT: 'bg-blue-100 text-blue-700',
+  SUB_ASSEMBLY: 'bg-violet-100 text-violet-700',
+  UNKNOWN: 'bg-slate-100 text-slate-600',
+};
+
 export const RecipeLinesTableSection = ({
   selectedItemName,
   recipeInsights,
@@ -65,7 +71,7 @@ export const RecipeLinesTableSection = ({
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Không thể đồng bộ danh sách nguyên liệu từ kho. Bạn vẫn xem được
+            Không thể đồng bộ danh sách thành phần từ kho. Bạn vẫn xem được
             công thức hiện có, nhưng dữ liệu tồn tham chiếu có thể chưa đầy đủ.
           </p>
         </div>
@@ -75,20 +81,20 @@ export const RecipeLinesTableSection = ({
         <div className="flex h-72 items-center justify-center rounded-2xl border border-border bg-white">
           <div className="text-center">
             <p className="text-base font-semibold text-gray-900">
-              Đang tải công thức của món đã chọn
+              Đang tải công thức của item đã chọn
             </p>
             <p className="mt-2 text-sm text-gray-500">
-              Hệ thống đang gọi API lấy công thức của món đã chọn.
+              Hệ thống đang gọi API lấy công thức của item đã chọn.
             </p>
           </div>
         </div>
       ) : isRecipeError ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
           <p className="text-lg font-semibold text-red-700">
-            Không thể tải công thức món bán
+            Không thể tải công thức item đích
           </p>
           <p className="mt-2 text-sm text-red-600">
-            Kiểm tra backend recipe hoặc dữ liệu món bán đang chọn rồi thử lại.
+            Kiểm tra backend recipe hoặc dữ liệu item đang chọn rồi thử lại.
           </p>
           <Button className="mt-4" onClick={onRetryRecipe}>
             Thử lại
@@ -97,11 +103,11 @@ export const RecipeLinesTableSection = ({
       ) : recipeInsights.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 px-6 py-12 text-center">
           <p className="text-lg font-semibold text-gray-900">
-            Món này chưa có công thức
+            Item này chưa có công thức
           </p>
           <p className="mt-2 text-sm text-gray-600">
-            Bắt đầu thêm nguyên liệu để hệ thống có thể dùng recipe cho các
-            luồng quản trị kho và bán hàng.
+            Bắt đầu thêm thành phần để hệ thống có thể dùng recipe cho các
+            luồng quản trị kho, bán hàng và sản xuất.
           </p>
           {canManageRecipe ? (
             <Button
@@ -119,7 +125,7 @@ export const RecipeLinesTableSection = ({
           <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-                Bảng nguyên liệu của {selectedItemName}
+                Bảng thành phần của {selectedItemName}
               </h2>
             </div>
           </div>
@@ -130,7 +136,7 @@ export const RecipeLinesTableSection = ({
                 <TableHead className="hidden w-[68px] md:table-cell">
                   STT
                 </TableHead>
-                <TableHead>Nguyên liệu</TableHead>
+                <TableHead>Thành phần</TableHead>
                 <TableHead>Định lượng</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Tồn tham chiếu
@@ -158,6 +164,14 @@ export const RecipeLinesTableSection = ({
                     <p className="font-medium text-slate-900">
                       {line.ingredientName}
                     </p>
+                    <span
+                      className={cn(
+                        'mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        RECIPE_COMPONENT_TYPE_CLASSNAME[line.ingredientType]
+                      )}
+                    >
+                      {line.ingredientTypeLabel}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {formatRecipeNumber(line.quantity)} {line.displayUnit}
@@ -170,7 +184,7 @@ export const RecipeLinesTableSection = ({
                   <TableCell className="hidden md:table-cell">
                     {line.coverageCount === null
                       ? 'Chưa tính được'
-                      : `${formatRecipeCoverageCount(line.coverageCount)} lượt pha`}
+                      : `${formatRecipeCoverageCount(line.coverageCount)} lượt tạo`}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <span
@@ -190,7 +204,7 @@ export const RecipeLinesTableSection = ({
                           size="icon"
                           onClick={() => onEditLine(line)}
                           disabled={isUpdatingRecipe || isDeletingRecipe}
-                          aria-label={`Sửa nguyên liệu ${line.ingredientName}`}
+                          aria-label={`Sửa thành phần ${line.ingredientName}`}
                           title="Sửa"
                         >
                           <PencilLine className="h-4 w-4" />
@@ -200,7 +214,7 @@ export const RecipeLinesTableSection = ({
                           size="icon"
                           onClick={() => onDeleteLine(line)}
                           disabled={isUpdatingRecipe || isDeletingRecipe}
-                          aria-label={`Xóa nguyên liệu ${line.ingredientName}`}
+                          aria-label={`Xóa thành phần ${line.ingredientName}`}
                           title="Xóa"
                         >
                           <Trash2 className="h-4 w-4" />

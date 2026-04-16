@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.services.data_service import (
-    get_active_tenants,
+    get_active_tenants,            # alias của get_all_active_tenants
     get_all_consumption_for_tenant,
 )
 from app.utils.model_io import save_model
@@ -109,14 +109,38 @@ def _build_neuralprophet_model():  # type: ignore[return]
         epochs=settings.np_epochs,
         batch_size=32,
         learning_rate=0.001,
-        # Tắt progress bar trong production — tránh spam log
-        progress="none",
     )
 
     # Thêm ngày lễ Việt Nam — BẮT BUỘC cho dự báo tại VN
     model.add_country_holidays("VN")
 
     return model
+
+
+def _filter_valid_series(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Lọc bỏ các series không đủ ngày data để train.
+
+    Series có < MIN_DAYS_REQUIRED ngày unique sẽ bị loại.
+    Log rõ từng series bị skip để debug dễ hơn.
+
+    Args:
+        df: DataFrame với cột [ds, y, ID]
+
+    Returns:
+        DataFrame chỉ giữ series đủ điều kiện. Rỗng nếu tất cả bị filter.
+    """
+    series_days = df.groupby("ID")["ds"].nunique()
+    valid_ids = series_days[series_days >= MIN_DAYS_REQUIRED].index.tolist()
+    skip_ids = series_days[series_days < MIN_DAYS_REQUIRED]
+
+    for sid, n_days in skip_ids.items():
+        logger.warning("Skip %s: chỉ %d ngày (cần %d)", sid, n_days, MIN_DAYS_REQUIRED)
+
+    if valid_ids:
+        logger.info("Giữ lại %d/%d series đủ điều kiện train", len(valid_ids), len(series_days))
+
+    return df[df["ID"].isin(valid_ids)].copy()
 
 
 def train_global_model(df: pd.DataFrame, tenant_id: str) -> dict:
@@ -135,7 +159,9 @@ def train_global_model(df: pd.DataFrame, tenant_id: str) -> dict:
         ValueError: Data không hợp lệ
         RuntimeError: Train thất bại
     """
-    # Bước 1: Validate
+    # Bước 1: Lọc series đủ điều kiện trước khi validate toàn bộ
+    df = _filter_valid_series(df)
+
     is_valid, reason = validate_training_data(df)
     if not is_valid:
         raise ValueError(f"Data không đủ điều kiện train: {reason}")
@@ -167,7 +193,7 @@ def train_global_model(df: pd.DataFrame, tenant_id: str) -> dict:
         logger.warning("Không lấy được MAE từ metrics")
 
     # Bước 5: Lưu model
-    model_path = save_model(model, tenant_id)
+    model_path = save_model(model, tenant_id, series_count=n_series)
     logger.info("Model đã lưu: %s", model_path)
 
     return {

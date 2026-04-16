@@ -7,3 +7,6 @@ ai-service/docs/skills/write-plan.md
 
 .env.*
 venv/*
+
+storage/models/*
+lightning_logs/*

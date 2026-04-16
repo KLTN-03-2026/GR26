@@ -68,7 +68,7 @@ export const buildRecipeFormulaSummary = (
   recipeInsights: RecipeLineInsight[]
 ) => {
   if (recipeInsights.length === 0) {
-    return 'Món này chưa có công thức.';
+    return 'Item này chưa có công thức.';
   }
 
   return recipeInsights

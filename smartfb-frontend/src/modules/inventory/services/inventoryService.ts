@@ -5,8 +5,14 @@ import type {
   ImportStockPayload,
   InventoryBalance,
   InventoryCatalogItem,
+  InventoryCatalogItemType,
   InventoryItemOption,
   InventoryListResult,
+  InventoryResolvedItemType,
+  InventoryTransaction,
+  InventoryTransactionListResult,
+  InventoryTransactionParams,
+  RecordProductionBatchPayload,
   WasteRecordPayload,
 } from '../types/inventory.types';
 
@@ -30,10 +36,25 @@ interface BackendInventoryBalanceResponse {
   updatedAt: string;
 }
 
-interface BackendIngredientCatalogResponse {
+interface BackendCatalogItemResponse {
   id: string;
   name: string;
   unit: string | null;
+}
+
+interface BackendTransactionResponse {
+  id: string;
+  type: string;
+  itemId: string;
+  itemName: string | null;
+  quantity: number | string;
+  costPerUnit: number | string | null;
+  userId: string | null;
+  staffName: string | null;
+  referenceId: string | null;
+  referenceType: string | null;
+  note: string | null;
+  createdAt: string;
 }
 
 const INVENTORY_PAGE_SIZE = 100;
@@ -80,13 +101,17 @@ const fetchAllPages = async <T>(
 /**
  * Chuyển response tồn kho từ backend sang model frontend.
  */
-const mapInventoryBalance = (balance: BackendInventoryBalanceResponse): InventoryBalance => {
+const mapInventoryBalance = (
+  balance: BackendInventoryBalanceResponse,
+  itemType: InventoryResolvedItemType,
+): InventoryBalance => {
   return {
     id: balance.id,
     branchId: balance.branchId,
     itemId: balance.itemId,
     itemName: balance.itemName,
     unit: balance.unit,
+    itemType,
     quantity: Number(balance.quantity),
     minLevel: Number(balance.minLevel),
     isLowStock: balance.isLowStock,
@@ -106,39 +131,62 @@ const mapInventoryItemOption = (item: InventoryCatalogItem): InventoryItemOption
 };
 
 /**
- * Lấy toàn bộ các trang tồn kho để frontend filter đầy đủ theo từ khóa và chi nhánh.
+ * Tạo map itemId -> type từ catalog để FE tách nguyên liệu và bán thành phẩm trong cùng bảng tồn kho.
  */
-const fetchAllInventoryPages = async (): Promise<InventoryBalance[]> => {
-  const balances = await fetchAllPages<BackendInventoryBalanceResponse>('/inventory');
-  return balances.map(mapInventoryBalance);
+const buildCatalogTypeMap = (catalogItems: InventoryCatalogItem[]): Map<string, InventoryCatalogItemType> => {
+  return new Map(catalogItems.map((item) => [item.id, item.type]));
 };
 
 /**
- * Lấy catalog nguyên liệu cấp tenant.
- * Dùng cho thao tác nhập kho lần đầu trước khi item có balance ở chi nhánh.
+ * Lấy toàn bộ các trang tồn kho để frontend filter đầy đủ theo từ khóa và chi nhánh.
  */
-const fetchAllIngredientCatalogPages = async (): Promise<InventoryCatalogItem[]> => {
-  const ingredients = await fetchAllPages<BackendIngredientCatalogResponse>('/menu/items', {
-    type: 'INGREDIENT',
+const fetchAllInventoryPages = async (
+  catalogTypeMap?: Map<string, InventoryCatalogItemType>,
+): Promise<InventoryBalance[]> => {
+  const balances = await fetchAllPages<BackendInventoryBalanceResponse>('/inventory');
+  return balances.map((balance) =>
+    mapInventoryBalance(balance, catalogTypeMap?.get(balance.itemId) ?? 'UNKNOWN'),
+  );
+};
+
+/**
+ * Lấy catalog item cấp tenant theo type.
+ * Dùng để tách nguồn nguyên liệu và bán thành phẩm khỏi snapshot tồn kho.
+ */
+const fetchAllCatalogPages = async (
+  type: InventoryCatalogItemType,
+): Promise<InventoryCatalogItem[]> => {
+  const items = await fetchAllPages<BackendCatalogItemResponse>('/menu/items', {
+    type,
   });
 
-  return ingredients.map((item) => ({
+  return items.map((item) => ({
     id: item.id,
     name: item.name,
     unit: item.unit,
+    type,
   }));
 };
 
 /**
  * Service gọi API inventory.
- * FE hiện dùng nhóm endpoint xem tồn kho, catalog nguyên liệu, nhập kho, điều chỉnh và hao hụt.
+ * FE hiện dùng nhóm endpoint xem tồn kho, catalog item, nhập kho, sản xuất, điều chỉnh và hao hụt.
  */
 export const inventoryService = {
   /**
    * Lấy toàn bộ tồn kho để frontend có thể filter/paginate client-side.
    */
   getList: async (): Promise<InventoryListResult> => {
-    const balances = await fetchAllInventoryPages();
+    const [ingredientCatalogResult, semiProductCatalogResult] = await Promise.allSettled([
+      fetchAllCatalogPages('INGREDIENT'),
+      fetchAllCatalogPages('SUB_ASSEMBLY'),
+    ]);
+    const catalogItems = [
+      ...(ingredientCatalogResult.status === 'fulfilled' ? ingredientCatalogResult.value : []),
+      ...(semiProductCatalogResult.status === 'fulfilled' ? semiProductCatalogResult.value : []),
+    ];
+    const catalogTypeMap = buildCatalogTypeMap(catalogItems);
+    const balances = await fetchAllInventoryPages(catalogTypeMap);
 
     return {
       data: balances,
@@ -155,9 +203,20 @@ export const inventoryService = {
    * Lấy danh mục nguyên liệu toàn tenant để form nhập kho chọn item nguồn.
    */
   getIngredientOptions: async (): Promise<InventoryItemOption[]> => {
-    const ingredients = await fetchAllIngredientCatalogPages();
+    const ingredients = await fetchAllCatalogPages('INGREDIENT');
 
     return ingredients
+      .map(mapInventoryItemOption)
+      .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
+  },
+
+  /**
+   * Lấy danh mục bán thành phẩm toàn tenant để tab bán thành phẩm thao tác trên catalog `SUB_ASSEMBLY`.
+   */
+  getSemiProductOptions: async (): Promise<InventoryItemOption[]> => {
+    const semiProducts = await fetchAllCatalogPages('SUB_ASSEMBLY');
+
+    return semiProducts
       .map(mapInventoryItemOption)
       .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
   },
@@ -202,5 +261,65 @@ export const inventoryService = {
     });
 
     return response.data;
+  },
+
+  /**
+   * Ghi nhận một mẻ sản xuất bán thành phẩm.
+   * Backend sẽ tự sinh `PRODUCTION_OUT` cho đầu vào và `PRODUCTION_IN` cho đầu ra.
+   */
+  recordProductionBatch: async (payload: RecordProductionBatchPayload): Promise<ApiResponse<string>> => {
+    const response = await api.post<ApiResponse<string>>('/inventory/production-batches', {
+      subAssemblyItemId: payload.subAssemblyItemId,
+      expectedOutputQuantity: payload.expectedOutputQuantity,
+      actualOutputQuantity: payload.actualOutputQuantity,
+      unit: payload.unit.trim(),
+      note: payload.note?.trim() ? payload.note.trim() : null,
+    });
+
+    return response.data;
+  },
+
+  /**
+   * Lấy lịch sử giao dịch kho (server-side pagination).
+   * Hỗ trợ lọc theo loại giao dịch và khoảng thời gian.
+   */
+  getTransactions: async (params?: InventoryTransactionParams): Promise<InventoryTransactionListResult> => {
+    const response = await api.get<ApiResponse<BackendPageResponse<BackendTransactionResponse>>>(
+      '/inventory/transactions',
+      {
+        params: {
+          type: params?.type ?? undefined,
+          from: params?.from ?? undefined,
+          to: params?.to ?? undefined,
+          page: params?.page ?? 0,
+          size: params?.size ?? 20,
+        },
+      },
+    );
+
+    const page = response.data.data;
+
+    const data: InventoryTransaction[] = page.content.map((item) => ({
+      id: item.id,
+      type: item.type as InventoryTransaction['type'],
+      itemId: item.itemId,
+      itemName: item.itemName,
+      quantity: Number(item.quantity),
+      costPerUnit: item.costPerUnit != null ? Number(item.costPerUnit) : null,
+      userId: item.userId,
+      staffName: item.staffName,
+      referenceId: item.referenceId,
+      referenceType: item.referenceType,
+      note: item.note,
+      createdAt: item.createdAt,
+    }));
+
+    return {
+      data,
+      totalElements: page.totalElements,
+      totalPages: page.totalPages,
+      page: page.page,
+      size: page.size,
+    };
   },
 };

@@ -6,6 +6,8 @@ import { useAdjustStock } from '@modules/inventory/hooks/useAdjustStock';
 import { useImportStock } from '@modules/inventory/hooks/useImportStock';
 import { useInventoryBalances } from '@modules/inventory/hooks/useInventoryBalances';
 import { useInventoryIngredientOptions } from '@modules/inventory/hooks/useInventoryIngredientOptions';
+import { useInventorySemiProductOptions } from '@modules/inventory/hooks/useInventorySemiProductOptions';
+import { useRecordProductionBatch } from '@modules/inventory/hooks/useRecordProductionBatch';
 import { useRecordWaste } from '@modules/inventory/hooks/useRecordWaste';
 import type {
   AdjustStockPayload,
@@ -13,6 +15,7 @@ import type {
   InventoryBalance,
   InventoryFilters,
   InventoryItemOption,
+  RecordProductionBatchPayload,
   WasteRecordPayload,
 } from '@modules/inventory/types/inventory.types';
 import { usePermission } from '@shared/hooks/usePermission';
@@ -27,11 +30,13 @@ const DEFAULT_INVENTORY_FILTERS = (branchId: string | null): InventoryFilters =>
 
 const normalizeSearch = (value: string) => value.trim().toLowerCase();
 
+export type InventoryManagementSection = 'ingredients' | 'semi-products';
+
 /**
  * Hook quản lý toàn bộ state và xử lý dữ liệu cho trang kho.
  * Logic lọc, phân trang và điều phối mutation được gom về module thay vì để trong page.
  */
-export const useInventoryManagement = () => {
+export const useInventoryManagement = (section: InventoryManagementSection = 'ingredients') => {
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const { can, isOwner } = usePermission();
   const { mutateAsync: selectBranch, isPending: isSelectingBranch } = useSelectBranch();
@@ -41,14 +46,20 @@ export const useInventoryManagement = () => {
     data: ingredientOptions = [],
     refetch: refetchIngredientOptions,
   } = useInventoryIngredientOptions();
+  const {
+    data: semiProductOptions = [],
+    refetch: refetchSemiProductOptions,
+  } = useInventorySemiProductOptions();
   const { mutate: importStock, isPending: isImporting } = useImportStock();
   const { mutate: adjustStock, isPending: isAdjusting } = useAdjustStock();
+  const { mutate: recordProductionBatch, isPending: isRecordingProduction } = useRecordProductionBatch();
   const { mutate: recordWaste, isPending: isRecordingWaste } = useRecordWaste();
 
   const [filters, setFilters] = useState<InventoryFilters>(DEFAULT_INVENTORY_FILTERS(currentBranchId));
   const [currentPage, setCurrentPage] = useState(1);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
+  const [isProductionDialogOpen, setIsProductionDialogOpen] = useState(false);
   const [isWasteDialogOpen, setIsWasteDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>(undefined);
   const [activeActionBranchId, setActiveActionBranchId] = useState<string | null>(null);
@@ -65,6 +76,16 @@ export const useInventoryManagement = () => {
   const branchNameMap = useMemo(() => {
     return new Map(branchList.map((branch) => [branch.id, branch.name]));
   }, [branchList]);
+  const isSemiProductSection = section === 'semi-products';
+  const sectionBalances = useMemo(() => {
+    return balances.filter((balance) => {
+      if (isSemiProductSection) {
+        return balance.itemType === 'SUB_ASSEMBLY';
+      }
+
+      return balance.itemType !== 'SUB_ASSEMBLY';
+    });
+  }, [balances, isSemiProductSection]);
 
   const resolveBranchName = (branchId: string) => {
     return branchNameMap.get(branchId) ?? 'Chi nhánh không xác định';
@@ -78,8 +99,8 @@ export const useInventoryManagement = () => {
   const stockItemOptions = useMemo<InventoryItemOption[]>(() => {
     const seen = new Set<string>();
     const balancesForActions = resolvedActionBranchId
-      ? balances.filter((balance) => balance.branchId === resolvedActionBranchId)
-      : balances;
+      ? sectionBalances.filter((balance) => balance.branchId === resolvedActionBranchId)
+      : sectionBalances;
 
     return balancesForActions
       .filter((balance) => {
@@ -92,11 +113,13 @@ export const useInventoryManagement = () => {
       })
       .map((balance) => ({
         itemId: balance.itemId,
-        itemName: balance.itemName?.trim() || `Nguyên liệu ${balance.itemId.slice(0, 8)}`,
+        itemName:
+          balance.itemName?.trim() ||
+          `${isSemiProductSection ? 'Bán thành phẩm' : 'Nguyên liệu'} ${balance.itemId.slice(0, 8)}`,
         unit: balance.unit,
       }))
       .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
-  }, [balances, resolvedActionBranchId]);
+  }, [isSemiProductSection, resolvedActionBranchId, sectionBalances]);
 
   /**
    * Dữ liệu tồn kho được lọc hoàn toàn tại module để component render chỉ việc tiêu thụ kết quả.
@@ -104,7 +127,7 @@ export const useInventoryManagement = () => {
   const filteredBalances = useMemo(() => {
     const keyword = normalizeSearch(filters.search);
 
-    return balances.filter((balance) => {
+    return sectionBalances.filter((balance) => {
       const matchesSearch =
         keyword.length === 0 ||
         balance.itemId.toLowerCase().includes(keyword) ||
@@ -114,7 +137,7 @@ export const useInventoryManagement = () => {
 
       return matchesSearch && matchesBranch && matchesLowStock;
     });
-  }, [balances, effectiveBranchFilter, filters.lowStockOnly, filters.search]);
+  }, [effectiveBranchFilter, filters.lowStockOnly, filters.search, sectionBalances]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBalances.length / INVENTORY_PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -124,15 +147,16 @@ export const useInventoryManagement = () => {
     return filteredBalances.slice(startIndex, startIndex + INVENTORY_PAGE_SIZE);
   }, [filteredBalances, safeCurrentPage]);
 
-  const totalItems = balances.length;
-  const lowStockCount = balances.filter((balance) => balance.isLowStock).length;
-  const visibleBranchCount = new Set(filteredBalances.map((balance) => balance.branchId)).size;
+  const totalItems = sectionBalances.length;
+  const lowStockCount = sectionBalances.filter((balance) => balance.isLowStock).length;
+  const visibleBranchCount = new Set(sectionBalances.map((balance) => balance.branchId)).size;
   const hasActiveFilters =
     Boolean(filters.search.trim()) || effectiveBranchFilter !== 'all' || filters.lowStockOnly;
   const isActionLocked = !actionBranchId;
   const canImport = can('INVENTORY_IMPORT');
   const canAdjust = can('INVENTORY_ADJUST');
   const canWaste = can('INVENTORY_WASTE');
+  const canRecordProduction = isSemiProductSection && canImport;
   const selectedBranchName = resolvedActionBranchId ? resolveBranchName(resolvedActionBranchId) : null;
   const actionHint = (() => {
     if (!canImport && !canAdjust && !canWaste) {
@@ -210,10 +234,29 @@ export const useInventoryManagement = () => {
       return;
     }
 
-    void refetchIngredientOptions();
+    if (isSemiProductSection) {
+      void refetchSemiProductOptions();
+    } else {
+      void refetchIngredientOptions();
+    }
+
     setActiveActionBranchId(actionBranchId);
     setSelectedItemId(undefined);
     setIsImportDialogOpen(true);
+  };
+
+  const handleOpenProduction = async (itemId?: string, branchId?: string) => {
+    const nextBranchId = branchId ?? actionBranchId;
+    const hasContext = await ensureActionBranchContext(nextBranchId);
+
+    if (!hasContext) {
+      return;
+    }
+
+    void refetchSemiProductOptions();
+    setActiveActionBranchId(nextBranchId ?? null);
+    setSelectedItemId(itemId);
+    setIsProductionDialogOpen(true);
   };
 
   const handleImportSubmit = (payload: ImportStockPayload) => {
@@ -236,6 +279,16 @@ export const useInventoryManagement = () => {
     });
   };
 
+  const handleProductionSubmit = (payload: RecordProductionBatchPayload) => {
+    recordProductionBatch(payload, {
+      onSuccess: () => {
+        setIsProductionDialogOpen(false);
+        setActiveActionBranchId(null);
+        setSelectedItemId(undefined);
+      },
+    });
+  };
+
   const handleWasteSubmit = (payload: WasteRecordPayload) => {
     recordWaste(payload, {
       onSuccess: () => {
@@ -251,6 +304,7 @@ export const useInventoryManagement = () => {
     canAdjust,
     canFilterByBranch: isOwner,
     canImport,
+    canRecordProduction,
     canWaste,
     currentPage: safeCurrentPage,
     filteredBalances,
@@ -268,9 +322,11 @@ export const useInventoryManagement = () => {
     isImportDialogOpen,
     isImporting,
     isLoading,
+    isProductionDialogOpen,
+    isRecordingProduction,
     isRecordingWaste,
     isWasteDialogOpen,
-    importItemOptions: ingredientOptions,
+    importItemOptions: isSemiProductSection ? semiProductOptions : ingredientOptions,
     lowStockCount,
     actionHint,
     onAdjustSubmit: handleAdjustSubmit,
@@ -281,6 +337,7 @@ export const useInventoryManagement = () => {
     onImportSubmit: handleImportSubmit,
     onOpenAdjust: handleOpenAdjust,
     onOpenImport: handleOpenImport,
+    onOpenProduction: handleOpenProduction,
     onOpenWaste: handleOpenWaste,
     onPageChange: setCurrentPage,
     onRefetch: () => {
@@ -306,6 +363,14 @@ export const useInventoryManagement = () => {
         setSelectedItemId(undefined);
       }
     },
+    onSelectProductionDialogOpen: (open: boolean) => {
+      setIsProductionDialogOpen(open);
+
+      if (!open) {
+        setActiveActionBranchId(null);
+        setSelectedItemId(undefined);
+      }
+    },
     onSelectWasteDialogOpen: (open: boolean) => {
       setIsWasteDialogOpen(open);
 
@@ -323,6 +388,7 @@ export const useInventoryManagement = () => {
       setCurrentPage(1);
     },
     stockItemOptions,
+    onProductionSubmit: handleProductionSubmit,
     onWasteSubmit: handleWasteSubmit,
     pageSize: INVENTORY_PAGE_SIZE,
     paginatedBalances,

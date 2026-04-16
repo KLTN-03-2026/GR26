@@ -7,31 +7,334 @@ Quy trình:
 3. Lấy tồn kho hiện tại
 4. Tính ngày hết hàng và số lượng gợi ý nhập
 5. Ghi vào bảng forecast_results (upsert)
+
+Fallback khi chưa có model:
+- Dùng trung bình 7 ngày gần nhất làm dự báo phẳng
+- is_fallback=True trong Pydantic response
+- Log warning để theo dõi
 """
 
+from datetime import date, timedelta
+
 import pandas as pd
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.logging import get_logger
+from app.repositories.series_registry_repo import SeriesRegistryRepo
+from app.schemas.forecast import IngredientPrediction
+from app.services import data_service
+from app.utils import dataframe_builder, model_io, stock_calculator
 
 logger = get_logger(__name__)
 
 
-async def predict_and_save(
-    db: AsyncSession,
-    tenant_id: str,
-    branch_id: str,
-) -> int:
+def _build_fallback_forecast(history_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Chạy predict cho tất cả nguyên liệu của chi nhánh và lưu kết quả.
+    Tạo dự báo fallback từ trung bình 7 ngày tiêu thụ gần nhất.
+
+    Dùng khi:
+    - Tenant chưa có model được train
+    - Load/predict model thất bại
+
+    Args:
+        history_df: DataFrame lịch sử tiêu thụ với cột 'y'.
+                    Có thể rỗng — khi đó avg_daily = 0.0.
+
+    Returns:
+        DataFrame với cột ['ds', 'yhat1'] — 7 ngày tương lai,
+        mỗi ngày có yhat1 = avg_daily (giá trị bằng nhau).
+    """
+    if history_df.empty:
+        avg_daily = 0.0
+    else:
+        # Lấy trung bình 7 ngày gần nhất để ước lượng tiêu thụ hàng ngày
+        recent = history_df.tail(7)
+        avg_daily = float(recent["y"].mean())
+
+    future_dates = pd.date_range(
+        start=date.today() + timedelta(days=1),
+        periods=7,
+        freq="D",
+    )
+    return pd.DataFrame({
+        "ds": pd.to_datetime(future_dates),
+        "yhat1": [avg_daily] * 7,
+    })
+
+
+async def _upsert_forecast_results(
+    db: AsyncSession,
+    series_id_int: int,
+    forecast_df: pd.DataFrame,
+    stockout_date: date | None,
+    suggested_qty: float,
+) -> None:
+    """
+    Upsert kết quả dự báo vào bảng forecast_results — 1 row cho mỗi ngày.
+
+    Dùng ON CONFLICT để tránh duplicate khi predict job chạy lại.
+    Không commit ở đây — để predict_branch kiểm soát transaction boundary.
 
     Args:
         db: AsyncSession
-        tenant_id: BẮT BUỘC filter
-        branch_id: ID chi nhánh cần predict
+        series_id_int: Integer PK trong ai_series_registry (FK của forecast_results)
+        forecast_df: DataFrame với cột ['ds', 'yhat1'] — 7 rows tương lai
+        stockout_date: Ngày dự kiến hết hàng (None = tồn kho đủ trong 7 ngày)
+        suggested_qty: Số lượng gợi ý nhập kho
+    """
+    for _, row in forecast_df.iterrows():
+        # Chuyển Timestamp → date nếu cần
+        forecast_date = row["ds"].date() if hasattr(row["ds"], "date") else row["ds"]
+        predicted_qty = float(max(float(row["yhat1"]), 0.0))
+
+        await db.execute(
+            text("""
+                INSERT INTO forecast_results
+                    (series_id, forecast_date, predicted_qty, stockout_date, suggested_qty)
+                VALUES
+                    (:series_id, :forecast_date, :predicted_qty, :stockout_date, :suggested_qty)
+                ON CONFLICT (series_id, forecast_date)
+                DO UPDATE SET
+                    predicted_qty = EXCLUDED.predicted_qty,
+                    stockout_date = EXCLUDED.stockout_date,
+                    suggested_qty = EXCLUDED.suggested_qty
+            """),
+            {
+                "series_id": series_id_int,
+                "forecast_date": forecast_date,
+                "predicted_qty": predicted_qty,
+                "stockout_date": stockout_date,
+                "suggested_qty": suggested_qty,
+            },
+        )
+
+
+async def predict_branch(
+    tenant_id: str,
+    branch_id: str,
+    db: AsyncSession,
+) -> list[IngredientPrediction]:
+    """
+    Dự báo tiêu thụ và tính gợi ý nhập kho cho toàn bộ nguyên liệu của 1 chi nhánh.
+
+    Luồng:
+    a. Load model của tenant (nếu chưa có → dùng fallback bằng trung bình lịch sử)
+    b. Lấy danh sách nguyên liệu đang có trong kho
+    c. Với mỗi nguyên liệu:
+       - Resolve integer series_id qua SeriesRegistryRepo
+       - Lấy lịch sử tiêu thụ gần đây
+       - Lấy tồn kho hiện tại
+       - Build future DataFrame + model.predict() hoặc fallback
+       - Tính stockout_date, suggested_qty, urgency
+       - Upsert vào forecast_results
+    d. Commit + trả về list IngredientPrediction
+
+    Args:
+        tenant_id: ID tenant — BẮT BUỘC, mọi query đều filter theo tenant này
+        branch_id: UUID chi nhánh cần predict
+        db: AsyncSession
 
     Returns:
-        Số lượng records đã ghi vào forecast_results
+        list[IngredientPrediction] — kết quả dự báo cho từng nguyên liệu.
+        Trả về list rỗng nếu chi nhánh không có nguyên liệu nào.
     """
-    # TODO: implement trong sprint predict
-    raise NotImplementedError
+    # ── Bước 1: Load model ──────────────────────────────────────────────────
+    model = None
+    global_is_fallback = False
+
+    if not model_io.model_exists(tenant_id):
+        logger.warning(
+            "Tenant %s chưa có model → dùng fallback (trung bình 7 ngày gần nhất)",
+            tenant_id,
+        )
+        global_is_fallback = True
+    else:
+        try:
+            model = model_io.load_model(tenant_id)
+        except Exception as exc:
+            logger.error(
+                "Load model thất bại: tenant=%s | %s → fallback",
+                tenant_id, exc,
+            )
+            global_is_fallback = True
+
+    # ── Bước 2: Lấy danh sách nguyên liệu ──────────────────────────────────
+    ingredients = await data_service.get_all_ingredients_of_branch(
+        db, tenant_id, branch_id
+    )
+
+    if not ingredients:
+        logger.info(
+            "Không có nguyên liệu nào trong kho: tenant=%s branch=%s",
+            tenant_id, branch_id,
+        )
+        return []
+
+    # Lấy đủ history cho n_lags + buffer ngày
+    history_days = settings.np_n_lags + 14
+
+    series_repo = SeriesRegistryRepo(db)
+    results: list[IngredientPrediction] = []
+
+    # ── Bước 3: Predict từng nguyên liệu ───────────────────────────────────
+    for ingredient in ingredients:
+        ingredient_id: str = ingredient["id"]
+        ingredient_name: str = ingredient["name"]
+        unit: str = ingredient["unit"]
+
+        try:
+            # Resolve integer series_id — tạo mới nếu chưa có trong registry
+            series_entry = await series_repo.get_or_create(ingredient_id, branch_id)
+            series_id_str: str = series_entry.series_id   # "s{int}"
+            series_id_int: int = series_entry.id           # integer FK
+
+            # Lấy lịch sử tiêu thụ để cung cấp AR lags cho model
+            history_df = await data_service.get_ingredient_consumption(
+                db, tenant_id, branch_id, ingredient_id, days_back=history_days,
+            )
+
+            # Lấy tồn kho hiện tại từ inventory_balances
+            current_stock = await data_service.get_current_stock(
+                db, tenant_id, branch_id, ingredient_id,
+            )
+
+            # ── Predict hoặc fallback ────────────────────────────────────
+            is_fallback = global_is_fallback
+
+            if not is_fallback and not history_df.empty:
+                try:
+                    # Build future DataFrame (lịch sử + 7 ngày tương lai)
+                    future_df = dataframe_builder.build_future_df(
+                        history_df, series_id_str, periods=7,
+                    )
+                    # NeuralProphet predict — trả về DataFrame với yhat1..yhat7
+                    raw_pred = model.predict(future_df)  # type: ignore[union-attr]
+
+                    # Với n_forecasts=7, kết quả đúng nằm ở row lịch sử cuối cùng:
+                    # yhat1=ngày+1, yhat2=ngày+2, ..., yhat7=ngày+7.
+                    # Các future rows (y=NaN) có yhat1=NaT → KHÔNG dùng.
+                    last_history_date = history_df["ds"].max()
+                    last_hist_row = raw_pred[
+                        raw_pred["ds"] <= last_history_date
+                    ].iloc[-1]
+                    n_fc = settings.np_n_forecasts  # 7
+                    forecast_dates = pd.date_range(
+                        start=last_history_date + pd.Timedelta(days=1),
+                        periods=n_fc,
+                        freq="D",
+                    )
+                    forecast_values = [
+                        max(
+                            float(last_hist_row[f"yhat{h}"])
+                            if pd.notna(last_hist_row.get(f"yhat{h}"))
+                            else 0.0,
+                            0.0,
+                        )
+                        for h in range(1, n_fc + 1)
+                    ]
+                    forecast_df = pd.DataFrame({
+                        "ds": forecast_dates,
+                        "yhat1": forecast_values,
+                    })
+
+                except Exception as exc:
+                    logger.error(
+                        "Predict thất bại: ingredient=%s (%s) | %s → fallback",
+                        ingredient_id, ingredient_name, exc,
+                    )
+                    forecast_df = _build_fallback_forecast(history_df)
+                    is_fallback = True
+            else:
+                # Không có model hoặc không có history → dùng fallback
+                if not history_df.empty and global_is_fallback:
+                    logger.info(
+                        "Fallback cho ingredient=%s (chưa có model)", ingredient_id,
+                    )
+                forecast_df = _build_fallback_forecast(history_df)
+                is_fallback = True
+
+            # ── Tính các chỉ số kho ──────────────────────────────────────
+            stockout_date = stock_calculator.predict_stockout_date(
+                current_stock, forecast_df,
+            )
+            suggested_qty = stock_calculator.calc_suggested_qty(forecast_df)
+            suggested_order_date = stock_calculator.calc_suggested_order_date(
+                stockout_date,
+            )
+            urgency = stock_calculator.get_urgency(stockout_date)
+
+            # ── Ghi vào DB ───────────────────────────────────────────────
+            await _upsert_forecast_results(
+                db, series_id_int, forecast_df, stockout_date, suggested_qty,
+            )
+
+            results.append(IngredientPrediction(
+                ingredient_id=ingredient_id,
+                ingredient_name=ingredient_name,
+                unit=unit,
+                current_stock=current_stock,
+                stockout_date=stockout_date,
+                suggested_order_qty=suggested_qty,
+                suggested_order_date=suggested_order_date,
+                urgency=urgency,
+                is_fallback=is_fallback,
+            ))
+
+        except Exception as exc:
+            # Không để lỗi 1 ingredient phá vỡ toàn bộ branch
+            logger.error(
+                "Bỏ qua ingredient %s (%s): %s",
+                ingredient_id, ingredient_name, exc,
+            )
+            continue
+
+    await db.commit()
+
+    logger.info(
+        "predict_branch xong: tenant=%s branch=%s → %d ingredients",
+        tenant_id, branch_id, len(results),
+    )
+    return results
+
+
+async def predict_all_branches(db: AsyncSession) -> None:
+    """
+    Dự báo cho tất cả chi nhánh của tất cả tenant đang active.
+
+    Được gọi bởi cron job mỗi đêm 00:30 (scheduler/jobs.py).
+    Lỗi 1 branch không làm dừng các branch khác — log error và tiếp tục.
+
+    Args:
+        db: AsyncSession
+
+    Log tổng kết:
+        "Predict hoàn thành: X tenant | Y branch | Z ingredient records"
+    """
+    tenant_ids = await data_service.get_all_active_tenants(db)
+    logger.info("Bắt đầu predict_all_branches: %d tenant active", len(tenant_ids))
+
+    total_branches = 0
+    total_ingredients = 0
+
+    for tenant_id in tenant_ids:
+        branches = await data_service.get_all_active_branches(db, tenant_id)
+
+        for branch in branches:
+            branch_id: str = branch["id"]
+            try:
+                predictions = await predict_branch(tenant_id, branch_id, db)
+                total_branches += 1
+                total_ingredients += len(predictions)
+            except Exception as exc:
+                logger.error(
+                    "predict_branch thất bại: tenant=%s branch=%s | %s",
+                    tenant_id, branch_id, exc,
+                )
+                continue
+
+    logger.info(
+        "Predict hoàn thành: %d tenant | %d branch | %d ingredient records",
+        len(tenant_ids), total_branches, total_ingredients,
+    )

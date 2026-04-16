@@ -66,6 +66,7 @@ interface BackendBranchItemResponse {
 interface BackendCreateMenuItemPayload {
   categoryId: string | null;
   name: string;
+  type?: string;
   basePrice: number;
   unit: string | null;
   isSyncDelivery: boolean;
@@ -222,6 +223,8 @@ const toMenuPayload = (payload: CreateMenuPayload | UpdateMenuPayload): BackendC
   return {
     categoryId: payload.category && payload.category !== NO_MENU_CATEGORY_VALUE ? payload.category : null,
     name: payload.name ?? '',
+    // Gửi type lên BE khi tạo mới INGREDIENT hoặc SUB_ASSEMBLY — SELLABLE là mặc định nên bỏ qua
+    ...(payload.type && payload.type !== 'SELLABLE' ? { type: payload.type } : {}),
     basePrice: payload.price ?? 0,
     unit: payload.unit?.trim() ? payload.unit.trim() : null,
     isSyncDelivery: Boolean(payload.isSyncDelivery),

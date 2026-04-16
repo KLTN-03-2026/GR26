@@ -64,10 +64,16 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
     }, [hideZeroValue, value]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      const nextDisplayValue = event.target.value;
-      const parsedValue = parseNumericValue(nextDisplayValue, allowDecimal);
+      const raw = event.target.value;
 
-      setDisplayValue(nextDisplayValue);
+      // Chỉ giữ lại ký tự số và dấu chấm thập phân (khi allowDecimal)
+      const sanitized = allowDecimal
+        ? raw.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1') // cho phép tối đa 1 dấu chấm
+        : raw.replace(/[^0-9]/g, '');
+
+      const parsedValue = parseNumericValue(sanitized, allowDecimal);
+
+      setDisplayValue(sanitized);
 
       if (parsedValue === null) {
         return;
@@ -98,15 +104,12 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
       <Input
         {...props}
         ref={ref}
-        type="number"
+        type="text"
         inputMode={allowDecimal ? 'decimal' : 'numeric'}
         value={displayValue}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={cn(
-          '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-          className
-        )}
+        className={className}
       />
     );
   }

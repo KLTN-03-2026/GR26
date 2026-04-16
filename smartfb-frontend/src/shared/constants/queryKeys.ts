@@ -90,6 +90,11 @@ export const queryKeys = {
       all: ['inventory', 'balances'] as const,
       list: (filters?: Record<string, unknown>) => ['inventory', 'balances', 'list', filters] as const,
     },
+    // Lịch sử giao dịch kho (nhập, xuất, điều chỉnh, hao hụt)
+    transactions: {
+      all: ['inventory', 'transactions'] as const,
+      list: (filters?: Record<string, unknown>) => ['inventory', 'transactions', 'list', filters] as const,
+    },
     ingredients: {
       all: ['inventory', 'ingredients'] as const,
       list: (filters?: Record<string, unknown>) => ['inventory', 'ingredients', 'list', filters] as const,
