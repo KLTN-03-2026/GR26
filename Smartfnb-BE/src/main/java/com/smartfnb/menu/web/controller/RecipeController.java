@@ -61,7 +61,9 @@ public class RecipeController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateRecipeRequest request) {
 
-        RecipeResponse result = recipeCommandHandler.updateRecipe(id, request.quantity(), request.unit());
+        // FIX BUG: Author: HOÀNG | 16/04/2026 — truyền cả request thay vì từng field rời
+        // để handler xử lý được baseOutputQuantity và baseOutputUnit mới bổ sung.
+        RecipeResponse result = recipeCommandHandler.updateRecipe(id, request);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 

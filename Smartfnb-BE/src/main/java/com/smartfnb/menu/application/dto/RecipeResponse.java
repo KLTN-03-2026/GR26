@@ -8,6 +8,10 @@ import java.util.UUID;
 /**
  * DTO response trả về thông tin một dòng công thức chế biến.
  *
+ * <p>FIX BUG: 16/04/2026 — Author: HOÀNG</p>
+ * <p>Bổ sung {@code baseOutputQuantity} và {@code baseOutputUnit} vào response
+ * để frontend hiển thị và cho phép user kiểm tra sản lượng chuẩn của SUB_ASSEMBLY recipe.</p>
+ *
  * @author SmartF&B Team
  * @since 2026-03-28
  */
@@ -32,7 +36,21 @@ public record RecipeResponse(
         BigDecimal quantity,
 
         /** Đơn vị tính */
-        String unit
+        String unit,
+
+        // --- FIX BUG: Author: HOÀNG | 16/04/2026 ---
+        // Trả thêm 2 field này để FE hiển thị và user có thể kiểm tra công thức SUB_ASSEMBLY.
+
+        /**
+         * Sản lượng đầu ra chuẩn của công thức (chỉ có với SUB_ASSEMBLY recipe).
+         * Null với SELLABLE recipe.
+         */
+        BigDecimal baseOutputQuantity,
+
+        /**
+         * Đơn vị của sản lượng đầu ra chuẩn (ví dụ: ml, g). Null với SELLABLE recipe.
+         */
+        String baseOutputUnit
 ) {
 
     /**
@@ -51,7 +69,10 @@ public record RecipeResponse(
                 entity.getIngredientItemId(),
                 ingredientName,
                 entity.getQuantity(),
-                entity.getUnit()
+                entity.getUnit(),
+                // FIX BUG: Author: HOÀNG | 16/04/2026 — thêm 2 field sản lượng chuẩn
+                entity.getBaseOutputQuantity(),
+                entity.getBaseOutputUnit()
         );
     }
 

@@ -55,4 +55,30 @@ public class RecipeJpaEntity {
     /** Đơn vị tính của nguyên liệu trong công thức (g, ml, cái...) */
     @Column(name = "unit", length = 30)
     private String unit;
+
+    // ---------------------------------------------------------------
+    // FIX BUG: Recipe scale sai khi ghi nhận mẻ sản xuất SUB_ASSEMBLY
+    // Author: HOÀNG | Ngày: 16/04/2026
+    // Bug cũ: handler nhân recipe.quantity × expectedOutputQuantity trực tiếp
+    //         → 1000g × 2000ml = 2,000,000g (sai hoàn toàn)
+    // Fix:    thêm base_output_quantity để tính scaleFactor đúng:
+    //         scaleFactor = expectedOutputQuantity / baseOutputQuantity
+    //         needed      = recipe.quantity × scaleFactor
+    // ---------------------------------------------------------------
+
+    /**
+     * Sản lượng đầu ra chuẩn của công thức này.
+     * Chỉ áp dụng cho recipe của SUB_ASSEMBLY item.
+     * Ví dụ: 2000 (ml) — nghĩa là công thức này tạo ra 2000 ml Cà phê pin mỗi mẻ.
+     * NULL với recipe SELLABLE.
+     */
+    @Column(name = "base_output_quantity", precision = 10, scale = 4)
+    private BigDecimal baseOutputQuantity;
+
+    /**
+     * Đơn vị tính của base_output_quantity (ví dụ: ml, g, cái).
+     * NULL với recipe SELLABLE.
+     */
+    @Column(name = "base_output_unit", length = 30)
+    private String baseOutputUnit;
 }
