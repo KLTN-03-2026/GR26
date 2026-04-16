@@ -63,12 +63,19 @@ interface BackendCategoryResponse {
   createdAt: string;
 }
 
+// FIX BUG: Author: HOÀNG | 16/04/2026
+// Thêm baseOutputQuantity và baseOutputUnit vào BackendRecipeResponse
+// để FE nhận được sản lượng chuẩn từ BE sau khi migration V17 chạy.
 interface BackendRecipeResponse {
   id: string;
   targetItemId: string;
   ingredientItemId: string;
   quantity: number | string;
   unit: string | null;
+  /** Sản lượng đầu ra chuẩn (chỉ có với SUB_ASSEMBLY recipe, null với SELLABLE). */
+  baseOutputQuantity: number | string | null;
+  /** Đơn vị sản lượng chuẩn (null với SELLABLE). */
+  baseOutputUnit: string | null;
 }
 
 const INVENTORY_PAGE_SIZE = 100;
@@ -218,8 +225,16 @@ const mapIngredientOptions = (
 /**
  * Chuẩn hóa response công thức về dạng dùng chung cho FE.
  * Tên thành phần sẽ được hook enrich thêm từ catalog đã load trước đó.
+ *
+ * FIX BUG: Author: HOÀNG | 16/04/2026
+ * Map thêm baseOutputQuantity và baseOutputUnit từ BE response
+ * để UI hiển thị và cho phép user kiểm tra sản lượng chuẩn của SUB_ASSEMBLY recipe.
  */
 const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
+  // Chuẩn hóa baseOutputQuantity: parse về number, null nếu không có
+  const rawBaseOutput = line.baseOutputQuantity;
+  const parsedBaseOutput = rawBaseOutput != null ? Number(rawBaseOutput) : null;
+
   return {
     id: line.id,
     targetItemId: line.targetItemId,
@@ -230,6 +245,9 @@ const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
     quantity: Number(line.quantity),
     unit: line.unit ?? '',
     availableQuantity: null,
+    // FIX BUG: Author: HOÀNG | 16/04/2026 — thêm 2 field sản lượng chuẩn
+    baseOutputQuantity: parsedBaseOutput !== null && Number.isFinite(parsedBaseOutput) ? parsedBaseOutput : null,
+    baseOutputUnit: line.baseOutputUnit ?? null,
   };
 };
 
@@ -329,6 +347,10 @@ export const recipeService = {
 
   /**
    * Tạo mới một dòng công thức.
+   *
+   * FIX BUG: Author: HOÀNG | 16/04/2026
+   * Gửi thêm baseOutputQuantity và baseOutputUnit lên BE.
+   * Bắt buộc với SUB_ASSEMBLY recipe để BE tính đúng scaleFactor khi ghi nhận mẻ sản xuất.
    */
   createRecipe: async (payload: CreateRecipePayload): Promise<RecipeLine> => {
     const response = await api.post<ApiResponse<BackendRecipeResponse>>('/menu/recipes', {
@@ -336,6 +358,9 @@ export const recipeService = {
       ingredientItemId: payload.ingredientItemId,
       quantity: payload.quantity,
       unit: payload.unit.trim(),
+      // FIX BUG: Author: HOÀNG | 16/04/2026 — gửi sản lượng chuẩn khi có
+      baseOutputQuantity: payload.baseOutputQuantity ?? null,
+      baseOutputUnit: payload.baseOutputUnit?.trim() ?? null,
     });
 
     return mapRecipeLine(response.data.data);
@@ -343,11 +368,18 @@ export const recipeService = {
 
   /**
    * Cập nhật định lượng của một dòng công thức.
+   *
+   * FIX BUG: Author: HOÀNG | 16/04/2026
+   * Gửi thêm baseOutputQuantity và baseOutputUnit để user có thể sửa lại
+   * các recipe SUB_ASSEMBLY đã lưu sai baseOutputQuantity trước khi có fix này.
    */
   updateRecipe: async (recipeId: string, payload: UpdateRecipePayload): Promise<RecipeLine> => {
     const response = await api.put<ApiResponse<BackendRecipeResponse>>(`/menu/recipes/${recipeId}`, {
       quantity: payload.quantity,
       unit: payload.unit.trim(),
+      // FIX BUG: Author: HOÀNG | 16/04/2026 — gửi sản lượng chuẩn mới nếu có thay đổi
+      baseOutputQuantity: payload.baseOutputQuantity ?? null,
+      baseOutputUnit: payload.baseOutputUnit?.trim() ?? null,
     });
 
     return mapRecipeLine(response.data.data);
