@@ -5,11 +5,14 @@ import type {
   RecipeMenuCategory,
   RecipeIngredientOption,
   RecipeLine,
+  RecipeComponentItemType,
   RecipeMenuItem,
   RecipeMenuListParams,
   RecipeMenuListResult,
+  RecipeTargetItemType,
   UpdateRecipePayload,
 } from '@modules/recipe/types/recipe.types';
+import { RECIPE_COMPONENT_TYPE_LABELS } from '@modules/recipe/types/recipe.types';
 
 interface BackendPageResponse<T> {
   content: T[];
@@ -23,6 +26,7 @@ interface BackendMenuItemResponse {
   id: string;
   categoryId: string | null;
   name: string;
+  type: string;
   basePrice: number;
   unit: string | null;
   imageUrl: string | null;
@@ -43,9 +47,10 @@ interface BackendInventoryBalanceResponse {
   updatedAt: string;
 }
 
-interface BackendIngredientCatalogResponse {
+interface BackendComponentCatalogResponse {
   id: string;
   name: string;
+  type: string;
   unit: string | null;
 }
 
@@ -68,7 +73,8 @@ interface BackendRecipeResponse {
 
 const INVENTORY_PAGE_SIZE = 100;
 
-// Type `INGREDIENT` là catalog nguyên liệu tenant dùng chung cho kho và công thức.
+const SELLABLE_ITEM_TYPE = 'SELLABLE';
+const SUB_ASSEMBLY_ITEM_TYPE = 'SUB_ASSEMBLY';
 const INGREDIENT_ITEM_TYPE = 'INGREDIENT';
 
 /**
@@ -111,13 +117,14 @@ const fetchAllPages = async <T>(
 };
 
 /**
- * Chuẩn hóa món bán cho màn quản lý công thức.
+ * Chuẩn hóa item đích cho màn quản lý công thức.
  */
 const mapMenuItem = (item: BackendMenuItemResponse): RecipeMenuItem => {
   return {
     id: item.id,
     categoryId: item.categoryId,
     name: item.name,
+    itemType: item.type as RecipeTargetItemType,
     basePrice: Number(item.basePrice),
     unit: item.unit ?? '',
     isActive: item.isActive,
@@ -177,10 +184,10 @@ const mapInventoryReferenceByItem = (
 };
 
 /**
- * Ghép catalog nguyên liệu với tồn kho tham chiếu để recipe vừa tạo được ngay, vừa vẫn nhìn được tồn nếu có.
+ * Ghép catalog thành phần với tồn kho tham chiếu để recipe vừa tạo được ngay, vừa vẫn nhìn được tồn nếu có.
  */
 const mapIngredientOptions = (
-  ingredients: BackendIngredientCatalogResponse[],
+  ingredients: BackendComponentCatalogResponse[],
   balances: BackendInventoryBalanceResponse[]
 ): RecipeIngredientOption[] => {
   const inventoryReferenceMap = mapInventoryReferenceByItem(balances);
@@ -192,17 +199,25 @@ const mapIngredientOptions = (
       return {
         itemId: ingredient.id,
         itemName: ingredient.name,
+        itemType: ingredient.type as RecipeComponentItemType,
+        itemTypeLabel: RECIPE_COMPONENT_TYPE_LABELS[ingredient.type as RecipeComponentItemType],
         unit: ingredient.unit ?? inventoryReference?.unit ?? '',
         branchIds: inventoryReference?.branchIds ?? [],
         quantity: inventoryReference?.quantity ?? null,
       };
     })
-    .sort((left, right) => left.itemName.localeCompare(right.itemName, 'vi'));
+    .sort((left, right) => {
+      if (left.itemType !== right.itemType) {
+        return left.itemType === INGREDIENT_ITEM_TYPE ? -1 : 1;
+      }
+
+      return left.itemName.localeCompare(right.itemName, 'vi');
+    });
 };
 
 /**
  * Chuẩn hóa response công thức về dạng dùng chung cho FE.
- * Tên nguyên liệu sẽ được hook enrich thêm từ danh sách nguyên liệu.
+ * Tên thành phần sẽ được hook enrich thêm từ catalog đã load trước đó.
  */
 const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
   return {
@@ -210,6 +225,8 @@ const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
     targetItemId: line.targetItemId,
     ingredientItemId: line.ingredientItemId,
     ingredientName: line.ingredientItemId,
+    ingredientType: 'UNKNOWN',
+    ingredientTypeLabel: RECIPE_COMPONENT_TYPE_LABELS.UNKNOWN,
     quantity: Number(line.quantity),
     unit: line.unit ?? '',
     availableQuantity: null,
@@ -217,11 +234,13 @@ const mapRecipeLine = (line: BackendRecipeResponse): RecipeLine => {
 };
 
 /**
- * Lấy catalog nguyên liệu cấp tenant để tạo công thức ngay cả khi item chưa nhập kho.
+ * Lấy catalog item theo type để dùng cho target item hoặc thành phần trong công thức.
  */
-const fetchAllIngredientCatalogPages = async (): Promise<BackendIngredientCatalogResponse[]> => {
-  return fetchAllPages<BackendIngredientCatalogResponse>('/menu/items', {
-    type: INGREDIENT_ITEM_TYPE,
+const fetchAllCatalogPagesByType = async (
+  type: RecipeTargetItemType | RecipeComponentItemType
+): Promise<BackendComponentCatalogResponse[]> => {
+  return fetchAllPages<BackendComponentCatalogResponse>('/menu/items', {
+    type,
   });
 };
 
@@ -236,18 +255,23 @@ const fetchAllInventoryBalancePages = async (): Promise<BackendInventoryBalanceR
  * Catalog là nguồn chính của recipe; tồn kho chỉ là dữ liệu bổ sung nếu lấy được.
  */
 const fetchRecipeIngredientOptions = async (): Promise<RecipeIngredientOption[]> => {
-  const [catalogResult, balancesResult] = await Promise.allSettled([
-    fetchAllIngredientCatalogPages(),
+  const [ingredientCatalogResult, semiProductCatalogResult, balancesResult] = await Promise.allSettled([
+    fetchAllCatalogPagesByType(INGREDIENT_ITEM_TYPE),
+    fetchAllCatalogPagesByType(SUB_ASSEMBLY_ITEM_TYPE),
     fetchAllInventoryBalancePages(),
   ]);
 
-  if (catalogResult.status !== 'fulfilled') {
-    throw catalogResult.reason;
+  if (ingredientCatalogResult.status !== 'fulfilled' && semiProductCatalogResult.status !== 'fulfilled') {
+    throw ingredientCatalogResult.reason;
   }
 
+  const catalogs = [
+    ...(ingredientCatalogResult.status === 'fulfilled' ? ingredientCatalogResult.value : []),
+    ...(semiProductCatalogResult.status === 'fulfilled' ? semiProductCatalogResult.value : []),
+  ];
   const balances = balancesResult.status === 'fulfilled' ? balancesResult.value : [];
 
-  return mapIngredientOptions(catalogResult.value, balances);
+  return mapIngredientOptions(catalogs, balances);
 };
 
 /**
@@ -255,11 +279,12 @@ const fetchRecipeIngredientOptions = async (): Promise<RecipeIngredientOption[]>
  */
 export const recipeService = {
   /**
-   * Lấy danh sách món bán theo trang nhỏ để giảm tải khi số lượng món lớn.
+   * Lấy danh sách item đích theo trang nhỏ để giảm tải khi số lượng dữ liệu lớn.
    */
   getMenuItems: async (params?: RecipeMenuListParams): Promise<RecipeMenuListResult> => {
     const response = await api.get<ApiResponse<BackendPageResponse<BackendMenuItemResponse>>>('/menu/items', {
       params: {
+        type: params?.type ?? SELLABLE_ITEM_TYPE,
         keyword: params?.keyword?.trim() ? params.keyword.trim() : undefined,
         page: params?.page ?? 0,
         size: params?.size ?? 10,
@@ -287,14 +312,15 @@ export const recipeService = {
   },
 
   /**
-   * Lấy danh sách nguyên liệu từ catalog `INGREDIENT` và ghép tồn kho tham chiếu nếu có.
+   * Lấy danh sách thành phần từ catalog `INGREDIENT` và `SUB_ASSEMBLY`.
+   * FE ghép thêm snapshot tồn kho nếu có để người dùng tham chiếu nhanh khi cấu hình công thức.
    */
   getIngredientOptions: async (): Promise<RecipeIngredientOption[]> => {
     return fetchRecipeIngredientOptions();
   },
 
   /**
-   * Lấy danh sách dòng công thức của một món bán.
+   * Lấy danh sách dòng công thức của item đích đang chọn.
    */
   getRecipeByItem: async (itemId: string): Promise<RecipeLine[]> => {
     const response = await api.get<ApiResponse<BackendRecipeResponse[]>>(`/menu/items/${itemId}/recipe`);

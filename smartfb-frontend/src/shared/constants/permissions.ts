@@ -5,6 +5,10 @@
  */
 export const PERMISSIONS = {
   STAFF_DASHBOARD_VIEW: 'STAFF_DASHBOARD_VIEW',
+  // Xem danh sách và chi tiết nhân viên trong tenant hoặc chi nhánh được phân quyền.
+  STAFF_VIEW: 'STAFF_VIEW',
+  // Tạo, cập nhật, vô hiệu hóa hoặc gán thông tin nhân viên.
+  STAFF_EDIT: 'STAFF_EDIT',
   TABLE_VIEW: 'TABLE_VIEW',
   TABLE_ASSIGN: 'TABLE_ASSIGN',
   ORDER_VIEW: 'ORDER_VIEW',
@@ -22,6 +26,12 @@ export const PERMISSIONS = {
   INVENTORY_IMPORT: 'INVENTORY_IMPORT',
   INVENTORY_ADJUST: 'INVENTORY_ADJUST',
   INVENTORY_WASTE: 'INVENTORY_WASTE',
+  // Xem danh sách role tenant để quản lý quyền theo vai trò.
+  ROLE_VIEW: 'ROLE_VIEW',
+  // Tạo hoặc chỉnh sửa role của tenant.
+  ROLE_EDIT: 'ROLE_EDIT',
+  // Bật hoặc tắt permission bên trong một role.
+  PERMISSION_EDIT: 'PERMISSION_EDIT',
   SCHEDULE_VIEW: 'SCHEDULE_VIEW',
   SHIFT_VIEW: 'SHIFT_VIEW',
 } as const;
@@ -38,6 +48,10 @@ const PAYMENT_ROUTE_PERMISSIONS = [PERMISSIONS.PAYMENT_CREATE, PERMISSIONS.PAYME
  */
 export const STAFF_ROUTE_PERMISSIONS = {
   DASHBOARD: [PERMISSIONS.STAFF_DASHBOARD_VIEW],
+  // Cho phép branch manager hoặc staff được phân quyền mở màn quản lý nhân viên.
+  STAFF: [PERMISSIONS.STAFF_VIEW, PERMISSIONS.STAFF_EDIT],
+  // Cho phép mở màn chức vụ và ma trận phân quyền.
+  STAFF_POSITIONS: [PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_EDIT, PERMISSIONS.PERMISSION_EDIT],
   TABLES: [PERMISSIONS.TABLE_VIEW, PERMISSIONS.TABLE_ASSIGN, PERMISSIONS.ORDER_CREATE],
   ORDERS: [
     PERMISSIONS.ORDER_VIEW,

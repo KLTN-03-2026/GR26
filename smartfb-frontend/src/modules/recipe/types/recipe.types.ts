@@ -1,10 +1,43 @@
 /**
+ * Loại item đích mà màn công thức cho phép quản lý.
+ */
+export type RecipeTargetItemType = 'SELLABLE' | 'SUB_ASSEMBLY';
+
+/**
+ * Loại thành phần có thể tham gia vào công thức theo contract backend.
+ */
+export type RecipeComponentItemType = 'INGREDIENT' | 'SUB_ASSEMBLY';
+
+/**
+ * Loại thành phần sau khi FE enrich từ catalog.
+ */
+export type RecipeResolvedComponentType = RecipeComponentItemType | 'UNKNOWN';
+
+/**
+ * Nhãn hiển thị cho từng loại item đích ở màn công thức.
+ */
+export const RECIPE_TARGET_TYPE_LABELS: Record<RecipeTargetItemType, string> = {
+  SELLABLE: 'Món bán',
+  SUB_ASSEMBLY: 'Bán thành phẩm',
+};
+
+/**
+ * Nhãn hiển thị cho từng loại thành phần trong công thức.
+ */
+export const RECIPE_COMPONENT_TYPE_LABELS: Record<RecipeResolvedComponentType, string> = {
+  INGREDIENT: 'Nguyên liệu',
+  SUB_ASSEMBLY: 'Bán thành phẩm',
+  UNKNOWN: 'Chưa xác định',
+};
+
+/**
  * Tóm tắt món bán dùng để chọn công thức cần quản lý.
  */
 export interface RecipeMenuItem {
   id: string;
   categoryId: string | null;
   name: string;
+  itemType: RecipeTargetItemType;
   basePrice: number;
   unit: string;
   isActive: boolean;
@@ -38,6 +71,8 @@ export interface RecipeMenuListResult {
 export interface RecipeIngredientOption {
   itemId: string;
   itemName: string;
+  itemType: RecipeComponentItemType;
+  itemTypeLabel: string;
   unit: string;
   branchIds: string[];
   quantity: number | null;
@@ -51,6 +86,8 @@ export interface RecipeLine {
   targetItemId: string;
   ingredientItemId: string;
   ingredientName: string;
+  ingredientType: RecipeResolvedComponentType;
+  ingredientTypeLabel: string;
   quantity: number;
   unit: string;
   availableQuantity: number | null;
@@ -78,6 +115,7 @@ export interface UpdateRecipePayload {
  * Bộ lọc danh sách món bán ở màn công thức.
  */
 export interface RecipeMenuListParams {
+  type?: RecipeTargetItemType;
   keyword?: string;
   page?: number;
   size?: number;

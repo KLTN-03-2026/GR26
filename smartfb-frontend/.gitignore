@@ -52,3 +52,7 @@ src/docs/dev-notes/
 **/bug*.md
 **/*Prompt*.md
 **/*prompt*.md
+
+
+ai-service/storage/models/*
+ai-service/lightning_logs/*

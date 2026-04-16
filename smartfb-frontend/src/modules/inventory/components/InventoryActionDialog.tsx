@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,22 +11,18 @@ import {
   DialogTitle,
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
+import {
+  SearchableCombobox,
+  type SearchableComboboxOption,
+} from '@shared/components/common/SearchableCombobox';
 import { Input } from '@shared/components/ui/input';
 import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@shared/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@shared/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@shared/components/ui/select';
 import { Textarea } from '@shared/components/ui/textarea';
-import { cn } from '@shared/utils/cn';
 import type {
   AdjustStockPayload,
+  InventoryCatalogItemType,
   ImportStockPayload,
   InventoryItemOption,
   WasteRecordPayload,
@@ -45,12 +40,7 @@ interface PackagingUnitOption {
   factorToStandard: number;
 }
 
-interface ComboboxOption {
-  value: string;
-  label: string;
-}
-
-const COMMON_PACKAGE_LABELS = ['thùng', 'hộp', 'chai', 'can', 'bao', 'gói', 'bịch', 'túi', 'dây'] as const;
+const COMMON_PACKAGE_LABELS = ['thùng', 'hộp', 'chai', 'can', 'bao', 'gói', 'bịch', 'túi', 'dây',"vỉ"] as const;
 
 const importStockSchema = z
   .object({
@@ -144,6 +134,9 @@ interface InventoryActionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemOptions: InventoryItemOption[];
+  itemLabel: string;
+  itemType: InventoryCatalogItemType;
+  importActionLabel?: string;
   selectedBranchName: string | null;
   defaultItemId?: string;
   isPending: boolean;
@@ -151,37 +144,6 @@ interface InventoryActionDialogProps {
   onAdjustSubmit?: (payload: AdjustStockPayload) => void;
   onWasteSubmit?: (payload: WasteRecordPayload) => void;
 }
-
-interface SimpleComboboxProps {
-  id: string;
-  value: string;
-  options: ComboboxOption[];
-  placeholder: string;
-  searchPlaceholder: string;
-  emptyMessage: string;
-  allowCustomValue?: boolean;
-  disabled?: boolean;
-  onChange: (value: string) => void;
-}
-
-const inventoryActionCopy = {
-  import: {
-    title: 'Nhập kho nguyên liệu',
-    description:
-      'Tạo lô nhập mới cho chi nhánh đang làm việc. Có thể nhập trực tiếp theo đơn vị chuẩn hoặc nhập theo thùng, hộp, gói rồi để frontend tự quy đổi trước khi gửi backend.',
-    submitLabel: 'Xác nhận nhập kho',
-  },
-  adjust: {
-    title: 'Điều chỉnh tồn kho',
-    description: 'Đặt lại số lượng tồn kho thực tế sau kiểm kê. Hệ thống sẽ ghi audit log kèm lý do.',
-    submitLabel: 'Lưu điều chỉnh',
-  },
-  waste: {
-    title: 'Ghi nhận hao hụt',
-    description: 'Ghi nhận nguyên liệu hỏng, đổ vỡ hoặc hết hạn để trừ khỏi tồn kho của chi nhánh hiện tại.',
-    submitLabel: 'Lưu hao hụt',
-  },
-} as const;
 
 const roundInventoryNumber = (value: number) => Number(value.toFixed(4));
 
@@ -192,6 +154,37 @@ const formatComputedCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value);
 
 const normalizeUnitValue = (unit: string | null | undefined) => unit?.trim().toLowerCase() ?? '';
+const capitalizeLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
+const buildInventoryActionCopy = (
+  mode: InventoryActionMode,
+  itemLabel: string,
+  importActionLabel: string,
+) => {
+  switch (mode) {
+    case 'import':
+      return {
+        title: `${importActionLabel} ${itemLabel}`,
+        description:
+          ` ` ,
+        submitLabel: `Xác nhận ${importActionLabel.toLowerCase()}`,
+      };
+    case 'adjust':
+      return {
+        title: `Điều chỉnh tồn kho ${itemLabel}`,
+        description:
+          `Đặt lại số lượng tồn kho thực tế của ${itemLabel} sau kiểm kê. `,
+        submitLabel: 'Lưu điều chỉnh',
+      };
+    default:
+      return {
+        title: `Ghi nhận hao hụt ${itemLabel}`,
+        description:
+          `Ghi nhận ${itemLabel} hỏng, đổ vỡ hoặc cần loại bỏ để trừ khỏi tồn kho của chi nhánh hiện tại.`,
+        submitLabel: 'Lưu hao hụt',
+      };
+  }
+};
 
 const resolveItemLabel = (itemOptions: InventoryItemOption[], itemId: string) => {
   const matchedItem = itemOptions.find((item) => item.itemId === itemId);
@@ -201,109 +194,6 @@ const resolveItemLabel = (itemOptions: InventoryItemOption[], itemId: string) =>
   }
 
   return matchedItem.unit ? `${matchedItem.itemName} (${matchedItem.unit})` : matchedItem.itemName;
-};
-
-const SimpleCombobox = ({
-  id,
-  value,
-  options,
-  placeholder,
-  searchPlaceholder,
-  emptyMessage,
-  allowCustomValue = false,
-  disabled = false,
-  onChange,
-}: SimpleComboboxProps) => {
-  const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
-
-  const normalizedSearch = searchValue.trim().toLowerCase();
-  const selectedOption = options.find((option) => option.value === value);
-  const triggerLabel = selectedOption?.label ?? (value || placeholder);
-  const filteredOptions =
-    normalizedSearch.length === 0
-      ? options
-      : options.filter((option) => option.label.toLowerCase().includes(normalizedSearch));
-  const canUseCustomValue =
-    allowCustomValue &&
-    normalizedSearch.length > 0 &&
-    !options.some((option) => option.value.toLowerCase() === normalizedSearch);
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-
-        if (nextOpen) {
-          setSearchValue(value);
-        }
-      }}
-    >
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between font-normal"
-          disabled={disabled}
-        >
-          <span className={cn('truncate', !value && 'text-text-secondary')}>
-            {triggerLabel}
-          </span>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-60" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2" align="start">
-        <div className="space-y-2">
-          <Input
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={searchPlaceholder}
-          />
-          <div className="max-h-56 overflow-y-auto">
-            {filteredOptions.length === 0 && !canUseCustomValue ? (
-              <p className="px-2 py-3 text-sm text-text-secondary">{emptyMessage}</p>
-            ) : (
-              <div className="space-y-1">
-                {filteredOptions.map((option) => (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    variant="ghost"
-                    className="w-full justify-between"
-                    onClick={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="truncate">{option.label}</span>
-                    <Check className={cn('h-4 w-4', option.value === value ? 'opacity-100' : 'opacity-0')} />
-                  </Button>
-                ))}
-                {canUseCustomValue ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full justify-between"
-                    onClick={() => {
-                      onChange(searchValue.trim());
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="truncate">Dùng "{searchValue.trim()}"</span>
-                    <Check className="h-4 w-4 opacity-0" />
-                  </Button>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
 };
 
 /**
@@ -404,7 +294,7 @@ const resolveStandardUnitGuide = (standardUnit: string | null | undefined) => {
     return 'Thường gặp: ly, nắp ly, ống hút, muỗng theo dây, gói, hộp hoặc thùng.';
   }
 
-  return 'Nếu đơn vị đóng gói không cố định, hãy nhập tổng lượng chuẩn có trong 1 kiện để frontend tự quy đổi.';
+  return '';
 };
 
 /**
@@ -415,6 +305,9 @@ export const InventoryActionDialog = ({
   open,
   onOpenChange,
   itemOptions,
+  itemLabel,
+  itemType,
+  importActionLabel = 'Nhập kho',
   selectedBranchName,
   defaultItemId,
   isPending,
@@ -422,7 +315,8 @@ export const InventoryActionDialog = ({
   onAdjustSubmit,
   onWasteSubmit,
 }: InventoryActionDialogProps) => {
-  const copy = inventoryActionCopy[mode];
+  const copy = buildInventoryActionCopy(mode, itemLabel, importActionLabel);
+  const itemLabelTitle = capitalizeLabel(itemLabel);
 
   const importForm = useForm<ImportStockFormValues>({
     resolver: zodResolver(importStockSchema),
@@ -527,7 +421,7 @@ export const InventoryActionDialog = ({
   const packageLabelSuggestions = useMemo(() => {
     return resolvePackageLabelSuggestions(selectedImportItem?.unit);
   }, [selectedImportItem?.unit]);
-  const packageLabelComboboxOptions = useMemo<ComboboxOption[]>(() => {
+  const packageLabelComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
     return packageLabelSuggestions.map((packageLabel) => ({
       value: packageLabel,
       label: packageLabel,
@@ -539,12 +433,20 @@ export const InventoryActionDialog = ({
   const standardUnitGuide = useMemo(() => {
     return resolveStandardUnitGuide(selectedImportItem?.unit);
   }, [selectedImportItem?.unit]);
-  const contentUnitComboboxOptions = useMemo<ComboboxOption[]>(() => {
+  const contentUnitComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
     return packagingUnitOptions.map((option) => ({
       value: option.value,
       label: option.label,
     }));
   }, [packagingUnitOptions]);
+  const itemComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
+    return itemOptions.map((item) => ({
+      value: item.itemId,
+      label: item.itemName,
+      description: item.unit ? `Đơn vị chuẩn: ${item.unit}` : 'Chưa có đơn vị chuẩn',
+      keywords: [item.itemId, item.unit ?? ''],
+    }));
+  }, [itemOptions]);
 
   useEffect(() => {
     const nextContentUnit = packagingUnitOptions[0]?.value;
@@ -600,31 +502,29 @@ export const InventoryActionDialog = ({
   ) => {
     const emptyStateMessage =
       mode === 'import'
-        ? 'Chưa có nguyên liệu nào trong danh mục. Tạo item `INGREDIENT` trước rồi quay lại nhập kho.'
-        : 'Chưa có nguyên liệu khả dụng trong kho của chi nhánh hiện tại.';
+        ? `Chưa có ${itemLabel} nào trong danh mục. Tạo item \`${itemType}\` trước rồi quay lại thao tác.`
+        : `Chưa có ${itemLabel} khả dụng trong kho của chi nhánh hiện tại.`;
 
     const helperMessage =
       mode === 'import'
-        ? 'Chọn nguyên liệu đã được tạo trong danh mục để nhập kho lần đầu hoặc nhập thêm lô mới.'
-        : 'Chọn nguyên liệu đã có tồn kho tại chi nhánh hiện tại để thực hiện thao tác.';
+        ? `Chọn ${itemLabel} đã được tạo trong danh mục để nhập tồn lần đầu hoặc nhập thêm lô mới.`
+        : `Chọn ${itemLabel} đã có tồn kho tại chi nhánh hiện tại để thực hiện thao tác.`;
 
     return (
       <div className="space-y-1.5">
         <Label htmlFor={`${mode}-item-id`}>
-          Nguyên liệu <span className="text-red-500">*</span>
+          {itemLabelTitle} <span className="text-red-500">*</span>
         </Label>
-        <Select value={itemId} onValueChange={onItemChange}>
-          <SelectTrigger id={`${mode}-item-id`}>
-            <SelectValue placeholder="Chọn nguyên liệu" />
-          </SelectTrigger>
-          <SelectContent>
-            {itemOptions.map((item) => (
-              <SelectItem key={item.itemId} value={item.itemId}>
-                {resolveItemLabel(itemOptions, item.itemId) ?? 'Nguyên liệu'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableCombobox
+          id={`${mode}-item-id`}
+          value={itemId}
+          options={itemComboboxOptions}
+          placeholder={`Chọn ${itemLabel}`}
+          searchPlaceholder={`Tìm ${itemLabel} theo tên, mã hoặc đơn vị`}
+          emptyMessage={`Không tìm thấy ${itemLabel} phù hợp.`}
+          disabled={itemOptions.length === 0}
+          onValueChange={onItemChange}
+        />
         {selectedItemLabel && <p className="text-xs text-text-secondary">Đã chọn: {selectedItemLabel}</p>}
         {!selectedItemLabel && itemOptions.length > 0 && (
           <p className="text-xs text-text-secondary">{helperMessage}</p>
@@ -701,9 +601,7 @@ export const InventoryActionDialog = ({
                   <RadioGroupItem value="standard" id="import-mode-standard" className="mt-0.5" />
                   <span className="space-y-1">
                     <span className="block text-sm font-medium text-text-primary">Theo đơn vị chuẩn</span>
-                    <span className="block text-xs text-text-secondary">
-                      Nhập trực tiếp theo `ml`, `g`, `cái` hoặc đơn vị chuẩn đang lưu trong kho.
-                    </span>
+                    
                   </span>
                 </label>
 
@@ -714,9 +612,7 @@ export const InventoryActionDialog = ({
                   <RadioGroupItem value="packaging" id="import-mode-packaging" className="mt-0.5" />
                   <span className="space-y-1">
                     <span className="block text-sm font-medium text-text-primary">Theo quy cách đóng gói</span>
-                    <span className="block text-xs text-text-secondary">
-                      Nhập theo thùng, hộp, gói, bao rồi để frontend tự quy đổi trước khi gọi backend.
-                    </span>
+                   
                   </span>
                 </label>
               </RadioGroup>
@@ -766,7 +662,6 @@ export const InventoryActionDialog = ({
             ) : (
               <div className="space-y-4 rounded-card border border-border bg-card p-4">
                 <div className="rounded-card border border-border bg-cream/70 px-4 py-3 text-sm text-text-secondary">
-                  <p className="font-medium text-text-primary">Quy đổi thường gặp</p>
                   <p className="mt-1">{standardUnitGuide}</p>
                 </div>
 
@@ -794,7 +689,7 @@ export const InventoryActionDialog = ({
                     <Label htmlFor="import-package-label">
                       Đơn vị kiện <span className="text-red-500">*</span>
                     </Label>
-                    <SimpleCombobox
+                    <SearchableCombobox
                       id="import-package-label"
                       value={watchedPackageLabel}
                       options={packageLabelComboboxOptions}
@@ -802,7 +697,7 @@ export const InventoryActionDialog = ({
                       searchPlaceholder="Tìm hoặc nhập đơn vị kiện"
                       emptyMessage="Không có gợi ý phù hợp. Nhập đơn vị mới để dùng giá trị này."
                       allowCustomValue
-                      onChange={(value) => {
+                      onValueChange={(value) => {
                         importForm.setValue('packageLabel', value, {
                           shouldDirty: true,
                           shouldValidate: true,
@@ -846,14 +741,14 @@ export const InventoryActionDialog = ({
                     <Label htmlFor="import-content-unit">
                       Đơn vị quy đổi <span className="text-red-500">*</span>
                     </Label>
-                    <SimpleCombobox
+                    <SearchableCombobox
                       id="import-content-unit"
                       value={watchedContentUnit}
                       options={contentUnitComboboxOptions}
                       placeholder="Chọn đơn vị quy đổi"
                       searchPlaceholder="Tìm đơn vị quy đổi"
                       emptyMessage="Không có đơn vị quy đổi khả dụng cho nguyên liệu này."
-                      onChange={(value) => {
+                      onValueChange={(value) => {
                         importForm.setValue('contentUnit', value, { shouldDirty: true, shouldValidate: true });
                       }}
                     />
@@ -882,9 +777,7 @@ export const InventoryActionDialog = ({
                       <RadioGroupItem value="total" id="import-price-total" className="mt-0.5" />
                       <span className="space-y-1">
                         <span className="block text-sm font-medium text-text-primary">Nhập theo tổng tiền lô</span>
-                        <span className="block text-xs text-text-secondary">
-                          FE tự chia lại thành đơn giá trên 1 {standardUnitLabel} trước khi gửi backend.
-                        </span>
+                      
                       </span>
                     </label>
 
@@ -895,9 +788,7 @@ export const InventoryActionDialog = ({
                       <RadioGroupItem value="per-package" id="import-price-package" className="mt-0.5" />
                       <span className="space-y-1">
                         <span className="block text-sm font-medium text-text-primary">Nhập theo giá mỗi kiện</span>
-                        <span className="block text-xs text-text-secondary">
-                          FE nhân với số kiện rồi quy đổi về đơn giá chuẩn.
-                        </span>
+                 
                       </span>
                     </label>
                   </RadioGroup>
@@ -954,10 +845,10 @@ export const InventoryActionDialog = ({
                     <p>
                       Lượng trong mỗi kiện: {formatComputedNumber(watchedContentPerPackage)} {selectedPackagingUnitLabel}
                     </p>
-                    <p>Số lượng gửi BE: {formatComputedNumber(derivedPackagingQuantity)} {standardUnitLabel}</p>
-                    <p>Tổng tiền lô: {formatComputedCurrency(derivedPackagingTotalCost)}</p>
+                    <p>Số lượng : {formatComputedNumber(derivedPackagingQuantity)} {standardUnitLabel}</p>
+                    <p>Tổng tiền 1 kiên: {formatComputedCurrency(derivedPackagingTotalCost)}</p>
                     <p>
-                      Đơn giá chuẩn gửi BE: {formatComputedNumber(derivedPackagingCostPerUnit)} / {standardUnitLabel}
+                      Đơn giá chuẩn : {formatComputedNumber(derivedPackagingCostPerUnit)} / {standardUnitLabel}
                     </p>
                   </div>
                 </div>
@@ -985,7 +876,7 @@ export const InventoryActionDialog = ({
                 id="import-note"
                 rows={3}
                 {...importForm.register('note')}
-                placeholder="Ví dụ: nhập lô đầu tuần từ nhà cung cấp A"
+                placeholder={`Ví dụ: ${importActionLabel.toLowerCase()} lô đầu tuần từ nhà cung cấp A`}
               />
             </div>
 

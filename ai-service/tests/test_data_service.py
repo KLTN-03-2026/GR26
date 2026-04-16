@@ -22,7 +22,8 @@ from app.services.data_service import (
     get_recent_consumption,
 )
 
-pytestmark = pytest.mark.asyncio
+# Chỉ áp dụng asyncio mark cho class có async methods
+# (TestBuildAndFill là sync — không cần mark)
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +55,10 @@ def _named_row(**kwargs):
 # Tests: get_active_tenants
 # ---------------------------------------------------------------------------
 
+pytestmark_async = pytest.mark.asyncio
+
+
+@pytest.mark.asyncio
 class TestGetActiveTenants:
     async def test_returns_tenant_ids(self):
         """Trả về list tenant_id khi có tenant ACTIVE."""
@@ -78,6 +83,7 @@ class TestGetActiveTenants:
 # Tests: get_current_stock
 # ---------------------------------------------------------------------------
 
+@pytest.mark.asyncio
 class TestGetCurrentStock:
     async def test_returns_stock_when_found(self):
         """Trả về tồn kho khi tìm thấy record."""
@@ -122,6 +128,7 @@ class TestGetCurrentStock:
 # Tests: get_branch_coordinates
 # ---------------------------------------------------------------------------
 
+@pytest.mark.asyncio
 class TestGetBranchCoordinates:
     async def test_returns_coordinates_when_found(self):
         """Trả về (lat, lng) khi chi nhánh có tọa độ."""
@@ -155,6 +162,7 @@ class TestGetBranchCoordinates:
 # Tests: get_recent_consumption
 # ---------------------------------------------------------------------------
 
+@pytest.mark.asyncio
 class TestGetRecentConsumption:
     async def test_returns_dataframe_with_correct_columns(self):
         """Trả về DataFrame [ds, y] khi có data trong consumption_history."""
@@ -208,6 +216,7 @@ class TestGetRecentConsumption:
 # Tests: get_active_ingredients
 # ---------------------------------------------------------------------------
 
+@pytest.mark.asyncio
 class TestGetActiveIngredients:
     async def test_returns_ingredients_with_series_id(self):
         """Trả về list ingredients kèm series_id khi đã có trong registry."""

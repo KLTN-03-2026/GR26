@@ -17,7 +17,6 @@ from app.core.logging import get_logger, setup_logging
 setup_logging()
 logger = get_logger(__name__)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
@@ -29,16 +28,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("SmartF&B AI Service đang khởi động...")
     logger.info("Port: %s | Log level: %s", settings.ai_service_port, settings.log_level)
 
-    # TODO: Khởi động APScheduler trong sprint scheduler
-    # from app.scheduler.runner import start_scheduler
-    # await start_scheduler()
+    # Khởi động APScheduler — đăng ký 3 cron jobs (train, predict, weather)
+    from app.scheduler.runner import start_scheduler, stop_scheduler
+    start_scheduler()
 
     logger.info("AI Service sẵn sàng nhận request.")
     yield
 
     # --- Shutdown ---
     logger.info("AI Service đang tắt...")
-    # TODO: await stop_scheduler()
+    stop_scheduler()
 
 
 app = FastAPI(

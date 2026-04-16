@@ -7,7 +7,10 @@ import com.smartfnb.menu.domain.exception.AddonNotFoundException;
 import com.smartfnb.menu.domain.exception.DuplicateAddonNameException;
 import com.smartfnb.menu.infrastructure.persistence.AddonJpaEntity;
 import com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository;
 import com.smartfnb.shared.TenantContext;
+import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ import java.util.UUID;
 public class AddonCommandHandler {
 
     private final AddonJpaRepository addonJpaRepository;
+    private final MenuItemJpaRepository menuItemJpaRepository;
 
     /**
      * Tạo Addon/Topping mới.
@@ -53,8 +57,23 @@ public class AddonCommandHandler {
         entity.setExtraPrice(request.extraPrice());
         entity.setIsActive(true);
 
+        if (request.itemId() != null) {
+            MenuItemJpaEntity item = menuItemJpaRepository
+                .findByIdAndTenantIdAndDeletedAtIsNull(request.itemId(), tenantId)
+                .orElseThrow(() -> new SmartFnbException("ITEM_NOT_FOUND", "Không tìm thấy item liên kết"));
+            
+            if ("SELLABLE".equals(item.getType())) {
+                throw new SmartFnbException("INVALID_ITEM_TYPE", "Chỉ được link addon tới INGREDIENT hoặc SUB_ASSEMBLY");
+            }
+            entity.setItemId(request.itemId());
+            if (request.itemQuantity() != null) {
+                entity.setItemQuantity(request.itemQuantity());
+            }
+            entity.setItemUnit(request.itemUnit());
+        }
+
         AddonJpaEntity saved = addonJpaRepository.save(entity);
-        log.info("Đã tạo addon {} - '{}'", saved.getId(), saved.getName());
+        log.info("Đã tạo addon {} - '{}' (itemId: {})", saved.getId(), saved.getName(), saved.getItemId());
 
         return AddonResponse.from(saved);
     }
@@ -87,6 +106,26 @@ public class AddonCommandHandler {
         entity.setExtraPrice(request.extraPrice());
         if (request.isActive() != null) {
             entity.setIsActive(request.isActive());
+        }
+
+        if (request.itemId() != null) {
+            MenuItemJpaEntity item = menuItemJpaRepository
+                .findByIdAndTenantIdAndDeletedAtIsNull(request.itemId(), tenantId)
+                .orElseThrow(() -> new SmartFnbException("ITEM_NOT_FOUND", "Không tìm thấy item liên kết"));
+            
+            if ("SELLABLE".equals(item.getType())) {
+                throw new SmartFnbException("INVALID_ITEM_TYPE", "Chỉ được link addon tới INGREDIENT hoặc SUB_ASSEMBLY");
+            }
+            entity.setItemId(request.itemId());
+            if (request.itemQuantity() != null) {
+                entity.setItemQuantity(request.itemQuantity());
+            }
+            entity.setItemUnit(request.itemUnit());
+        } else {
+            // Null itemId in update request means unlink the inventory item
+            entity.setItemId(null);
+            entity.setItemQuantity(java.math.BigDecimal.ONE);
+            entity.setItemUnit(null);
         }
 
         AddonJpaEntity saved = addonJpaRepository.save(entity);

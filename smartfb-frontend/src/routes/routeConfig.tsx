@@ -187,6 +187,12 @@ export const staffRoutes: RouteConfigItem[] = [
     <Navigate to={ROUTES.POS_MANAGEMENT} replace />,
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT }
   ),
+  createRoute(ROUTES.STAFF.STAFF, 'Nhân viên', <StaffPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF,
+  }),
+  createRoute(ROUTES.STAFF.STAFF_POSITIONS, 'Chức vụ', <StaffPositionsPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF_POSITIONS,
+  }),
   createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,
   }),

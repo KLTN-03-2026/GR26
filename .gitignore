@@ -18,6 +18,14 @@ lerna-debug.log*
 # Environment / secrets
 .env
 .env.*
+
+# Python virtual environments
+venv/
+.venv/
+ai-service/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
 !.env.example
 
 # JavaScript / TypeScript
@@ -36,7 +44,7 @@ lerna-debug.log*
 **/.claude/
 docs
 images
-report
+reports
 
 # Internal docs you do not want to push
 smartfb-frontend/src/docs/architecture
@@ -63,3 +71,6 @@ Smartfnb-BE/.agents/
 Smartfnb-BE/tests_api/
 Smartfnb-BE/uploads/
 
+AI_PROJECT_STRUCTURE.md
+CLAUDE_CODE_PROMPT.md
+scripts/*

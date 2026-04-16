@@ -326,6 +326,7 @@ com\smartfnb\supplier\infrastructure\persistence\SupplierJpaRepository.class
 com\smartfnb\plan\application\dto\SubscriptionResponse.class
 com\smartfnb\shared\web\PageResponse.class
 com\smartfnb\menu\infrastructure\persistence\AddonJpaRepository.class
+com\smartfnb\order\domain\event\OrderCompletedEvent$CompletedAddonItem.class
 com\smartfnb\branch\application\BranchService.class
 com\smartfnb\SmartFnbApplication.class
 com\smartfnb\staff\application\command\UpdateStaffCommandHandler.class
@@ -344,6 +345,7 @@ com\smartfnb\payment\infrastructure\persistence\PaymentRepositoryImpl.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleJpaEntity$UserRoleJpaEntityBuilder.class
 com\smartfnb\staff\infrastructure\persistence\StaffAuditLogJpaRepository.class
 com\smartfnb\staff\infrastructure\persistence\UserRoleJpaEntity.class
+com\smartfnb\inventory\web\controller\InventoryController.class
 com\smartfnb\order\infrastructure\websocket\OrderStatusBroadcaster.class
 com\smartfnb\order\infrastructure\persistence\OrderStatusLogJpaRepository.class
 com\smartfnb\payment\domain\model\PaymentStatus.class
@@ -434,6 +436,7 @@ com\smartfnb\shift\web\controller\ShiftScheduleController.class
 com\smartfnb\branch\web\controller\BranchController.class
 com\smartfnb\staff\web\controller\StaffController.class
 com\smartfnb\branch\infrastructure\persistence\BranchJpaEntity$BranchJpaEntityBuilder.class
+com\smartfnb\order\application\command\UpdateOrderStatusCommandHandler$1.class
 com\smartfnb\payment\application\dto\ProcessQRPaymentResponse.class
 com\smartfnb\shared\web\GlobalExceptionHandler.class
 com\smartfnb\menu\application\dto\CategoryResponse.class

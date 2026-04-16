@@ -3,6 +3,7 @@ package com.smartfnb.menu.application.dto;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO request cập nhật Addon/Topping.
@@ -23,5 +24,21 @@ public record UpdateAddonRequest(
         BigDecimal extraPrice,
 
         /** Trạng thái kích hoạt */
-        Boolean isActive
+        Boolean isActive,
+
+        /**
+         * FK tới items(id) — INGREDIENT hoặc SUB_ASSEMBLY.
+         * Gửi null để xóa liên kết kho (addon trở về thuần giá).
+         */
+        UUID itemId,
+
+        /**
+         * Định lượng tiêu hao mới. Bắt buộc > 0 khi itemId != null.
+         */
+        @DecimalMin(value = "0.0001", message = "Định lượng tiêu hao phải lớn hơn 0")
+        BigDecimal itemQuantity,
+
+        /** Đơn vị tính mới (g, ml, cái...). */
+        @Size(max = 30, message = "Đơn vị tính tối đa 30 ký tự")
+        String itemUnit
 ) {}

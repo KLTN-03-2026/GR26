@@ -21,10 +21,12 @@ from app.core.config import settings
 # Async engine kết nối PostgreSQL qua asyncpg driver
 engine = create_async_engine(
     settings.database_url,
-    pool_pre_ping=True,   # Kiểm tra kết nối trước mỗi lần dùng
-    pool_size=10,
-    max_overflow=20,
-    echo=False,           # Đặt True khi debug SQL
+    pool_pre_ping=True,    # Kiểm tra kết nối trước mỗi lần dùng
+    pool_size=5,           # Số connection thường trực
+    max_overflow=10,       # Số connection bổ sung khi cần
+    pool_timeout=30,       # Giây chờ tối đa để lấy connection từ pool
+    pool_recycle=1800,     # Recycle connection sau 30 phút — tránh "connection closed"
+    echo=False,            # Đặt True khi debug SQL
 )
 
 # Session factory — dùng trong get_db() và scheduler jobs

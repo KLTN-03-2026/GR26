@@ -88,6 +88,11 @@ export interface MenuListParams extends Record<string, unknown>  {
 }
 
 /**
+ * Loại item trong hệ thống menu — đồng bộ với backend.
+ */
+export type MenuItemType = 'SELLABLE' | 'INGREDIENT' | 'SUB_ASSEMBLY';
+
+/**
  * Payload cho tạo mới món ăn
  */
 export interface CreateMenuPayload {
@@ -98,6 +103,8 @@ export interface CreateMenuPayload {
   imageFile?: File | null;
   unit?: string;
   isSyncDelivery?: boolean;
+  /** Loại item: SELLABLE (mặc định), INGREDIENT, SUB_ASSEMBLY */
+  type?: MenuItemType;
 }
 
 /**

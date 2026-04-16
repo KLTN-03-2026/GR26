@@ -140,6 +140,20 @@ export const menuConfig: MenuSection[] = [
             path: ROUTES.OWNER.STAFF_POSITIONS,
             roles: [ROLES.OWNER],
           },
+          {
+            title: 'Nhân viên',
+            icon: Users2,
+            path: ROUTES.STAFF.STAFF,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF,
+          },
+          {
+            title: 'Chức vụ',
+            icon: BriefcaseBusiness,
+            path: ROUTES.STAFF.STAFF_POSITIONS,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF_POSITIONS,
+          },
           { title: 'Lịch làm', icon: Clock, path: ROUTES.OWNER.SCHEDULES, roles: [ROLES.OWNER] },
           {
             title: 'Lịch làm',
