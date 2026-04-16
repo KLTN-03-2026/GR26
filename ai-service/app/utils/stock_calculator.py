@@ -6,7 +6,9 @@ Stock Calculator — tính ngày hết hàng và số lượng gợi ý nhập.
 - Không có side effect — dễ test, dễ tái sử dụng
 """
 
-from datetime import date, timedelta
+from collections.abc import Iterable
+from datetime import date, datetime, timedelta
+from math import ceil
 from typing import Any
 
 import pandas as pd
@@ -20,61 +22,129 @@ DEFAULT_LEAD_TIME_DAYS = 2
 # Ngày đặt hàng mặc định khi không xác định được ngày hết hàng
 DEFAULT_ORDER_HORIZON_DAYS = 30
 
+# Số ngày tối đa được ước tính tiếp sau forecast window.
+# Tránh trả về ngày hết hàng rất xa khi tồn kho quá lớn so với nhu cầu dự báo.
+DEFAULT_STOCKOUT_EXTRAPOLATION_DAYS = 30
+
+
+def _to_date(value: Any) -> date | None:
+    if pd.isna(value):
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if hasattr(value, "date"):
+        return value.date()
+    return None
+
+
+def _to_daily_qty(value: Any) -> float:
+    if pd.isna(value):
+        return 0.0
+    return max(float(value), 0.0)
+
+
+def predict_stockout_date_from_forecasts(
+    current_stock: float,
+    daily_forecasts: Iterable[tuple[Any, Any]],
+    max_extrapolation_days: int | None = DEFAULT_STOCKOUT_EXTRAPOLATION_DAYS,
+) -> date | None:
+    """
+    Tính ngày hết hàng từ chuỗi dự báo ngày/số lượng.
+
+    Nếu tồn kho chưa hết trong forecast window, hàm ước tính tiếp bằng mức tiêu
+    thụ trung bình của window hiện tại. Trả về None nếu không có tiêu thụ hoặc
+    ngày hết hàng vượt quá max_extrapolation_days sau forecast window.
+    """
+    if current_stock <= 0:
+        return date.today()
+
+    rows = []
+    for raw_date, raw_qty in daily_forecasts:
+        forecast_date = _to_date(raw_date)
+        if forecast_date is None:
+            continue
+        rows.append((forecast_date, _to_daily_qty(raw_qty)))
+
+    if not rows:
+        return None
+
+    rows.sort(key=lambda item: item[0])
+
+    cumulative = 0.0
+    for forecast_date, daily in rows:
+        cumulative += daily
+        if cumulative >= current_stock:
+            return forecast_date
+
+    avg_daily = cumulative / len(rows)
+    if avg_daily <= 0:
+        return None
+
+    remaining_after_window = current_stock - cumulative
+    days_after_window = ceil(remaining_after_window / avg_daily)
+    if (
+        max_extrapolation_days is not None
+        and days_after_window > max_extrapolation_days
+    ):
+        return None
+
+    return rows[-1][0] + timedelta(days=days_after_window)
 
 
 def predict_stockout_date(
     current_stock: float,
     forecast_df: pd.DataFrame,
+    max_extrapolation_days: int | None = DEFAULT_STOCKOUT_EXTRAPOLATION_DAYS,
 ) -> date | None:
     """
     Tính ngày hết hàng dự kiến dựa trên tồn kho hiện tại và dự báo tiêu thụ.
 
     Tích lũy tiêu thụ từng ngày (yhat1) đến khi vượt current_stock.
     Giá trị yhat1 âm được clip về 0 trước khi tính.
+    Nếu chưa hết trong forecast window, ước tính tiếp bằng tiêu thụ trung bình.
 
     Args:
         current_stock: Số lượng tồn kho hiện tại (theo đơn vị nguyên liệu).
                        Nếu <= 0 → coi như đã hết hàng, trả về hôm nay.
         forecast_df: DataFrame từ NeuralProphet với cột 'ds' (datetime)
                      và 'yhat1' (float). Có thể rỗng.
+        max_extrapolation_days: Số ngày tối đa ước tính tiếp sau forecast window.
+                                None = không giới hạn.
 
     Returns:
-        Ngày dự kiến hết hàng, hoặc None nếu tồn kho đủ trong toàn kỳ dự báo.
+        Ngày dự kiến hết hàng, hoặc None nếu không thể ước tính trong horizon.
     """
-    # Đã hết hàng rồi — trả về hôm nay ngay
     if current_stock <= 0:
         return date.today()
 
-    # Không có dự báo → không thể tính ngày hết hàng
     if forecast_df.empty:
         return None
 
-    # Tích lũy tiêu thụ từng ngày cho đến khi vượt tồn kho hiện tại
-    cumulative = 0.0
-    for _, row in forecast_df.iterrows():
-        # Guard NaN/NaT — không để float() crash trên giá trị không hợp lệ
-        raw: Any = row["yhat1"]
-        daily = max(float(raw) if pd.notna(raw) else 0.0, 0.0)
-        cumulative += daily
-        if cumulative >= current_stock:
-            return row["ds"].date()
-
-    return None  # Tồn kho đủ dùng trong toàn kỳ dự báo
+    return predict_stockout_date_from_forecasts(
+        current_stock,
+        ((row["ds"], row["yhat1"]) for _, row in forecast_df.iterrows()),
+        max_extrapolation_days=max_extrapolation_days,
+    )
 
 
 def calc_suggested_qty(
     forecast_df: pd.DataFrame,
     safety_factor: float = DEFAULT_SAFETY_FACTOR,
+    current_stock: float = 0.0,
 ) -> float:
     """
     Tính số lượng gợi ý nhập dựa trên tổng tiêu thụ dự báo + safety buffer.
 
-    Công thức: round(sum(max(yhat1, 0)) × safety_factor, 2)
+    Công thức: round(max(sum(max(yhat1, 0)) × safety_factor − current_stock, 0), 2)
 
     Args:
         forecast_df: DataFrame với cột 'yhat1'.
                      Nếu rỗng → trả về 0.0.
         safety_factor: Hệ số an toàn (mặc định 1.2 = nhập thêm 20%).
+        current_stock: Tồn kho hiện tại. Mặc định 0 để giữ tương thích với
+                       cách tính chỉ dựa trên forecast.
 
     Returns:
         Số lượng gợi ý nhập, làm tròn 2 chữ số thập phân.
@@ -86,7 +156,7 @@ def calc_suggested_qty(
         max(float(row["yhat1"]) if pd.notna(row["yhat1"]) else 0.0, 0.0)
         for _, row in forecast_df.iterrows()
     )
-    return round(total_forecast * safety_factor, 2)
+    return round(max(total_forecast * safety_factor - max(current_stock, 0.0), 0.0), 2)
 
 
 def calc_suggested_order_date(
@@ -101,7 +171,8 @@ def calc_suggested_order_date(
 
     Args:
         stockout_date: Ngày dự kiến hết hàng (từ predict_stockout_date).
-                       Nếu None → tồn kho đủ, đặt hàng sau 30 ngày.
+                       Nếu None → không ước tính được trong horizon, đặt hàng
+                       theo lịch định kỳ sau 30 ngày.
         lead_time_days: Số ngày cần để nhà cung cấp giao hàng (mặc định 2).
 
     Returns:

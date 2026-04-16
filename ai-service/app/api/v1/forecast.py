@@ -22,105 +22,125 @@ from app.schemas.forecast import (
     IngredientForecast,
 )
 from app.utils import model_io
-from app.utils.stock_calculator import calc_suggested_order_date, get_urgency
+from app.utils.stock_calculator import (
+    calc_suggested_order_date,
+    get_urgency,
+    predict_stockout_date_from_forecasts,
+)
 
 router = APIRouter(prefix="/forecast", tags=["Forecast"])
 logger = get_logger(__name__)
 
 # SQL lấy toàn bộ forecast cho 1 chi nhánh từ hôm nay trở đi
-_SQL_BRANCH_FORECAST = text("""
+_SQL_BRANCH_FORECAST = text(
+    """
     SELECT
         asr.ingredient_id,
         i.name                       AS ingredient_name,
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
-        fr.stockout_date,
-        fr.suggested_qty,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
-    JOIN items i ON i.id::text = asr.ingredient_id
+    JOIN items i ON i.id::text = asr.ingredient_id::text
     LEFT JOIN inventory_balances ib
-        ON ib.item_id::text = asr.ingredient_id
+        ON ib.item_id::text = asr.ingredient_id::text
         AND ib.branch_id::text = :branch_id
         AND ib.tenant_id::text = :tenant_id
     WHERE asr.branch_id::text = :branch_id
       AND fr.forecast_date >= :today
     ORDER BY i.name ASC, fr.forecast_date ASC
-""")
+"""
+)
 
 # SQL lấy forecast cho 1 nguyên liệu cụ thể
-_SQL_INGREDIENT_FORECAST = text("""
+_SQL_INGREDIENT_FORECAST = text(
+    """
     SELECT
         asr.ingredient_id,
         i.name                       AS ingredient_name,
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
-        fr.stockout_date,
-        fr.suggested_qty,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
-    JOIN items i ON i.id::text = asr.ingredient_id
+    JOIN items i ON i.id::text = asr.ingredient_id::text
     LEFT JOIN inventory_balances ib
-        ON ib.item_id::text = asr.ingredient_id
+        ON ib.item_id::text = asr.ingredient_id::text
         AND ib.branch_id::text = :branch_id
         AND ib.tenant_id::text = :tenant_id
     WHERE asr.branch_id::text = :branch_id
-      AND asr.ingredient_id = :ingredient_id
+      AND asr.ingredient_id::text = :ingredient_id
       AND fr.forecast_date >= :today
     ORDER BY fr.forecast_date ASC
-""")
+"""
+)
 
 
 def _rows_to_ingredient_forecasts(rows: list) -> list[IngredientForecast]:
     """
     Chuyển đổi danh sách rows DB thành list[IngredientForecast].
 
-    Nhóm theo ingredient_id, tính urgency và suggested_order_date từ stockout_date.
+    Nhóm theo ingredient_id, tính stockout/urgency/suggested_order_date realtime.
     """
     # Nhóm rows theo ingredient_id
-    grouped: dict[str, dict] = defaultdict(lambda: {
-        "ingredient_name": "",
-        "unit": "",
-        "current_stock": 0.0,
-        "stockout_date": None,
-        "suggested_qty": 0.0,
-        "forecast_days": [],
-    })
+    grouped: dict[str, dict] = defaultdict(
+        lambda: {
+            "ingredient_name": "",
+            "unit": "",
+            "current_stock": 0.0,
+            "forecast_days": [],
+        }
+    )
 
     for row in rows:
         ing_id = str(row.ingredient_id)
         g = grouped[ing_id]
         g["ingredient_name"] = row.ingredient_name
         g["unit"] = row.unit
-        # Lấy current_stock và stockout_date từ row đầu tiên của ingredient
+        # Lấy current_stock từ row đầu tiên của ingredient.
         if not g["forecast_days"]:
             g["current_stock"] = float(row.current_stock)
-            g["stockout_date"] = row.stockout_date
-            g["suggested_qty"] = float(row.suggested_qty) if row.suggested_qty else 0.0
-        g["forecast_days"].append(DayForecast(
-            forecast_date=row.forecast_date,
-            predicted_qty=float(row.predicted_qty),
-        ))
+        g["forecast_days"].append(
+            DayForecast(
+                forecast_date=row.forecast_date,
+                predicted_qty=float(row.predicted_qty),
+            )
+        )
 
     result: list[IngredientForecast] = []
     for ing_id, g in grouped.items():
-        stockout: date | None = g["stockout_date"]
-        result.append(IngredientForecast(
-            ingredient_id=ing_id,
-            ingredient_name=g["ingredient_name"],
-            unit=g["unit"],
-            current_stock=g["current_stock"],
-            forecast_days=g["forecast_days"],
-            stockout_date=stockout,
-            suggested_order_qty=g["suggested_qty"],
-            suggested_order_date=calc_suggested_order_date(stockout),
-            urgency=get_urgency(stockout),
-            is_fallback=False,  # Không lưu trong DB — mặc định False
-        ))
+        current_stock: float = g["current_stock"]
+        forecast_days: list[DayForecast] = g["forecast_days"]
+
+        # Recompute stockout_date từ current_stock realtime + forecast hiện tại,
+        # gồm cả phần ngoại suy sau forecast window nếu tồn kho chỉ dư vài ngày.
+        stockout = predict_stockout_date_from_forecasts(
+            current_stock,
+            ((day.forecast_date, day.predicted_qty) for day in forecast_days),
+        )
+
+        # Recompute suggested_qty từ forecast thực tế (+ 20% safety buffer)
+        # và trừ tồn kho hiện tại. Nếu tồn kho đủ thì không đề nghị nhập thêm.
+        total_forecast = sum(day.predicted_qty for day in forecast_days)
+        suggested_qty = round(max(total_forecast * 1.2 - current_stock, 0.0), 2)
+
+        result.append(
+            IngredientForecast(
+                ingredient_id=ing_id,
+                ingredient_name=g["ingredient_name"],
+                unit=g["unit"],
+                current_stock=current_stock,
+                forecast_days=forecast_days,
+                stockout_date=stockout,
+                suggested_order_qty=suggested_qty,
+                suggested_order_date=calc_suggested_order_date(stockout),
+                urgency=get_urgency(stockout),
+                is_fallback=False,  # Không lưu trong DB — mặc định False
+            )
+        )
 
     return result
 
@@ -141,29 +161,22 @@ async def get_branch_forecast_summary(
     Returns:
         ForecastSummary với urgent_count, warning_count, ok_count
     """
-    # Lấy 1 row per ingredient cho hôm nay để tính urgency
-    sql = text("""
-        SELECT DISTINCT ON (asr.ingredient_id)
-            fr.stockout_date
-        FROM forecast_results fr
-        JOIN ai_series_registry asr ON asr.id = fr.series_id
-        WHERE asr.branch_id = :branch_id
-          AND fr.forecast_date = :today
-        ORDER BY asr.ingredient_id, fr.forecast_date
-    """)
-
-    result = await db.execute(sql, {
-        "branch_id": branch_id,
-        "today": date.today(),
-    })
+    result = await db.execute(
+        _SQL_BRANCH_FORECAST,
+        {
+            "branch_id": branch_id,
+            "tenant_id": tenant.tenant_id,
+            "today": date.today(),
+        },
+    )
     rows = result.fetchall()
+    ingredients = _rows_to_ingredient_forecasts(rows)
 
     urgency_counts = {"critical": 0, "warning": 0, "ok": 0}
-    for row in rows:
-        u = get_urgency(row.stockout_date)
-        urgency_counts[u] += 1
+    for ingredient in ingredients:
+        urgency_counts[ingredient.urgency] += 1
 
-    total = len(rows)
+    total = len(ingredients)
     return ForecastSummary(
         branch_id=branch_id,
         generated_at=datetime.now(),
@@ -194,12 +207,15 @@ async def get_ingredient_forecast(
     Raises:
         HTTPException 404: Không có dự báo cho nguyên liệu này
     """
-    result = await db.execute(_SQL_INGREDIENT_FORECAST, {
-        "branch_id": branch_id,
-        "ingredient_id": ingredient_id,
-        "tenant_id": tenant.tenant_id,
-        "today": date.today(),
-    })
+    result = await db.execute(
+        _SQL_INGREDIENT_FORECAST,
+        {
+            "branch_id": branch_id,
+            "ingredient_id": ingredient_id,
+            "tenant_id": tenant.tenant_id,
+            "today": date.today(),
+        },
+    )
     rows = result.fetchall()
 
     if not rows:
@@ -220,7 +236,7 @@ async def get_branch_forecast(
     db: AsyncSession = Depends(get_db),
 ) -> ForecastResponse:
     """
-    Lấy kết quả dự báo 7 ngày tới của tất cả nguyên liệu tại chi nhánh.
+    Lấy kết quả dự báo n ngày tới của tất cả nguyên liệu tại chi nhánh.
     Kết quả đọc từ bảng forecast_results — predict job đã tính sẵn mỗi đêm.
 
     Args:
@@ -248,17 +264,22 @@ async def get_branch_forecast(
     branch_name = branch_row[0] if branch_row else branch_id
 
     # Lấy forecast data
-    result = await db.execute(_SQL_BRANCH_FORECAST, {
-        "branch_id": branch_id,
-        "tenant_id": tenant.tenant_id,
-        "today": date.today(),
-    })
+    result = await db.execute(
+        _SQL_BRANCH_FORECAST,
+        {
+            "branch_id": branch_id,
+            "tenant_id": tenant.tenant_id,
+            "today": date.today(),
+        },
+    )
     rows = result.fetchall()
 
     ingredients = _rows_to_ingredient_forecasts(rows)
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
-    logger.info("forecast %s: %.0fms (%d ingredients)", branch_id, elapsed_ms, len(ingredients))
+    logger.info(
+        "forecast %s: %.0fms (%d ingredients)", branch_id, elapsed_ms, len(ingredients)
+    )
 
     # Cache 5 phút — FE không cần real-time, forecast job chạy hàng đêm
     response.headers["Cache-Control"] = "max-age=300"

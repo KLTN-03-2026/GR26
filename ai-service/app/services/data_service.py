@@ -553,4 +553,43 @@ async def get_all_consumption_for_tenant(
         "Consumption cho train: tenant=%s | %d rows | %d series",
         tenant_id, len(df), df["ID"].nunique(),
     )
+
+    # Upsert vào consumption_history — cache data đã chuẩn hóa để predict đọc nhanh
+    await _upsert_consumption_history(db, df)
+
     return df
+
+
+async def _upsert_consumption_history(db: AsyncSession, df: pd.DataFrame) -> None:
+    """
+    Upsert DataFrame tiêu thụ vào bảng consumption_history.
+
+    Dùng ON CONFLICT (series_id, ds) DO UPDATE SET y — an toàn khi train job chạy lại.
+    ID trong DataFrame có dạng "s{int}" — lấy integer PK bằng cách bỏ ký tự 's' đầu.
+
+    Args:
+        db: AsyncSession
+        df: DataFrame với cột [ds, y, ID] — ID dạng "s{int}"
+    """
+    if df.empty:
+        return
+
+    # Chuẩn bị danh sách dict để bulk upsert
+    rows = [
+        {
+            "series_id": int(row["ID"][1:]),  # "s42" → 42
+            "ds": row["ds"].date() if hasattr(row["ds"], "date") else row["ds"],
+            "y": float(row["y"]),
+        }
+        for _, row in df.iterrows()
+    ]
+
+    await db.execute(
+        text("""
+            INSERT INTO consumption_history (series_id, ds, y)
+            VALUES (:series_id, :ds, :y)
+            ON CONFLICT (series_id, ds) DO UPDATE SET y = EXCLUDED.y
+        """),
+        rows,
+    )
+    logger.info("Upsert consumption_history: %d rows", len(rows))

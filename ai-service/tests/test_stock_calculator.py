@@ -45,10 +45,24 @@ class TestPredictStockoutDate:
         assert result == date.today()
 
     def test_returns_none_when_stock_never_runs_out(self):
-        """Tồn kho lớn hơn tổng dự báo → không bao giờ hết trong kỳ."""
+        """Tồn kho quá lớn → không ước tính ngày hết hàng trong horizon."""
         forecast = _make_forecast([5.0] * 7)  # tổng = 35
         result = predict_stockout_date(999_999.0, forecast)
         assert result is None
+
+    def test_extrapolates_near_stockout_after_forecast_window(self):
+        """Tồn kho đủ qua 7 ngày nhưng sắp hết sau window → extrapolate."""
+        forecast = _make_forecast([
+            72.52542114257812,
+            85.3180160522461,
+            69.81234741210938,
+            113.71172332763672,
+            110.37989044189453,
+            110.96672058105469,
+            110.07401275634766,
+        ], start="2026-04-17")
+        result = predict_stockout_date(1061.4, forecast)
+        assert result == date(2026, 4, 28)
 
     def test_returns_none_for_empty_forecast(self):
         """Forecast rỗng → không thể tính → None."""
@@ -144,6 +158,16 @@ class TestCalcSuggestedQty:
     def test_all_zeros(self):
         forecast = _make_forecast([0.0] * 7)
         result = calc_suggested_qty(forecast)
+        assert result == 0.0
+
+    def test_subtracts_current_stock_when_provided(self):
+        forecast = _make_forecast([10.0] * 7)
+        result = calc_suggested_qty(forecast, current_stock=50.0)
+        assert result == round(70.0 * 1.2 - 50.0, 2)
+
+    def test_returns_zero_when_current_stock_covers_forecast_with_buffer(self):
+        forecast = _make_forecast([10.0] * 7)
+        result = calc_suggested_qty(forecast, current_stock=100.0)
         assert result == 0.0
 
 

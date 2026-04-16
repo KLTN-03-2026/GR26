@@ -9,6 +9,7 @@ export type ShiftStatus = 'REGISTERED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED
 
 /**
  * LocalTime format từ backend (hour, minute, second, nano)
+ * Dùng cho response từ backend
  */
 export interface LocalTime {
     hour: number;
@@ -52,7 +53,7 @@ export interface ShiftSchedule {
 }
 
 /**
- * Dữ liệu form tạo ca mẫu
+ * Dữ liệu form tạo ca mẫu (UI)
  */
 export interface CreateShiftTemplateFormData {
     name: string;
@@ -71,12 +72,11 @@ export type ShiftTemplateFormData = CreateShiftTemplateFormData;
 
 /**
  * Payload gửi lên khi tạo ca mẫu
- * Khớp với ShiftTemplateRequest từ backend
  */
 export type CreateShiftTemplatePayload = {
     name: string;
-    startTime: LocalTime;
-    endTime: LocalTime;
+    startTime: string;
+    endTime: string;
     minStaff: number;
     maxStaff: number;
     color?: string;
@@ -85,7 +85,6 @@ export type CreateShiftTemplatePayload = {
 
 /**
  * Payload gửi lên khi cập nhật ca mẫu
- * Backend dùng chung ShiftTemplateRequest cho create và update
  */
 export type UpdateShiftTemplatePayload = CreateShiftTemplatePayload;
 
@@ -100,7 +99,6 @@ export interface RegisterShiftFormData {
 
 /**
  * Payload gửi lên khi đăng ký ca
- * Khớp với RegisterShiftRequest từ backend
  */
 export type RegisterShiftPayload = {
     userId: string;

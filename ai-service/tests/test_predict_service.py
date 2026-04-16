@@ -400,8 +400,8 @@ class TestPredictBranchEdgeCases:
         results = await predict_branch("tenant-1", "branch-1", db)
 
         assert len(results) == 2
-        # 7 ngày × 2 ingredients = 14 lần execute (cho upsert)
-        assert db.execute.await_count == 14
+        # Mỗi ingredient: 1 DELETE forecast cũ + 7 INSERT/UPSERT rows.
+        assert db.execute.await_count == 16
 
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")
@@ -427,6 +427,32 @@ class TestPredictBranchEdgeCases:
 
         assert results[0].urgency == "critical"
         assert results[0].stockout_date == date.today()
+
+    @patch("app.services.predict_service.SeriesRegistryRepo")
+    @patch("app.services.predict_service.data_service")
+    @patch("app.services.predict_service.model_io")
+    async def test_extrapolates_stockout_after_forecast_window(
+        self, mock_model_io, mock_data_svc, mock_series_repo_cls
+    ):
+        """Tồn kho dư nhẹ sau 7 ngày → ngày order bám theo stockout ước tính."""
+        mock_model_io.model_exists.return_value = False
+        history_df = _make_history_df(14, avg=5.0)
+        mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
+            return_value=[{"id": "ing-001", "name": "Sắp hết", "unit": "kg"}]
+        )
+        mock_data_svc.get_recent_consumption = AsyncMock(return_value=history_df)
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
+        mock_data_svc.get_current_stock = AsyncMock(return_value=45.0)
+
+        mock_repo = AsyncMock()
+        mock_repo.get_or_create = AsyncMock(return_value=_make_series_entry(1))
+        mock_series_repo_cls.return_value = mock_repo
+
+        results = await predict_branch("tenant-1", "branch-1", _make_db())
+
+        assert results[0].stockout_date == date.today() + timedelta(days=9)
+        assert results[0].suggested_order_date == date.today() + timedelta(days=7)
+        assert results[0].suggested_order_qty == 0.0
 
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")

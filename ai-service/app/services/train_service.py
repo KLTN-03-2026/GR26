@@ -109,7 +109,13 @@ def _build_neuralprophet_model():  # type: ignore[return]
         epochs=settings.np_epochs,
         batch_size=32,
         learning_rate=0.001,
+        impute_missing=True,                   # Tự điền NaN thay vì drop row
     )
+    # Fix random seed để MAE ổn định giữa các lần train
+    import torch, numpy as np, random
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
 
     # Thêm ngày lễ Việt Nam — BẮT BUỘC cho dự báo tại VN
     model.add_country_holidays("VN")
@@ -203,6 +209,43 @@ def train_global_model(df: pd.DataFrame, tenant_id: str) -> dict:
     }
 
 
+async def _register_model(db: AsyncSession, tenant_id: str, result: dict) -> None:
+    """
+    Ghi thông tin model vừa train vào bảng model_registry.
+
+    Deactivate tất cả model cũ của tenant trước khi insert record mới.
+    Đảm bảo mỗi tenant chỉ có 1 model is_active=True tại mọi thời điểm.
+
+    Args:
+        db: AsyncSession
+        tenant_id: ID tenant
+        result: dict từ train_global_model() — có mae, model_path, series_count
+    """
+    from sqlalchemy import text as sa_text
+    from app.models.model_registry import ModelRegistry
+
+    # Deactivate tất cả model cũ của tenant
+    await db.execute(
+        sa_text("UPDATE model_registry SET is_active = false WHERE tenant_id = :tenant_id"),
+        {"tenant_id": tenant_id},
+    )
+
+    # Insert model mới với is_active=True
+    new_record = ModelRegistry(
+        tenant_id=tenant_id,
+        model_path=result["model_path"],
+        trained_at=datetime.now(timezone.utc),
+        series_count=result["series_count"],
+        mae=result["mae"],
+        is_active=True,
+    )
+    db.add(new_record)
+    logger.info(
+        "model_registry: ghi record mới cho tenant=%s | series=%s | mae=%s",
+        tenant_id, result["series_count"], result["mae"],
+    )
+
+
 async def run_train_for_tenant(
     db: AsyncSession,
     tenant_id: str,
@@ -250,7 +293,10 @@ async def run_train_for_tenant(
         # Bước 2: Train Global Model
         result = train_global_model(combined_df, tenant_id)
 
-        # Bước 3: Cập nhật log thành công
+        # Bước 3: Ghi vào model_registry — deactivate model cũ, insert model mới
+        await _register_model(db, tenant_id, result)
+
+        # Bước 4: Cập nhật log thành công
         train_log.status = "success"
         train_log.finished_at = datetime.now(timezone.utc)
         train_log.mae = result["mae"]

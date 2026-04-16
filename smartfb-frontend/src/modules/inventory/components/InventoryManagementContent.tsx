@@ -13,7 +13,9 @@ import { InventoryTable } from '@modules/inventory/components/InventoryTable';
 import { InventoryToolbar } from '@modules/inventory/components/InventoryToolbar';
 import { RecordProductionBatchDialog } from '@modules/inventory/components/RecordProductionBatchDialog';
 import { InventoryTransactionHistory } from '@modules/inventory/components/InventoryTransactionHistory';
-import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
+// import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
+// Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement
+import { InventoryCheckManagement } from '@modules/inventory/components/InventoryCheck/InventoryCheckManagement';
 import { CreateIngredientDialog } from '@modules/inventory/components/CreateIngredientDialog';
 import { useInventoryIngredientCatalogView } from '@modules/inventory/hooks/useInventoryIngredientCatalogView';
 import { useInventoryManagement } from '@modules/inventory/hooks/useInventoryManagement';
@@ -336,7 +338,7 @@ export const InventoryManagementContent = () => {
         ) : null}
 
         <TabsContent value="semi-products" className="space-y-4">
-    
+
 
           <InventoryToolbar
             search={filters.search}
@@ -403,10 +405,11 @@ export const InventoryManagementContent = () => {
           <InventoryTransactionHistory />
         </TabsContent>
 
-        {/* Tab 4: Kiểm kho (chỉ owner/admin mới thấy) */}
+        {/* Tab 4: Kiểm kho (chỉ owner/admin mới thấy) Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement*/}
         {canAdjust && (
           <TabsContent value="stockcheck">
-            <InventoryStockCheck />
+            {/* <InventoryStockCheck /> */}
+            <InventoryCheckManagement />
           </TabsContent>
         )}
       </Tabs>

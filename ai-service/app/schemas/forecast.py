@@ -27,7 +27,7 @@ class IngredientForecast(BaseModel):
     unit: str
     current_stock: float                              # Tồn kho tại thời điểm predict
     forecast_days: list[DayForecast]                  # 7 ngày dự báo
-    stockout_date: date | None                        # None = đủ dùng trong 7 ngày
+    stockout_date: date | None                        # None = không ước tính trong horizon
     suggested_order_qty: float                        # Số lượng gợi ý nhập
     suggested_order_date: date                        # Ngày nên đặt hàng
     urgency: Literal["ok", "warning", "critical"]     # Mức độ khẩn cấp

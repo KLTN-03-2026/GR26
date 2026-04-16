@@ -23,9 +23,8 @@ const formatTimeForInput = (hour: number, minute: number): string => {
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 };
 
-const parseTimeFromInput = (time: string): { hour: number; minute: number; second: number; nano: number } => {
-    const [hour, minute] = time.split(':').map(Number);
-    return { hour, minute, second: 0, nano: 0 };
+const parseTimeFromInput = (time: string): string => {
+    return `${time}:00`;
 };
 
 /**
@@ -96,7 +95,7 @@ export const ShiftTemplateFormModal = ({
             nextErrors.maxStaff = 'Số lượng tối đa phải lớn hơn hoặc bằng số lượng tối thiểu';
         }
 
-        // Validate giờ kết thúc phải sau giờ bắt đầu
+        // Validate giờ kết thúc phải sau giờ bắt đầu (so sánh string "HH:MM")
         if (formData.startTime >= formData.endTime) {
             nextErrors.endTime = 'Giờ kết thúc phải sau giờ bắt đầu';
         }
@@ -110,6 +109,7 @@ export const ShiftTemplateFormModal = ({
             return;
         }
 
+        // Tạo payload với startTime và endTime là string format "HH:MM:SS"
         const payload: CreateShiftTemplatePayload = {
             name: formData.name.trim(),
             startTime: parseTimeFromInput(formData.startTime),

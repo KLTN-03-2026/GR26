@@ -19,10 +19,10 @@ CREATE TABLE forecast_results (
     predicted_qty   DECIMAL(10,4) NOT NULL CHECK (predicted_qty >= 0),
 
     -- Ngày dự kiến hết hàng dựa trên inventory_balances.quantity hiện tại
-    -- NULL = tồn kho đủ dùng trong toàn kỳ dự báo 7 ngày
+    -- NULL = không ước tính được trong horizon
     stockout_date   DATE,
 
-    -- Số lượng gợi ý nhập để đủ dùng (bao gồm safety factor 20%)
+    -- Số lượng gợi ý nhập thêm để đủ dùng (bao gồm safety factor 20%)
     suggested_qty   DECIMAL(10,4),
 
     -- Thời điểm predict job chạy và ghi kết quả này
@@ -46,9 +46,9 @@ COMMENT ON TABLE forecast_results IS
 COMMENT ON COLUMN forecast_results.forecast_date IS
     'Ngày được dự báo, không phải ngày chạy job';
 COMMENT ON COLUMN forecast_results.stockout_date IS
-    'NULL = tồn kho đủ trong 7 ngày tới';
+    'NULL = không ước tính được trong horizon';
 COMMENT ON COLUMN forecast_results.suggested_qty IS
-    'Tổng tiêu thụ dự báo × safety factor 1.2';
+    'max(Tổng tiêu thụ dự báo × safety factor 1.2 - tồn kho hiện tại, 0)';
 
 
 -- Log quá trình train model NeuralProphet
@@ -90,5 +90,3 @@ COMMENT ON COLUMN train_logs.mae IS
     'Mean Absolute Error — càng thấp model càng chính xác';
 COMMENT ON COLUMN train_logs.trigger_type IS
     'manual = Owner bấm tay | scheduled = cron tự động';
-
-
