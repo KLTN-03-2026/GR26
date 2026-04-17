@@ -571,6 +571,12 @@ stompClient.connect(
 
 > Đã hoàn thành S-11 & S-12. Xem chi tiết trong codebase.
 
+### 7.1 Xác nhận Chuyển khoản (Thủ công)
+- **Method:** `POST /api/v1/payments/{paymentId}/confirm`
+- **Quyền:** `PAYMENT_CREATE` hoặc `OWNER`, `BRANCH_MANAGER`, `CASHIER`
+- **Mô tả:** API phục vụ khi Thu ngân muốn bấm xác nhận thủ công trên app (ví dụ như chụp bill chuyển khoản, kiểm tra biến động số dư cá nhân) khi webhook ngân hàng bị lỗi.
+- **Response:** `200 OK`. Tự động đẩy đơn hàng sang COMPLETED và sinh `PaymentCompletedEvent` (WebSocket).
+
 ---
 
 ## 🏭 8. MODULE KHO NGUYÊN LIỆU (INVENTORY) - S-13 & S-14 - Prefix: `/api/v1/inventory`
@@ -826,6 +832,55 @@ await fetch(`/api/v1/staff/${staffId}/status`, {
   }
   ```
 - **Response:** `200 OK` với `data: null`
+
+---
+
+## 💸 10. MODULE QUẢN LÝ CHI TIÊU (EXPENSE) - Prefix: `/api/v1/expenses`
+
+> **Phân quyền (JWT Role):**
+>
+> - `EXPENSE_MANAGE` (hoặc `OWNER`, `BRANCH_MANAGER`) — Tạo, sửa, xóa phiếu chi.
+> - `EXPENSE_VIEW` (hoặc `OWNER`, `BRANCH_MANAGER`, `CASHIER`) — Xem danh sách phiếu chi tại chi nhánh.
+
+### 10.1 Tạo Phiếu Chi (Hóa đơn chi)
+
+- **Method:** `POST /`
+- **Quyền:** `EXPENSE_MANAGE`
+- **Request Body:**
+  ```json
+  {
+    "amount": 500000.0, // Bắt buộc, > 0
+    "categoryName": "Mua nguyên liệu", // Bắt buộc
+    "description": "Mua thêm cà phê hạt", 
+    "expenseDate": "2026-04-17T10:00:00Z", // Bắt buộc
+    "paymentMethod": "CASH" // Bắt buộc (CASH | TRANSFER | ...)
+  }
+  ```
+- **Response `data`:** UUID của phiếu chi vừa tạo.
+- **HTTP Status:** `201 Created`
+
+### 10.2 Cập nhật Phiếu Chi
+
+- **Method:** `PUT /{id}`
+- **Quyền:** `EXPENSE_MANAGE` 
+- **Request Body:** Tương tự API POST.
+- **Response:** `200 OK` (data: `null`)
+- **Lưu ý:** Không thể sửa nếu phiếu chi đã bị hủy.
+
+### 10.3 Hủy / Xóa mềm Phiếu Chi
+
+- **Method:** `DELETE /{id}`
+- **Quyền:** `EXPENSE_MANAGE`
+- **Lưu ý:** Set trạng thái deleted = true. Không thể thao tác trên hóa đơn đã bị hủy trước đó.
+
+### 10.4 Danh sách Phiếu Chi
+
+- **Method:** `GET /`
+- **Quyền:** `EXPENSE_VIEW`
+- **Query Params:**
+  - `categoryName=abc` — Tìm kiếm theo hạng mục (tuỳ chọn)
+  - `page=0&size=20` — Phân trang
+- **Response `data`:** Danh sách phân trang `PageResponse`.
 
 ---
 

@@ -60,7 +60,7 @@ public class DailyRevenueSummaryJpaEntity {
     @Column(name = "cost_of_goods", precision = 12, scale = 2)
     private BigDecimal costOfGoods;
     
-    @Column(name = "gross_profit", precision = 12, scale = 2)
+    @Column(name = "gross_profit", precision = 12, scale = 2, insertable = false, updatable = false)
     private BigDecimal grossProfit;
     
     @Column(name = "updated_at")
