@@ -1,14 +1,18 @@
 import { Clock, Users, Palette, Power } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
-import type { ShiftTemplate } from '@modules/shift/types/shift.types';
+import type { LocalTime, ShiftTemplate } from '@modules/shift/types/shift.types';
 
 interface ShiftTemplateInfoCardProps {
     template: ShiftTemplate;
     onEdit: () => void;
 }
 
-const formatTime = (hour: number, minute: number): string => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+const formatTime = (time?: LocalTime | null): string => {
+    if (typeof time?.hour !== 'number' || typeof time?.minute !== 'number') {
+        return '--:--';
+    }
+
+    return `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
 };
 
 const getStatusBadgeClassName = (active: boolean) =>
@@ -50,8 +54,7 @@ export const ShiftTemplateInfoCard = ({ template, onEdit }: ShiftTemplateInfoCar
                     <div>
                         <p className="text-sm text-text-secondary">Giờ làm việc</p>
                         <p className="font-medium text-text-primary">
-                            {formatTime(template.startTime.hour, template.startTime.minute)} -{' '}
-                            {formatTime(template.endTime.hour, template.endTime.minute)}
+                            {formatTime(template.startTime)} - {formatTime(template.endTime)}
                         </p>
                     </div>
                 </div>

@@ -27,7 +27,7 @@ class IngredientForecast(BaseModel):
     unit: str
     current_stock: float                              # Tồn kho tại thời điểm predict
     forecast_days: list[DayForecast]                  # 7 ngày dự báo
-    stockout_date: date | None                        # None = đủ dùng trong 7 ngày
+    stockout_date: date | None                        # None = không ước tính trong horizon
     suggested_order_qty: float                        # Số lượng gợi ý nhập
     suggested_order_date: date                        # Ngày nên đặt hàng
     urgency: Literal["ok", "warning", "critical"]     # Mức độ khẩn cấp
@@ -63,21 +63,33 @@ class ForecastResponse(BaseModel):
         return sum(1 for i in self.ingredients if i.urgency == "warning")
 
 
+class IngredientSummaryItem(BaseModel):
+    """Thông tin tóm tắt 1 nguyên liệu trong summary — không có forecast_days chi tiết."""
+
+    ingredient_id: str
+    ingredient_name: str
+    unit: str
+    stockout_date: date | None
+
+
 class ForecastSummary(BaseModel):
     """
     Response nhẹ cho dashboard overview — không có forecast_days chi tiết.
 
     Dùng cho danh sách nhiều chi nhánh, tránh payload lớn.
+    Bao gồm danh sách nguyên liệu critical/warning để FE hiển thị alert cụ thể.
     """
 
     model_config = ConfigDict(from_attributes=True)
 
     branch_id: str
     generated_at: datetime
-    urgent_count: int      # Số nguyên liệu critical
-    warning_count: int     # Số nguyên liệu warning
-    ok_count: int          # Số nguyên liệu bình thường
+    urgent_count: int                            # Số nguyên liệu critical
+    warning_count: int                           # Số nguyên liệu warning
+    ok_count: int                                # Số nguyên liệu bình thường
     total_ingredients: int
+    urgent_items: list[IngredientSummaryItem]    # Danh sách nguyên liệu critical
+    warning_items: list[IngredientSummaryItem]   # Danh sách nguyên liệu warning
 
 
 class IngredientPrediction(BaseModel):

@@ -40,10 +40,10 @@ class ForecastResult(Base):
     # Tiêu thụ dự kiến trong ngày forecast_date
     predicted_qty: Mapped[float] = mapped_column(Float, nullable=False)
 
-    # Ngày dự kiến hết hàng — None = tồn kho đủ trong 7 ngày
+    # Ngày dự kiến hết hàng — None = không ước tính trong horizon
     stockout_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
-    # Số lượng gợi ý nhập (tổng dự báo × safety factor 1.2)
+    # Số lượng gợi ý nhập thêm (tổng dự báo × safety factor 1.2 − tồn kho)
     suggested_qty: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(

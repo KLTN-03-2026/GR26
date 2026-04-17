@@ -51,7 +51,7 @@ export const StaffTable = ({
           <TableHeader className="border-0">
             <TableRow className="hover:bg-cream border-b-0">
               <TableHead>HỌ TÊN</TableHead>
-              <TableHead>MÃ NV</TableHead>
+              {/* <TableHead>MÃ NV</TableHead> */}
               <TableHead>SỐ ĐIỆN THOẠI</TableHead>
               <TableHead>EMAIL</TableHead>
               <TableHead>VỊ TRÍ</TableHead>

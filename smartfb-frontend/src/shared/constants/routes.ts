@@ -31,6 +31,8 @@ export const ROUTES = {
     BRANCHES_NEW: '/owner/branches/new',
     BRANCHES_DETAIL: '/owner/branches/:id',
     PROMOTIONS: '/owner/promotions',
+    PROMOTIONS_NEW: '/owner/promotions/new',      // Thêm mới
+    PROMOTIONS_DETAIL: '/owner/promotions/:id',
     SUPPLIERS: '/owner/suppliers',
     REPORTS: '/owner/reports',
     SETTINGS: '/owner/settings',

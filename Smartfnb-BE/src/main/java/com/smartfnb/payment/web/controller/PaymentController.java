@@ -42,6 +42,7 @@ public class PaymentController {
     private final ProcessCashPaymentCommandHandler cashPaymentHandler;
     private final ProcessQRPaymentCommandHandler qrPaymentHandler;
     private final ConfirmQRPaymentCommandHandler confirmQRPaymentHandler;
+    private final ManualConfirmQRPaymentCommandHandler manualConfirmQRPaymentHandler;
     private final SearchInvoiceQueryHandler searchInvoiceHandler;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
@@ -136,6 +137,35 @@ public class PaymentController {
             log.error("Lỗi xác nhận thanh toán QR", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail("QR_PAYMENT_ERROR", e.getMessage()));
+        }
+    }
+
+    /**
+     * API xác nhận thanh toán thủ công.
+     * Dành cho Thu ngân tự kiểm tra sổ phụ ngân hàng và bấm xác nhận khi App không báo webhook.
+     *
+     * POST /api/v1/payments/{paymentId}/confirm
+     */
+    @PostMapping("/{paymentId}/confirm")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<Void>> manualConfirmQRPayment(@PathVariable UUID paymentId) {
+        
+        UUID currentStaffId = TenantContext.getCurrentUserId();
+        log.info("Thu ngân {} xác nhận thủ công thanh toán {}", currentStaffId, paymentId);
+
+        ManualConfirmQRPaymentCommand command = new ManualConfirmQRPaymentCommand(
+            paymentId,
+            TenantContext.getCurrentTenantId(),
+            currentStaffId
+        );
+
+        try {
+            manualConfirmQRPaymentHandler.handle(command);
+            return ResponseEntity.ok(ApiResponse.ok());
+        } catch (Exception e) {
+            log.error("Lỗi xác nhận thanh toán thủ công", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail("MANUAL_CONFIRM_ERROR", e.getMessage()));
         }
     }
 

@@ -26,17 +26,14 @@ import { Tabs, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 const RECIPE_TARGET_TYPE_OPTIONS: Array<{
   type: RecipeTargetItemType;
   icon: typeof ChefHat;
-  description: string;
 }> = [
   {
     type: 'SELLABLE',
     icon: ChefHat,
-    description: 'Quản lý công thức cho món bán trực tiếp phục vụ khách.',
   },
   {
     type: 'SUB_ASSEMBLY',
     icon: Boxes,
-    description: 'Quản lý công thức cho bán thành phẩm dùng trong sơ chế, pha cốt hoặc topping nền.',
   },
 ];
 
@@ -121,11 +118,23 @@ export const RecipeManagementContent = () => {
       return;
     }
 
+    // FIX BUG: Author: HOÀNG | 16/04/2026
+    // Truyền baseOutputQuantity và baseOutputUnit khi tạo recipe SUB_ASSEMBLY
+    // để BE lưu sản lượng chuẩn, dùng cho tính scaleFactor khi ghi nhận mẻ sản xuất.
+    const parsedBaseOutput = Number(values.baseOutputQuantity);
     await onCreateRecipe({
       targetItemId: selectedItem.id,
       ingredientItemId: values.ingredientItemId,
       quantity: Number(values.quantity),
       unit: values.unit,
+      baseOutputQuantity:
+        targetItemType === 'SUB_ASSEMBLY' && Number.isFinite(parsedBaseOutput) && parsedBaseOutput > 0
+          ? parsedBaseOutput
+          : undefined,
+      baseOutputUnit:
+        targetItemType === 'SUB_ASSEMBLY' && values.baseOutputUnit.trim()
+          ? values.baseOutputUnit.trim()
+          : undefined,
     });
 
     setIsCreateDialogOpen(false);
@@ -136,9 +145,21 @@ export const RecipeManagementContent = () => {
       return;
     }
 
+    // FIX BUG: Author: HOÀNG | 16/04/2026
+    // Truyền baseOutputQuantity và baseOutputUnit khi sửa recipe SUB_ASSEMBLY
+    // để user có thể sửa lại sản lượng chuẩn đã nhập sai trước đó.
+    const parsedBaseOutput = Number(values.baseOutputQuantity);
     await onUpdateRecipe(editingLine.id, {
       quantity: Number(values.quantity),
       unit: values.unit,
+      baseOutputQuantity:
+        targetItemType === 'SUB_ASSEMBLY' && Number.isFinite(parsedBaseOutput) && parsedBaseOutput > 0
+          ? parsedBaseOutput
+          : undefined,
+      baseOutputUnit:
+        targetItemType === 'SUB_ASSEMBLY' && values.baseOutputUnit.trim()
+          ? values.baseOutputUnit.trim()
+          : undefined,
     });
 
     setEditingLine(null);
@@ -227,11 +248,7 @@ export const RecipeManagementContent = () => {
           </TabsList>
         </Tabs>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {
-            RECIPE_TARGET_TYPE_OPTIONS.find((option) => option.type === targetItemType)?.description
-          }
-        </div>
+  
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -299,11 +316,13 @@ export const RecipeManagementContent = () => {
 
       {canManageRecipe ? (
         <>
+          {/* FIX BUG: Author: HOÀNG | 16/04/2026 — thêm targetItemType để dialog biết có hiện field sản lượng chuẩn không */}
           <RecipeLineDialog
             key={`recipe-create-${selectedItemId}`}
             open={isCreateDialogOpen}
             mode="create"
             targetItemName={selectedItem?.name ?? selectedTargetTypeLabel.toLowerCase()}
+            targetItemType={targetItemType}
             ingredientOptions={createIngredientOptions}
             isPending={isCreatingRecipe}
             onOpenChange={setIsCreateDialogOpen}
@@ -315,6 +334,7 @@ export const RecipeManagementContent = () => {
             open={Boolean(editingLine)}
             mode="edit"
             targetItemName={selectedItem?.name ?? selectedTargetTypeLabel.toLowerCase()}
+            targetItemType={targetItemType}
             ingredientOptions={editIngredientOptions}
             initialLine={editingLine}
             isPending={isUpdatingRecipe}

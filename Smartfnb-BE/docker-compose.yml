@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: smartfnb123
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"          # Expose ra host để DBeaver kết nối
+      - "5433:5432"          # Expose ra host để DBeaver kết nối
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -51,16 +51,16 @@ services:
     container_name: smartfnb-app
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy   # Chờ Postgres sẵn sàng trước
+      # postgres:
+      #   condition: service_healthy   # Chờ Postgres sẵn sàng trước
       redis:
         condition: service_healthy   # Chờ Redis sẵn sàng trước
     environment:
       # Database
-      DB_HOST: postgres              # Tên service trong Docker network
+      DB_HOST: host.docker.internal              # Tên service trong Docker network
       DB_PORT: 5432
       DB_NAME: smartfnb
-      DB_USER: smartfnb
+      DB_USER: postgres
       DB_PASS: smartfnb123
       # Redis Configuration
       REDIS_HOST: redis

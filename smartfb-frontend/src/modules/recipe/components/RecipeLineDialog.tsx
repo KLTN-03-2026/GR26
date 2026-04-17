@@ -18,12 +18,15 @@ import type {
   RecipeIngredientOption,
   RecipeLine,
   RecipeLineFormValues,
+  RecipeTargetItemType,
 } from '@modules/recipe/types/recipe.types';
 
 interface RecipeLineDialogProps {
   open: boolean;
   mode: 'create' | 'edit';
   targetItemName: string;
+  /** FIX BUG: Author: HOÀNG | 16/04/2026 — thêm để biết có cần hiện field sản lượng chuẩn không */
+  targetItemType: RecipeTargetItemType;
   ingredientOptions: RecipeIngredientOption[];
   initialLine?: RecipeLine | null;
   isPending: boolean;
@@ -31,14 +34,20 @@ interface RecipeLineDialogProps {
   onSubmit: (values: RecipeLineFormValues) => Promise<void>;
 }
 
+// FIX BUG: Author: HOÀNG | 16/04/2026 — thêm baseOutputQuantity và baseOutputUnit vào giá trị rỗng
 const EMPTY_FORM_VALUES: RecipeLineFormValues = {
   ingredientItemId: '',
   quantity: '',
   unit: '',
+  baseOutputQuantity: '',
+  baseOutputUnit: '',
 };
 
 /**
  * Tạo giá trị khởi tạo cho form từ dòng công thức hiện tại.
+ *
+ * FIX BUG: Author: HOÀNG | 16/04/2026 — map thêm baseOutputQuantity và baseOutputUnit
+ * để khi mở form edit, user thấy ngay sản lượng chuẩn đã lưu trước đó.
  */
 const buildInitialFormValues = (line?: RecipeLine | null): RecipeLineFormValues => {
   if (!line) {
@@ -49,22 +58,34 @@ const buildInitialFormValues = (line?: RecipeLine | null): RecipeLineFormValues 
     ingredientItemId: line.ingredientItemId,
     quantity: String(line.quantity),
     unit: line.unit,
+    // FIX BUG: Author: HOÀNG | 16/04/2026
+    baseOutputQuantity: line.baseOutputQuantity != null ? String(line.baseOutputQuantity) : '',
+    baseOutputUnit: line.baseOutputUnit ?? '',
   };
 };
 
 /**
  * Dialog thêm hoặc sửa một dòng công thức.
+ *
+ * FIX BUG: Author: HOÀNG | 16/04/2026
+ * Khi targetItemType = SUB_ASSEMBLY, hiển thị thêm 2 field:
+ *   - Sản lượng đầu ra chuẩn (baseOutputQuantity)
+ *   - Đơn vị sản lượng (baseOutputUnit)
+ * Đây là thông tin bắt buộc để BE tính đúng scaleFactor khi ghi nhận mẻ sản xuất.
  */
 export const RecipeLineDialog = ({
   open,
   mode,
   targetItemName,
+  targetItemType,
   ingredientOptions,
   initialLine,
   isPending,
   onOpenChange,
   onSubmit,
 }: RecipeLineDialogProps) => {
+  // Chỉ hiển thị section sản lượng chuẩn với recipe SUB_ASSEMBLY
+  const isSubAssemblyTarget = targetItemType === 'SUB_ASSEMBLY';
   const [formValues, setFormValues] = useState<RecipeLineFormValues>(() => buildInitialFormValues(initialLine));
   const [formError, setFormError] = useState('');
 
@@ -145,12 +166,30 @@ export const RecipeLineDialog = ({
       return;
     }
 
+    // FIX BUG: Author: HOÀNG | 16/04/2026
+    // Validate bắt buộc sản lượng chuẩn với SUB_ASSEMBLY recipe.
+    // Thiếu field này sẽ khiến BE tính sai lượng nguyên liệu khi ghi nhận mẻ sản xuất.
+    if (isSubAssemblyTarget) {
+      const parsedBaseOutput = Number(formValues.baseOutputQuantity);
+      if (!formValues.baseOutputQuantity.trim() || !Number.isFinite(parsedBaseOutput) || parsedBaseOutput <= 0) {
+        setFormError('Vui lòng nhập sản lượng đầu ra chuẩn (phải lớn hơn 0)');
+        return;
+      }
+      if (!formValues.baseOutputUnit.trim()) {
+        setFormError('Vui lòng nhập đơn vị sản lượng đầu ra chuẩn');
+        return;
+      }
+    }
+
     setFormError('');
 
     await onSubmit({
       ingredientItemId: formValues.ingredientItemId,
       quantity: String(parsedQuantity),
       unit: formValues.unit.trim(),
+      // FIX BUG: Author: HOÀNG | 16/04/2026 — truyền sản lượng chuẩn nếu là SUB_ASSEMBLY
+      baseOutputQuantity: isSubAssemblyTarget ? formValues.baseOutputQuantity : '',
+      baseOutputUnit: isSubAssemblyTarget ? formValues.baseOutputUnit.trim() : '',
     });
   };
 
@@ -227,6 +266,61 @@ export const RecipeLineDialog = ({
               />
             </div>
           </div>
+
+          {/* FIX BUG: Author: HOÀNG | 16/04/2026
+              Hiển thị thêm section sản lượng chuẩn khi cấu hình công thức cho bán thành phẩm.
+              Đây là thông tin bắt buộc để BE tính đúng: scaleFactor = expectedOutput / baseOutputQuantity.
+              Ví dụ: 1000g nguyên liệu → 2000ml Cà phê pin: nhập "2000" và đơn vị "ml".
+          */}
+          {isSubAssemblyTarget ? (
+            <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-blue-900">Sản lượng đầu ra chuẩn của công thức</p>
+                <p className="text-xs text-blue-700">
+                  Công thức này tạo ra bao nhiêu bán thành phẩm mỗi mẻ?
+                  Ví dụ: nếu 1000g nguyên liệu pha được 2000ml, hãy nhập <strong>2000</strong> và đơn vị <strong>ml</strong>.
+                  Backend dùng thông tin này để tính đúng lượng nguyên liệu cần trừ kho.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="recipe-base-output-quantity">Sản lượng chuẩn <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="recipe-base-output-quantity"
+                    type="number"
+                    min="0.0001"
+                    step="0.0001"
+                    value={formValues.baseOutputQuantity}
+                    onChange={(event) => {
+                      setFormValues((currentValues) => ({
+                        ...currentValues,
+                        baseOutputQuantity: event.target.value,
+                      }));
+                      setFormError('');
+                    }}
+                    placeholder="Ví dụ: 2000"
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recipe-base-output-unit">Đơn vị sản lượng <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="recipe-base-output-unit"
+                    value={formValues.baseOutputUnit}
+                    onChange={(event) => {
+                      setFormValues((currentValues) => ({
+                        ...currentValues,
+                        baseOutputUnit: event.target.value,
+                      }));
+                      setFormError('');
+                    }}
+                    placeholder="ml, lít, gram..."
+                    disabled={isPending}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {formError ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

@@ -132,19 +132,15 @@ export default function PaymentPage() {
     }
 
     if (paidTableId) {
-      queryClient.removeQueries({
-        queryKey: queryKeys.orders.activeByTable(paidTableId),
-      });
+      queryClient.setQueryData(queryKeys.orders.activeByTable(paidTableId), null);
     }
 
-    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
 
     if (paidTableId) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(paidTableId) });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.orders.activeByTable(paidTableId),
-      });
     }
 
     navigate(tableManagementRoute, { replace: true });

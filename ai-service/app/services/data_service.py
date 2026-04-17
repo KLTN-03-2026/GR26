@@ -142,9 +142,10 @@ async def get_all_ingredients_of_branch(
     """
     sql = text("""
         SELECT
-            i.id::text      AS id,
-            i.name          AS name,
-            i.unit          AS unit
+            i.id::text                   AS id,
+            i.name                       AS name,
+            i.unit                       AS unit,
+            COALESCE(ib.min_level, 0.0)  AS min_stock
         FROM inventory_balances ib
         JOIN items i ON i.id = ib.item_id
         WHERE ib.tenant_id = :tenant_id
@@ -159,7 +160,7 @@ async def get_all_ingredients_of_branch(
         "branch_id": branch_id,
     })
     rows = result.fetchall()
-    return [{"id": r[0], "name": r[1], "unit": r[2]} for r in rows]
+    return [{"id": r[0], "name": r[1], "unit": r[2], "min_stock": float(r[3])} for r in rows]
 
 
 async def get_all_active_branches(
@@ -553,4 +554,273 @@ async def get_all_consumption_for_tenant(
         "Consumption cho train: tenant=%s | %d rows | %d series",
         tenant_id, len(df), df["ID"].nunique(),
     )
+
+    # Upsert vào consumption_history — cache data đã chuẩn hóa để predict đọc nhanh
+    await _upsert_consumption_history(db, df)
+
     return df
+
+
+async def get_branch_active_days(
+    db: AsyncSession,
+    tenant_id: str,
+    branch_id: str,
+) -> dict:
+    """
+    Thống kê số ngày chi nhánh có đơn hàng từ inventory_transactions.
+
+    Dùng để:
+    - Tự động bật yearly_seasonality khi active_days >= 730
+    - Hiển thị thông tin cho chủ quán trong API config
+
+    Args:
+        tenant_id: BẮT BUỘC filter
+        branch_id: ID chi nhánh
+
+    Returns:
+        dict với keys:
+            active_days (int): số ngày có đơn SALE_DEDUCT
+            first_order_date (date | None): ngày có đơn đầu tiên
+            last_order_date (date | None): ngày có đơn gần nhất
+    """
+    sql = text("""
+        SELECT
+            COUNT(DISTINCT DATE(created_at)) AS active_days,
+            MIN(DATE(created_at))            AS first_order_date,
+            MAX(DATE(created_at))            AS last_order_date
+        FROM inventory_transactions
+        WHERE tenant_id = :tenant_id
+          AND branch_id = :branch_id
+          AND type      = 'SALE_DEDUCT'
+          AND quantity  < 0
+    """)
+    result = await db.execute(sql, {"tenant_id": tenant_id, "branch_id": branch_id})
+    row = result.fetchone()
+
+    if row is None or row[0] is None:
+        return {"active_days": 0, "first_order_date": None, "last_order_date": None}
+
+    return {
+        "active_days": int(row[0]),
+        "first_order_date": row[1],
+        "last_order_date": row[2],
+    }
+
+
+async def get_branch_train_config(
+    db: AsyncSession,
+    tenant_id: str,
+    branch_id: str,
+) -> dict:
+    """
+    Đọc config train của chi nhánh từ bảng ai_train_config.
+
+    Nếu chưa có config → trả về giá trị mặc định từ Settings.
+    Caller dùng result để biết start_date, n_lags, n_forecasts, epochs, weekly_seasonality.
+    yearly_seasonality KHÔNG lưu ở đây — tự tính dựa vào active_days.
+
+    Args:
+        tenant_id: BẮT BUỘC filter
+        branch_id: ID chi nhánh
+
+    Returns:
+        dict với keys: start_date, n_lags, n_forecasts, epochs, weekly_seasonality
+    """
+    from app.core.config import settings  # tránh circular top-level
+
+    sql = text("""
+        SELECT start_date, n_lags, n_forecasts, epochs, weekly_seasonality
+        FROM ai_train_config
+        WHERE tenant_id = :tenant_id
+          AND branch_id = :branch_id
+        LIMIT 1
+    """)
+    result = await db.execute(sql, {"tenant_id": tenant_id, "branch_id": branch_id})
+    row = result.fetchone()
+
+    if row is None:
+        # Chưa có config → trả về defaults từ Settings
+        return {
+            "start_date": None,
+            "n_forecasts": settings.np_n_forecasts,
+            "epochs": settings.np_epochs,
+            "weekly_seasonality": True,
+        }
+
+    return {
+        "start_date": row.start_date,
+        "n_forecasts": row.n_forecasts,
+        "epochs": row.epochs,
+        "weekly_seasonality": row.weekly_seasonality,
+    }
+
+
+async def upsert_branch_train_config(
+    db: AsyncSession,
+    tenant_id: str,
+    branch_id: str,
+    config: dict,
+) -> None:
+    """
+    Lưu hoặc cập nhật config train cho chi nhánh.
+
+    Dùng ON CONFLICT để upsert an toàn khi gọi nhiều lần.
+    Ghi updated_at để biết thời điểm chủ quán thay đổi config lần cuối.
+
+    Args:
+        tenant_id: BẮT BUỘC
+        branch_id: ID chi nhánh
+        config: dict với keys: start_date, n_lags, n_forecasts, epochs, weekly_seasonality
+    """
+    await db.execute(
+        text("""
+            INSERT INTO ai_train_config
+                (tenant_id, branch_id, start_date, n_forecasts, epochs, weekly_seasonality, updated_at)
+            VALUES
+                (:tenant_id, :branch_id, :start_date, :n_forecasts, :epochs, :weekly_seasonality, NOW())
+            ON CONFLICT (tenant_id, branch_id) DO UPDATE SET
+                start_date         = EXCLUDED.start_date,
+                n_forecasts        = EXCLUDED.n_forecasts,
+                epochs             = EXCLUDED.epochs,
+                weekly_seasonality = EXCLUDED.weekly_seasonality,
+                updated_at         = NOW()
+        """),
+        {
+            "tenant_id": tenant_id,
+            "branch_id": branch_id,
+            "start_date": config.get("start_date"),
+            "n_forecasts": config["n_forecasts"],
+            "epochs": config["epochs"],
+            "weekly_seasonality": config["weekly_seasonality"],
+        },
+    )
+    logger.info(
+        "Upsert train config: tenant=%s branch=%s | n_forecasts=%d epochs=%d",
+        tenant_id, branch_id, config["n_forecasts"], config["epochs"],
+    )
+
+
+async def get_consumption_for_branch(
+    db: AsyncSession,
+    tenant_id: str,
+    branch_id: str,
+    start_date: date | None = None,
+) -> pd.DataFrame:
+    """
+    Lấy toàn bộ lịch sử tiêu thụ của tất cả nguyên liệu trong 1 chi nhánh.
+
+    Nếu start_date=None → lấy từ đơn đầu tiên của branch (không giới hạn ngày).
+    Nếu start_date có giá trị → lấy từ ngày đó đến nay.
+
+    Map (ingredient_id) → series_id "s{int}" qua AiSeriesRegistry.
+    Upsert vào consumption_history sau khi fetch.
+
+    Args:
+        tenant_id: BẮT BUỘC filter
+        branch_id: ID chi nhánh
+        start_date: Ngày bắt đầu lấy data (None = từ đơn đầu tiên)
+
+    Returns:
+        DataFrame với cột [ds (datetime64), y (float), ID (str "s{int}")]
+        DataFrame rỗng nếu không có data
+    """
+    from app.repositories.series_registry_repo import SeriesRegistryRepo
+
+    # Xây dựng điều kiện start_date động
+    date_condition = "AND DATE(it.created_at) >= :start_date" if start_date else ""
+
+    sql = text(f"""
+        SELECT
+            DATE(it.created_at)   AS ds,
+            SUM(ABS(it.quantity)) AS y,
+            it.item_id::text      AS ingredient_id
+        FROM inventory_transactions it
+        JOIN items i ON i.id = it.item_id
+        WHERE it.tenant_id  = :tenant_id
+          AND it.branch_id  = :branch_id
+          AND it.type       = 'SALE_DEDUCT'
+          AND it.quantity   < 0
+          AND i.type        = 'INGREDIENT'
+          AND i.deleted_at  IS NULL
+          {date_condition}
+        GROUP BY DATE(it.created_at), it.item_id
+        ORDER BY ds ASC
+    """)
+
+    params: dict = {"tenant_id": tenant_id, "branch_id": branch_id}
+    if start_date:
+        params["start_date"] = start_date
+
+    result = await db.execute(sql, params)
+    rows = result.fetchall()
+
+    if not rows:
+        logger.warning(
+            "Không có data tiêu thụ: tenant=%s branch=%s start_date=%s",
+            tenant_id, branch_id, start_date,
+        )
+        return pd.DataFrame(columns=["ds", "y", "ID"])
+
+    df = pd.DataFrame(rows, columns=["ds", "y", "ingredient_id"])
+    df["ds"] = pd.to_datetime(df["ds"])
+    df["y"] = df["y"].astype(float)
+
+    # Map ingredient_id → series_id "s{int}" qua AiSeriesRegistry
+    repo = SeriesRegistryRepo(db)
+    pairs = df["ingredient_id"].unique()
+    series_map: dict[str, str] = {}
+
+    for ingredient_id in pairs:
+        entry = await repo.get_or_create(
+            ingredient_id=ingredient_id,
+            branch_id=branch_id,
+        )
+        series_map[ingredient_id] = entry.series_id  # "s{int}"
+
+    df["ID"] = df["ingredient_id"].map(series_map)
+    df = df.drop(columns=["ingredient_id"])
+
+    logger.info(
+        "Consumption cho branch: tenant=%s branch=%s → %d rows | %d series | from=%s",
+        tenant_id, branch_id, len(df), df["ID"].nunique(), start_date or "first_order",
+    )
+
+    # Cache vào consumption_history để predict đọc nhanh
+    await _upsert_consumption_history(db, df)
+
+    return df
+
+
+async def _upsert_consumption_history(db: AsyncSession, df: pd.DataFrame) -> None:
+    """
+    Upsert DataFrame tiêu thụ vào bảng consumption_history.
+
+    Dùng ON CONFLICT (series_id, ds) DO UPDATE SET y — an toàn khi train job chạy lại.
+    ID trong DataFrame có dạng "s{int}" — lấy integer PK bằng cách bỏ ký tự 's' đầu.
+
+    Args:
+        db: AsyncSession
+        df: DataFrame với cột [ds, y, ID] — ID dạng "s{int}"
+    """
+    if df.empty:
+        return
+
+    # Chuẩn bị danh sách dict để bulk upsert
+    rows = [
+        {
+            "series_id": int(row["ID"][1:]),  # "s42" → 42
+            "ds": row["ds"].date() if hasattr(row["ds"], "date") else row["ds"],
+            "y": float(row["y"]),
+        }
+        for _, row in df.iterrows()
+    ]
+
+    await db.execute(
+        text("""
+            INSERT INTO consumption_history (series_id, ds, y)
+            VALUES (:series_id, :ds, :y)
+            ON CONFLICT (series_id, ds) DO UPDATE SET y = EXCLUDED.y
+        """),
+        rows,
+    )
+    logger.info("Upsert consumption_history: %d rows", len(rows))

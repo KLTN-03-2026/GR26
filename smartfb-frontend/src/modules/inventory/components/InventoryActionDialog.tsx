@@ -38,9 +38,58 @@ interface PackagingUnitOption {
   value: string;
   label: string;
   factorToStandard: number;
+  keywords?: string[];
 }
 
-const COMMON_PACKAGE_LABELS = ['thùng', 'hộp', 'chai', 'can', 'bao', 'gói', 'bịch', 'túi', 'dây',"vỉ"] as const;
+const COMMON_PACKAGE_LABELS = ['thùng', 'hộp', 'chai', 'can', 'bao', 'gói', 'bịch', 'túi', 'dây', 'vỉ'] as const;
+const VOLUME_PACKAGE_LABEL_SET = new Set(['thùng', 'hộp', 'chai', 'can', 'bịch']);
+const WEIGHT_PACKAGE_LABEL_SET = new Set(['bao', 'gói', 'hộp', 'túi', 'can']);
+const COUNT_PACKAGE_LABEL_SET = new Set(['dây', 'gói', 'thùng', 'hộp', 'túi']);
+
+interface UnitFamilyOption {
+  normalizedValue: string;
+  label: string;
+  factorToBase: number;
+  aliases: string[];
+}
+
+// Nhóm đơn vị thể tích có quy đổi cố định về cùng hệ.
+const VOLUME_UNIT_OPTIONS: UnitFamilyOption[] = [
+  { normalizedValue: 'ml', label: 'ml', factorToBase: 1, aliases: ['ml', 'mililit', 'millilit', 'milliliter'] },
+  { normalizedValue: 'l', label: 'L', factorToBase: 1000, aliases: ['l', 'lit', 'liter', 'litre'] },
+];
+
+// Nhóm đơn vị khối lượng có quy đổi cố định về cùng hệ.
+const WEIGHT_UNIT_OPTIONS: UnitFamilyOption[] = [
+  { normalizedValue: 'g', label: 'g', factorToBase: 1, aliases: ['g', 'gr', 'gram', 'gam'] },
+  { normalizedValue: 'kg', label: 'kg', factorToBase: 1000, aliases: ['kg', 'kilogram', 'kilo', 'ky', 'ki'] },
+];
+
+// Các đơn vị đếm chỉ quy đổi 1:1 với chính đơn vị chuẩn đang lưu trong DB.
+const COUNT_UNIT_OPTIONS: UnitFamilyOption[] = [
+  { normalizedValue: 'cai', label: 'cái', factorToBase: 1, aliases: ['cai', 'chiec'] },
+  { normalizedValue: 'qua', label: 'quả', factorToBase: 1, aliases: ['qua', 'trai'] },
+  { normalizedValue: 'chai', label: 'chai', factorToBase: 1, aliases: ['chai'] },
+  { normalizedValue: 'lon', label: 'lon', factorToBase: 1, aliases: ['lon'] },
+  { normalizedValue: 'ly', label: 'ly', factorToBase: 1, aliases: ['ly', 'coc', 'cup'] },
+  { normalizedValue: 'ong', label: 'ống', factorToBase: 1, aliases: ['ong'] },
+  { normalizedValue: 'nap', label: 'nắp', factorToBase: 1, aliases: ['nap'] },
+  { normalizedValue: 'muong', label: 'muỗng', factorToBase: 1, aliases: ['muong', 'thia'] },
+  { normalizedValue: 'hop', label: 'hộp', factorToBase: 1, aliases: ['hop'] },
+  { normalizedValue: 'goi', label: 'gói', factorToBase: 1, aliases: ['goi'] },
+  { normalizedValue: 'tui', label: 'túi', factorToBase: 1, aliases: ['tui'] },
+  { normalizedValue: 'bich', label: 'bịch', factorToBase: 1, aliases: ['bich'] },
+  { normalizedValue: 'vi', label: 'vỉ', factorToBase: 1, aliases: ['vi'] },
+  { normalizedValue: 'bao', label: 'bao', factorToBase: 1, aliases: ['bao'] },
+  { normalizedValue: 'can', label: 'can', factorToBase: 1, aliases: ['can'] },
+  { normalizedValue: 'binh', label: 'bình', factorToBase: 1, aliases: ['binh'] },
+  { normalizedValue: 'khay', label: 'khay', factorToBase: 1, aliases: ['khay'] },
+  { normalizedValue: 'me', label: 'mẻ', factorToBase: 1, aliases: ['me'] },
+  { normalizedValue: 'ca', label: 'ca', factorToBase: 1, aliases: ['ca'] },
+  { normalizedValue: 'day', label: 'dây', factorToBase: 1, aliases: ['day'] },
+  { normalizedValue: 'bo', label: 'bó', factorToBase: 1, aliases: ['bo'] },
+  { normalizedValue: 'xap', label: 'xấp', factorToBase: 1, aliases: ['xap'] },
+];
 
 const importStockSchema = z
   .object({
@@ -153,8 +202,122 @@ const formatComputedNumber = (value: number) =>
 const formatComputedCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value);
 
-const normalizeUnitValue = (unit: string | null | undefined) => unit?.trim().toLowerCase() ?? '';
+const normalizeUnitValue = (unit: string | null | undefined) =>
+  unit
+    ?.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .trim()
+    .toLowerCase() ?? '';
+
 const capitalizeLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
+const buildUnitKeywords = (keywords: Array<string | null | undefined>) =>
+  Array.from(
+    new Set(
+      keywords
+        .map((keyword) => keyword?.trim())
+        .filter((keyword): keyword is string => Boolean(keyword)),
+    ),
+  );
+
+const buildPackagingUnitOption = (
+  value: string,
+  label: string,
+  factorToStandard: number,
+  keywords: Array<string | null | undefined> = [],
+): PackagingUnitOption => ({
+  value,
+  label,
+  factorToStandard,
+  keywords: buildUnitKeywords([value, label, ...keywords]),
+});
+
+const dedupePackagingUnitOptions = (options: PackagingUnitOption[]) => {
+  const seenValues = new Set<string>();
+
+  return options.filter((option) => {
+    const normalizedValue = normalizeUnitValue(option.value);
+
+    if (!normalizedValue || seenValues.has(normalizedValue)) {
+      return false;
+    }
+
+    seenValues.add(normalizedValue);
+    return true;
+  });
+};
+
+const filterCommonPackageLabels = (allowedLabels: ReadonlySet<string>) =>
+  COMMON_PACKAGE_LABELS.filter((packageLabel) => allowedLabels.has(packageLabel));
+
+const findUnitFamilyOption = (options: UnitFamilyOption[], normalizedUnit: string) =>
+  options.find(
+    (option) =>
+      option.normalizedValue === normalizedUnit || option.aliases.includes(normalizedUnit),
+  );
+
+const isVolumeUnit = (normalizedUnit: string) =>
+  Boolean(findUnitFamilyOption(VOLUME_UNIT_OPTIONS, normalizedUnit));
+
+const isWeightUnit = (normalizedUnit: string) =>
+  Boolean(findUnitFamilyOption(WEIGHT_UNIT_OPTIONS, normalizedUnit));
+
+const isCountUnit = (normalizedUnit: string) =>
+  Boolean(findUnitFamilyOption(COUNT_UNIT_OPTIONS, normalizedUnit));
+
+const buildConvertiblePackagingUnitOptions = (
+  standardUnit: string | null | undefined,
+  options: UnitFamilyOption[],
+): PackagingUnitOption[] | null => {
+  const standardUnitLabel = standardUnit?.trim();
+  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
+  const matchedStandardUnit = findUnitFamilyOption(options, normalizedStandardUnit);
+
+  if (!standardUnitLabel || !matchedStandardUnit) {
+    return null;
+  }
+
+  const standardOption = buildPackagingUnitOption(
+    standardUnitLabel,
+    standardUnitLabel,
+    1,
+    [matchedStandardUnit.label, ...matchedStandardUnit.aliases],
+  );
+
+  const alternateOptions = options
+    .filter((option) => option.normalizedValue !== matchedStandardUnit.normalizedValue)
+    .map((option) =>
+      buildPackagingUnitOption(
+        option.label,
+        option.label,
+        option.factorToBase / matchedStandardUnit.factorToBase,
+        option.aliases,
+      ),
+    );
+
+  return dedupePackagingUnitOptions([standardOption, ...alternateOptions]);
+};
+
+const resolveCountUnitOptions = (standardUnit: string | null | undefined): PackagingUnitOption[] | null => {
+  const standardUnitLabel = standardUnit?.trim();
+  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
+  const matchedStandardUnit = findUnitFamilyOption(COUNT_UNIT_OPTIONS, normalizedStandardUnit);
+
+  if (!standardUnitLabel || !matchedStandardUnit) {
+    return null;
+  }
+
+  return [
+    buildPackagingUnitOption(
+      standardUnitLabel,
+      standardUnitLabel,
+      1,
+      [matchedStandardUnit.label, ...matchedStandardUnit.aliases],
+    ),
+  ];
+};
 
 const buildInventoryActionCopy = (
   mode: InventoryActionMode,
@@ -196,35 +359,55 @@ const resolveItemLabel = (itemOptions: InventoryItemOption[], itemId: string) =>
   return matchedItem.unit ? `${matchedItem.itemName} (${matchedItem.unit})` : matchedItem.itemName;
 };
 
+// Danh sách đơn vị gợi ý đầy đủ khi item chưa được gán đơn vị chuẩn.
+const FALLBACK_UNIT_OPTIONS: PackagingUnitOption[] = [
+  ...VOLUME_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
+  ...WEIGHT_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
+  ...COUNT_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
+];
+
 /**
- * FE quy đổi đơn vị nhập thực tế về đơn vị chuẩn mà backend đang lưu kho.
+ * FE quy đổi đơn vị nhập thực tế về Đơn vị mà backend đang lưu kho.
  * Ví dụ: item chuẩn là `ml`, user nhập `10 hộp x 1 L` thì FE sẽ gửi `10000 ml`.
+ * Nếu item chưa có đơn vị chuẩn, trả về toàn bộ đơn vị phổ biến để user tự chọn.
  */
 const resolvePackagingUnitOptions = (standardUnit: string | null | undefined): PackagingUnitOption[] => {
   const normalizedStandardUnit = normalizeUnitValue(standardUnit);
 
-  if (normalizedStandardUnit === 'ml' || normalizedStandardUnit === 'l') {
-    const standardFactor = normalizedStandardUnit === 'ml' ? 1 : 1000;
-
-    return [
-      { value: 'ml', label: 'ml', factorToStandard: 1 / standardFactor },
-      { value: 'l', label: 'L', factorToStandard: 1000 / standardFactor },
-    ];
+  if (isVolumeUnit(normalizedStandardUnit)) {
+    return buildConvertiblePackagingUnitOptions(standardUnit, VOLUME_UNIT_OPTIONS) ?? [];
   }
 
-  if (normalizedStandardUnit === 'g' || normalizedStandardUnit === 'kg') {
-    const standardFactor = normalizedStandardUnit === 'g' ? 1 : 1000;
-
-    return [
-      { value: 'g', label: 'g', factorToStandard: 1 / standardFactor },
-      { value: 'kg', label: 'kg', factorToStandard: 1000 / standardFactor },
-    ];
+  if (isWeightUnit(normalizedStandardUnit)) {
+    return buildConvertiblePackagingUnitOptions(standardUnit, WEIGHT_UNIT_OPTIONS) ?? [];
   }
 
-  const fallbackLabel = standardUnit?.trim() || 'đơn vị chuẩn';
-  const fallbackValue = normalizedStandardUnit || 'standard-unit';
+  if (isCountUnit(normalizedStandardUnit)) {
+    return resolveCountUnitOptions(standardUnit) ?? [];
+  }
 
-  return [{ value: fallbackValue, label: fallbackLabel, factorToStandard: 1 }];
+  // Item chưa có đơn vị chuẩn hoặc đơn vị không nhận dạng được →
+  // hiển thị toàn bộ đơn vị phổ biến để user chọn phù hợp với thực tế.
+  return FALLBACK_UNIT_OPTIONS;
+};
+
+/**
+ * Chỉ chấp nhận custom value nếu map được về đơn vị chuẩn của item hoặc cùng hệ quy đổi hợp lệ.
+ */
+const resolvePackagingUnitSelection = (inputValue: string, standardUnit: string | null | undefined) => {
+  const normalizedInputValue = normalizeUnitValue(inputValue);
+
+  if (!normalizedInputValue) {
+    return null;
+  }
+
+  return (
+    resolvePackagingUnitOptions(standardUnit).find((option) =>
+      [option.value, option.label, ...(option.keywords ?? [])].some(
+        (candidate) => normalizeUnitValue(candidate) === normalizedInputValue,
+      ),
+    ) ?? null
+  );
 };
 
 /**
@@ -233,68 +416,19 @@ const resolvePackagingUnitOptions = (standardUnit: string | null | undefined): P
 const resolvePackageLabelSuggestions = (standardUnit: string | null | undefined) => {
   const normalizedStandardUnit = normalizeUnitValue(standardUnit);
 
-  if (normalizedStandardUnit === 'ml' || normalizedStandardUnit === 'l') {
-    return ['thùng', 'hộp', 'chai', 'can', 'bịch'] as const;
+  if (isVolumeUnit(normalizedStandardUnit)) {
+    return filterCommonPackageLabels(VOLUME_PACKAGE_LABEL_SET);
   }
 
-  if (normalizedStandardUnit === 'g' || normalizedStandardUnit === 'kg') {
-    return ['bao', 'gói', 'hộp', 'túi', 'can'] as const;
+  if (isWeightUnit(normalizedStandardUnit)) {
+    return filterCommonPackageLabels(WEIGHT_PACKAGE_LABEL_SET);
   }
 
-  if (normalizedStandardUnit === 'cái') {
-    return ['dây', 'gói', 'thùng', 'hộp', 'túi'] as const;
+  if (isCountUnit(normalizedStandardUnit)) {
+    return filterCommonPackageLabels(COUNT_PACKAGE_LABEL_SET);
   }
 
   return COMMON_PACKAGE_LABELS;
-};
-
-/**
- * Gợi ý quy cách thường gặp theo đơn vị đóng gói để user nhập tổng lượng chuẩn trong 1 kiện.
- */
-const resolvePackageLabelHint = (packageLabel: string, standardUnit: string | null | undefined) => {
-  const normalizedPackageLabel = packageLabel.trim().toLowerCase();
-  const unitLabel = standardUnit?.trim() || 'đơn vị chuẩn';
-
-  switch (normalizedPackageLabel) {
-    case 'thùng':
-      return `Thùng không có quy đổi cố định. Hãy nhập tổng lượng chuẩn có trong 1 thùng, ví dụ 24 L/thùng hoặc 120 hộp x 180 ml đã cộng sẵn ra ${unitLabel}.`;
-    case 'hộp':
-      return `Hộp không cố định. Với sữa thường gặp 180 ml/hộp hoặc 1 L/hộp; hãy nhập đúng tổng ${unitLabel} trong 1 hộp.`;
-    case 'chai':
-      return 'Chai thường quy đổi theo ml hoặc L, ví dụ 750 ml/chai hoặc 1 L/chai.';
-    case 'can':
-      return 'Can thường quy đổi theo L hoặc kg, ví dụ 5 L/can hoặc 20 kg/can.';
-    case 'bao':
-      return 'Bao thường dùng cho đường, bột hoặc đá, ví dụ 25 kg/bao hoặc 50 kg/bao.';
-    case 'gói':
-      return 'Gói có thể quy đổi theo g hoặc cái, ví dụ 18 g/gói hoặc 100 cái/gói.';
-    case 'bịch':
-      return 'Bịch có thể quy đổi theo ml hoặc g tùy loại nguyên liệu.';
-    case 'túi':
-      return 'Túi có thể quy đổi theo g hoặc cái tùy loại.';
-    case 'dây':
-      return 'Dây thường dùng cho ly, nắp ly hoặc ống hút và thường quy đổi về cái.';
-    default:
-      return `Nhập tổng lượng chuẩn có trong 1 ${packageLabel.trim() || 'kiện'} theo đơn vị ${unitLabel}.`;
-  }
-};
-
-const resolveStandardUnitGuide = (standardUnit: string | null | undefined) => {
-  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
-
-  if (normalizedStandardUnit === 'ml' || normalizedStandardUnit === 'l') {
-    return 'Thường gặp: sữa tươi theo hộp/thùng, syrup theo chai, nước trái cây theo chai, bịch hoặc can.';
-  }
-
-  if (normalizedStandardUnit === 'g' || normalizedStandardUnit === 'kg') {
-    return 'Thường gặp: cà phê, bột, đường, sữa bột, topping khô theo bao, gói, hộp hoặc túi.';
-  }
-
-  if (normalizedStandardUnit === 'cái') {
-    return 'Thường gặp: ly, nắp ly, ống hút, muỗng theo dây, gói, hộp hoặc thùng.';
-  }
-
-  return '';
 };
 
 /**
@@ -414,7 +548,7 @@ export const InventoryActionDialog = ({
     return itemOptions.find((item) => item.itemId === watchedImportItemId) ?? null;
   }, [itemOptions, watchedImportItemId]);
 
-  const standardUnitLabel = selectedImportItem?.unit?.trim() || 'đơn vị chuẩn';
+  const standardUnitLabel = selectedImportItem?.unit?.trim() || 'Đơn vị';
   const packagingUnitOptions = useMemo(() => {
     return resolvePackagingUnitOptions(selectedImportItem?.unit);
   }, [selectedImportItem?.unit]);
@@ -427,23 +561,18 @@ export const InventoryActionDialog = ({
       label: packageLabel,
     }));
   }, [packageLabelSuggestions]);
-  const packageLabelHint = useMemo(() => {
-    return resolvePackageLabelHint(watchedPackageLabel, selectedImportItem?.unit);
-  }, [selectedImportItem?.unit, watchedPackageLabel]);
-  const standardUnitGuide = useMemo(() => {
-    return resolveStandardUnitGuide(selectedImportItem?.unit);
-  }, [selectedImportItem?.unit]);
   const contentUnitComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
     return packagingUnitOptions.map((option) => ({
       value: option.value,
       label: option.label,
+      keywords: [...(option.keywords ?? [])],
     }));
   }, [packagingUnitOptions]);
   const itemComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
     return itemOptions.map((item) => ({
       value: item.itemId,
       label: item.itemName,
-      description: item.unit ? `Đơn vị chuẩn: ${item.unit}` : 'Chưa có đơn vị chuẩn',
+      description: item.unit ? `Đơn vị: ${item.unit}` : 'Chưa có Đơn vị',
       keywords: [item.itemId, item.unit ?? ''],
     }));
   }, [itemOptions]);
@@ -464,6 +593,7 @@ export const InventoryActionDialog = ({
         shouldValidate: false,
       });
     }
+    importForm.clearErrors('contentUnit');
   }, [importForm, packagingUnitOptions]);
 
   const selectedPackagingUnitOption = packagingUnitOptions.find((option) => option.value === watchedContentUnit);
@@ -600,7 +730,7 @@ export const InventoryActionDialog = ({
                 >
                   <RadioGroupItem value="standard" id="import-mode-standard" className="mt-0.5" />
                   <span className="space-y-1">
-                    <span className="block text-sm font-medium text-text-primary">Theo đơn vị chuẩn</span>
+                    <span className="block text-sm font-medium text-text-primary">Theo Đơn vị</span>
                     
                   </span>
                 </label>
@@ -634,7 +764,7 @@ export const InventoryActionDialog = ({
                       importForm.setValue('quantity', value, { shouldDirty: true, shouldValidate: true });
                     }}
                   />
-                  <p className="text-xs text-text-secondary">Đơn vị chuẩn hiện tại: {standardUnitLabel}.</p>
+                  <p className="text-xs text-text-secondary">Đơn vị hiện tại: {standardUnitLabel}.</p>
                   {importForm.formState.errors.quantity && (
                     <p className="text-xs text-red-500">{importForm.formState.errors.quantity.message}</p>
                   )}
@@ -661,10 +791,6 @@ export const InventoryActionDialog = ({
               </div>
             ) : (
               <div className="space-y-4 rounded-card border border-border bg-card p-4">
-                <div className="rounded-card border border-border bg-cream/70 px-4 py-3 text-sm text-text-secondary">
-                  <p className="mt-1">{standardUnitGuide}</p>
-                </div>
-
                 <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
                   <div className="space-y-1.5">
                     <Label htmlFor="import-package-count">
@@ -704,7 +830,6 @@ export const InventoryActionDialog = ({
                         });
                       }}
                     />
-                    <p className="text-xs text-text-secondary">{packageLabelHint}</p>
                     {importForm.formState.errors.packageLabel && (
                       <p className="text-xs text-red-500">{importForm.formState.errors.packageLabel.message}</p>
                     )}
@@ -748,10 +873,32 @@ export const InventoryActionDialog = ({
                       placeholder="Chọn đơn vị quy đổi"
                       searchPlaceholder="Tìm đơn vị quy đổi"
                       emptyMessage="Không có đơn vị quy đổi khả dụng cho nguyên liệu này."
+                      allowCustomValue
                       onValueChange={(value) => {
-                        importForm.setValue('contentUnit', value, { shouldDirty: true, shouldValidate: true });
+                        const resolvedUnitOption = resolvePackagingUnitSelection(value, selectedImportItem?.unit);
+
+                        if (!resolvedUnitOption) {
+                          importForm.setError('contentUnit', {
+                            type: 'manual',
+                            message: selectedImportItem?.unit
+                              ? `Đơn vị quy đổi phải trùng hoặc cùng hệ với đơn vị chuẩn ${standardUnitLabel} của item.`
+                              : 'Vui lòng chọn một đơn vị hợp lệ từ danh sách.',
+                          });
+                          return;
+                        }
+
+                        importForm.clearErrors('contentUnit');
+                        importForm.setValue('contentUnit', resolvedUnitOption.value, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
                       }}
                     />
+                    <p className="text-xs text-text-secondary">
+                      {selectedImportItem?.unit
+                        ? `Đơn vị này phải quy về đơn vị chuẩn đang lưu cho item: ${standardUnitLabel}.`
+                        : 'Item chưa có đơn vị chuẩn. Chọn đơn vị phù hợp với thực tế nhập kho.'}
+                    </p>
                     {importForm.formState.errors.contentUnit && (
                       <p className="text-xs text-red-500">{importForm.formState.errors.contentUnit.message}</p>
                     )}
@@ -838,9 +985,8 @@ export const InventoryActionDialog = ({
                 )}
 
                 <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-amber-900">Preview quy đổi trước khi gửi backend</p>
                   <div className="mt-2 grid gap-2 text-sm text-amber-900 md:grid-cols-2">
-                    <p>Đơn vị chuẩn của kho: {standardUnitLabel}</p>
+                    <p>Đơn vị của kho: {standardUnitLabel}</p>
                     <p>Quy cách hiện tại: {formatComputedNumber(watchedPackageCount)} {watchedPackageLabel?.trim() || 'kiện'}</p>
                     <p>
                       Lượng trong mỗi kiện: {formatComputedNumber(watchedContentPerPackage)} {selectedPackagingUnitLabel}
@@ -848,7 +994,7 @@ export const InventoryActionDialog = ({
                     <p>Số lượng : {formatComputedNumber(derivedPackagingQuantity)} {standardUnitLabel}</p>
                     <p>Tổng tiền 1 kiên: {formatComputedCurrency(derivedPackagingTotalCost)}</p>
                     <p>
-                      Đơn giá chuẩn : {formatComputedNumber(derivedPackagingCostPerUnit)} / {standardUnitLabel}
+                      Đơn giá : {formatComputedNumber(derivedPackagingCostPerUnit)} / {standardUnitLabel}
                     </p>
                   </div>
                 </div>

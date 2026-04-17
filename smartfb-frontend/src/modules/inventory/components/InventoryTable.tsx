@@ -1,4 +1,4 @@
-import { AlertTriangle, PencilLine, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, BellRing, PencilLine, ShieldAlert } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -25,6 +25,7 @@ interface InventoryTableProps {
   onPageChange: (page: number) => void;
   onAdjustItem: (itemId: string, branchId: string) => void;
   onWasteItem: (itemId: string, branchId: string) => void;
+  onEditThreshold?: (balance: InventoryBalance) => void;
   resolveBranchName: (branchId: string) => string;
 }
 
@@ -71,6 +72,7 @@ export const InventoryTable = ({
   onPageChange,
   onAdjustItem,
   onWasteItem,
+  onEditThreshold,
   resolveBranchName,
 }: InventoryTableProps) => {
   const itemLabelTitle = capitalizeLabel(itemLabel);
@@ -121,6 +123,20 @@ export const InventoryTable = ({
               <TableCell>{formatDateTime(balance.updatedAt)}</TableCell>
               <TableCell className={cn(!(canAdjust || canWaste) && 'hidden')}>
                 <div className="flex justify-end gap-2">
+                  {canAdjust && onEditThreshold && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+                      onClick={() => onEditThreshold(balance)}
+                      disabled={isActionPending}
+                      aria-label={`Cập nhật mức tối thiểu cho ${balance.itemName?.trim() || itemLabel}`}
+                      title="Cập nhật mức tối thiểu"
+                    >
+                      <BellRing className="h-4 w-4" />
+                    </Button>
+                  )}
                   {canWaste && (
                     <Button
                       type="button"

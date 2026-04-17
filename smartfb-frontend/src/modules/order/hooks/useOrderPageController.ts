@@ -31,6 +31,7 @@ import type {
   DraftOrderMeta,
   OrderAddonSelection,
   OrderDraftItem,
+  OrderListItemResponse,
   OrderResponse,
   OrderTableContext,
 } from '@modules/order/types/order.types';
@@ -94,6 +95,24 @@ interface UseOrderPageControllerResult {
   handleOpenItemDialog: (menuItemId: string) => void;
   handleSubmitItem: (payload: OrderDialogSubmitPayload) => Promise<void>;
 }
+
+const toOrderListItemCache = (order: OrderResponse): OrderListItemResponse => ({
+  id: order.id,
+  orderNumber: order.orderNumber,
+  tableId: order.tableId,
+  tableName: order.tableName,
+  status: order.status,
+  totalAmount: order.totalAmount,
+  createdAt: order.createdAt,
+});
+
+const isOpenOrder = (order: OrderResponse) => {
+  // Order đã hoàn tất hoặc đã hủy không còn được xem là order active của bàn.
+  return order.status !== 'COMPLETED' && order.status !== 'CANCELLED';
+};
+
+// Response sau tạo/sửa order là source of truth tạm thời, tránh GET detail lại ngay sau mutation.
+const ORDER_DETAIL_SYNC_STALE_TIME = 15 * 1000;
 
 /**
  * Hook điều phối toàn bộ nghiệp vụ của màn `OrderPage`.
@@ -319,6 +338,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       isRouteContextReady &&
       !isFreshTakeawayRoute &&
       (!routeTableId || !tableActiveOrderQuery.isFetching),
+    staleTime: ORDER_DETAIL_SYNC_STALE_TIME,
   });
 
   /**
@@ -362,23 +382,30 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     });
   };
 
-  const invalidateOrderRelatedQueries = (orderId?: string | null, tableId?: string | null) => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
+  const syncOrderQueryCache = (order: OrderResponse, tableId?: string | null) => {
+    const normalizedTableId = tableId?.trim() || order.tableId?.trim() || '';
+
+    queryClient.setQueryData(queryKeys.orders.detail(order.id), order);
+
+    if (normalizedTableId) {
+      queryClient.setQueryData(
+        queryKeys.orders.activeByTable(normalizedTableId),
+        isOpenOrder(order) ? toOrderListItemCache(order) : null
+      );
+    }
+  };
+
+  const invalidateOrderListQueries = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+  };
+
+  const invalidateTableStatusQueries = (tableId?: string | null) => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
 
     if (tableId?.trim()) {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.orders.activeByTable(tableId.trim()),
-      });
-      void queryClient.invalidateQueries({
         queryKey: queryKeys.tables.detail(tableId.trim()),
-      });
-    }
-
-    if (orderId?.trim()) {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.orders.detail(orderId.trim()),
       });
     }
   };
@@ -426,11 +453,12 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         return null;
       }
 
+      const resolvedTableId = response.data.tableId ?? nextTableContext.tableId;
+
       applyOrderResponseToDraft(response.data);
-      invalidateOrderRelatedQueries(
-        response.data.id,
-        response.data.tableId ?? nextTableContext.tableId
-      );
+      syncOrderQueryCache(response.data, resolvedTableId);
+      invalidateOrderListQueries();
+      invalidateTableStatusQueries(resolvedTableId);
       toast.success(successMessage);
 
       return response.data;
@@ -465,11 +493,11 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         return null;
       }
 
+      const resolvedTableId = response.data.tableId ?? nextTableContext.tableId;
+
       applyOrderResponseToDraft(response.data);
-      invalidateOrderRelatedQueries(
-        response.data.id,
-        response.data.tableId ?? nextTableContext.tableId
-      );
+      syncOrderQueryCache(response.data, resolvedTableId);
+      invalidateOrderListQueries();
       toast.success(successMessage);
 
       return response.data;
@@ -505,12 +533,13 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         return false;
       }
 
-      const cancelledOrderId = draftOrder.orderId;
       const cancelledTableId = tableContext?.tableId ?? nextTableContext.tableId ?? null;
 
+      syncOrderQueryCache(response.data, cancelledTableId);
       clearDraft();
       replaceOrderRoute(nextTableContext);
-      invalidateOrderRelatedQueries(cancelledOrderId, cancelledTableId);
+      invalidateOrderListQueries();
+      invalidateTableStatusQueries(cancelledTableId);
       toast.success(successMessage);
 
       return true;

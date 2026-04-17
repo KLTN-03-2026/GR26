@@ -2,7 +2,7 @@
 Tests cho app/utils/model_io.py
 
 Dùng tmp_path fixture của pytest để tạo thư mục tạm.
-Mock neuralprophet.save / load để không cần cài NeuralProphet khi test.
+Mock neuralprophet.save / torch.load để không cần load model thật khi test.
 Patch MODEL_DIR để trỏ vào thư mục tạm.
 """
 
@@ -148,19 +148,20 @@ class TestLoadModel:
         _make_np_file(tmp_path, "tenant_ok")
         fake_model = MagicMock(name="NeuralProphetInstance")
 
-        with patch("neuralprophet.load", return_value=fake_model):
+        with patch("torch.load", return_value=fake_model):
             import app.utils.model_io as model_io
             model_io.MODEL_DIR = tmp_path
 
             result = model_io.load_model("tenant_ok")
 
         assert result is fake_model
+        fake_model.restore_trainer.assert_called_once_with(accelerator=None)
 
     def test_load_corrupt_returns_none(self, tmp_path: Path) -> None:
         """load_model trả về None khi file bị corrupt (load exception)."""
         _make_np_file(tmp_path, "tenant_corrupt")
 
-        with patch("neuralprophet.load", side_effect=RuntimeError("corrupt file")):
+        with patch("torch.load", side_effect=RuntimeError("corrupt file")):
             import app.utils.model_io as model_io
             model_io.MODEL_DIR = tmp_path
 
@@ -173,7 +174,7 @@ class TestLoadModel:
         np_file = _make_np_file(tmp_path, "tenant_del")
         assert np_file.exists()
 
-        with patch("neuralprophet.load", side_effect=RuntimeError("bad file")):
+        with patch("torch.load", side_effect=RuntimeError("bad file")):
             import app.utils.model_io as model_io
             model_io.MODEL_DIR = tmp_path
             model_io.load_model("tenant_del")
@@ -186,7 +187,7 @@ class TestLoadModel:
         meta_file = _make_metadata_file(tmp_path, "tenant_meta_del")
         assert meta_file.exists()
 
-        with patch("neuralprophet.load", side_effect=RuntimeError("bad")):
+        with patch("torch.load", side_effect=RuntimeError("bad")):
             import app.utils.model_io as model_io
             model_io.MODEL_DIR = tmp_path
             model_io.load_model("tenant_meta_del")
@@ -221,7 +222,7 @@ class TestModelExists:
         """model_exists không load model vào bộ nhớ."""
         _make_np_file(tmp_path, "tenant_check")
 
-        with patch("neuralprophet.load") as mock_load:
+        with patch("torch.load") as mock_load:
             import app.utils.model_io as model_io
             model_io.MODEL_DIR = tmp_path
             model_io.model_exists("tenant_check")

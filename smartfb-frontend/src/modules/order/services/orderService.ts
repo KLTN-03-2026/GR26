@@ -5,22 +5,21 @@ import type {
   OrderApiResponse,
   OrderListApiResponse,
   OrderListItemResponse,
+  OrderListPageApiResponse,
+  OrderListPageResponse,
   OrderListQueryParams,
   PlaceOrderRequest,
   UpdateOrderRequest,
   UpdateOrderStatusRequest,
 } from '../types/order.types';
 
-interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-}
-
 interface OrderRequestOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * Kích thước trang tối đa khi FE cần quét toàn bộ order đang mở.
+ */
 const ORDER_PAGE_SIZE = 100;
 
 const buildOrderListParams = (
@@ -39,8 +38,8 @@ const buildOrderListParams = (
 const fetchOrderPage = async (
   params?: OrderListQueryParams,
   options?: OrderRequestOptions
-): Promise<PageResponse<OrderListItemResponse>> => {
-  const response = await api.get<ApiResponse<PageResponse<OrderListItemResponse>>>('/orders', {
+): Promise<OrderListPageResponse> => {
+  const response = await api.get<ApiResponse<OrderListPageResponse>>('/orders', {
     params: buildOrderListParams(params),
     signal: options?.signal,
   });
@@ -52,7 +51,7 @@ const fetchOrderPage = async (
  * Lấy toàn bộ danh sách đơn hàng qua tất cả trang backend.
  *
  * Backend hiện trả dữ liệu phân trang kiểu Spring nên FE cần lặp qua `totalPages`
- * để trang quản lý đơn hàng luôn nhìn thấy đầy đủ dữ liệu thay vì chỉ 20 đơn đầu.
+ * khi các flow POS cần quét đủ đơn đang mở thay vì chỉ đọc một trang đầu.
  */
 const fetchAllOrderPages = async (
   params?: OrderListQueryParams,
@@ -70,11 +69,14 @@ const fetchAllOrderPages = async (
 
   const remainingPages = await Promise.all(
     pages.map(async (page) => {
-      const nextPage = await fetchOrderPage({
-        ...params,
-        page,
-        size: params?.size ?? ORDER_PAGE_SIZE,
-      }, options);
+      const nextPage = await fetchOrderPage(
+        {
+          ...params,
+          page,
+          size: params?.size ?? ORDER_PAGE_SIZE,
+        },
+        options
+      );
 
       return nextPage.content;
     })
@@ -129,8 +131,23 @@ export const orderService = {
   },
 
   /**
-   * Lấy danh sách đơn hàng cho trang quản lý.
-   * FE chủ động gom tất cả trang để danh sách không bị cắt ở 20 bản ghi đầu.
+   * Lấy một trang đơn hàng cho màn quản lý order.
+   */
+  getOrderPage: async (
+    params?: OrderListQueryParams,
+    options?: OrderRequestOptions
+  ): Promise<OrderListPageApiResponse> => {
+    const pageData = await fetchOrderPage(params, options);
+
+    return {
+      success: true,
+      data: pageData,
+    };
+  },
+
+  /**
+   * Lấy toàn bộ danh sách đơn hàng cho các flow cần dò order đang mở.
+   * Trang quản lý order dùng `getOrderPage` để phân trang server-side.
    */
   getOrders: async (
     params?: OrderListQueryParams,
