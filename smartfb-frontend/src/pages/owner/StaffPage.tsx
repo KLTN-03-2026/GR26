@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Users, CircleCheckBig, SlidersHorizontal } from 'lucide-react';
 import { ROUTES } from '@shared/constants/routes';
-import { queryKeys } from '@shared/constants/queryKeys';
-import { staffService } from '@modules/staff/services/staffService';
 import { usePositions } from '@modules/staff/hooks/usePositions';
 import { useStaffFilters } from '@modules/staff/hooks/useStaffFilters';
+import { useStaffList } from '@modules/staff/hooks/useStaffList';
 import { useVisibleStaff } from '@modules/staff/hooks/useVisibleStaff';
 import { StaffFilterBar } from '@modules/staff/components/StaffFilterBar';
 import { StaffTable } from '@modules/staff/components/StaffTable';
@@ -25,12 +23,7 @@ const StatCard = ({ icon, iconBg, label, value }: { icon: React.ReactNode; iconB
 export default function StaffPage() {
   const navigate = useNavigate();
   const { data: positionsData = [] } = usePositions();
-
-  // Fetch staff list from API với pagination
-  const { data: staffData, isLoading, refetch } = useQuery({
-    queryKey: queryKeys.staff.list({ page: 0, size: 100 }),
-    queryFn: () => staffService.getList({ page: 0, size: 100 }),
-  });
+  const { data: staffData, isLoading, refetch } = useStaffList({ page: 0, size: 100 });
   
   const staffList = useMemo(() => staffData?.content ?? [], [staffData]);
   const visibleStaffList = useVisibleStaff(staffList);

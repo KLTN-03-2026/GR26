@@ -1,12 +1,11 @@
 import { useEffect, useMemo } from 'react';
-import { Boxes, Hammer } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, Factory, TrendingDown, TrendingUp } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -27,11 +26,12 @@ import {
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Textarea } from '@shared/components/ui/textarea';
+import { cn } from '@shared/utils/cn';
 import type { InventoryItemOption, RecordProductionBatchPayload } from '@modules/inventory/types/inventory.types';
 
 const recordProductionBatchSchema = z.object({
   subAssemblyItemId: z.string().uuid('ID bán thành phẩm phải đúng định dạng UUID'),
-  expectedOutputQuantity: z.number().min(0.0001, 'Sản lượng chuẩn phải lớn hơn 0'),
+  expectedOutputQuantity: z.number().min(0.0001, 'Sản lượng kế hoạch phải lớn hơn 0'),
   actualOutputQuantity: z.number().min(0, 'Sản lượng thực tế không được âm'),
   unit: z
     .string()
@@ -64,6 +64,18 @@ const buildDefaultValues = (defaultItemId?: string): RecordProductionBatchFormVa
   note: '',
 });
 
+const formatNumber = (value: number) =>
+  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 }).format(value);
+
+/**
+ * Tính tỉ lệ hiệu suất: thực tế / kế hoạch * 100.
+ * Trả về null nếu kế hoạch = 0.
+ */
+const calcYieldRate = (actual: number, expected: number): number | null => {
+  if (expected <= 0) return null;
+  return Math.round((actual / expected) * 100);
+};
+
 /**
  * Dialog ghi nhận mẻ sản xuất cho bán thành phẩm.
  * Tách riêng khỏi flow nhập tồn vì backend xử lý trừ đầu vào và cộng đầu ra khác nhau.
@@ -82,23 +94,38 @@ export const RecordProductionBatchDialog = ({
     defaultValues: buildDefaultValues(defaultItemId),
   });
 
-  const watchedItemId = useWatch({
-    control: form.control,
-    name: 'subAssemblyItemId',
-  });
+  const watchedItemId = useWatch({ control: form.control, name: 'subAssemblyItemId' });
+  const watchedExpected = useWatch({ control: form.control, name: 'expectedOutputQuantity' });
+  const watchedActual = useWatch({ control: form.control, name: 'actualOutputQuantity' });
+  const watchedUnit = useWatch({ control: form.control, name: 'unit' });
 
-  const selectedItem = useMemo(() => {
-    return itemOptions.find((item) => item.itemId === watchedItemId) ?? null;
-  }, [itemOptions, watchedItemId]);
+  const selectedItem = useMemo(
+    () => itemOptions.find((item) => item.itemId === watchedItemId) ?? null,
+    [itemOptions, watchedItemId],
+  );
 
-  const itemComboboxOptions = useMemo<SearchableComboboxOption[]>(() => {
-    return itemOptions.map((item) => ({
-      value: item.itemId,
-      label: item.itemName,
-      description: item.unit ? `Đơn vị chuẩn: ${item.unit}` : 'Chưa có đơn vị chuẩn',
-      keywords: [item.itemId, item.unit ?? ''],
-    }));
-  }, [itemOptions]);
+  const itemComboboxOptions = useMemo<SearchableComboboxOption[]>(
+    () =>
+      itemOptions.map((item) => ({
+        value: item.itemId,
+        label: item.itemName,
+        description: item.unit ? `Đơn vị: ${item.unit}` : 'Chưa có đơn vị chuẩn',
+        keywords: [item.itemId, item.unit ?? ''],
+      })),
+    [itemOptions],
+  );
+
+  const yieldRate = calcYieldRate(watchedActual, watchedExpected);
+
+  // Màu badge hiệu suất theo ngưỡng
+  const yieldBadgeStyle =
+    yieldRate === null
+      ? null
+      : yieldRate >= 95
+        ? 'bg-green-100 text-green-700 border-green-200'
+        : yieldRate >= 80
+          ? 'bg-amber-100 text-amber-700 border-amber-200'
+          : 'bg-red-100 text-red-700 border-red-200';
 
   useEffect(() => {
     if (!open) {
@@ -114,6 +141,7 @@ export const RecordProductionBatchDialog = ({
     }
   }, [defaultItemId, form, open]);
 
+  // Tự động điền đơn vị khi chọn item
   useEffect(() => {
     if (!selectedItem?.unit?.trim()) {
       return;
@@ -137,144 +165,205 @@ export const RecordProductionBatchDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Hammer className="h-5 w-5 text-primary" />
-            Ghi nhận sản xuất bán thành phẩm
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Factory className="h-5 w-5 text-primary" />
+            Ghi nhận sản xuất
           </DialogTitle>
-          <DialogDescription>
-            Ghi nhận một mẻ sản xuất để backend tự trừ thành phần đầu vào theo công thức và cộng tồn đầu ra.
-            {selectedBranchName ? ` Chi nhánh hiện tại: ${selectedBranchName}.` : ''}
-          </DialogDescription>
+          {selectedBranchName && (
+            <p className="text-xs text-text-secondary">Chi nhánh: {selectedBranchName}</p>
+          )}
         </DialogHeader>
 
-        <div className="rounded-card border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Lưu ý nghiệp vụ</p>
-          <p className="mt-1">
-            Backend dùng <strong>sản lượng chuẩn</strong> để tính mức trừ đầu vào theo recipe, và dùng
-            <strong> sản lượng thực tế</strong> để cộng tồn đầu ra. Bán thành phẩm phải có công thức trước khi ghi nhận sản xuất.
-          </p>
-        </div>
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="subAssemblyItemId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bán thành phẩm đầu ra *</FormLabel>
-                  <FormControl>
-                    <SearchableCombobox
-                      value={field.value}
-                      options={itemComboboxOptions}
-                      placeholder="Chọn bán thành phẩm cần ghi nhận sản xuất"
-                      searchPlaceholder="Tìm bán thành phẩm theo tên, mã hoặc đơn vị"
-                      emptyMessage="Không tìm thấy bán thành phẩm phù hợp."
-                      disabled={isPending || itemOptions.length === 0}
-                      onValueChange={field.onChange}
-                    />
-                  </FormControl>
-                  {selectedItem ? (
-                    <p className="text-xs text-text-secondary">
-                      Đang chọn: {selectedItem.itemName}
-                      {selectedItem.unit ? ` • đơn vị chuẩn ${selectedItem.unit}` : ''}
-                    </p>
-                  ) : null}
-                  {itemOptions.length === 0 ? (
-                    <p className="text-xs text-text-secondary">
-                      Chưa có bán thành phẩm nào trong catalog `SUB_ASSEMBLY`. Hãy tạo item trước rồi quay lại ghi nhận sản xuất.
-                    </p>
-                  ) : null}
-                  <FormMessage />
-                </FormItem>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+
+            {/* ── Bước 1: Chọn bán thành phẩm ── */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">
+                Bán thành phẩm
+              </p>
+              <FormField
+                control={form.control}
+                name="subAssemblyItemId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <SearchableCombobox
+                        value={field.value}
+                        options={itemComboboxOptions}
+                        placeholder="Chọn bán thành phẩm cần sản xuất"
+                        searchPlaceholder="Tìm theo tên hoặc đơn vị..."
+                        emptyMessage="Không tìm thấy. Hãy tạo item SUB_ASSEMBLY trước."
+                        disabled={isPending || itemOptions.length === 0}
+                        onValueChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Chip thông tin item đã chọn */}
+              {selectedItem && (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+                  <span className="flex-1 truncate text-sm font-medium text-text-primary">
+                    {selectedItem.itemName}
+                  </span>
+                  {selectedItem.unit && (
+                    <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-text-secondary">
+                      {selectedItem.unit}
+                    </span>
+                  )}
+                </div>
               )}
-            />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="expectedOutputQuantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sản lượng chuẩn *</FormLabel>
-                    <FormControl>
-                      <NumericInput
-                        allowDecimal
-                        min={0.0001}
-                        step="0.0001"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-text-secondary">
-                      Dùng để backend suy ra mức trừ đầu vào theo công thức của bán thành phẩm.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="actualOutputQuantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sản lượng thực tế *</FormLabel>
-                    <FormControl>
-                      <NumericInput
-                        allowDecimal
-                        min={0}
-                        step="0.0001"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-text-secondary">
-                      Dùng để cộng tồn đầu ra thực tế sau khi sản xuất xong.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {itemOptions.length === 0 && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  Chưa có bán thành phẩm nào. Hãy tạo item trước rồi quay lại.
+                </div>
+              )}
             </div>
 
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Đơn vị đầu ra *</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ví dụ: ml, L, mẻ, chai"
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <p className="text-xs text-text-secondary">
-                    Mặc định lấy từ bán thành phẩm đã chọn. Chỉ sửa khi dữ liệu catalog đang thiếu hoặc sai đơn vị.
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* ── Bước 2: Sản lượng ── */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">
+                Sản lượng
+              </p>
 
+              <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+                {/* Kế hoạch */}
+                <FormField
+                  control={form.control}
+                  name="expectedOutputQuantity"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="flex items-center gap-1.5 text-xs text-text-secondary">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Công thức
+                      </FormLabel>
+                      <FormControl>
+                        <NumericInput
+                          allowDecimal
+                          min={0.0001}
+                          step="0.0001"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <p className="text-[11px] text-text-secondary">
+                        Dùng để tính lượng trừ đầu vào
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Mũi tên phân cách */}
+                <div className="mt-7 flex justify-center">
+                  <ArrowRight className="h-4 w-4 text-text-secondary" />
+                </div>
+
+                {/* Thực tế */}
+                <FormField
+                  control={form.control}
+                  name="actualOutputQuantity"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="flex items-center gap-1.5 text-xs text-text-secondary">
+                        <TrendingDown className="h-3.5 w-3.5" />
+                        Thực tế
+                      </FormLabel>
+                      <FormControl>
+                        <NumericInput
+                          allowDecimal
+                          min={0}
+                          step="0.0001"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <p className="text-[11px] text-text-secondary">
+                        Lượng thực tế cộng vào kho
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Hiệu suất và tổng kết */}
+              <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">Kết quả dự kiến</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-text-primary">
+                      +{formatNumber(watchedActual)} {watchedUnit || 'đơn vị'}
+                    </span>
+                    {yieldRate !== null && yieldBadgeStyle && (
+                      <span
+                        className={cn(
+                          'rounded-full border px-2 py-0.5 text-xs font-medium',
+                          yieldBadgeStyle,
+                        )}
+                      >
+                        {yieldRate}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {yieldRate !== null && yieldRate < 80 && (
+                  <p className="mt-1 text-xs text-amber-700">
+                    Hiệu suất thấp hơn 80%. Kiểm tra lại số liệu trước khi xác nhận.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* ── Đơn vị (chỉ hiện khi item chưa có unit) ── */}
+            {selectedItem && !selectedItem.unit && (
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Đơn vị đầu ra <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ví dụ: ml, L, mẻ, chai, hộp"
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-text-secondary">
+                      Item chưa có đơn vị chuẩn. Nhập đơn vị để ghi vào lịch sử giao dịch.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* ── Ghi chú ── */}
             <FormField
               control={form.control}
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
+                  <FormLabel className="text-text-secondary">Ghi chú (tùy chọn)</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value ?? ''}
                       placeholder="Ví dụ: Mẻ sáng, pha cốt ca đầu ngày, hao hụt nhẹ do lọc..."
-                      rows={4}
+                      rows={3}
                       disabled={isPending}
                     />
                   </FormControl>
@@ -283,21 +372,16 @@ export const RecordProductionBatchDialog = ({
               )}
             />
 
-            <div className="rounded-card border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <div className="flex items-start gap-2">
-                <Boxes className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                <p>
-                  Sau khi xác nhận, hệ thống sẽ ghi giao dịch `PRODUCTION_OUT` cho thành phần đầu vào và `PRODUCTION_IN`
-                  cho bán thành phẩm đầu ra. Nếu recipe chưa tồn tại hoặc đầu vào không đủ tồn, backend sẽ từ chối.
-                </p>
-              </div>
-            </div>
-
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isPending}
+              >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isPending || itemOptions.length === 0}>
+              <Button type="submit" disabled={isPending || itemOptions.length === 0 || !watchedItemId}>
                 {isPending ? 'Đang ghi nhận...' : 'Xác nhận sản xuất'}
               </Button>
             </DialogFooter>

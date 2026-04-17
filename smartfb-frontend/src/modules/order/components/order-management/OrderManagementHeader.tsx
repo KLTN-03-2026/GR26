@@ -1,5 +1,9 @@
-import { Plus, RefreshCcw, Search } from 'lucide-react';
+import { Plus, RefreshCcw, Search, X } from 'lucide-react';
 import type { OrderStatus } from '@modules/order/types/order.types';
+import {
+  DateRangePicker,
+  type DateRangePickerValue,
+} from '@shared/components/common/DateRangePicker';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { cn } from '@shared/utils/cn';
@@ -17,11 +21,15 @@ interface OrderManagementHeaderProps {
   canCreateTakeaway: boolean;
   searchQuery: string;
   activeTab: OrderStatus | 'ALL';
+  dateRange: DateRangePickerValue;
+  hasActiveFilters: boolean;
   summaryCards: SummaryCard[];
   onRefresh: () => void;
   onCreateTakeaway: () => void;
   onSearchChange: (value: string) => void;
   onTabChange: (tab: OrderStatus | 'ALL') => void;
+  onDateRangeChange: (value: DateRangePickerValue) => void;
+  onClearFilters: () => void;
 }
 
 export const OrderManagementHeader = ({
@@ -29,11 +37,15 @@ export const OrderManagementHeader = ({
   canCreateTakeaway,
   searchQuery,
   activeTab,
+  dateRange,
+  hasActiveFilters,
   summaryCards,
   onRefresh,
   onCreateTakeaway,
   onSearchChange,
   onTabChange,
+  onDateRangeChange,
+  onClearFilters,
 }: OrderManagementHeaderProps) => {
   return (
     <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
@@ -69,17 +81,40 @@ export const OrderManagementHeader = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
+        <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Tìm mã đơn hoặc tên bàn..."
+              placeholder="Tìm mã đơn hoặc tên bàn trong trang hiện tại..."
               className="h-14 rounded-2xl border-slate-200 bg-slate-50 pl-12 text-base focus-visible:ring-orange-500"
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
             />
           </div>
 
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] 2xl:min-w-[440px]">
+            <DateRangePicker
+              value={dateRange}
+              onChange={onDateRangeChange}
+              placeholder="Từ ngày - Đến ngày"
+              disabled={isLoading}
+              className="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 text-sm font-bold text-slate-700 hover:bg-slate-50 focus-visible:ring-orange-500"
+            />
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClearFilters}
+              disabled={!hasActiveFilters || isLoading}
+              className="h-12 self-end rounded-2xl border-slate-200 px-4 text-sm font-bold text-slate-600"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Xóa lọc
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap gap-2 rounded-[24px] bg-slate-50 p-1.5">
             {STATUS_TABS.map((tab) => (
               <button

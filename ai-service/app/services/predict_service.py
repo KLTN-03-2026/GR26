@@ -1,17 +1,15 @@
 """
 Predict Service — dự báo tiêu thụ và tính gợi ý nhập kho.
 
-Quy trình:
-1. Load model từ storage/models/{tenant_id}/global_model.np
-2. Predict 7 ngày tới cho từng nguyên liệu × chi nhánh
-3. Lấy tồn kho hiện tại
-4. Tính ngày hết hàng và số lượng gợi ý nhập
-5. Ghi vào bảng forecast_results (upsert)
+Kiến trúc mới (từ migration 003):
+- Load model per-branch: storage/models/{tenant_id}/{branch_id}/model.np
+- n_forecasts và n_lags lấy từ config đã train (lưu trong train_metadata.json)
+- Fallback Option C: nếu branch chưa có model → skip, KHÔNG ghi forecast_results
 
-Fallback khi chưa có model:
-- Dùng trung bình 7 ngày gần nhất làm dự báo phẳng
-- is_fallback=True trong Pydantic response
-- Log warning để theo dõi
+Option C — branch chưa có model:
+  → Log warning với lý do cụ thể
+  → Trả về list rỗng (predict_all_branches log và bỏ qua)
+  → FE gọi GET /train/status?branch_id=... để biết lý do
 """
 
 from datetime import date, timedelta
@@ -28,6 +26,37 @@ from app.services import data_service
 from app.utils import dataframe_builder, model_io, stock_calculator
 
 logger = get_logger(__name__)
+
+
+def _validate_model_config(tenant_id: str, branch_id: str, expected_n_forecasts: int) -> bool:
+    """
+    Kiểm tra model đã train có đúng n_forecasts với config hiện tại không.
+
+    Nếu n_forecasts lúc train ≠ n_forecasts trong config branch hiện tại
+    → model không dùng được (output shape khác nhau) → cần retrain.
+
+    Args:
+        tenant_id: ID tenant
+        branch_id: ID chi nhánh
+        expected_n_forecasts: giá trị n_forecasts hiện tại từ branch config
+
+    Returns:
+        True nếu config khớp hoặc không có metadata (bỏ qua check).
+        False nếu phát hiện mismatch → caller sẽ skip branch này.
+    """
+    config = model_io.get_model_config(tenant_id, branch_id)
+    if not config:
+        # Không có metadata → model cũ chưa lưu config → bỏ qua check
+        return True
+    actual = config.get("n_forecasts", 0)
+    if actual != expected_n_forecasts:
+        logger.warning(
+            "Model của branch %s được train với n_forecasts=%d "
+            "nhưng config hiện tại là n_forecasts=%d. Cần retrain!",
+            branch_id, actual, expected_n_forecasts,
+        )
+        return False
+    return True
 
 
 def _build_fallback_forecast(history_df: pd.DataFrame) -> pd.DataFrame:
@@ -147,25 +176,37 @@ async def predict_branch(
         list[IngredientPrediction] — kết quả dự báo cho từng nguyên liệu.
         Trả về list rỗng nếu chi nhánh không có nguyên liệu nào.
     """
-    # ── Bước 1: Load model ──────────────────────────────────────────────────
-    model = None
-    global_is_fallback = False
-
-    if not model_io.model_exists(tenant_id):
+    # ── Bước 1: Kiểm tra model của branch (Option C — không fallback moving average) ──
+    if not model_io.model_exists(tenant_id, branch_id):
         logger.warning(
-            "Tenant %s chưa có model → dùng fallback (trung bình 7 ngày gần nhất)",
-            tenant_id,
+            "Branch %s chưa có model → skip predict (Option C). "
+            "Gọi PUT /train/config hoặc POST /train/trigger để train.",
+            branch_id,
         )
-        global_is_fallback = True
-    else:
-        try:
-            model = model_io.load_model(tenant_id)
-        except Exception as exc:
-            logger.error(
-                "Load model thất bại: tenant=%s | %s → fallback",
-                tenant_id, exc,
-            )
-            global_is_fallback = True
+        return []
+
+    # Load config đã train để biết n_forecasts, n_lags
+    branch_model_config = model_io.get_model_config(tenant_id, branch_id) or {}
+    n_forecasts = branch_model_config.get("n_forecasts", settings.np_n_forecasts)
+    n_lags = branch_model_config.get("n_lags", settings.np_n_lags)
+
+    # Kiểm tra n_forecasts có khớp với config branch hiện tại không
+    # (config thay đổi sau khi train → cần retrain trước khi predict)
+    if not _validate_model_config(tenant_id, branch_id, n_forecasts):
+        logger.warning(
+            "Branch %s: config mismatch → skip predict, cần retrain trước",
+            branch_id,
+        )
+        return []
+
+    # Load model
+    model = model_io.load_model(tenant_id, branch_id)
+    if model is None:
+        logger.error(
+            "Load model thất bại: tenant=%s branch=%s → skip predict",
+            tenant_id, branch_id,
+        )
+        return []
 
     # ── Bước 2: Lấy danh sách nguyên liệu ──────────────────────────────────
     ingredients = await data_service.get_all_ingredients_of_branch(
@@ -180,7 +221,7 @@ async def predict_branch(
         return []
 
     # Lấy đủ history cho n_lags + buffer ngày
-    history_days = settings.np_n_lags + 14
+    history_days = n_lags + 14
 
     series_repo = SeriesRegistryRepo(db)
     results: list[IngredientPrediction] = []
@@ -192,6 +233,9 @@ async def predict_branch(
         unit: str = ingredient["unit"]
 
         try:
+            # Lấy min_stock từ ingredient info (đã có trong dict từ data_service)
+            min_stock: float = float(ingredient.get("min_stock", 0.0))
+
             # Resolve integer series_id — tạo mới nếu chưa có trong registry
             series_entry = await series_repo.get_or_create(ingredient_id, branch_id)
             series_id_str: str = series_entry.series_id   # "s{int}"
@@ -225,26 +269,25 @@ async def predict_branch(
                 db, tenant_id, branch_id, ingredient_id,
             )
 
-            # ── Predict hoặc fallback ────────────────────────────────────
-            is_fallback = global_is_fallback
+            # ── Predict ─────────────────────────────────────────────────
+            is_fallback = False
 
-            if not is_fallback and not history_df.empty:
+            if not history_df.empty:
                 try:
-                    # Build future DataFrame (lịch sử + 7 ngày tương lai)
+                    # Build future DataFrame (lịch sử + n_forecasts ngày tương lai)
                     future_df = dataframe_builder.build_future_df(
-                        history_df, series_id_str, periods=settings.np_n_forecasts,
+                        history_df, series_id_str, periods=n_forecasts,
                     )
-                    # NeuralProphet predict — trả về DataFrame với yhat1..yhat7
+                    # NeuralProphet predict — trả về DataFrame với yhat1..yhat{n_forecasts}
                     raw_pred = model.predict(future_df)  # type: ignore[union-attr]
 
-                    # Với n_forecasts=7, kết quả đúng nằm ở row lịch sử cuối cùng:
-                    # yhat1=ngày+1, yhat2=ngày+2, ..., yhat7=ngày+7.
-                    # Các future rows (y=NaN) có yhat1=NaT → KHÔNG dùng.
+                    # Kết quả đúng nằm ở row lịch sử cuối cùng:
+                    # yhat1=ngày+1, yhat2=ngày+2, ..., yhat{n}=ngày+n.
                     last_history_date = history_df["ds"].max()
                     last_hist_row = raw_pred[
                         raw_pred["ds"] <= last_history_date
                     ].iloc[-1]
-                    n_fc = settings.np_n_forecasts  # 7
+                    n_fc = n_forecasts
                     # Bắt đầu từ ngày mai — không phụ thuộc vào last_history_date
                     # (last_history_date có thể là vài ngày trước hôm nay → forecast bị thiếu ngày)
                     forecast_dates = pd.date_range(
@@ -286,17 +329,22 @@ async def predict_branch(
                     forecast_df = _build_fallback_forecast(history_df)
                     is_fallback = True
             else:
-                # Không có model hoặc không có history → dùng fallback
-                if not history_df.empty and global_is_fallback:
-                    logger.info(
-                        "Fallback cho ingredient=%s (chưa có model)", ingredient_id,
-                    )
+                # Không có history → fallback moving average cho ingredient này
+                logger.info(
+                    "Không có history cho ingredient=%s → fallback moving average",
+                    ingredient_id,
+                )
                 forecast_df = _build_fallback_forecast(history_df)
                 is_fallback = True
 
             # ── Tính các chỉ số kho ──────────────────────────────────────
+            # Tính avg tiêu thụ để ước tính order date khi tồn kho vượt forecast window
+            avg_daily = stock_calculator.calc_avg_daily_consumption(forecast_df)
+
             stockout_date = stock_calculator.predict_stockout_date(
-                current_stock, forecast_df,
+                current_stock,
+                forecast_df,
+                min_stock=min_stock,
             )
             suggested_qty = stock_calculator.calc_suggested_qty(
                 forecast_df,
@@ -304,8 +352,11 @@ async def predict_branch(
             )
             suggested_order_date = stock_calculator.calc_suggested_order_date(
                 stockout_date,
+                avg_daily_consumption=avg_daily,
+                min_stock=min_stock,
+                current_stock=current_stock,
             )
-            urgency = stock_calculator.get_urgency(stockout_date)
+            urgency = stock_calculator.get_urgency(stockout_date, n_forecasts=n_forecasts)
 
             # ── Ghi vào DB ───────────────────────────────────────────────
             await _upsert_forecast_results(

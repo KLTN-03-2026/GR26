@@ -126,7 +126,13 @@ export interface OrderListQueryParams {
   from?: string;
   to?: string;
   tableId?: string;
+  /**
+   * Trang backend dùng zero-based index.
+   */
   page?: number;
+  /**
+   * Số order mỗi trang, backend giới hạn tối đa 100.
+   */
   size?: number;
 }
 
@@ -184,5 +190,18 @@ export interface OrderListItemResponse {
   staffName?: string | null;
 }
 
+/**
+ * Response phân trang của API danh sách order.
+ * Backend trả `page` theo zero-based index và `content` là dữ liệu của trang hiện tại.
+ */
+export interface OrderListPageResponse {
+  content: OrderListItemResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export type OrderApiResponse = ApiResponse<OrderResponse>;
 export type OrderListApiResponse = ApiResponse<OrderListItemResponse[]>;
+export type OrderListPageApiResponse = ApiResponse<OrderListPageResponse>;

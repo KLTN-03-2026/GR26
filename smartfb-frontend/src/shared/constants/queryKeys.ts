@@ -21,6 +21,8 @@ export const queryKeys = {
   // Tables
   tables: {
     all: ['tables'] as const,
+    // Prefix danh sách bàn, dùng khi chỉ cần refresh trạng thái bàn mà không đụng khu vực.
+    lists: ['tables', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['tables', 'list', filters] as const,
     detail: (id: string) => ['tables', 'detail', id] as const,
     zones: ['tables', 'zones'] as const,
@@ -69,6 +71,8 @@ export const queryKeys = {
   // Orders
   orders: {
     all: ['orders'] as const,
+    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của bàn.
+    lists: ['orders', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
     active: ['orders', 'active'] as const,
@@ -129,6 +133,7 @@ export const queryKeys = {
   shifts: {
     templates: {
       all: ['shifts', 'templates'] as const,
+      list: (filters?: Record<string, unknown>) => ['shifts', 'templates', 'list', filters] as const,
       detail: (id: string) => ['shifts', 'templates', id] as const,
     },
     schedules: {

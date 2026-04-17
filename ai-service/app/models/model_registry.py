@@ -23,6 +23,9 @@ class ModelRegistry(Base):
     # UUID tenant từ BE — string, không FK ngoại
     tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
 
+    # branch_id — nullable để backward compat với global model cũ (trước migration 003)
+    branch_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+
     # Đường dẫn file .np trong storage/models/
     model_path: Mapped[str] = mapped_column(String(500), nullable=False)
 
@@ -30,13 +33,14 @@ class ModelRegistry(Base):
         DateTime(timezone=True), nullable=False
     )
 
-    # Số series đã train trong lần này
+    # Số series đã train trong lần này (số ingredient của branch)
     series_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    # MAE trên validation set
+    # MAE (kỹ thuật) và MAPE (%) — MAPE dễ giải thích hơn cho chủ quán
     mae: Mapped[float | None] = mapped_column(Float, nullable=True)
+    mape: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    # Chỉ 1 model active mỗi tenant tại 1 thời điểm
+    # Chỉ 1 model active mỗi (tenant, branch) tại 1 thời điểm
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     created_at: Mapped[datetime] = mapped_column(

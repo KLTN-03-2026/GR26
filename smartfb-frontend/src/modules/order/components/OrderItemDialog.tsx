@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, Minus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Check, Minus, Plus, Trash2 } from "lucide-react";
 import type { MenuAddonInfo, MenuItem } from "@modules/menu/types/menu.types";
 import type {
   OrderAddonSelection,

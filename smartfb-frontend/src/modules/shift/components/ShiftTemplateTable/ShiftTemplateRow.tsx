@@ -7,7 +7,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@shared/components/ui/dropdown-menu';
-import type { ShiftTemplate } from '@modules/shift/types/shift.types';
+import type { LocalTime, ShiftTemplate } from '@modules/shift/types/shift.types';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
 
@@ -17,8 +17,12 @@ interface ShiftTemplateRowProps {
     onEdit: (template: ShiftTemplate) => void;
 }
 
-const formatTime = (hour: number, minute: number): string => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+const formatTime = (time?: LocalTime | null): string => {
+    if (typeof time?.hour !== 'number' || typeof time?.minute !== 'number') {
+        return '--:--';
+    }
+
+    return `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
 };
 
 const getStatusBadgeClassName = (active: boolean) =>
@@ -55,10 +59,10 @@ export const ShiftTemplateRow = ({ template, onDelete, onEdit }: ShiftTemplateRo
                 {template.name}
             </TableCell>
             <TableCell className="text-sm text-gray-600">
-                {formatTime(template.startTime.hour, template.startTime.minute)}
+                {formatTime(template.startTime)}
             </TableCell>
             <TableCell className="text-sm text-gray-600">
-                {formatTime(template.endTime.hour, template.endTime.minute)}
+                {formatTime(template.endTime)}
             </TableCell>
             <TableCell className="text-sm text-gray-600">
                 {template.minStaff} - {template.maxStaff}
