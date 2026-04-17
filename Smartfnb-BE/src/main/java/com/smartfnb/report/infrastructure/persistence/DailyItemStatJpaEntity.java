@@ -54,7 +54,7 @@ public class DailyItemStatJpaEntity {
     @Column(name = "cost", precision = 12, scale = 2)
     private BigDecimal cost;
     
-    @Column(name = "gross_margin", precision = 5, scale = 2)
+    @Column(name = "gross_margin", precision = 5, scale = 2, insertable = false, updatable = false)
     private BigDecimal grossMargin;
     
     public DailyItemStat toDomain() {

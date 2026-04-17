@@ -38,7 +38,7 @@ public class HourlyRevenueStatJpaEntity {
     private LocalDate date;
     
     @Column(name = "hour", nullable = false)
-    private int hour;
+    private short hour;
     
     @Column(name = "order_count")
     private int orderCount;
@@ -48,7 +48,7 @@ public class HourlyRevenueStatJpaEntity {
     
     public HourlyRevenueStat toDomain() {
         return new HourlyRevenueStat(
-            id, branchId, date, hour, orderCount, revenue
+            id, branchId, date, (int) hour, orderCount, revenue
         );
     }
     
@@ -57,7 +57,7 @@ public class HourlyRevenueStatJpaEntity {
             .id(domain.id())
             .branchId(domain.branchId())
             .date(domain.date())
-            .hour(domain.hour())
+            .hour((short) domain.hour())
             .orderCount(domain.orderCount())
             .revenue(domain.revenue())
             .build();

@@ -52,6 +52,7 @@ com\smartfnb\payment\domain\model\Payment.class
 com\smartfnb\supplier\web\controller\SupplierController$CreateSupplierRequest.class
 com\smartfnb\order\domain\model\OrderSource.class
 com\smartfnb\payment\application\dto\ProcessCashPaymentRequest.class
+com\smartfnb\expense\infrastructure\persistence\ExpenseRepositoryImpl.class
 com\smartfnb\shift\application\query\GetActivePosSessionQueryHandler.class
 com\smartfnb\supplier\domain\exception\PurchaseOrderNotFoundException.class
 com\smartfnb\inventory\web\controller\dto\AdjustStockRequest.class
@@ -77,6 +78,8 @@ com\smartfnb\report\application\dto\RevenueReportResult.class
 com\smartfnb\order\application\dto\TablePositionItem.class
 com\smartfnb\auth\domain\event\TenantRegisteredEvent.class
 com\smartfnb\order\infrastructure\persistence\TableJpaEntity.class
+com\smartfnb\expense\application\command\CreateExpenseCommand.class
+com\smartfnb\expense\domain\exception\ExpenseNotFoundException.class
 com\smartfnb\order\domain\exception\TableNotFoundException.class
 com\smartfnb\rbac\infrastructure\persistence\RolePermissionJpaEntity$RolePermissionJpaEntityBuilder.class
 com\smartfnb\staff\application\query\StaffDetailResult.class
@@ -85,6 +88,7 @@ com\smartfnb\plan\infrastructure\persistence\SubscriptionJpaEntity$SubscriptionJ
 com\smartfnb\payment\application\command\ProcessQRPaymentCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommandHandler.class
 com\smartfnb\shift\infrastructure\persistence\ShiftTemplateJpaRepository.class
+com\smartfnb\expense\infrastructure\persistence\SpringDataExpenseRepository.class
 com\smartfnb\order\application\command\UpdateOrderCommand$UpdateOrderItemCommand.class
 com\smartfnb\inventory\application\command\UpdateThresholdCommand.class
 com\smartfnb\menu\application\dto\UpdateMenuItemRequest.class
@@ -93,7 +97,6 @@ com\smartfnb\staff\infrastructure\persistence\StaffJpaEntity.class
 com\smartfnb\menu\domain\exception\CategoryNotFoundException.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleId.class
 com\smartfnb\payment\application\dto\ProcessQRPaymentRequest.class
-com\smartfnb\report\infrastructure\persistence\BranchJpaRepository.class
 com\smartfnb\shared\web\ApiResponse$ErrorDetail.class
 com\smartfnb\auth\application\command\RefreshTokenCommand.class
 com\smartfnb\supplier\application\command\CancelPurchaseOrderCommand.class
@@ -176,6 +179,7 @@ com\smartfnb\order\application\dto\UpdateOrderStatusRequest.class
 com\smartfnb\shift\application\command\ClosePosSessionCommandHandler.class
 com\smartfnb\shift\web\dto\ShiftTemplateRequest.class
 com\smartfnb\auth\application\dto\AuthResponse.class
+com\smartfnb\expense\application\command\DeleteExpenseCommand.class
 com\smartfnb\order\infrastructure\persistence\TableJpaRepository.class
 com\smartfnb\report\application\dto\PaymentMethodBreakdownResult.class
 com\smartfnb\report\infrastructure\persistence\ReportDataAccessor.class
@@ -196,6 +200,7 @@ com\smartfnb\staff\application\command\CreatePositionCommandHandler.class
 com\smartfnb\menu\application\command\MenuItemCommandHandler.class
 com\smartfnb\order\domain\event\OrderCancelledEvent.class
 com\smartfnb\menu\infrastructure\persistence\MenuItemJpaRepository.class
+com\smartfnb\expense\application\command\CreateExpenseCommandHandler.class
 com\smartfnb\payment\domain\repository\InvoiceNumberGenerator.class
 com\smartfnb\order\application\command\CancelOrderCommandHandler.class
 com\smartfnb\supplier\application\command\CancelPurchaseOrderCommandHandler.class
@@ -288,6 +293,7 @@ com\smartfnb\report\infrastructure\persistence\DailyItemStatRepositoryImpl.class
 com\smartfnb\order\application\dto\UpdateTableRequest.class
 com\smartfnb\order\infrastructure\persistence\OrderJpaEntity.class
 com\smartfnb\order\application\query\OrderQueryHandler.class
+com\smartfnb\expense\application\command\UpdateExpenseCommandHandler.class
 com\smartfnb\supplier\web\controller\SupplierController$UpdateSupplierRequest.class
 com\smartfnb\report\infrastructure\persistence\DailyItemStatJpaEntity$DailyItemStatJpaEntityBuilder.class
 com\smartfnb\inventory\application\command\AdjustStockCommand.class
@@ -320,6 +326,7 @@ com\smartfnb\plan\application\dto\PlanRequest.class
 com\smartfnb\shared\storage\FileStorageService.class
 com\smartfnb\inventory\infrastructure\persistence\InventoryBalanceJpaRepository.class
 com\smartfnb\staff\application\query\RolePermissionMatrixResult$RoleDetail.class
+com\smartfnb\expense\application\dto\ExpenseRequest.class
 com\smartfnb\menu\application\dto\BranchItemResponse.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleJpaRepository.class
 com\smartfnb\order\application\command\CancelOrderCommand.class
@@ -347,6 +354,7 @@ com\smartfnb\auth\application\command\PinLoginCommand.class
 com\smartfnb\shift\application\command\DeleteShiftTemplateCommandHandler.class
 com\smartfnb\shift\domain\exception\PosSessionAlreadyOpenException.class
 com\smartfnb\auth\application\command\ResetPasswordCommand.class
+com\smartfnb\expense\web\controller\ExpenseController.class
 com\smartfnb\supplier\application\command\CreatePurchaseOrderCommand.class
 com\smartfnb\menu\application\command\RecipeCommandHandler.class
 com\smartfnb\menu\application\dto\CreateCategoryRequest.class
@@ -357,24 +365,31 @@ com\smartfnb\staff\application\query\StaffDetailResult$RoleInfo.class
 com\smartfnb\shift\application\query\ShiftScheduleResult.class
 com\smartfnb\menu\web\controller\CategoryController.class
 com\smartfnb\supplier\infrastructure\persistence\SupplierJpaRepository.class
+com\smartfnb\expense\domain\repository\ExpenseRepository.class
 com\smartfnb\plan\application\dto\SubscriptionResponse.class
+com\smartfnb\expense\application\query\SearchExpensesQueryHandler.class
 com\smartfnb\report\infrastructure\persistence\HourlyRevenueStatJpaEntity$HourlyRevenueStatJpaEntityBuilder.class
 com\smartfnb\shared\web\PageResponse.class
 com\smartfnb\menu\infrastructure\persistence\AddonJpaRepository.class
 com\smartfnb\order\domain\event\OrderCompletedEvent$CompletedAddonItem.class
 com\smartfnb\branch\application\BranchService.class
+com\smartfnb\expense\application\dto\ExpenseResponse.class
 com\smartfnb\SmartFnbApplication.class
 com\smartfnb\staff\application\command\UpdateStaffCommandHandler.class
+com\smartfnb\expense\application\command\DeleteExpenseCommandHandler.class
 com\smartfnb\order\application\dto\OrderResponse.class
 com\smartfnb\inventory\web\controller\dto\ImportStockRequest.class
 com\smartfnb\shift\domain\exception\ShiftTemplateNotFoundException.class
 com\smartfnb\plan\domain\FeatureFlag.class
+com\smartfnb\expense\application\query\GetExpenseDetailQueryHandler.class
 com\smartfnb\supplier\domain\event\PurchaseOrderReceivedEvent.class
+com\smartfnb\expense\application\query\SearchExpensesQuery.class
 com\smartfnb\order\application\command\PlaceOrderCommand$OrderItemCommand.class
 com\smartfnb\inventory\application\query\result\InventoryTransactionResult.class
 com\smartfnb\order\domain\model\OrderItemStatus.class
 com\smartfnb\order\infrastructure\persistence\TableZoneJpaEntity.class
 com\smartfnb\branch\infrastructure\persistence\BranchUserJpaEntity$BranchUserJpaEntityBuilder.class
+com\smartfnb\expense\infrastructure\persistence\ExpenseJpaEntity.class
 com\smartfnb\payment\application\dto\SearchInvoiceResponse.class
 com\smartfnb\payment\infrastructure\persistence\PaymentRepositoryImpl.class
 com\smartfnb\rbac\infrastructure\persistence\UserRoleJpaEntity$UserRoleJpaEntityBuilder.class
@@ -393,6 +408,7 @@ com\smartfnb\shift\domain\exception\ShiftConflictException.class
 com\smartfnb\payment\infrastructure\persistence\InvoiceItemJpaEntity.class
 com\smartfnb\inventory\domain\event\LowStockAlertEvent.class
 com\smartfnb\menu\application\command\CategoryCommandHandler.class
+com\smartfnb\expense\application\command\UpdateExpenseCommand.class
 com\smartfnb\order\application\command\UpdateOrderStatusCommandHandler.class
 com\smartfnb\inventory\application\command\ImportStockCommand.class
 com\smartfnb\order\domain\repository\OrderRepository.class
@@ -424,12 +440,14 @@ com\smartfnb\supplier\application\command\CreateSupplierCommandHandler.class
 com\smartfnb\supplier\application\command\UpdatePurchaseOrderCommand$PurchaseOrderItemCmd.class
 com\smartfnb\shared\config\WebMvcConfig.class
 com\smartfnb\supplier\application\query\GetPurchaseOrderListQueryHandler.class
+com\smartfnb\expense\domain\model\ExpenseStatus.class
 com\smartfnb\plan\domain\FeatureFlag$1.class
 com\smartfnb\menu\domain\service\InventoryCheckService.class
 com\smartfnb\order\infrastructure\persistence\OrderStatusLogJpaEntity.class
 com\smartfnb\shared\domain\BaseAggregateRoot.class
 com\smartfnb\menu\web\controller\MenuItemController.class
 com\smartfnb\supplier\application\command\ReceivePurchaseOrderCommand.class
+com\smartfnb\expense\domain\model\Expense.class
 com\smartfnb\staff\web\dto\UpdateStaffStatusRequest.class
 com\smartfnb\auth\infrastructure\persistence\OtpRepository.class
 com\smartfnb\order\domain\exception\DuplicateTableNameException.class
@@ -452,6 +470,7 @@ com\smartfnb\inventory\infrastructure\persistence\AuditLogJpaRepository.class
 com\smartfnb\report\domain\model\HourlyRevenueStat.class
 com\smartfnb\order\domain\event\OrderUpdatedEvent.class
 com\smartfnb\auth\infrastructure\persistence\PlanJpaEntity.class
+com\smartfnb\payment\application\command\ManualConfirmQRPaymentCommandHandler.class
 com\smartfnb\order\infrastructure\persistence\OrderItemJpaEntity.class
 com\smartfnb\shift\domain\event\StaffCheckedInEvent.class
 com\smartfnb\inventory\application\command\WasteRecordCommandHandler.class
@@ -466,6 +485,7 @@ com\smartfnb\staff\infrastructure\persistence\PositionJpaRepository.class
 com\smartfnb\branch\application\dto\BranchResponse.class
 com\smartfnb\rbac\application\eventhandler\RbacTenantRegisteredEventHandler.class
 com\smartfnb\auth\infrastructure\persistence\TenantRepository.class
+com\smartfnb\payment\application\command\ManualConfirmQRPaymentCommand.class
 com\smartfnb\inventory\application\query\GetInventoryQuery.class
 com\smartfnb\staff\domain\exception\StaffNotFoundException.class
 com\smartfnb\order\domain\event\OrderStatusChangedEvent.class
