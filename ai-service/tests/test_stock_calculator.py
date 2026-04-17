@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from app.utils.stock_calculator import (
+    calc_avg_daily_consumption,
     calc_suggested_order_date,
     calc_suggested_qty,
     get_urgency,
@@ -44,10 +45,11 @@ class TestPredictStockoutDate:
         result = predict_stockout_date(-10.0, forecast)
         assert result == date.today()
 
-    def test_returns_none_when_stock_never_runs_out(self):
-        """Tồn kho quá lớn → không ước tính ngày hết hàng trong horizon."""
+    def test_returns_none_when_stock_never_runs_out_with_limit(self):
+        """Tồn kho quá lớn + max_extrapolation_days đặt giới hạn → trả về None."""
         forecast = _make_forecast([5.0] * 7)  # tổng = 35
-        result = predict_stockout_date(999_999.0, forecast)
+        # 999_999 / 5 = 199_999 ngày sau window → vượt limit 30 → None
+        result = predict_stockout_date(999_999.0, forecast, max_extrapolation_days=30)
         assert result is None
 
     def test_extrapolates_near_stockout_after_forecast_window(self):
@@ -109,6 +111,42 @@ class TestPredictStockoutDate:
         forecast = _make_forecast([5.0] * 7, start="2024-06-01")
         result = predict_stockout_date(25.0, forecast)
         assert result == date(2024, 6, 5)
+
+    def test_min_stock_reduces_usable_stock(self):
+        """min_stock > 0 → chỉ dùng được (current - min) trước khi phải order."""
+        # current=10, min=2 → usable=8
+        # tiêu thụ 2/ngày → hết sau 4 ngày (ngày 2024-06-04)
+        forecast = _make_forecast([2.0] * 7, start="2024-06-01")
+        result = predict_stockout_date(10.0, forecast, min_stock=2.0)
+        assert result == date(2024, 6, 4)
+
+    def test_min_stock_equals_current_stock_returns_today(self):
+        """current_stock = min_stock → usable = 0 → đã ở mức an toàn tối thiểu → trả today."""
+        forecast = _make_forecast([5.0] * 7)
+        result = predict_stockout_date(5.0, forecast, min_stock=5.0)
+        assert result == date.today()
+
+    def test_min_stock_exceeds_current_stock_returns_today(self):
+        """current_stock < min_stock → đã dưới mức an toàn → trả today."""
+        forecast = _make_forecast([5.0] * 7)
+        result = predict_stockout_date(3.0, forecast, min_stock=5.0)
+        assert result == date.today()
+
+    def test_min_stock_zero_behaves_like_no_min_stock(self):
+        """min_stock=0 giữ nguyên behavior cũ."""
+        forecast = _make_forecast([5.0] * 7, start="2024-06-01")
+        result_no_min = predict_stockout_date(25.0, forecast, min_stock=0.0)
+        result_old = predict_stockout_date(25.0, forecast)
+        assert result_no_min == result_old
+
+    def test_stock_exceeds_forecast_window_returns_none_by_default(self):
+        """Tồn kho vượt forecast window, max_extrapolation_days=None → không giới hạn."""
+        # usable = 100, tiêu thụ 5/ngày × 7 = 35 trong window → còn 65 sau window
+        # avg = 5/ngày → cần 13 ngày thêm → extrapolate và trả về ngày cụ thể
+        forecast = _make_forecast([5.0] * 7, start="2024-06-01")
+        result = predict_stockout_date(100.0, forecast, max_extrapolation_days=None)
+        # 100/5 = 20 ngày → ngày 2024-06-20
+        assert result == date(2024, 6, 20)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,6 +258,78 @@ class TestCalcSuggestedOrderDate:
         """None → today + DEFAULT_ORDER_HORIZON_DAYS (=30)."""
         result = calc_suggested_order_date(None, lead_time_days=2)
         assert result == date.today() + timedelta(days=30)
+
+    def test_none_stockout_with_avg_daily_estimates_order_date(self):
+        """stockout_date=None nhưng có avg_daily → ước tính từ usable_stock."""
+        # current=100, min=10 → usable=90, avg=5/ngày → hết sau 18 ngày
+        # order_date = today + 18 - 2 (lead) = today + 16
+        result = calc_suggested_order_date(
+            None,
+            lead_time_days=2,
+            avg_daily_consumption=5.0,
+            min_stock=10.0,
+            current_stock=100.0,
+        )
+        assert result == date.today() + timedelta(days=16)
+
+    def test_none_stockout_avg_daily_result_not_in_past(self):
+        """Kết quả ước tính không được là ngày quá khứ."""
+        # current=1, min=0 → usable=1, avg=10/ngày → hết 0.1 ngày → order ngay
+        result = calc_suggested_order_date(
+            None,
+            lead_time_days=2,
+            avg_daily_consumption=10.0,
+            min_stock=0.0,
+            current_stock=1.0,
+        )
+        assert result == date.today()
+
+    def test_none_stockout_no_avg_daily_falls_back_to_horizon(self):
+        """avg_daily=0 → không ước tính được → fallback today + 30."""
+        result = calc_suggested_order_date(
+            None,
+            lead_time_days=2,
+            avg_daily_consumption=0.0,
+        )
+        assert result == date.today() + timedelta(days=30)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# calc_avg_daily_consumption
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestCalcAvgDailyConsumption:
+    def test_basic_average(self):
+        """Trung bình đơn giản của các giá trị dương."""
+        forecast = _make_forecast([4.0, 6.0, 8.0, 2.0])
+        result = calc_avg_daily_consumption(forecast)
+        assert result == 5.0  # (4+6+8+2)/4
+
+    def test_empty_forecast_returns_zero(self):
+        """Forecast rỗng → 0.0."""
+        result = calc_avg_daily_consumption(pd.DataFrame(columns=["ds", "yhat1"]))
+        assert result == 0.0
+
+    def test_negative_values_clipped_to_zero(self):
+        """Giá trị âm được clip về 0 trước khi tính trung bình."""
+        forecast = _make_forecast([-5.0, -3.0, 10.0])
+        result = calc_avg_daily_consumption(forecast)
+        assert result == pytest.approx((0.0 + 0.0 + 10.0) / 3)
+
+    def test_all_zeros(self):
+        """Toàn bộ = 0 → trả về 0.0."""
+        forecast = _make_forecast([0.0] * 7)
+        result = calc_avg_daily_consumption(forecast)
+        assert result == 0.0
+
+    def test_nan_values_skipped(self):
+        """NaN được bỏ qua, chỉ tính các giá trị hợp lệ."""
+        import numpy as np
+        forecast = _make_forecast([10.0, float("nan"), 6.0])
+        result = calc_avg_daily_consumption(forecast)
+        # NaN bị skip, tính trung bình: (10 + 0_from_nan_skip + 6) / ...
+        # Thực tế: pd.notna lọc NaN, chỉ còn [10.0, 6.0] → avg = 8.0
+        assert result == pytest.approx(8.0)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

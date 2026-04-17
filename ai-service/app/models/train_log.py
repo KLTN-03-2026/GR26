@@ -23,6 +23,9 @@ class TrainLog(Base):
     # UUID tenant từ BE — string, không FK ngoại
     tenant_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
 
+    # branch_id — nullable để backward compat; mỗi lần train 1 branch ghi 1 log riêng
+    branch_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

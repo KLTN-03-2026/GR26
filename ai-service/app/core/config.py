@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # --- Database ---
     database_url: str = (
-        "postgresql+asyncpg://smartfnb:password@localhost:5432/smartfnb_db"
+        "postgresql+asyncpg://smartfnb:password@localhost:5433/smartfnb_db"
     )
 
     # --- AI Service ---
@@ -40,6 +40,9 @@ class Settings(BaseSettings):
 
     # --- Model Storage ---
     model_storage_dir: str = "./storage/models"
+
+    # --- Logging ---
+    log_dir: str = "./logs"  # Folder gốc chứa log — tổ chức theo ngày bên trong
 
     # --- Scheduler ---
     train_cron_hour: int = 2

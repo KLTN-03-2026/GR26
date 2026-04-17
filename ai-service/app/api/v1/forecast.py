@@ -20,6 +20,7 @@ from app.schemas.forecast import (
     ForecastResponse,
     ForecastSummary,
     IngredientForecast,
+    IngredientSummaryItem,
 )
 from app.utils import model_io
 from app.utils.stock_calculator import (
@@ -30,6 +31,12 @@ from app.utils.stock_calculator import (
 
 router = APIRouter(prefix="/forecast", tags=["Forecast"])
 logger = get_logger(__name__)
+
+# SQL đọc n_forecasts của branch từ ai_train_config (fallback = 7 nếu chưa config)
+_SQL_BRANCH_N_FORECASTS = text(
+    "SELECT n_forecasts FROM ai_train_config "
+    "WHERE tenant_id = :tenant_id AND branch_id = :branch_id LIMIT 1"
+)
 
 # SQL lấy toàn bộ forecast cho 1 chi nhánh từ hôm nay trở đi
 _SQL_BRANCH_FORECAST = text(
@@ -79,11 +86,19 @@ _SQL_INGREDIENT_FORECAST = text(
 )
 
 
-def _rows_to_ingredient_forecasts(rows: list) -> list[IngredientForecast]:
+def _rows_to_ingredient_forecasts(
+    rows: list,
+    n_forecasts: int = 7,
+) -> list[IngredientForecast]:
     """
     Chuyển đổi danh sách rows DB thành list[IngredientForecast].
 
     Nhóm theo ingredient_id, tính stockout/urgency/suggested_order_date realtime.
+
+    Args:
+        rows: Danh sách rows từ SQL query forecast_results.
+        n_forecasts: Số ngày forecast của branch — đọc từ ai_train_config.
+                     Dùng để tính urgency threshold động theo config branch.
     """
     # Nhóm rows theo ingredient_id
     grouped: dict[str, dict] = defaultdict(
@@ -122,10 +137,26 @@ def _rows_to_ingredient_forecasts(rows: list) -> list[IngredientForecast]:
             ((day.forecast_date, day.predicted_qty) for day in forecast_days),
         )
 
-        # Recompute suggested_qty từ forecast thực tế (+ 20% safety buffer)
-        # và trừ tồn kho hiện tại. Nếu tồn kho đủ thì không đề nghị nhập thêm.
+        # Recompute suggested_qty dựa trên stockout_date để nhất quán:
+        # - Nếu stockout = None (đủ hàng > 37 ngày) → không cần nhập
+        # - Nếu stockout trong forecast window (≤ 7 ngày) → dùng tổng 7 ngày × 1.2
+        # - Nếu stockout trong vùng extrapolation (8–37 ngày) → cover đến stockout + 7 ngày buffer
         total_forecast = sum(day.predicted_qty for day in forecast_days)
-        suggested_qty = round(max(total_forecast * 1.2 - current_stock, 0.0), 2)
+        n_days = len(forecast_days)
+        avg_daily = total_forecast / n_days if n_days > 0 else 0.0
+
+        if stockout is None:
+            # Tồn kho đủ dùng vượt 37 ngày → không cần order
+            suggested_qty = 0.0
+        else:
+            days_to_stockout = max((stockout - date.today()).days, 0)
+            if days_to_stockout > n_days:
+                # Stockout nằm trong vùng extrapolation: cover đến stockout + 1 forecast window
+                total_needed = avg_daily * (days_to_stockout + n_days) * 1.2
+            else:
+                # Stockout trong forecast window: dùng tổng 7 ngày (behavior hiện tại)
+                total_needed = total_forecast * 1.2
+            suggested_qty = round(max(total_needed - current_stock, 0.0), 2)
 
         result.append(
             IngredientForecast(
@@ -137,7 +168,7 @@ def _rows_to_ingredient_forecasts(rows: list) -> list[IngredientForecast]:
                 stockout_date=stockout,
                 suggested_order_qty=suggested_qty,
                 suggested_order_date=calc_suggested_order_date(stockout),
-                urgency=get_urgency(stockout),
+                urgency=get_urgency(stockout, n_forecasts=n_forecasts),
                 is_fallback=False,  # Không lưu trong DB — mặc định False
             )
         )
@@ -161,6 +192,14 @@ async def get_branch_forecast_summary(
     Returns:
         ForecastSummary với urgent_count, warning_count, ok_count
     """
+    # Đọc n_forecasts từ ai_train_config để tính urgency threshold đúng với config branch
+    cfg_row = await db.execute(
+        _SQL_BRANCH_N_FORECASTS,
+        {"tenant_id": tenant.tenant_id, "branch_id": branch_id},
+    )
+    cfg = cfg_row.fetchone()
+    n_forecasts: int = cfg[0] if cfg else 7
+
     result = await db.execute(
         _SQL_BRANCH_FORECAST,
         {
@@ -170,11 +209,24 @@ async def get_branch_forecast_summary(
         },
     )
     rows = result.fetchall()
-    ingredients = _rows_to_ingredient_forecasts(rows)
+    ingredients = _rows_to_ingredient_forecasts(rows, n_forecasts=n_forecasts)
 
     urgency_counts = {"critical": 0, "warning": 0, "ok": 0}
+    urgent_items: list[IngredientSummaryItem] = []
+    warning_items: list[IngredientSummaryItem] = []
+
     for ingredient in ingredients:
         urgency_counts[ingredient.urgency] += 1
+        item = IngredientSummaryItem(
+            ingredient_id=ingredient.ingredient_id,
+            ingredient_name=ingredient.ingredient_name,
+            unit=ingredient.unit,
+            stockout_date=ingredient.stockout_date,
+        )
+        if ingredient.urgency == "critical":
+            urgent_items.append(item)
+        elif ingredient.urgency == "warning":
+            warning_items.append(item)
 
     total = len(ingredients)
     return ForecastSummary(
@@ -184,6 +236,8 @@ async def get_branch_forecast_summary(
         warning_count=urgency_counts["warning"],
         ok_count=urgency_counts["ok"],
         total_ingredients=total,
+        urgent_items=urgent_items,
+        warning_items=warning_items,
     )
 
 
@@ -249,7 +303,7 @@ async def get_branch_forecast(
     t_start = time.perf_counter()
 
     # Lấy metadata train để biết last_trained_at
-    metadata = model_io.get_train_metadata(tenant.tenant_id)
+    metadata = model_io.get_train_metadata(tenant.tenant_id, branch_id)
     last_trained_at: datetime | None = None
     if metadata and metadata.get("trained_at"):
         try:
@@ -257,11 +311,18 @@ async def get_branch_forecast(
         except (ValueError, TypeError):
             pass
 
-    # Lấy tên chi nhánh từ bảng branches
+    # Lấy tên chi nhánh + n_forecasts từ DB (chạy song song)
     branch_sql = text("SELECT name FROM branches WHERE id::text = :branch_id LIMIT 1")
     branch_result = await db.execute(branch_sql, {"branch_id": branch_id})
     branch_row = branch_result.fetchone()
     branch_name = branch_row[0] if branch_row else branch_id
+
+    cfg_row = await db.execute(
+        _SQL_BRANCH_N_FORECASTS,
+        {"tenant_id": tenant.tenant_id, "branch_id": branch_id},
+    )
+    cfg = cfg_row.fetchone()
+    n_forecasts: int = cfg[0] if cfg else 7
 
     # Lấy forecast data
     result = await db.execute(
@@ -274,7 +335,7 @@ async def get_branch_forecast(
     )
     rows = result.fetchall()
 
-    ingredients = _rows_to_ingredient_forecasts(rows)
+    ingredients = _rows_to_ingredient_forecasts(rows, n_forecasts=n_forecasts)
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
     logger.info(

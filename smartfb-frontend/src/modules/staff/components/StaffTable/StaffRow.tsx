@@ -65,9 +65,9 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
         <TableCell className="font-medium text-gray-900 truncate">
           {staff.fullName}
         </TableCell>
-        <TableCell className="text-gray-600 text-sm">
+        {/* <TableCell className="text-gray-600 text-sm">
           {staff.employeeCode || '---'}
-        </TableCell>
+        </TableCell> */}
         <TableCell className="text-gray-600 text-sm">
           {staff.phone}
         </TableCell>

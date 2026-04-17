@@ -10,7 +10,7 @@ import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { useShiftTemplates } from '../hooks/useShiftTemplates';
-import type { ShiftTemplate, CreateShiftTemplatePayload } from '../types/shift.types';
+import type { LocalTime, ShiftTemplate, CreateShiftTemplatePayload } from '../types/shift.types';
 
 interface ShiftTemplateFormModalProps {
     open: boolean;
@@ -19,8 +19,15 @@ interface ShiftTemplateFormModalProps {
     onSuccess?: () => void;
 }
 
-const formatTimeForInput = (hour: number, minute: number): string => {
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+const DEFAULT_START_TIME = '09:00';
+const DEFAULT_END_TIME = '17:00';
+
+const formatTimeForInput = (time: LocalTime | null | undefined, fallback: string): string => {
+    if (typeof time?.hour !== 'number' || typeof time?.minute !== 'number') {
+        return fallback;
+    }
+
+    return `${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}`;
 };
 
 const parseTimeFromInput = (time: string): string => {
@@ -42,8 +49,8 @@ export const ShiftTemplateFormModal = ({
 
     const [formData, setFormData] = useState({
         name: '',
-        startTime: '09:00',
-        endTime: '17:00',
+        startTime: DEFAULT_START_TIME,
+        endTime: DEFAULT_END_TIME,
         minStaff: 1,
         maxStaff: 5,
         color: '#1890ff',
@@ -57,8 +64,8 @@ export const ShiftTemplateFormModal = ({
         if (open && editingTemplate) {
             setFormData({
                 name: editingTemplate.name,
-                startTime: formatTimeForInput(editingTemplate.startTime.hour, editingTemplate.startTime.minute),
-                endTime: formatTimeForInput(editingTemplate.endTime.hour, editingTemplate.endTime.minute),
+                startTime: formatTimeForInput(editingTemplate.startTime, DEFAULT_START_TIME),
+                endTime: formatTimeForInput(editingTemplate.endTime, DEFAULT_END_TIME),
                 minStaff: editingTemplate.minStaff,
                 maxStaff: editingTemplate.maxStaff,
                 color: editingTemplate.color,
@@ -67,8 +74,8 @@ export const ShiftTemplateFormModal = ({
         } else if (open && !editingTemplate) {
             setFormData({
                 name: '',
-                startTime: '09:00',
-                endTime: '17:00',
+                startTime: DEFAULT_START_TIME,
+                endTime: DEFAULT_END_TIME,
                 minStaff: 1,
                 maxStaff: 5,
                 color: '#1890ff',

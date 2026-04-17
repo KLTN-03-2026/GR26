@@ -6,6 +6,8 @@ import type { OrderResponse } from '@modules/order/types/order.types';
 
 interface UseOrderDetailOptions {
   enabled?: boolean;
+  staleTime?: number;
+  refetchOnMount?: boolean | 'always';
 }
 
 const normalizeOrderDetail = (order: OrderResponse): OrderResponse => {
@@ -34,6 +36,7 @@ export const useOrderDetail = (orderId?: string | null, options?: UseOrderDetail
     },
     select: normalizeOrderDetail,
     enabled: Boolean(orderId) && (options?.enabled ?? true),
-    staleTime: 0,
+    staleTime: options?.staleTime ?? 0,
+    refetchOnMount: options?.refetchOnMount,
   });
 };

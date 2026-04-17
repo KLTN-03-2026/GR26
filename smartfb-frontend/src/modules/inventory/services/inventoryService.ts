@@ -13,6 +13,7 @@ import type {
   InventoryTransactionListResult,
   InventoryTransactionParams,
   RecordProductionBatchPayload,
+  UpdateThresholdPayload,
   WasteRecordPayload,
 } from '../types/inventory.types';
 
@@ -275,6 +276,19 @@ export const inventoryService = {
       unit: payload.unit.trim(),
       note: payload.note?.trim() ? payload.note.trim() : null,
     });
+
+    return response.data;
+  },
+
+  /**
+   * Cập nhật mức tồn tối thiểu để hệ thống tự động đánh dấu low-stock.
+   * Endpoint: PATCH /inventory/balances/{id}/threshold
+   */
+  updateThreshold: async (payload: UpdateThresholdPayload): Promise<ApiResponse<void>> => {
+    const response = await api.patch<ApiResponse<void>>(
+      `/inventory/balances/${payload.balanceId}/threshold`,
+      { minLevel: payload.minLevel },
+    );
 
     return response.data;
   },
