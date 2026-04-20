@@ -1,0 +1,13 @@
+init.md
+CLAUDE.md
+
+ai-service/docs/architecture/ai-service-structure.md
+ai-service/docs/skills/vibe-coding-services.md
+ai-service/docs/skills/write-plan.md
+
+.env.*
+venv/*
+
+storage/models/*
+lightning_logs/*
+logs/

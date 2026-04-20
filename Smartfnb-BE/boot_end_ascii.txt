@@ -1,0 +1,150 @@
+00:10:12.549 [tomcat-handler-16] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.552 [tomcat-handler-16] INFO  c.s.i.w.c.InventoryController - API ghi hao h???t: itemId=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5
+00:10:12.552 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5, reason=H?? h???ng
+00:10:12.555 [tomcat-handler-16] INFO  c.s.i.a.c.WasteRecordCommandHandler - Ghi hao h???t th??nh c??ng: item=f4650210-ea40-4f2d-a9e5-c6d4fd15cc32, qty=5
+00:10:12.565 [tomcat-handler-17] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.567 [tomcat-handler-17] WARN  c.s.s.web.GlobalExceptionHandler - L???i validation: must not be blank
+00:10:12.571 [tomcat-handler-18] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.572 [tomcat-handler-18] DEBUG c.s.i.w.c.InventoryController - API xem t???n kho: page=0, size=20
+00:10:12.573 [tomcat-handler-18] DEBUG c.s.i.a.q.GetInventoryQueryHandler - L???y t???n kho: tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc, branch=null, page=0/20
+00:10:12.613 [tomcat-handler-19] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.617 [tomcat-handler-19] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? m???i: name=Qu???n l?? c???a h??ng, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.622 [tomcat-handler-19] INFO  c.s.s.a.c.CreatePositionCommandHandler - T???o ch???c v??? th??nh c??ng: positionId=d702699a-d6ac-457a-850d-0d196c39ca7b
+00:10:12.635 [tomcat-handler-20] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.647 [tomcat-handler-21] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.653 [tomcat-handler-21] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n m???i: phone=0999888777, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.664 [tomcat-handler-21] INFO  c.s.s.a.c.CreateStaffCommandHandler - T???o nh??n vi??n th??nh c??ng: staffId=c382b48b-e11e-48ec-9e52-981df792026f, phone=0999888777
+00:10:12.673 [tomcat-handler-22] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.678 [tomcat-handler-22] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n: staffId=c382b48b-e11e-48ec-9e52-981df792026f
+00:10:12.685 [tomcat-handler-22] INFO  c.s.s.a.c.UpdateStaffCommandHandler - C???p nh???t nh??n vi??n th??nh c??ng: staffId=c382b48b-e11e-48ec-9e52-981df792026f
+00:10:12.694 [tomcat-handler-23] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.696 [tomcat-handler-23] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? m???i: name=Thu Ng??n Test, tenant=9545c0d7-7a93-45ef-b24b-544b8f7170cc
+00:10:12.700 [tomcat-handler-23] INFO  c.s.s.a.c.CreateRoleCommandHandler - T???o vai tr?? th??nh c??ng: roleId=526560bd-8f63-407b-bfef-5920515f5f7c
+00:10:12.707 [tomcat-handler-24] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.713 [tomcat-handler-24] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u m???i: name=Ca S??ng Test, branch=d846e6c1-15a3-4501-8012-eb6efecafc6f
+00:10:12.718 [tomcat-handler-24] INFO  c.s.s.a.c.CreateShiftTemplateCommandHandler - T???o ca m???u th??nh c??ng: id=666c3ae9-734e-4279-897c-b910d9cb1287, name=Ca S??ng Test
+00:10:12.733 [tomcat-handler-25] DEBUG c.s.a.i.jwt.JwtAuthFilter - JWT h???p l??? ??? userId=4d7f2fa1-26fc-4bd3-80cb-3ff961cd9b23, tenantId=9545c0d7-7a93-45ef-b24b-544b8f7170cc, role=OWNER
+00:10:12.735 [tomcat-handler-25] ERROR c.s.s.web.GlobalExceptionHandler - L???i kh??ng mong ?????i: No static resource api/v1/shift-schedules.
+org.springframework.web.servlet.resource.NoResourceFoundException: No static resource api/v1/shift-schedules.
+	at org.springframework.web.servlet.resource.ResourceHttpRequestHandler.handleRequest(ResourceHttpRequestHandler.java:585)
+	at org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.handle(HttpRequestHandlerAdapter.java:52)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
+	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
+	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at com.smartfnb.auth.infrastructure.jwt.JwtAuthFilter.doFilterInternal(JwtAuthFilter.java:73)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
+	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
+	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
+	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195)
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:113)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:384)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:905)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1741)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:329)
+00:10:46.716 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 3, active threads = 1, queued tasks = 2, completed tasks = 0]

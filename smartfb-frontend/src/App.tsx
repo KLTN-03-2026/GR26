@@ -1,4 +1,4 @@
-import { AdminLayout, AppLayout } from '@/layouts';
+import { AdminLayout, AppLayout } from '@layouts';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
@@ -15,12 +15,14 @@ import {
   type RouteConfigItem,
 } from './routes';
 
+const EMPTY_PERMISSIONS: string[] = [];
+
 const renderProtectedRoutes = (
   routes: RouteConfigItem[],
-  allowedRoles: typeof ROLES[keyof typeof ROLES][],
+  allowedRoles: (typeof ROLES)[keyof typeof ROLES][],
   layout: 'admin' | 'app'
 ) => {
-  return routes.map(({ path, element, pageTitle }) => {
+  return routes.map(({ path, element, pageTitle, requiredPermissions }) => {
     const wrappedElement =
       layout === 'admin' ? (
         <AdminLayout pageTitle={pageTitle}>{element}</AdminLayout>
@@ -33,7 +35,10 @@ const renderProtectedRoutes = (
         key={path}
         path={path}
         element={
-          <ProtectedRoute allowedRoles={allowedRoles}>
+          <ProtectedRoute
+            allowedRoles={allowedRoles}
+            requiredPermissions={requiredPermissions}
+          >
             {wrappedElement}
           </ProtectedRoute>
         }
@@ -42,13 +47,19 @@ const renderProtectedRoutes = (
   });
 };
 
+const renderPosRouteElement = (route: RouteConfigItem) => {
+  return <AppLayout pageTitle={route.pageTitle}>{route.element}</AppLayout>;
+};
+
 /**
  * App shell chịu trách nhiệm mount hệ thống routes.
  */
 function App() {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const currentRole = useAuthStore((state) => state.user?.role);
+  const currentRole = useAuthStore((state) => state.user?.role ?? state.session?.role);
+  const permissions =
+    useAuthStore((state) => state.session?.permissions) ?? EMPTY_PERMISSIONS;
 
   if (!hasHydrated) {
     return (
@@ -59,7 +70,7 @@ function App() {
   }
 
   const fallbackRoute =
-    isAuthenticated && currentRole ? getRoleHomePage(currentRole) : ROUTES.LOGIN;
+    isAuthenticated && currentRole ? getRoleHomePage(currentRole, permissions) : ROUTES.LOGIN;
 
   return (
     <Routes>
@@ -75,16 +86,17 @@ function App() {
       {renderProtectedRoutes(ownerRoutes, [ROLES.OWNER], 'app')}
       {renderProtectedRoutes(staffRoutes, [ROLES.STAFF], 'app')}
       
-      {/* POS Routes - Custom full-screen layout protected for Owner & Staff */}
-      {posRoutes.map(({ path, element }) => (
+      {/* POS Routes - Owner/Staff dùng chung app shell để giữ sidebar và header nhất quán */}
+      {posRoutes.map((route) => (
         <Route
-          key={path}
-          path={path}
+          key={route.path}
+          path={route.path}
           element={
-            <ProtectedRoute allowedRoles={[ROLES.OWNER, ROLES.STAFF]}>
-              <div className="min-h-screen bg-[#faf7f2] p-4 font-sans antialiased text-slate-900 overflow-hidden">
-                {element}
-              </div>
+            <ProtectedRoute
+              allowedRoles={[ROLES.OWNER, ROLES.STAFF]}
+              requiredPermissions={route.requiredPermissions}
+            >
+              {renderPosRouteElement(route)}
             </ProtectedRoute>
           }
         />

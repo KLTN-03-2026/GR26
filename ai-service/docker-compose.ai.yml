@@ -1,0 +1,33 @@
+version: "3.9"
+
+# Standalone compose file cho AI Service.
+# Merge với docker-compose chính của BE: docker-compose -f docker-compose.yml -f ai-service/docker-compose.ai.yml up
+
+services:
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: smartfnb-ai
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./ai-service/.env
+    volumes:
+      # Persist trained model files — không bị xóa khi rebuild container
+      - ai_models:/app/storage/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  ai_models:
+    driver: local

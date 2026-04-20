@@ -1,286 +1,216 @@
+import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import ForgotPasswordPage from '@pages/auth/ForgotPasswordPage';
 import LoginPage from '@pages/auth/LoginPage';
 import RegisterPage from '@pages/auth/RegisterPage';
 import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import BranchesPage from '@pages/owner/BranchesPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
-import MenuPage from '@pages/owner/MenuPage';
-import StaffPage from '@pages/owner/StaffPage';
-import StaffDetailPage from '@pages/owner/StaffDetailPage';
 import CreateStaffPage from '@pages/owner/CreateStaffPage';
-import PositionsPage from '@pages/owner/PositionsPage';
-import PermissionsPage from '@pages/owner/PermissionsPage';
-import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
+import InventoryPage from '@pages/owner/InventoryPage';
+import MenuPage from '@pages/owner/MenuPage';
+import RecipesPage from '@pages/owner/RecipesPage';
+import StaffDetailPage from '@pages/owner/StaffDetailPage';
+import StaffPage from '@pages/owner/StaffPage';
+import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
+import TablesPage from '@pages/owner/TablesPage';
+import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
-import ShiftRegistrationPage from '@pages/staff/ShiftRegistrationPage';
+import OrderManagementPage from '@pages/pos/OrderManagementPage';
+import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
+import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
+import VouchersPage from '@pages/owner/VouchersPage';
 import SuppliersPage from '@pages/owner/SuppliersPage';
 import SupplierDetailPage from '@pages/owner/SupplierDetailPage';
 import StaffSupplierListPage from '@pages/staff/SupplierListPage';
-import OrderManagementPage from '@pages/pos/OrderManagementPage';
+import ShiftRegistrationPage from '@pages/staff/ShiftRegistrationPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
+import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
+import type { AccessRequirement } from '@shared/utils/accessControl';
 
-export interface RouteConfigItem {
+export interface RouteConfigItem extends AccessRequirement {
   path: string;
   pageTitle: string;
-  element: React.ReactNode;
+  element: ReactNode;
 }
 
+/**
+ * Tạo cấu hình route cơ bản để tránh lặp object shape ở toàn file.
+ */
+const createRoute = (
+  path: string,
+  pageTitle: string,
+  element: ReactNode,
+  accessRequirement?: AccessRequirement
+): RouteConfigItem => ({
+  path,
+  pageTitle,
+  element,
+  ...accessRequirement,
+});
+
+/**
+ * Tạo nhanh placeholder route cho các page chưa được triển khai riêng.
+ */
+const createPlaceholderRoute = (
+  path: string,
+  pageTitle: string,
+  title: string,
+  description: string,
+  accessRequirement?: AccessRequirement
+): RouteConfigItem => {
+  return createRoute(
+    path,
+    pageTitle,
+    <PagePlaceholder title={title} description={description} />,
+    accessRequirement
+  );
+};
+
 export const publicRoutes: RouteConfigItem[] = [
-  {
-    path: ROUTES.LOGIN,
-    pageTitle: 'Đăng nhập',
-    element: <LoginPage />,
-  },
-  {
-    path: ROUTES.REGISTER,
-    pageTitle: 'Đăng ký',
-    element: <RegisterPage />,
-  },
+  createRoute(ROUTES.LOGIN, 'Đăng nhập', <LoginPage />),
+  createRoute(ROUTES.FORGOT_PASSWORD, 'Quên mật khẩu', <ForgotPasswordPage />),
+  createRoute(ROUTES.REGISTER, 'Đăng ký', <RegisterPage />),
 ];
 
 export const adminRoutes: RouteConfigItem[] = [
-  {
-    path: ROUTES.ADMIN_DASHBOARD,
-    pageTitle: 'Tổng quan hệ thống',
-    element: (
-      <PagePlaceholder
-        title="Tổng quan hệ thống"
-        description="Trang tổng hợp số liệu SaaS cho quản trị viên đang được tách thành page riêng."
-      />
-    ),
-  },
-  {
-    path: ROUTES.ADMIN_PLANS,
-    pageTitle: 'Quản lý gói dịch vụ',
-    element: (
-      <PagePlaceholder
-        title="Quản lý gói dịch vụ"
-        description="Khu vực cấu hình plan và billing admin sẽ được triển khai tại page riêng trong module tiếp theo."
-      />
-    ),
-  },
-  {
-    path: ROUTES.ADMIN_TENANTS,
-    pageTitle: 'Quản lý tenant',
-    element: (
-      <PagePlaceholder
-        title="Quản lý tenant"
-        description="Danh sách tenant và công cụ quản trị SaaS đang được chuẩn hóa lại cấu trúc page."
-      />
-    ),
-  },
+  createPlaceholderRoute(
+    ROUTES.ADMIN_DASHBOARD,
+    'Tổng quan hệ thống',
+    'Tổng quan hệ thống',
+    'Trang tổng hợp số liệu SaaS cho quản trị viên đang được tách thành page riêng.'
+  ),
+  createPlaceholderRoute(
+    ROUTES.ADMIN_PLANS,
+    'Quản lý gói dịch vụ',
+    'Quản lý gói dịch vụ',
+    'Khu vực cấu hình plan và billing admin sẽ được triển khai tại page riêng trong module tiếp theo.'
+  ),
+  createPlaceholderRoute(
+    ROUTES.ADMIN_TENANTS,
+    'Quản lý tenant',
+    'Quản lý tenant',
+    'Danh sách tenant và công cụ quản trị SaaS đang được chuẩn hóa lại cấu trúc page.'
+  ),
 ];
 
 export const ownerRoutes: RouteConfigItem[] = [
-  {
-    path: ROUTES.OWNER.DASHBOARD,
-    pageTitle: 'Dashboard',
-    element: (
-      <PagePlaceholder
-        title="Dashboard Chủ quán"
-        description="Trang dashboard owner đang được tách riêng khỏi file routes."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.TABLES,
-    pageTitle: 'Quản lý bàn',
-    element: (
-      <PagePlaceholder
-        title="Quản lý bàn"
-        description="Module sơ đồ bàn đang được đưa về page chuyên trách."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.ORDERS,
-    pageTitle: 'Quản lý đơn hàng',
-    element: (
-      <PagePlaceholder
-        title="Quản lý đơn hàng"
-        description="Page quản lý đơn hàng sẽ được tách riêng theo đúng cấu trúc pages/owner."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.REVENUE,
-    pageTitle: 'Báo cáo doanh thu',
-    element: (
-      <PagePlaceholder
-        title="Báo cáo doanh thu"
-        description="Trang báo cáo doanh thu đang dùng placeholder để route đi đúng vị trí ngay từ bây giờ."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.MENU,
-    pageTitle: 'Quản lý thực đơn',
-    element: <MenuPage />,
-  },
-  {
-    path: ROUTES.OWNER.INVENTORY,
-    pageTitle: 'Quản lý kho',
-    element: (
-      <PagePlaceholder
-        title="Quản lý kho"
-        description="Page kho sẽ được tách riêng thành file page theo chuẩn module."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.RECIPES,
-    pageTitle: 'Công thức',
-    element: (
-      <PagePlaceholder
-        title="Công thức"
-        description="Trang công thức đang chờ page riêng, nhưng route đã được cấu hình đúng vị trí."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.STAFF,
-    pageTitle: 'Quản lý nhân viên',
-    element: <StaffPage />,
-  },
-  {
-    path: ROUTES.OWNER.STAFF_NEW,
-    pageTitle: 'Thêm nhân viên mới',
-    element: <CreateStaffPage />,
-  },
-  {
-    path: ROUTES.OWNER.STAFF_POSITIONS,
-    pageTitle: 'Quản lý chức vụ',
-    element: <PositionsPage />,
-  },
-  {
-    path: ROUTES.OWNER.STAFF_PERMISSIONS,
-    pageTitle: 'Phân quyền',
-    element: <PermissionsPage />,
-  },
-  {
-    path: ROUTES.OWNER.SCHEDULES,
-    pageTitle: 'Lịch làm việc',
-    element: <ShiftManagementPage />,
-  },
-  {
-    path: ROUTES.OWNER.BRANCHES,
-    pageTitle: 'Quản lý chi nhánh',
-    element: <BranchesPage />,
-  },
-  {
-    path: ROUTES.OWNER.BRANCHES_NEW,
-    pageTitle: 'Tạo chi nhánh mới',
-    element: <CreateBranchPage />,
-  },
-  {
-    path: `${ROUTES.OWNER.BRANCHES}/:id`,
-    pageTitle: 'Chi tiết chi nhánh',
-    element: <BranchDetailPage />,
-  },
-  {
-    path: ROUTES.OWNER.PROMOTIONS,
-    pageTitle: 'Khuyến mãi',
-    element: (
-      <PagePlaceholder
-        title="Khuyến mãi"
-        description="Trang khuyến mãi đang dùng placeholder để hoàn chỉnh hệ route trước."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.SUPPLIERS,
-    pageTitle: 'Quản lý nhà cung cấp',
-    element: <SuppliersPage />,
-  },
-  {
-    path: `${ROUTES.OWNER.SUPPLIERS}/:id`,
-    pageTitle: 'Chi tiết nhà cung cấp',
-    element: <SupplierDetailPage />,
-  },
-  {
-    path: ROUTES.OWNER.REPORTS,
-    pageTitle: 'Báo cáo',
-    element: (
-      <PagePlaceholder
-        title="Báo cáo"
-        description="Khu vực báo cáo tổng hợp đang chờ page riêng nhưng route đã được set up đúng vị trí."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.SETTINGS,
-    pageTitle: 'Cài đặt',
-    element: (
-      <PagePlaceholder
-        title="Cài đặt"
-        description="Trang cài đặt owner sẽ được triển khai ở file page riêng."
-      />
-    ),
-  },
-  {
-    path: ROUTES.OWNER.PACKAGES,
-    pageTitle: 'Gói dịch vụ',
-    element: (
-      <PagePlaceholder
-        title="Gói dịch vụ"
-        description="Trang gói dịch vụ đang dùng placeholder để hoàn thiện route map trước."
-      />
-    ),
-  },
+  createPlaceholderRoute(
+    ROUTES.OWNER.DASHBOARD,
+    'Dashboard',
+    'Dashboard Chủ quán',
+    'Trang dashboard owner đang được tách riêng khỏi file routes.'
+  ),
+  createRoute(ROUTES.OWNER.TABLES, 'Quản lý bàn', <TablesPage />),
+  createRoute(
+    ROUTES.OWNER.ORDERS,
+    'Quản lý đơn hàng',
+    <Navigate to={ROUTES.POS_MANAGEMENT} replace />
+  ),
+  createPlaceholderRoute(
+    ROUTES.OWNER.REVENUE,
+    'Báo cáo doanh thu',
+    'Báo cáo doanh thu',
+    'Trang báo cáo doanh thu đang dùng placeholder để route đi đúng vị trí ngay từ bây giờ.'
+  ),
+  createRoute(ROUTES.OWNER.MENU, 'Quản lý thực đơn', <MenuPage />),
+  createRoute(ROUTES.OWNER.INVENTORY, 'Quản lý kho', <InventoryPage />),
+  createRoute(ROUTES.OWNER.RECIPES, 'Công thức', <RecipesPage />),
+  createRoute(ROUTES.OWNER.STAFF, 'Quản lý nhân viên', <StaffPage />),
+  createRoute(ROUTES.OWNER.STAFF_NEW, 'Thêm nhân viên mới', <CreateStaffPage />),
+  createRoute(ROUTES.OWNER.STAFF_DETAIL, 'Chi tiết nhân viên', <StaffDetailPage />),
+  createRoute(ROUTES.OWNER.STAFF_POSITIONS, 'Quản lý chức vụ', <StaffPositionsPage />),
+  createRoute(
+    ROUTES.OWNER.SCHEDULES,
+    'Lịch làm việc',
+    <ShiftManagementPage />
+  ),
+  createRoute(
+    ROUTES.OWNER.SHIFT_TEMPLATE_NEW,
+    'Thêm ca mẫu',
+    <ShiftManagementPage />
+  ),
+  createRoute(
+    ROUTES.OWNER.SHIFT_TEMPLATE_DETAIL,
+    'Chi tiết ca mẫu',
+    <ShiftTemplateDetailPage />
+  ),
+  createRoute(ROUTES.OWNER.BRANCHES, 'Quản lý chi nhánh', <BranchesPage />),
+  createRoute(ROUTES.OWNER.BRANCHES_NEW, 'Tạo chi nhánh mới', <CreateBranchPage />),
+  createRoute(ROUTES.OWNER.BRANCHES_DETAIL, 'Chi tiết chi nhánh', <BranchDetailPage />),
+  createRoute(ROUTES.OWNER.PROMOTIONS, 'Quản lý voucher', <VouchersPage />),
+  createRoute(ROUTES.OWNER.SUPPLIERS, 'Quản lý nhà cung cấp', <SuppliersPage />),
+  createRoute(`${ROUTES.OWNER.SUPPLIERS}/:id`, 'Chi tiết nhà cung cấp', <SupplierDetailPage />),
+  createPlaceholderRoute(
+    ROUTES.OWNER.REPORTS,
+    'Báo cáo',
+    'Báo cáo',
+    'Khu vực báo cáo tổng hợp đang chờ page riêng nhưng route đã được set up đúng vị trí.'
+  ),
+  createPlaceholderRoute(
+    ROUTES.OWNER.SETTINGS,
+    'Cài đặt',
+    'Cài đặt',
+    'Trang cài đặt owner sẽ được triển khai ở file page riêng.'
+  ),
+  createPlaceholderRoute(
+    ROUTES.OWNER.PACKAGES,
+    'Gói dịch vụ',
+    'Gói dịch vụ',
+    'Trang gói dịch vụ đang dùng placeholder để hoàn thiện route map trước.'
+  ),
 ];
 
 export const staffRoutes: RouteConfigItem[] = [
-  {
-    path: ROUTES.STAFF.DASHBOARD,
-    pageTitle: 'Dashboard Nhân viên',
-    element: (
-      <PagePlaceholder
-        title="Dashboard Nhân viên"
-        description="Trang dashboard staff đang được tách riêng, route đã sẵn sàng theo đúng cấu trúc."
-      />
-    ),
-  },
-  {
-    path: ROUTES.STAFF.TABLES,
-    pageTitle: 'Bàn',
-    element: (
-      <PagePlaceholder
-        title="Bàn"
-        description="Trang thao tác bàn cho nhân viên đang được chuẩn hóa về page riêng."
-      />
-    ),
-  },
-  {
-    path: ROUTES.STAFF.ORDERS,
-    pageTitle: 'Đơn hàng',
-    element: (
-      <PagePlaceholder
-        title="Đơn hàng"
-        description="Trang đơn hàng staff đang được dựng lại theo flow role-based."
-      />
-    ),
-  },
-  {
-    path: ROUTES.STAFF.MY_SHIFTS,
-    pageTitle: 'Ca làm của tôi',
-    element: (
-      <PagePlaceholder
-        title="Ca làm của tôi"
-        description="Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule."
-      />
-    ),
-  },
-  {
-    path: ROUTES.STAFF.SHIFT_REGISTRATION,
-    pageTitle: 'Đăng ký ca làm',
-    element: <ShiftRegistrationPage />,
-  },
-  {
-    path: ROUTES.STAFF.SUPPLIERS,
-    pageTitle: 'Tra cứu nhà cung cấp',
-    element: <StaffSupplierListPage />,
-  },
+  createPlaceholderRoute(
+    ROUTES.STAFF.DASHBOARD,
+    'Dashboard Nhân viên',
+    'Dashboard Nhân viên',
+    'Trang dashboard staff đang được tách riêng, route đã sẵn sàng theo đúng cấu trúc.',
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD }
+  ),
+  createRoute(
+    ROUTES.STAFF.TABLES,
+    'Bàn',
+    <TablesPage />,
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES }
+  ),
+  createRoute(
+    ROUTES.STAFF.ORDERS,
+    'Order',
+    <Navigate to={ROUTES.POS_MANAGEMENT} replace />,
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT }
+  ),
+  createRoute(ROUTES.STAFF.STAFF, 'Nhân viên', <StaffPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF,
+  }),
+  createRoute(ROUTES.STAFF.STAFF_POSITIONS, 'Chức vụ', <StaffPositionsPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF_POSITIONS,
+  }),
+  createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,
+  }),
+  createRoute(ROUTES.STAFF.RECIPES, 'Công thức', <RecipesPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+  }),
+  createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,
+  }),
+  createPlaceholderRoute(
+    ROUTES.STAFF.MY_SHIFTS,
+    'Ca làm của tôi',
+    'Ca làm của tôi',
+    'Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule.',
+    { requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS }
+  ),
+  createRoute(ROUTES.STAFF.SHIFT_REGISTRATION, 'Đăng ký ca làm', <ShiftRegistrationPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS // Assuming same permission for now
+  }),
+  createRoute(ROUTES.STAFF.SUPPLIERS, 'Tra cứu nhà cung cấp', <StaffSupplierListPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY // Shared with inventory role
+  }),
 ];
 
 export const posRoutes: RouteConfigItem[] = [
@@ -288,15 +218,24 @@ export const posRoutes: RouteConfigItem[] = [
     path: ROUTES.POS_ORDER,
     pageTitle: 'Đặt món',
     element: <OrderPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
   },
   {
     path: ROUTES.POS_PAYMENT,
     pageTitle: 'Thanh toán',
     element: <PaymentPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_PAYMENT,
   },
   {
     path: ROUTES.POS_MANAGEMENT,
     pageTitle: 'Quản lý đơn hàng',
     element: <OrderManagementPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
+  },
+  {
+    path: ROUTES.POS_ORDER_DETAIL,
+    pageTitle: 'Chi tiết đơn hàng',
+    element: <OrderDetailPage />,
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
 ];

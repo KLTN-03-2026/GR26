@@ -1,0 +1,686 @@
+const fs = require('fs');
+const path = require('path');
+
+const BASE_URL = 'http://localhost:8080/api/v1';
+
+async function request(endpoint, method = 'GET', body = null, token = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const config = { method, headers };
+    if (body) config.body = JSON.stringify(body);
+
+    const res = await fetch(`${BASE_URL}${endpoint}`, config);
+    // if status is 204 No Content, don't parse JSON
+    if (res.status === 204) return { status: res.status, data: {} };
+    
+    let data;
+    try {
+        data = await res.json();
+    } catch {
+        data = await res.text();
+    }
+    
+    return { status: res.status, data };
+}
+
+/**
+ * Gửi request multipart/form-data với JSON part "data" và file part "image" (tùy chọn).
+ * Dùng cho POST /menu/items và PUT /menu/items/{id} sau khi chuyển sang file upload.
+ * @param {string} endpoint
+ * @param {string} method POST hoặc PUT
+ * @param {object} dataJson object sẽ serialize thành JSON trong part "data"
+ * @param {string|null} imageFilePath đường dẫn file ảnh cục bộ, null = không kèm ảnh
+ * @param {string|null} token Bearer token
+ */
+async function requestMultipart(endpoint, method, dataJson, imageFilePath = null, token = null) {
+    // FormData + Blob available natively từ Node.js 18+
+    const form = new FormData();
+    form.append('data', new Blob([JSON.stringify(dataJson)], { type: 'application/json' }));
+
+    if (imageFilePath) {
+        const fileBuffer = fs.readFileSync(imageFilePath);
+        const ext = path.extname(imageFilePath).slice(1).toLowerCase();
+        const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+        const mime = mimeMap[ext] || 'image/jpeg';
+        form.append('image', new Blob([fileBuffer], { type: mime }), path.basename(imageFilePath));
+    }
+
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${BASE_URL}${endpoint}`, { method, headers, body: form });
+    if (res.status === 204) return { status: res.status, data: {} };
+
+    let data;
+    try { data = await res.json(); }
+    catch { data = await res.text(); }
+    return { status: res.status, data };
+}
+
+async function runTests() {
+    console.log("==========================================");
+    console.log("🚀 Bắt đầu chuỗi Test API SmartF&B (S-01 -> S-12)");
+    console.log("==========================================\n");
+
+    const email = `testowner_${Date.now()}@test.com`;
+    const password = "Password123!";
+    let currentToken = null;
+    let userId = null;
+    let branchId = null;
+    let categoryId = null;
+    let itemId = null;
+    let zoneId = null;
+    let tableId = null;
+    let orderId = null;
+    const staffEmail = `stafftest_${Date.now()}@smartfnb.com`;
+    const staffEmailUpd = `stafftest_upd_${Date.now()}@smartfnb.com`;
+
+    try {
+        // --- S-01, S-02: AUTH & TENANT ---
+        console.log("1. MỚI: Đăng ký Tenant (Chủ quán)");
+        let res = await request('/auth/register', 'POST', {
+            tenantName: "Quán Test Tự Động",
+            email: email,
+            password: password,
+            ownerName: "Auto Tester",
+            planSlug: "standard"
+        });
+        if (res.status !== 200 && res.status !== 201) throw new Error("Register failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Đăng ký thành công.");
+
+        console.log("2. Đăng nhập");
+        res = await request('/auth/login', 'POST', { email, password });
+        if (res.status !== 200) throw new Error("Login failed: " + JSON.stringify(res.data));
+        currentToken = res.data.data.accessToken || res.data.data.token;
+        console.log("   ✅ Đăng nhập thành công. Token lấy được.");
+
+        console.log("3. Kiểm tra Gói cước (Subscription)");
+        res = await request('/subscriptions/current', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get subscription failed: " + JSON.stringify(res.data));
+        console.log("   ✅ API Subscription chạy tốt.");
+
+        // --- S-03: BRANCH ---
+        console.log("4. Tạo Chi nhánh mới");
+        res = await request('/branches', 'POST', {
+            name: "Chi nhánh Auto " + Date.now(),
+            code: "CN" + Date.now().toString().slice(-4),
+            address: "123 Test Street"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create branch failed: " + JSON.stringify(res.data));
+        branchId = res.data.data.id;
+        console.log("   ✅ Tạo chi nhánh thành công: " + branchId);
+
+        console.log("5. Chọn chi nhánh làm việc (Select Branch)");
+        res = await request('/auth/select-branch', 'POST', { branchId }, currentToken);
+        if (res.status !== 200) throw new Error("Select branch failed: " + JSON.stringify(res.data));
+        currentToken = res.data.data.token || res.data.data.accessToken || currentToken;
+        // Notice API returns data.data.token if select-branch replaces token.
+        console.log("   ✅ Chuyển scope sang chi nhánh thành công.");
+
+        // --- S-05, S-06: MENU ---
+        console.log("6. Tạo Danh mục (Category)");
+        res = await request('/menu/categories', 'POST', {
+            name: "Đồ uống Test",
+            displayOrder: 1,
+            isActive: true
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create category failed: " + JSON.stringify(res.data));
+        categoryId = res.data.data.id;
+        console.log("   ✅ Tạo Category thành công.");
+
+        console.log("7. Tạo Món bán (Item) — multipart/form-data (không kèm ảnh)");
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Cà phê Auto",
+            basePrice: 20000,
+            unit: "Ly"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create item failed: " + JSON.stringify(res.data));
+        itemId = res.data.data.id;
+        console.log("   ✅ Tạo Món thành công. ID: " + itemId);
+
+        console.log("7b. Cập nhật Món (Item) — multipart PUT không kèm ảnh (giữ nguyên ảnh cũ)");
+        res = await requestMultipart(`/menu/items/${itemId}`, 'PUT', {
+            categoryId: categoryId,
+            name: "Cà phê Auto (Updated)",
+            basePrice: 25000,
+            unit: "Ly",
+            isActive: true,
+            isSyncDelivery: false
+        }, null, currentToken);
+        if (res.status !== 200) throw new Error("Update item failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Cập nhật Món thành công.");
+
+        // --- S-08: TABLES ---
+        console.log("8. Tạo Khu vực (Zone)");
+        res = await request(`/branches/${branchId}/zones`, 'POST', {
+            name: "Tầng 1"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create zone failed: " + JSON.stringify(res.data));
+        zoneId = res.data.data.id;
+        console.log("   ✅ Tạo Zone thành công.");
+
+        console.log("9. Tạo Bàn (Table)");
+        res = await request(`/branches/${branchId}/tables`, 'POST', {
+            zoneId: zoneId,
+            name: "Bàn 01",
+            capacity: 4,
+            shape: "square"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create table failed: " + JSON.stringify(res.data));
+        tableId = res.data.data.id;
+        console.log("   ✅ Tạo Bàn thành công.");
+
+        // --- S-10: ORDER ---
+        console.log("10. Tạo Đơn hàng (Order)");
+        res = await request('/orders', 'POST', {
+            tableId: tableId,
+            source: "IN_STORE",
+            notes: "Test tự động",
+            items: [
+                {
+                    itemId: itemId,
+                    itemName: "Cà phê Auto",
+                    quantity: 2,
+                    unitPrice: 20000
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create order failed: " + JSON.stringify(res.data));
+        orderId = res.data.data.id;
+        let totalAmount = res.data.data.totalAmount;
+        console.log("   ✅ Tạo Order thành công. Mã: " + orderId);
+
+        console.log("10b. Cập nhật Order (Sửa bàn, ghi chú và thêm món)");
+        res = await request(`/orders/${orderId}`, 'PUT', {
+            tableId: tableId,
+            notes: "Ghi chú đã cập nhật bởi Auto Test",
+            items: [
+                {
+                    id: res.data.data.items[0].id, // Giữ lại món cũ
+                    itemId: itemId,
+                    itemName: "Cà phê Auto",
+                    quantity: 3, // Tăng số lượng lên 3
+                    unitPrice: 20000
+                },
+                {
+                    itemId: itemId, // Thêm món mới (cùng loại hoặc loại khác đều được)
+                    itemName: "Bánh mì Test",
+                    quantity: 1,
+                    unitPrice: 15000
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order failed: " + JSON.stringify(res.data));
+        totalAmount = res.data.data.totalAmount;
+        console.log("   ✅ Cập nhật Order thành công. Tổng tiền mới: " + totalAmount);
+        if (totalAmount !== (3 * 20000 + 1 * 15000)) {
+            console.warn("   ⚠️ CẢNH BÁO: Tổng tiền sau cập nhật không khớp kỳ vọng! Thực tế: " + totalAmount);
+        }
+
+        console.log("11. Cập nhật Order sang COMPLETED");
+        res = await request(`/orders/${orderId}/status`, 'PUT', {
+            newStatus: "COMPLETED",
+            reason: ""
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Đổi Order sang COMPLETED.");
+
+        // --- S-11: PAYMENT & INVOICE ---
+        console.log("12. Thanh toán bằng tiền mặt (Cash Payment)");
+        res = await request('/payments/cash', 'POST', {
+            orderId: orderId,
+            amount: totalAmount
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Payment failed: " + JSON.stringify(res.data));
+        const paymentId = res.data.data.id;
+        console.log("   ✅ Thanh toán thành công. PaymentId: " + paymentId);
+
+        console.log("13. Truy vấn Hóa đơn (Invoices)");
+        res = await request('/payments/invoices', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Search invoices failed: " + JSON.stringify(res.data));
+        console.log(`   ✅ Truy vấn hóa đơn thành công. Có ${res.data.data.totalElements ?? 0} hóa đơn trong chi nhánh.`);
+
+        // --- S-13 & S-14: INVENTORY ---
+        console.log("\n--- BẮT ĐẦU TEST S-13 & S-14 (INVENTORY) ---");
+
+        console.log("14. [Đúng] Nhập kho (Import Stock) nguyên liệu (+50)");
+        res = await request('/inventory/import', 'POST', {
+            itemId: itemId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 50,
+            costPerUnit: 10000,
+            expiresAt: new Date(Date.now() + 30*24*3600*1000).toISOString(),
+            note: "Nhập test lô hàng 1"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import stock failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Nhập kho thành công. BatchId: " + res.data.data);
+
+        console.log("15. [Sai] Nhập kho với số lượng âm (Validation Error)");
+        let failRes = await request('/inventory/import', 'POST', {
+            itemId: itemId,
+            quantity: -10,
+            costPerUnit: 10000
+        }, currentToken);
+        if (failRes.status === 200 || failRes.status === 201) throw new Error("Expected validation error but succeeded!");
+        console.log("   ✅ Server từ chối request sai thành công: " + (failRes.data.error?.message || "Lỗi validation"));
+
+        console.log("16. [Đúng] Điều chỉnh kho (Adjust Stock) -> Tồn kho = 45");
+        res = await request('/inventory/adjust', 'POST', {
+            itemId: itemId,
+            newQuantity: 45,
+            reason: "Kiểm kê tháng"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Adjust stock failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Điều chỉnh kho thành công.");
+
+        console.log("17. [Đúng] Ghi hao hụt (Record Waste) (-5)");
+        res = await request('/inventory/waste', 'POST', {
+            itemId: itemId,
+            quantity: 5,
+            reason: "Hư hỏng"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Record waste failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Ghi nhận hao hụt thành công.");
+
+        console.log("18. [Sai] Ghi hao hụt mà thiếu lý do (Validation Error)");
+        failRes = await request('/inventory/waste', 'POST', {
+            itemId: itemId,
+            quantity: 5,
+            reason: "" // Rỗng
+        }, currentToken);
+        if (failRes.status === 200) throw new Error("Expected validation error but succeeded!");
+        console.log("   ✅ Server từ chối request thiếu lý do thành công.");
+
+        console.log("19. [Đúng] Truy vấn Tồn kho (GET /inventory)");
+        res = await request('/inventory', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get inventory failed: " + JSON.stringify(res.data));
+        console.log(`   ✅ Truy vấn tồn kho thành công. Số mã hàng: ${res.data.data.totalElements}`);
+        
+        let invItem = res.data.data.content.find(i => i.itemId === itemId);
+        if (invItem) {
+            console.log(`   🔎 Số lượng tồn kho hiện tại đối với món test (sau khi set 45 -> trừ 5 hao hụt -> còn 40): ${invItem.quantity}`);
+            if (Number(invItem.quantity) !== 40) {
+                console.warn("   ⚠️ CẢNH BÁO: Số dư tồn kho không khớp kỳ vọng! Thực tế: " + invItem.quantity);
+            } else {
+                console.log("   ✅ Cân bằng kho (Balance) tính toán chính xác!");
+            }
+        }
+
+        console.log("\n--- BẮT ĐẦU TEST S-14 (SẢN XUẤT BÁN THÀNH PHẨM & CẢNH BÁO KHO) ---");
+        
+        console.log("19a. Tạo Catalog Mới: Nguyên Liệu & Bán Thành Phẩm");
+        // Nguyên liệu đầu vào
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Hạt Cafe Thô",
+            basePrice: 0,
+            unit: "kg",
+            type: "INGREDIENT"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create ingredient failed: " + JSON.stringify(res.data));
+        const ingredientId = res.data.data.id;
+        
+        // Bán thành phẩm đầu ra
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Cốt Cafe Phin",
+            basePrice: 0,
+            unit: "Lít",
+            type: "SUB_ASSEMBLY"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create sub-assembly failed: " + JSON.stringify(res.data));
+        const subAssemblyId = res.data.data.id;
+        console.log("   ✅ Thuần thục tạo Ingredient: " + ingredientId + " và SubAssembly: " + subAssemblyId);
+
+        console.log("19b. Nhập kho nguyên liệu đầu vào (50 kg)");
+        res = await request('/inventory/import', 'POST', {
+            itemId: ingredientId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 50,
+            costPerUnit: 150000,
+            note: "Nhập phục vụ pha cốt"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import ingredient failed");
+        
+        console.log("19c. Tạo công thức (Recipe) cho Cốt Cafe Phin (1 Lít cần 0.5 kg hạt)");
+        res = await request('/menu/recipes', 'POST', {
+            targetItemId: subAssemblyId,
+            ingredientItemId: ingredientId,
+            quantity: 0.5,
+            unit: "kg"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create recipe failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Gán recipe cho cấu phần thành công");
+
+        console.log("19d. Tạo mẻ sản xuất (Production Batch)");
+        // kỳ vọng output: 10 Lít => cần 5kg hạt => thực tế ra 9.5 Lít (hao hụt tay nghề)
+        res = await request('/inventory/production-batches', 'POST', {
+            subAssemblyItemId: subAssemblyId,
+            expectedOutputQuantity: 10,
+            actualOutputQuantity: 9.5,
+            unit: "Lít",
+            producedBy: "00000000-0000-0000-0000-000000000000",
+            note: "Mẻ pha cốt buổi sáng"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create batch failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Ghi nhận mẻ sản xuất (Production IN/OUT) thành công");
+
+        console.log("19e. Xem Lịch sử giao dịch kho (Audit Trail)");
+        res = await request('/inventory/transactions', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get transactions failed");
+        // Sẽ có PRODUCTION_OUT cho nguyên liệu và PRODUCTION_IN cho bán thành phẩm
+        const txList = res.data.data.content;
+        const hasProdIn = txList.some(t => t.type === 'PRODUCTION_IN');
+        const hasProdOut = txList.some(t => t.type === 'PRODUCTION_OUT');
+        if (!hasProdIn || !hasProdOut) throw new Error("Không bắt được giao dịch PRODUCTION_IN/OUT");
+        console.log(`   ✅ Bắt được ${txList.length} giao dịch, trong đó bao gồm xuất/nhập phục vụ Mẻ Sản Xuất.`);
+
+        console.log("19f. Set Ngưỡng Tồn Thấp (Threshold)");
+        // Lấy lại danh sách inventory để kiếm balanceId của SubAssembly
+        res = await request('/inventory', 'GET', null, currentToken);
+        const subAssemblyBalance = res.data.data.content.find(i => i.itemId === subAssemblyId);
+        if (!subAssemblyBalance) throw new Error("Không tìm thấy inventory balance của bán thành phẩm");
+
+        res = await request(`/inventory/balances/${subAssemblyBalance.id}/threshold`, 'PATCH', {
+            minLevel: 15.0
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update threshold failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Cập nhật Threshold (minLevel) mượt mà!");
+
+        console.log("\n--- BẮT ĐẦU TEST S-15 (STAFF) ---");
+        
+        console.log("20. Tạo Chức vụ (Position)");
+        res = await request('/positions', 'POST', {
+            name: "Quản lý cửa hàng",
+            description: "Quản lý chung chi nhánh"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create position failed: " + JSON.stringify(res.data));
+        const positionId = res.data.data;
+        console.log("   ✅ Tạo Chức vụ thành công. ID: " + positionId);
+
+        console.log("21. Lấy danh sách Chức vụ");
+        res = await request('/positions', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get positions failed");
+        console.log("   ✅ Lấy danh sách Chức vụ thành công.");
+
+        console.log("22. Tạo Nhân sự (Staff)");
+        res = await request('/staff', 'POST', {
+            positionId: positionId,
+            fullName: "Nguyễn Văn Test",
+            email: staffEmail,
+            phone: "0999888777",
+            employeeCode: "EMP-001",
+            baseSalary: 10000000,
+            hireDate: "2026-04-06",
+            password: "StaffPassword1!",
+            posPin: "123456"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create staff failed: " + JSON.stringify(res.data));
+        let staffId = res.data.data;
+        console.log("   ✅ Tạo Nhân sự thành công. ID: " + staffId);
+
+        console.log("23. Cập nhật Nhân sự (Staff)");
+        res = await request(`/staff/${staffId}`, 'PUT', {
+            positionId: positionId,
+            fullName: "Nguyễn Văn Test (Updated)",
+            email: staffEmailUpd,
+            phone: "0999888777",
+            employeeCode: "EMP-001X",
+            baseSalary: 12000000,
+            hireDate: "2026-04-06",
+            isActive: true,
+            password: "StaffPassword2!",
+            posPin: "654321"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update staff failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Cập nhật Nhân sự thành công.");
+
+        console.log("24. Tạo Vai trò (Role)");
+        res = await request('/roles', 'POST', {
+            name: "Thu Ngân Test",
+            description: "Role dành cho thu ngân test"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create role failed: " + JSON.stringify(res.data));
+        const roleId = res.data.data;
+        console.log("   ✅ Tạo Role thành công. ID: " + roleId);
+
+        console.log("24b. Gán Role cho Staff");
+        res = await request(`/staff/${staffId}/roles`, 'PUT', { roleIds: [roleId] }, currentToken);
+        if (res.status !== 200) throw new Error("Assign role to staff failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Gán Role cho Staff thành công.");
+
+        console.log("24c. Đăng nhập Staff (Bằng Email/Pass)");
+        res = await request('/auth/login', 'POST', {
+            email: staffEmailUpd,
+            password: "StaffPassword2!"
+        });
+        if (res.status !== 200) throw new Error("Staff login failed: " + JSON.stringify(res.data));
+        let staffToken = res.data.data.accessToken || res.data.data.token;
+        console.log("   ✅ Staff Đăng nhập Email/Pass thành công.");
+
+        console.log("24d. Đăng nhập Staff (Bằng POS PIN)");
+        // Lấy tenantId từ token hiện tại (owner's token)
+        const ownerJwtPayload = JSON.parse(Buffer.from(currentToken.split('.')[1], 'base64').toString());
+        res = await request('/auth/pin-login', 'POST', {
+            tenantId: ownerJwtPayload.tenantId,
+            userId: staffId,
+            pin: "654321"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Staff PIN login failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Staff Đăng nhập qua POS PIN thành công.");
+
+        // --- S-16: SHIFT & SESSION ---
+        console.log("\n--- BẮT ĐẦU TEST S-16 (SHIFT) ---");
+
+        console.log("25. Tạo Ca làm việc mẫu (Shift Template)");
+        res = await request('/shift-templates', 'POST', {
+            name: "Ca Sáng Test",
+            startTime: "07:00:00",
+            endTime: "15:00:00",
+            minStaff: 2,
+            maxStaff: 5,
+            color: "#FF5733",
+            active: true
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create shift template failed: " + JSON.stringify(res.data));
+        const templateId = res.data.data;
+        console.log("   ✅ Tạo Shift Template thành công. ID: " + templateId);
+
+        console.log("26. Đăng ký Ca làm việc (Register Shift)");
+        const jwtPayload = JSON.parse(Buffer.from(currentToken.split('.')[1], 'base64').toString());
+        const currentUserId = jwtPayload.sub;
+        res = await request('/shifts', 'POST', {
+            userId: currentUserId,
+            shiftTemplateId: templateId,
+            date: "2026-04-07"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Register shift failed: " + JSON.stringify(res.data));
+        const scheduleId = res.data.data;
+        console.log("   ✅ Đăng ký Shift Schedule thành công. ID: " + scheduleId);
+
+        console.log("27. Lấy danh sách Ca của tôi (My Shifts)");
+        res = await request('/shifts/my?startDate=2026-04-07&endDate=2026-04-07', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get my shifts failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Lấy danh sách ca làm việc cá nhân thành công.");
+
+        console.log("28. Check-IN Ca làm việc");
+        res = await request(`/shifts/${scheduleId}/checkin`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Check-in failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Check-In thành công.");
+
+        console.log("29. Check-OUT Ca làm việc");
+        res = await request(`/shifts/${scheduleId}/checkout`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Check-out failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Check-Out thành công.");
+
+        console.log("30. Mở Phiên bàn giao POS (Open PosSession)");
+        res = await request('/pos-sessions/open', 'POST', {
+            startingCash: 1000000,
+            shiftScheduleId: scheduleId
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Open POS Session failed: " + JSON.stringify(res.data));
+        const sessionId = res.data.data;
+        console.log("   ✅ Mở POS Session thành công. ID: " + sessionId);
+
+        console.log("31. Lấy POS Session đang Active");
+        res = await request('/pos-sessions/active', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get Active POS Session failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Lấy Active POS Session thành công.");
+
+        console.log("32. Đóng Phiên Bàn giao POS (Close PosSession)");
+        res = await request(`/pos-sessions/${sessionId}/close`, 'POST', {
+            endingCashActual: 1500000,
+            note: "Đóng két cuối ca"
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Close POS Session failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Đóng POS Session thành công.");
+
+        console.log("\n--- BẮT ĐẦU TEST S-17 (SUPPLIER & PURCHASE ORDER) ---");
+        console.log("33. Tạo Nhà cung cấp (Supplier)");
+        res = await request('/suppliers', 'POST', {
+            name: "NCC Cà Phê Mộc",
+            code: "NCC-CFM",
+            phone: "0901234567",
+            address: "123 Đường ABC",
+            note: "Nhà cung cấp hạt cà phê ngon"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create supplier failed: " + JSON.stringify(res.data));
+        const supplierId = res.data.data;
+        console.log("   ✅ Tạo Supplier thành công. ID: " + supplierId);
+
+        console.log("34. Tạo Đơn mua hàng (Purchase Order) - DRAFT");
+        // We need an itemId to map to PO items. Taking global testItemId (from S-06)
+        res = await request('/purchase-orders', 'POST', {
+            supplierId: supplierId,
+            note: "Nhập đợt 1",
+            expectedDate: "2026-05-01",
+            items: [
+                {
+                    itemId: itemId,
+                    itemName: "Hạt Cafe Arabica",
+                    unit: "kg",
+                    quantity: 10,
+                    unitPrice: 200000,
+                    note: "Loại 1"
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create PO failed: " + JSON.stringify(res.data));
+        const poId = res.data.data;
+        console.log("   ✅ Tạo Purchase Order (DRAFT) thành công. ID: " + poId);
+
+        console.log("35. Gửi Đơn mua hàng cho NCC (DRAFT -> SENT)");
+        res = await request(`/purchase-orders/${poId}/send`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Send PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Send Purchase Order thành công.");
+
+        console.log("36. Xác nhận nhận hàng (SENT -> RECEIVED)");
+        res = await request(`/purchase-orders/${poId}/receive`, 'POST', {}, currentToken);
+        if (res.status !== 200) throw new Error("Receive PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Nhận Purchase Order thành công. (Đã trigger sinh StockBatch autmatically)");
+
+        console.log("37. Huỷ Đơn mua hàng (CANCELLED)");
+        // create a quick dummy PO to test cancel
+        res = await request('/purchase-orders', 'POST', {
+            supplierId: supplierId,
+            items: [{ itemId: itemId, itemName: "Test Item", quantity: 1, unitPrice: 10 }]
+        }, currentToken);
+        const poCancelId = res.data.data;
+        res = await request(`/purchase-orders/${poCancelId}/cancel`, 'POST', { reason: "Không cần nhập hàng nữa" }, currentToken);
+        if (res.status !== 200) throw new Error("Cancel PO failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Huỷ Purchase Order thành công.");
+
+        console.log("\n--- BẮT ĐẦU TEST S-HOTFIX (ADDON/TOPPING INVENTORY DEDUCTION) ---");
+        
+        console.log("38. Tạo INGREDIENT: Tóp Mỡ (Đầu vào Addon)");
+        res = await requestMultipart('/menu/items', 'POST', {
+            categoryId: categoryId,
+            name: "Tóp Mỡ Thô",
+            basePrice: 0,
+            unit: "g",
+            type: "INGREDIENT"
+        }, null, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create ingredient failed");
+        const topMoId = res.data.data.id;
+        console.log("   ✅ Tạo Ingredient Tóp Mỡ: " + topMoId);
+
+        console.log("39. Nhập kho Tóp Mỡ: 1000g");
+        res = await request('/inventory/import', 'POST', {
+            itemId: topMoId,
+            supplierId: "00000000-0000-0000-0000-000000000000",
+            quantity: 1000,
+            costPerUnit: 100,
+            note: "Nhập Tóp Mỡ cho Addon"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Import ingredient failed");
+        console.log("   ✅ Nhập kho 1000g Tóp Mỡ thành công");
+
+        console.log("40. Tạo Addon: Thêm Tóp Mỡ, link tới Tóp Mỡ (50g / addon)");
+        res = await request('/menu/addons', 'POST', {
+            name: "Thêm Tóp Mỡ",
+            extraPrice: 10000,
+            itemId: topMoId,
+            itemQuantity: 50,
+            itemUnit: "g"
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create addon failed: " + JSON.stringify(res.data));
+        const addonId = res.data.data.id;
+        console.log("   ✅ Tạo Addon thành công, link kho OK. ID: " + addonId);
+
+        console.log("41. Tạo Order với Addon (Mua 2 món chính, mỗi món kẹp 1 addon)");
+        res = await request('/orders', 'POST', {
+            tableId: tableId,
+            source: "IN_STORE",
+            notes: "Test Addon Deduction",
+            items: [
+                {
+                    itemId: itemId, 
+                    itemName: "Cà phê Auto (Test Addon)",
+                    quantity: 2, 
+                    unitPrice: 20000,
+                    addons: JSON.stringify([{ addonId: addonId, quantity: 1 }]) // Addon JSON passed
+                }
+            ]
+        }, currentToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("Create order with addon failed: " + JSON.stringify(res.data));
+        const addonOrderId = res.data.data.id;
+        console.log("   ✅ Tạo Order có Addon thành công. Mã: " + addonOrderId);
+
+        console.log("42. Chuyển Đơn hàng sang COMPLETED (Trigger Event Trừ Kho)");
+        res = await request(`/orders/${addonOrderId}/status`, 'PUT', {
+            newStatus: "COMPLETED",
+            reason: ""
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order to COMPLETED failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Complete Order thành công (Trừ kho ngầm qua FIFO event).");
+
+        console.log("43. Kiểm tra Tồn kho của Tóp Mỡ sau khi bán");
+        // Wait briefly for async event to process
+        await new Promise(r => setTimeout(r, 1500)); 
+        res = await request('/inventory', 'GET', null, currentToken);
+        const topMoBalance = res.data.data.content.find(i => i.itemId === topMoId);
+        if (!topMoBalance) throw new Error("Không tìm thấy inventory của Tóp Mỡ");
+        
+        console.log(`   🔎 Số lượng tồn kho Tóp Mỡ hiện tại: ${topMoBalance.quantity}`);
+        // Kì vọng: nhập 1000g, order có 2 món chính, số lượng addon = 2 x 1 x 50g = 100g.
+        // Trừ đi 100g, còn lại 900g.
+        if (Number(topMoBalance.quantity) !== 900) {
+             throw new Error("   ⚠️ CẢNH BÁO: Số dư Tóp Mỡ KHÔNG KHỚP! Thực tế: " + topMoBalance.quantity + ", Kì vọng: 900. Lỗi Deduction Addon!");
+        } else {
+             console.log("   ✅ Kho Addon được Deduction CHÍNH XÁC (Đã trừ đi chính xác 100g)!");
+        }
+
+        console.log("\n==========================================");
+        console.log("🎉 TẤT CẢ MODULES (S-01 đến S-17 & Addon Fix) HOẠT ĐỘNG HOÀN HẢO!");
+        console.log("==========================================");
+
+    } catch (e) {
+        console.error("\n❌ LỖI TRONG QUÁ TRÌNH TEST:");
+        console.error(e.message);
+        process.exit(1);
+    }
+}
+
+runTests();

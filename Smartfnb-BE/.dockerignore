@@ -1,0 +1,11 @@
+.mvn/
+target/
+*.class
+*.jar
+!app.jar
+.idea/
+*.iml
+.vscode/
+compile_errors.txt
+*.log
+docs/dev-notes/

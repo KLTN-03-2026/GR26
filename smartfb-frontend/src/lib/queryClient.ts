@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 /**
+<<<<<<< HEAD
  * TanStack Query client configuration
  * Global settings for all queries and mutations
  */
@@ -26,6 +27,16 @@ export const queryClient = new QueryClient({
     mutations: {
       // Retry failed mutations 0 times
       retry: 0,
+=======
+ * Query client dùng chung cho toàn bộ frontend.
+ * Giữ cấu hình tập trung tại một chỗ để tránh `main.tsx` và các test setup tự khai báo lệch nhau.
+ */
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+>>>>>>> origin/main
     },
   },
 });
