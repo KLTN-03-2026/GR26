@@ -9,6 +9,7 @@ import CreateStaffPage from '@pages/owner/CreateStaffPage';
 import InventoryPage from '@pages/owner/InventoryPage';
 import MenuPage from '@pages/owner/MenuPage';
 import RecipesPage from '@pages/owner/RecipesPage';
+import RevenuePage from '@pages/owner/RevenuePage';
 import StaffDetailPage from '@pages/owner/StaffDetailPage';
 import StaffPage from '@pages/owner/StaffPage';
 import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
@@ -17,6 +18,7 @@ import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
+import ExpensesPage from '@pages/shared/ExpensesPage';
 import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
 import VouchersPage from '@pages/owner/VouchersPage';
@@ -105,12 +107,12 @@ export const ownerRoutes: RouteConfigItem[] = [
     'Quản lý đơn hàng',
     <Navigate to={ROUTES.POS_MANAGEMENT} replace />
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.OWNER.REVENUE,
     'Báo cáo doanh thu',
-    'Báo cáo doanh thu',
-    'Trang báo cáo doanh thu đang dùng placeholder để route đi đúng vị trí ngay từ bây giờ.'
+    <RevenuePage />
   ),
+  createRoute(ROUTES.OWNER.EXPENSES, 'Thu chi', <ExpensesPage />),
   createRoute(ROUTES.OWNER.MENU, 'Quản lý thực đơn', <MenuPage />),
   createRoute(ROUTES.OWNER.INVENTORY, 'Quản lý kho', <InventoryPage />),
   createRoute(ROUTES.OWNER.RECIPES, 'Công thức', <RecipesPage />),
@@ -143,11 +145,10 @@ export const ownerRoutes: RouteConfigItem[] = [
     'Nhà cung cấp',
     'Page nhà cung cấp sẽ được thêm riêng ở bước triển khai module supplier.'
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.OWNER.REPORTS,
     'Báo cáo',
-    'Báo cáo',
-    'Khu vực báo cáo tổng hợp đang chờ page riêng nhưng route đã được set up đúng vị trí.'
+    <RevenuePage />
   ),
   createPlaceholderRoute(
     ROUTES.OWNER.SETTINGS,
@@ -188,6 +189,9 @@ export const staffRoutes: RouteConfigItem[] = [
   }),
   createRoute(ROUTES.STAFF.STAFF_POSITIONS, 'Chức vụ', <StaffPositionsPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.STAFF_POSITIONS,
+  }),
+  createRoute(ROUTES.STAFF.EXPENSES, 'Thu chi', <ExpensesPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.EXPENSES,
   }),
   createRoute(ROUTES.STAFF.MENU, 'Thực đơn', <MenuPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.MENU,

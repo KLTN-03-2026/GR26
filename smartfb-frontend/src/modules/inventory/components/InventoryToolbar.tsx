@@ -103,9 +103,7 @@ export const InventoryToolbar = ({
                 ))}
               </SelectContent>
             </Select>
-            {!canFilterByBranch ? (
-              <p className="text-xs text-text-secondary">Nhân viên xem tồn kho theo chi nhánh đang làm việc.</p>
-            ) : null}
+
           </div>
 
           <div className="space-y-1 text-nowrap w-fit">

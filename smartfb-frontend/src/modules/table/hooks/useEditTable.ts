@@ -25,8 +25,9 @@ export const useEditTable = () => {
     },
     onError: (err) => {
       console.error('Update table failed', err);
-      const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
-      error('Cập nhật bàn thất bại', message);
+      // const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
+
+      error('Cập nhật bàn thất bại');
     },
   });
 };

@@ -26,6 +26,7 @@ import {
   buildTablePresentationData,
   resolveDrawerTable,
 } from '@modules/table/utils';
+import { useToast } from '@shared/hooks/useToast';
 
 import { Button } from '@shared/components/ui/button';
 
@@ -109,8 +110,7 @@ export default function TablesPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-red-500 mb-4">
-            Có lỗi xảy ra khi tải dữ liệu:
-            <br />
+       
             {error instanceof Error ? error.message : 'Lỗi không xác định'}
           </p>
           <button
@@ -151,9 +151,25 @@ export default function TablesPage() {
     setDeleteDialog({ open: true, id, name });
   };
 
+  const { error: toastError } = useToast();
+
   const handleToggleStatus = (id: string, currentStatus: TableStatus) => {
     const table = tables.find((t) => t.id === id);
     if (!table) return;
+
+    // Chặn inactive nếu bàn đang có đơn
+    if (
+      currentStatus === 'active' &&
+      (table.usageStatus === 'occupied' ||
+        table.usageStatus === 'unpaid' ||
+        table.usageStatus === 'reserved')
+    ) {
+      toastError(
+        'Không thể vô hiệu hóa bàn',
+        'Bàn đang có đơn hàng. Vui lòng hoàn tất hoặc hủy đơn trước khi đổi trạng thái.'
+      );
+      return;
+    }
 
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
 
