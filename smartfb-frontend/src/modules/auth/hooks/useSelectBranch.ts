@@ -34,6 +34,8 @@ export const useSelectBranch = (options: UseSelectBranchOptions = {}) => {
 
       // Sau khi branch context đổi, cần refresh các query phụ thuộc JWT branch hiện tại.
       void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.payments.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.shifts.templates.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.shifts.schedules.all });
 

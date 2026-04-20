@@ -49,7 +49,7 @@ export const DeleteTableDialog = ({
         <DialogHeader>
           <DialogTitle>Xác nhận xóa bàn</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa bàn <strong>{tableName}</strong>? Đây là thao tác không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa bàn <strong>{tableName}</strong>? 
           </DialogDescription>
         </DialogHeader>
 

@@ -161,7 +161,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
     if (
-      (error.response?.status === 401  || error.response?.status === 403 )&& 
+      (error.response?.status === 401 || error.response?.status === 403) &&
       originalRequest &&
       !originalRequest._retry &&
       isRefreshableRequest(originalRequest.url)
@@ -201,7 +201,7 @@ axiosInstance.interceptors.response.use(
           toast.error(backendMessage || 'Dữ liệu gửi lên không hợp lệ');
           break;
         case 403:
-          toast.error(backendMessage || 'Bạn không có quyền thực hiện thao tác này');
+          toast.error('Bạn không có quyền thực hiện thao tác này');
           break;
         case 404:
           toast.error(backendMessage || 'Không tìm thấy dữ liệu yêu cầu');
