@@ -207,6 +207,60 @@ def build_future_df(
     return result
 
 
+def clip_outliers_per_series(
+    df: pd.DataFrame,
+    iqr_multiplier: float = 3.0,
+) -> tuple[pd.DataFrame, dict]:
+    """
+    Clip giá trị bất thường theo từng series dùng IQR method.
+
+    Chỉ clip upper bound — không clip lower (ngày tiêu thụ = 0 là hợp lệ).
+    Giữ nguyên pattern bình thường, chỉ giới hạn spike cực đoan.
+
+    Args:
+        df: DataFrame với cột ['ID', 'y']
+        iqr_multiplier: Hệ số IQR cho upper bound (mặc định 3.0 — ít aggressive)
+
+    Returns:
+        Tuple (df_clipped, clip_report):
+        - df_clipped: DataFrame đã clip, index giữ nguyên
+        - clip_report: dict[series_id → {"clipped_rows", "upper_bound", "original_max"}]
+    """
+    missing = {"ID", "y"} - set(df.columns)
+    if missing:
+        raise ValueError(f"DataFrame thiếu cột: {missing}")
+
+    result = df.copy()
+    clip_report: dict = {}
+
+    for series_id in df["ID"].unique():
+        mask = result["ID"] == series_id
+        y = result.loc[mask, "y"]
+
+        q25 = y.quantile(0.25)
+        q75 = y.quantile(0.75)
+        iqr = q75 - q25
+        upper_bound = q75 + iqr_multiplier * iqr
+
+        clipped_count = int((y > upper_bound).sum())
+        if clipped_count > 0:
+            result.loc[mask, "y"] = y.clip(upper=upper_bound)
+            clip_report[series_id] = {
+                "clipped_rows": clipped_count,
+                "upper_bound": round(float(upper_bound), 2),
+                "original_max": round(float(y.max()), 2),
+            }
+
+    if clip_report:
+        logger.info(
+            "clip_outliers: %d series bị ảnh hưởng (iqr_multiplier=%.1f)",
+            len(clip_report),
+            iqr_multiplier,
+        )
+
+    return result, clip_report
+
+
 def split_by_series(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     """
     Tách DataFrame tổng hợp thành dict theo từng series ID.

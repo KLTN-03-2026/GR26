@@ -4,6 +4,12 @@ Tests cho app/services/predict_service.py
 Dùng AsyncMock + patch để giả lập DB session, model I/O và data service.
 Không cần PostgreSQL thật, không cần NeuralProphet thật.
 
+Lưu ý quan trọng về behavior hiện tại (Option C):
+  - Nếu branch chưa có model → predict_branch() trả về [] ngay lập tức
+  - Không dùng fallback moving average ở cấp branch
+  - Fallback moving average vẫn hoạt động ở cấp ingredient:
+    khi model.predict() thất bại hoặc history rỗng
+
 Chạy: pytest tests/test_predict_service.py -v
 """
 
@@ -53,7 +59,12 @@ def _make_series_entry(series_int_id: int = 1) -> MagicMock:
 def _make_mock_model(history_df: pd.DataFrame, yhat_value: float = 5.0) -> MagicMock:
     """
     Tạo mock NeuralProphet model với predict() trả về DataFrame hợp lệ.
-    Output bao gồm cả history rows + 7 future rows với yhat1.
+
+    Output gồm history rows + 7 future rows.
+    Mỗi row trong history có cột yhat1 = yhat_value.
+    predict_service đọc yhat1..yhat{n} từ row lịch sử cuối cùng —
+    các cột yhat2..yhat{n} không tồn tại trong mock sẽ được pd.Series.get()
+    trả về None, sau đó fill-logic thay bằng fallback_mean = yhat_value.
     """
     model = MagicMock()
     last_date = history_df["ds"].max()
@@ -64,7 +75,7 @@ def _make_mock_model(history_df: pd.DataFrame, yhat_value: float = 5.0) -> Magic
         history_df["ds"],
         pd.Series(future_dates),
     ]).reset_index(drop=True)
-    yhat1_values = [yhat_value] * len(history_df) + [yhat_value] * 7
+    yhat1_values = [yhat_value] * len(all_dates)
 
     model.predict.return_value = pd.DataFrame({
         "ds": all_dates,
@@ -133,42 +144,34 @@ class TestBuildFallbackForecast:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# predict_branch — no model (fallback)
+# predict_branch — no model (Option C)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestPredictBranchFallback:
+    """
+    Kiểm tra behavior khi branch chưa có model (Option C).
+
+    Option C: không predict, không ghi DB, trả về list rỗng ngay lập tức.
+    Fallback moving average vẫn hoạt động ở cấp ingredient khi model.predict() lỗi.
+    """
     pytestmark = pytest.mark.asyncio
+
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")
     @patch("app.services.predict_service.model_io")
-    async def test_uses_fallback_when_no_model(
+    async def test_no_model_returns_empty_list(
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
-        """Chưa có model → is_fallback=True cho tất cả ingredients."""
-        # Setup model_io → không có model
+        """Branch chưa có model → Option C: skip ngay, trả về [] không gọi gì thêm."""
         mock_model_io.model_exists.return_value = False
 
-        # Setup data_service
-        history_df = _make_history_df(14, avg=8.0)
-        mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
-            return_value=_sample_ingredients()
-        )
-        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
-        mock_data_svc.get_current_stock = AsyncMock(return_value=50.0)
-
-        # Setup SeriesRegistryRepo
-        mock_repo = AsyncMock()
-        mock_repo.get_or_create = AsyncMock(return_value=_make_series_entry(1))
-        mock_series_repo_cls.return_value = mock_repo
-
         db = _make_db()
-
         results = await predict_branch("tenant-1", "branch-1", db)
 
-        assert len(results) == 2
-        assert all(r.is_fallback is True for r in results)
-        # Không gọi load_model
+        assert results == []
+        # Không load model, không lấy ingredients khi chưa có model
         mock_model_io.load_model.assert_not_called()
+        mock_data_svc.get_all_ingredients_of_branch.assert_not_called()
 
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")
@@ -176,14 +179,19 @@ class TestPredictBranchFallback:
     async def test_fallback_sets_correct_schema_fields(
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
-        """Kết quả fallback phải có đầy đủ các trường schema."""
-        mock_model_io.model_exists.return_value = False
+        """Model predict() thất bại → fallback per-ingredient, kết quả vẫn đủ trường schema."""
+        history_df = _make_history_df(14, avg=5.0)
+        mock_model = MagicMock()
+        mock_model.predict.side_effect = RuntimeError("NaN in model input")
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[{"id": "ing-001", "name": "Bột mì", "unit": "kg"}]
         )
-        mock_data_svc.get_ingredient_consumption = AsyncMock(
-            return_value=_make_history_df(14, avg=5.0)
-        )
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
         mock_data_svc.get_current_stock = AsyncMock(return_value=20.0)
 
         mock_repo = AsyncMock()
@@ -192,6 +200,7 @@ class TestPredictBranchFallback:
 
         results = await predict_branch("tenant-1", "branch-1", _make_db())
 
+        assert len(results) == 1
         r = results[0]
         assert r.ingredient_id == "ing-001"
         assert r.ingredient_name == "Bột mì"
@@ -209,6 +218,7 @@ class TestPredictBranchFallback:
 
 class TestPredictBranchWithModel:
     pytestmark = pytest.mark.asyncio
+
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")
     @patch("app.services.predict_service.model_io")
@@ -220,6 +230,7 @@ class TestPredictBranchWithModel:
         mock_model = _make_mock_model(history_df, yhat_value=6.0)
 
         mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
         mock_model_io.load_model.return_value = mock_model
 
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
@@ -250,6 +261,7 @@ class TestPredictBranchWithModel:
         mock_model.predict.side_effect = RuntimeError("NaN detected in model input")
 
         mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
         mock_model_io.load_model.return_value = mock_model
 
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
@@ -302,6 +314,7 @@ class TestPredictBranchWithModel:
 
 class TestPredictBranchEdgeCases:
     pytestmark = pytest.mark.asyncio
+
     @patch("app.services.predict_service.SeriesRegistryRepo")
     @patch("app.services.predict_service.data_service")
     @patch("app.services.predict_service.model_io")
@@ -309,6 +322,7 @@ class TestPredictBranchEdgeCases:
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
         """Không có nguyên liệu → trả về list rỗng, không lỗi."""
+        # Khi không có model (Option C) cũng trả về []
         mock_model_io.model_exists.return_value = False
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(return_value=[])
         mock_series_repo_cls.return_value = AsyncMock()
@@ -324,7 +338,12 @@ class TestPredictBranchEdgeCases:
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
         """Lỗi ở ingredient thứ nhất → bỏ qua, vẫn process ingredient thứ hai."""
-        mock_model_io.model_exists.return_value = False
+        history_df = _make_history_df(14, avg=3.0)
+        mock_model = _make_mock_model(history_df, yhat_value=3.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
 
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[
@@ -332,17 +351,17 @@ class TestPredictBranchEdgeCases:
                 {"id": "ing-ok",   "name": "OK",   "unit": "g"},
             ]
         )
-        # ingredient đầu tiên gây lỗi khi lấy stock
-        mock_data_svc.get_ingredient_consumption = AsyncMock(
-            side_effect=[
-                RuntimeError("DB timeout"),   # ing-fail → lỗi
-                _make_history_df(14, avg=3.0), # ing-ok → OK
-            ]
-        )
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
         mock_data_svc.get_current_stock = AsyncMock(return_value=10.0)
 
+        # ingredient đầu tiên gây lỗi ở bước get_or_create
         mock_repo = AsyncMock()
-        mock_repo.get_or_create = AsyncMock(return_value=_make_series_entry(1))
+        mock_repo.get_or_create = AsyncMock(
+            side_effect=[
+                RuntimeError("Registry error"),  # ing-fail bị lỗi
+                _make_series_entry(1),            # ing-ok thành công
+            ]
+        )
         mock_series_repo_cls.return_value = mock_repo
 
         results = await predict_branch("tenant-1", "branch-1", _make_db())
@@ -358,13 +377,17 @@ class TestPredictBranchEdgeCases:
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
         """db.commit() phải được gọi sau khi xử lý xong tất cả ingredients."""
-        mock_model_io.model_exists.return_value = False
+        history_df = _make_history_df(14)
+        mock_model = _make_mock_model(history_df, yhat_value=5.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[{"id": "ing-001", "name": "Test", "unit": "kg"}]
         )
-        mock_data_svc.get_ingredient_consumption = AsyncMock(
-            return_value=_make_history_df(14)
-        )
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
         mock_data_svc.get_current_stock = AsyncMock(return_value=5.0)
 
         mock_repo = AsyncMock()
@@ -382,13 +405,19 @@ class TestPredictBranchEdgeCases:
     async def test_upserts_forecast_results_for_each_ingredient(
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
-        """db.execute phải được gọi cho mỗi ngày × ingredient (7 ngày × 2 ingredients)."""
-        mock_model_io.model_exists.return_value = False
+        """db.execute phải được gọi cho mỗi ingredient: 1 DELETE + 7 INSERT."""
+        history_df = _make_history_df(14, avg=4.0)
+        mock_model = _make_mock_model(history_df, yhat_value=4.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=_sample_ingredients()  # 2 ingredients
         )
         mock_data_svc.get_ingredient_consumption = AsyncMock(
-            return_value=_make_history_df(14, avg=4.0)
+            return_value=history_df
         )
         mock_data_svc.get_current_stock = AsyncMock(return_value=50.0)
 
@@ -400,7 +429,7 @@ class TestPredictBranchEdgeCases:
         results = await predict_branch("tenant-1", "branch-1", db)
 
         assert len(results) == 2
-        # Mỗi ingredient: 1 DELETE forecast cũ + 7 INSERT/UPSERT rows.
+        # Mỗi ingredient: 1 DELETE forecast cũ + 7 INSERT/UPSERT rows = 8 calls
         assert db.execute.await_count == 16
 
     @patch("app.services.predict_service.SeriesRegistryRepo")
@@ -410,13 +439,17 @@ class TestPredictBranchEdgeCases:
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
         """Tồn kho = 0 → stockout hôm nay → urgency = critical."""
-        mock_model_io.model_exists.return_value = False
+        history_df = _make_history_df(14, avg=5.0)
+        mock_model = _make_mock_model(history_df, yhat_value=5.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[{"id": "ing-001", "name": "Hết kho", "unit": "kg"}]
         )
-        mock_data_svc.get_ingredient_consumption = AsyncMock(
-            return_value=_make_history_df(14, avg=5.0)
-        )
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
         mock_data_svc.get_current_stock = AsyncMock(return_value=0.0)
 
         mock_repo = AsyncMock()
@@ -434,9 +467,21 @@ class TestPredictBranchEdgeCases:
     async def test_extrapolates_stockout_after_forecast_window(
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
-        """Tồn kho dư nhẹ sau 7 ngày → ngày order bám theo stockout ước tính."""
-        mock_model_io.model_exists.return_value = False
+        """
+        Tồn kho dư nhẹ sau 7 ngày → ngày stockout được ước tính ngoài forecast window.
+
+        stock=45, avg=5/ngày → 7 ngày dùng 35 → còn dư 10 → hết sau 2 ngày thêm.
+        stockout_date = today+7+2 = today+9
+        suggested_order_date = today+9 - lead_time(2) = today+7
+        suggested_order_qty = max(35*1.2 - 45, 0) = 0.0
+        """
         history_df = _make_history_df(14, avg=5.0)
+        mock_model = _make_mock_model(history_df, yhat_value=5.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[{"id": "ing-001", "name": "Sắp hết", "unit": "kg"}]
         )
@@ -460,14 +505,18 @@ class TestPredictBranchEdgeCases:
     async def test_ok_urgency_when_stock_very_large(
         self, mock_model_io, mock_data_svc, mock_series_repo_cls
     ):
-        """Tồn kho rất lớn → không bao giờ hết trong kỳ → urgency = ok."""
-        mock_model_io.model_exists.return_value = False
+        """Tồn kho rất lớn → sẽ hết rất lâu nữa (vượt forecast window) → urgency = ok."""
+        history_df = _make_history_df(14, avg=5.0)
+        mock_model = _make_mock_model(history_df, yhat_value=5.0)
+
+        mock_model_io.model_exists.return_value = True
+        mock_model_io.get_model_config.return_value = {"n_forecasts": 7, "n_lags": 14}
+        mock_model_io.load_model.return_value = mock_model
+
         mock_data_svc.get_all_ingredients_of_branch = AsyncMock(
             return_value=[{"id": "ing-001", "name": "Đủ hàng", "unit": "kg"}]
         )
-        mock_data_svc.get_ingredient_consumption = AsyncMock(
-            return_value=_make_history_df(14, avg=5.0)
-        )
+        mock_data_svc.get_ingredient_consumption = AsyncMock(return_value=history_df)
         mock_data_svc.get_current_stock = AsyncMock(return_value=999_999.0)
 
         mock_repo = AsyncMock()
@@ -476,8 +525,8 @@ class TestPredictBranchEdgeCases:
 
         results = await predict_branch("tenant-1", "branch-1", _make_db())
 
+        # Tồn kho rất lớn → days_until >> n_forecasts=7 → urgency ok
         assert results[0].urgency == "ok"
-        assert results[0].stockout_date is None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -486,6 +535,7 @@ class TestPredictBranchEdgeCases:
 
 class TestPredictAllBranches:
     pytestmark = pytest.mark.asyncio
+
     @patch("app.services.predict_service.predict_branch")
     @patch("app.services.predict_service.data_service")
     async def test_calls_predict_branch_for_each_branch(
