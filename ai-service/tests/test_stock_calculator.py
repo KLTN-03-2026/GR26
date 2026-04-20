@@ -362,8 +362,8 @@ class TestGetUrgency:
         assert get_urgency(date.today() + timedelta(days=5)) == "warning"
 
     def test_stockout_in_six_days_is_ok(self):
-        """Hết hàng sau 6 ngày → ok."""
-        assert get_urgency(date.today() + timedelta(days=6)) == "ok"
+        """Hết hàng sau 8 ngày → ok (vượt forecast window mặc định 7 ngày)."""
+        assert get_urgency(date.today() + timedelta(days=8)) == "ok"
 
     def test_stockout_in_far_future_is_ok(self):
         """Hết hàng sau 30 ngày → ok."""
