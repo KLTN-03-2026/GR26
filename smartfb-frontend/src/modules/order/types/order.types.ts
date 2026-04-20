@@ -2,11 +2,18 @@ import type { ApiResponse } from '@shared/types/api.types';
 
 export type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED';
 
-export type OrderSource = 'POS' | 'WEB' | 'MOBILE';
+export type OrderSource = 'POS' | 'WEB' | 'MOBILE' | 'IN_STORE' | 'TAKEAWAY' | 'DELIVERY';
 
 export type PaymentMethod = 'CASH' | 'VIETQR' | 'MOMO' | 'ZALOPAY';
 
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+
+export interface OrderAddonResponse {
+  id: string;
+  addonName: string;
+  quantity: number;
+  price: number;
+}
 
 export interface OrderItemCommand {
   itemId: string;
@@ -36,6 +43,7 @@ export interface OrderItemResponse {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  addons?: OrderAddonResponse[];
   notes?: string;
 }
 
@@ -49,9 +57,13 @@ export interface OrderResponse {
   tableId?: string;
   tableName?: string;
   notes?: string;
+  subtotal?: number;
+  discountAmount?: number;
+  taxAmount?: number;
   totalAmount: number;
   items: OrderItemResponse[];
   createdAt: string;
+  completedAt?: string;
 }
 
 export type OrderApiResponse = ApiResponse<OrderResponse>;

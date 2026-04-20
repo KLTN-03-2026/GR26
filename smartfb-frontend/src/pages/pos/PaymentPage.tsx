@@ -51,7 +51,7 @@ const PaymentPage: React.FC = () => {
       if (!orderId) return;
       setIsLoadingOrder(true);
       try {
-        const response = await orderService.getOrderById(orderId);
+        const response = await orderService.getById(orderId);
         if (response.success && response.data) {
           setOrderData(response.data);
         } else {
