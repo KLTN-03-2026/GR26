@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class GetTopItemsQueryHandler {
     
     private final DailyItemStatJpaRepository dailyItemStatRepo;
+    private final com.smartfnb.report.infrastructure.persistence.ReportDataAccessor reportDataAccessor;
     
     public TopItemsResult handle(GetTopItemsQuery query) {
         log.info("Lấy Top Items: branchId={}, date={}, limit={}", 
@@ -54,7 +55,7 @@ public class GetTopItemsQueryHandler {
         
         return new TopItemsResult(
             query.date(),
-            "Branch Name",  // TODO: Lấy tên branch
+            reportDataAccessor.getBranchName(query.branchId()).orElse("Unknown"),
             topItems
         );
     }

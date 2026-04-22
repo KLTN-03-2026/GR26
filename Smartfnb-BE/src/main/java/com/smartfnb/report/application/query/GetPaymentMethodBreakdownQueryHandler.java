@@ -23,6 +23,7 @@ import java.util.Optional;
 public class GetPaymentMethodBreakdownQueryHandler {
     
     private final DailyRevenueSummaryJpaRepository dailyRevenueSummaryRepo;
+    private final com.smartfnb.report.infrastructure.persistence.ReportDataAccessor reportDataAccessor;
     
     public PaymentMethodBreakdownResult handle(GetPaymentMethodBreakdownQuery query) {
         log.info("Lấy chi tiết thanh toán: branchId={}, date={}", query.branchId(), query.date());
@@ -46,12 +47,12 @@ public class GetPaymentMethodBreakdownQueryHandler {
         // Tính phần trăm cho mỗi phương thức
         return new PaymentMethodBreakdownResult(
             query.date(),
-            "Branch Name",  // TODO: Lấy tên branch
+            reportDataAccessor.getBranchName(query.branchId()).orElse("Unknown"),
             buildPaymentMethodDto("CASH", breakdown.cash(), totalOrders, totalRevenue),
             buildPaymentMethodDto("MOMO", breakdown.momo(), totalOrders, totalRevenue),
             buildPaymentMethodDto("VIETQR", breakdown.vietqr(), totalOrders, totalRevenue),
             buildPaymentMethodDto("BANKING", breakdown.banking(), totalOrders, totalRevenue),
-            buildPaymentMethodDto("OTHER", breakdown.other(), totalOrders, totalRevenue),
+            buildPaymentMethodDto("KHÁC (ZaloPay, Thẻ...)", breakdown.other(), totalOrders, totalRevenue),
             totalRevenue,
             totalOrders
         );
@@ -75,12 +76,12 @@ public class GetPaymentMethodBreakdownQueryHandler {
         BigDecimal zero = BigDecimal.ZERO;
         return new PaymentMethodBreakdownResult(
             query.date(),
-            "Branch Name",
+            reportDataAccessor.getBranchName(query.branchId()).orElse("Unknown"),
             new PaymentMethodDto("CASH", zero, 0, zero),
             new PaymentMethodDto("MOMO", zero, 0, zero),
             new PaymentMethodDto("VIETQR", zero, 0, zero),
             new PaymentMethodDto("BANKING", zero, 0, zero),
-            new PaymentMethodDto("OTHER", zero, 0, zero),
+            new PaymentMethodDto("KHÁC (ZaloPay, Thẻ...)", zero, 0, zero),
             zero,
             0
         );

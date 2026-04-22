@@ -16,6 +16,10 @@ public record BranchRequest(
         String address,
 
         @Size(max = 20, message = "Số điện thoại không hợp lệ")
-        String phone
+        String phone,
+
+        java.math.BigDecimal latitude,
+        
+        java.math.BigDecimal longitude
 ) {
 }

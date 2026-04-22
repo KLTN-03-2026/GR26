@@ -15,7 +15,7 @@ public interface SpringDataExpenseRepository extends JpaRepository<ExpenseJpaEnt
     Optional<ExpenseJpaEntity> findByIdAndDeletedFalse(UUID id);
 
     @Query("SELECT e FROM ExpenseJpaEntity e WHERE e.tenantId = :tenantId AND e.branchId = :branchId AND e.deleted = false " +
-           "AND (:categoryName IS NULL OR LOWER(e.categoryName) LIKE LOWER(CONCAT('%', :categoryName, '%'))) " +
+           "AND (:categoryName IS NULL OR LOWER(e.categoryName) LIKE :categoryName) " +
            "ORDER BY e.expenseDate DESC")
     Page<ExpenseJpaEntity> searchExpenses(UUID tenantId, UUID branchId, String categoryName, Pageable pageable);
 }
