@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Clock, Loader2, Package } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, Clock, Loader2, Package } from 'lucide-react';
 import type { OrderListItemResponse } from '@modules/order/types/order.types';
+import { Button } from '@shared/components/ui/button';
 import { cn } from '@shared/utils/cn';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { formatOrderTime, resolveOrderNavigationTarget } from './orderManagement.utils';
@@ -8,19 +9,48 @@ import { formatOrderTime, resolveOrderNavigationTarget } from './orderManagement
 interface OrderManagementListProps {
   orders: OrderListItemResponse[];
   isLoading: boolean;
+  isError?: boolean;
+  errorMessage?: string;
   onOpenOrder: (order: OrderListItemResponse) => void;
+  onRetry?: () => void;
 }
 
 export const OrderManagementList = ({
   orders,
   isLoading,
+  isError = false,
+  errorMessage,
   onOpenOrder,
+  onRetry,
 }: OrderManagementListProps) => {
   if (isLoading) {
     return (
       <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-4 rounded-[32px] border border-slate-100 bg-white text-slate-400">
         <Loader2 className="h-12 w-12 animate-spin" />
         <p className="font-bold">Đang tải danh sách...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-4 rounded-[32px] border border-rose-100 bg-white px-6 text-center text-rose-500">
+        <AlertCircle className="h-14 w-14" />
+        <div className="space-y-1">
+          <p className="text-lg font-black">Không thể tải danh sách đơn hàng</p>
+          <p className="text-sm font-medium text-slate-500">
+            {errorMessage ?? 'Vui lòng thử tải lại sau vài giây.'}
+          </p>
+        </div>
+        {onRetry ? (
+          <Button
+            type="button"
+            onClick={onRetry}
+            className="rounded-xl bg-orange-500 font-bold text-white hover:bg-orange-600"
+          >
+            Tải lại
+          </Button>
+        ) : null}
       </div>
     );
   }

@@ -2,6 +2,11 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
 
+interface OrderDateRangeFilter {
+  fromDate: string;
+  toDate: string;
+}
+
 interface StatusTab {
   id: OrderStatus | 'ALL';
   label: string;
@@ -22,6 +27,32 @@ export const resolveOrderCreatedAt = (createdAt?: string): Date => {
 
 export const formatOrderTime = (createdAt?: string, formatString = 'HH:mm') => {
   return format(resolveOrderCreatedAt(createdAt), formatString, { locale: vi });
+};
+
+const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toOrderFilterInstant = (
+  dateValue: string,
+  boundary: 'start' | 'end'
+): string | undefined => {
+  if (!DATE_INPUT_PATTERN.test(dateValue)) {
+    return undefined;
+  }
+
+  const time = boundary === 'start' ? '00:00:00.000' : '23:59:59.999';
+  const date = new Date(`${dateValue}T${time}`);
+
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+/**
+ * Chuyển ngày từ input `YYYY-MM-DD` sang Instant ISO để backend lọc `createdAt`.
+ */
+export const buildOrderDateRangeParams = ({ fromDate, toDate }: OrderDateRangeFilter) => {
+  return {
+    from: toOrderFilterInstant(fromDate, 'start'),
+    to: toOrderFilterInstant(toDate, 'end'),
+  };
 };
 
 /**
@@ -71,26 +102,29 @@ export const buildOrderPageSearchParams = ({
   return searchParams.toString();
 };
 
-export const getOrderSummaryCards = (orders: OrderListItemResponse[]) => {
+export const getOrderSummaryCards = (
+  orders: OrderListItemResponse[],
+  totalElements = orders.length
+) => {
   const pendingCount = orders.filter((order) => order.status === 'PENDING').length;
   const processingCount = orders.filter((order) => order.status === 'PROCESSING').length;
 
   return [
     {
       key: 'all',
-      label: 'Tổng đơn đang có',
-      value: orders.length,
+      label: 'Tổng đơn phù hợp',
+      value: totalElements,
       tone: 'bg-slate-900 text-white',
     },
     {
       key: 'pending',
-      label: 'Đơn chờ xử lý',
+      label: 'Chờ xử lý trong trang',
       value: pendingCount,
       tone: 'bg-amber-50 text-amber-700',
     },
     {
       key: 'processing',
-      label: 'Đơn đang làm',
+      label: 'Đang làm trong trang',
       value: processingCount,
       tone: 'bg-blue-50 text-blue-700',
     },

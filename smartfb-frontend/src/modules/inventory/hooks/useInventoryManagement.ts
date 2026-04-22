@@ -9,6 +9,7 @@ import { useInventoryIngredientOptions } from '@modules/inventory/hooks/useInven
 import { useInventorySemiProductOptions } from '@modules/inventory/hooks/useInventorySemiProductOptions';
 import { useRecordProductionBatch } from '@modules/inventory/hooks/useRecordProductionBatch';
 import { useRecordWaste } from '@modules/inventory/hooks/useRecordWaste';
+import { useUpdateThreshold } from '@modules/inventory/hooks/useUpdateThreshold';
 import type {
   AdjustStockPayload,
   ImportStockPayload,
@@ -16,6 +17,7 @@ import type {
   InventoryFilters,
   InventoryItemOption,
   RecordProductionBatchPayload,
+  UpdateThresholdPayload,
   WasteRecordPayload,
 } from '@modules/inventory/types/inventory.types';
 import { usePermission } from '@shared/hooks/usePermission';
@@ -54,6 +56,7 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
   const { mutate: adjustStock, isPending: isAdjusting } = useAdjustStock();
   const { mutate: recordProductionBatch, isPending: isRecordingProduction } = useRecordProductionBatch();
   const { mutate: recordWaste, isPending: isRecordingWaste } = useRecordWaste();
+  const { mutate: updateThreshold, isPending: isUpdatingThreshold } = useUpdateThreshold();
 
   const [filters, setFilters] = useState<InventoryFilters>(DEFAULT_INVENTORY_FILTERS(currentBranchId));
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,7 +64,9 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const [isProductionDialogOpen, setIsProductionDialogOpen] = useState(false);
   const [isWasteDialogOpen, setIsWasteDialogOpen] = useState(false);
+  const [isThresholdDialogOpen, setIsThresholdDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>(undefined);
+  const [selectedThresholdBalance, setSelectedThresholdBalance] = useState<InventoryBalance | null>(null);
   const [activeActionBranchId, setActiveActionBranchId] = useState<string | null>(null);
 
   const balances = useMemo<InventoryBalance[]>(() => data?.data ?? [], [data?.data]);
@@ -168,11 +173,11 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     }
 
     if (isOwner && effectiveBranchFilter === 'all' && currentBranchId) {
-      return `Bạn đang xem toàn chuỗi. Nếu bấm thao tác từ toolbar, hệ thống sẽ áp dụng cho chi nhánh đang làm việc: ${resolveBranchName(currentBranchId)}.`;
+      return `Bạn đang xem toàn chuỗi. Nếu bấm thao tác ,hệ thống sẽ áp dụng cho chi nhánh đang làm việc: ${resolveBranchName(currentBranchId)}.`;
     }
 
     if (isOwner && selectedFilterBranchId && selectedFilterBranchId !== currentBranchId) {
-      return `Thao tác từ toolbar sẽ tự chuyển sang chi nhánh ${resolveBranchName(selectedFilterBranchId)} trước khi mở form.`;
+      return `Thao tác sẽ tự chuyển sang chi nhánh ${resolveBranchName(selectedFilterBranchId)} trước khi mở form.`;
     }
 
     return null;
@@ -299,6 +304,20 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     });
   };
 
+  const handleOpenThreshold = (balance: InventoryBalance) => {
+    setSelectedThresholdBalance(balance);
+    setIsThresholdDialogOpen(true);
+  };
+
+  const handleThresholdSubmit = (payload: UpdateThresholdPayload) => {
+    updateThreshold(payload, {
+      onSuccess: () => {
+        setIsThresholdDialogOpen(false);
+        setSelectedThresholdBalance(null);
+      },
+    });
+  };
+
   return {
     branchOptions,
     canAdjust,
@@ -325,7 +344,10 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     isProductionDialogOpen,
     isRecordingProduction,
     isRecordingWaste,
+    isThresholdDialogOpen,
+    isUpdatingThreshold,
     isWasteDialogOpen,
+    selectedThresholdBalance,
     importItemOptions: isSemiProductSection ? semiProductOptions : ingredientOptions,
     lowStockCount,
     actionHint,
@@ -388,7 +410,13 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
       setCurrentPage(1);
     },
     stockItemOptions,
+    onOpenThreshold: handleOpenThreshold,
     onProductionSubmit: handleProductionSubmit,
+    onSelectThresholdDialogOpen: (open: boolean) => {
+      setIsThresholdDialogOpen(open);
+      if (!open) setSelectedThresholdBalance(null);
+    },
+    onThresholdSubmit: handleThresholdSubmit,
     onWasteSubmit: handleWasteSubmit,
     pageSize: INVENTORY_PAGE_SIZE,
     paginatedBalances,

@@ -12,6 +12,7 @@ import { InventorySummaryCards } from '@modules/inventory/components/InventorySu
 import { InventoryTable } from '@modules/inventory/components/InventoryTable';
 import { InventoryToolbar } from '@modules/inventory/components/InventoryToolbar';
 import { RecordProductionBatchDialog } from '@modules/inventory/components/RecordProductionBatchDialog';
+import { UpdateThresholdDialog } from '@modules/inventory/components/UpdateThresholdDialog';
 import { InventoryTransactionHistory } from '@modules/inventory/components/InventoryTransactionHistory';
 // import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
 // Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement
@@ -84,13 +85,17 @@ export const InventoryManagementContent = () => {
     isRecordingProduction,
     isRecordingWaste,
     isSelectingBranch,
+    isThresholdDialogOpen,
+    isUpdatingThreshold,
     isWasteDialogOpen,
+    selectedThresholdBalance,
     lowStockCount,
     onAdjustSubmit,
     onImportSubmit,
     onOpenAdjust,
     onOpenImport,
     onOpenProduction,
+    onOpenThreshold,
     onOpenWaste,
     onPageChange,
     onProductionSubmit,
@@ -99,9 +104,11 @@ export const InventoryManagementContent = () => {
     onSelectAdjustDialogOpen,
     onSelectImportDialogOpen,
     onSelectProductionDialogOpen,
+    onSelectThresholdDialogOpen,
     onSelectWasteDialogOpen,
     onSetBranchFilter,
     onSetLowStockFilter,
+    onThresholdSubmit,
     onWasteSubmit,
     pageSize,
     paginatedBalances,
@@ -282,6 +289,7 @@ export const InventoryManagementContent = () => {
             onWasteItem={(itemId, branchId) => {
               void onOpenWaste(itemId, branchId);
             }}
+            onEditThreshold={canAdjust ? onOpenThreshold : undefined}
             resolveBranchName={resolveBranchName}
           />
         </TabsContent>
@@ -396,6 +404,7 @@ export const InventoryManagementContent = () => {
             onWasteItem={(itemId, branchId) => {
               void onOpenWaste(itemId, branchId);
             }}
+            onEditThreshold={canAdjust ? onOpenThreshold : undefined}
             resolveBranchName={resolveBranchName}
           />
         </TabsContent>
@@ -465,6 +474,19 @@ export const InventoryManagementContent = () => {
         defaultItemId={selectedItemId}
         isPending={isRecordingWaste}
         onWasteSubmit={onWasteSubmit}
+      />
+
+      <UpdateThresholdDialog
+        open={isThresholdDialogOpen}
+        onOpenChange={onSelectThresholdDialogOpen}
+        itemName={selectedThresholdBalance?.itemName ?? null}
+        unit={selectedThresholdBalance?.unit ?? null}
+        currentMinLevel={selectedThresholdBalance?.minLevel ?? 0}
+        isPending={isUpdatingThreshold}
+        onSubmit={(minLevel) => {
+          if (!selectedThresholdBalance) return;
+          onThresholdSubmit({ balanceId: selectedThresholdBalance.id, minLevel });
+        }}
       />
 
       {/* Dialog tạo nguyên liệu mới trong danh mục kho */}

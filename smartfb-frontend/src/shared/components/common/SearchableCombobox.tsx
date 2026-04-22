@@ -162,7 +162,11 @@ export const SearchableCombobox = forwardRef<HTMLButtonElement, SearchableCombob
             />
           </div>
 
-          <div className="max-h-64 overflow-y-auto p-1">
+          <div
+            className="max-h-64 overflow-y-auto p-1"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             {filteredOptions.length === 0 && !canUseCustomValue ? (
               <p className="px-3 py-3 text-sm text-text-secondary">{emptyMessage}</p>
             ) : (

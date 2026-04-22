@@ -1,6 +1,5 @@
 import { forwardRef, useEffect, useState, type ChangeEvent, type FocusEvent } from 'react';
 import { Input, type InputProps } from '@shared/components/ui/input';
-import { cn } from '@shared/utils/cn';
 
 interface NumericInputProps
   extends Omit<InputProps, 'type' | 'value' | 'defaultValue' | 'onChange' | 'inputMode'> {

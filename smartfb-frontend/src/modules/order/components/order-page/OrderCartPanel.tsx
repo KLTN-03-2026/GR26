@@ -7,7 +7,6 @@ import {
   ReceiptText,
   Trash2,
 } from "lucide-react";
-import { OrderStatusBadge } from "@modules/order/components/order-management/OrderStatusBadge";
 import type {
   OrderDraftItem,
   OrderStatus,

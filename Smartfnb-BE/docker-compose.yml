@@ -3,26 +3,26 @@ services:
   # ================================================================
   # PostgreSQL 16 — Database chính
   # ================================================================
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: smartfnb-postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: smartfnb
-  #     POSTGRES_USER: smartfnb
-  #     POSTGRES_PASSWORD: smartfnb123
-  #     PGDATA: /var/lib/postgresql/data/pgdata
-  #   ports:
-  #     - "5432:5432"          # Expose ra host để DBeaver kết nối
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - smartfnb-net
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U smartfnb -d smartfnb"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartfnb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smartfnb
+      POSTGRES_USER: smartfnb
+      POSTGRES_PASSWORD: smartfnb123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"          # Expose ra host để DBeaver kết nối
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smartfnb-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartfnb -d smartfnb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ================================================================
   # Redis 7 — In-memory Cache & Message Broker

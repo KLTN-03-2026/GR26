@@ -179,6 +179,14 @@ export interface InventoryTransactionListResult {
 }
 
 /**
+ * Payload cập nhật mức tồn tối thiểu để hệ thống cảnh báo low-stock.
+ */
+export interface UpdateThresholdPayload {
+  balanceId: string;
+  minLevel: number;
+}
+
+/**
  * Dữ liệu kiểm kho một dòng: số lượng thực tế người dùng nhập vào.
  */
 export interface StockCheckEntry {

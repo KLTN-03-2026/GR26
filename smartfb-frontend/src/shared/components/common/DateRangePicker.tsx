@@ -50,6 +50,10 @@ const formatDateValue = (value?: Date): string | undefined => {
   return format(value, 'yyyy-MM-dd');
 };
 
+const isSameDate = (left?: Date, right?: Date): boolean => {
+  return Boolean(left && right && formatDateValue(left) === formatDateValue(right));
+};
+
 /**
  * Dùng chung cho các bộ lọc chọn khoảng ngày theo pattern `Button + Popover + Calendar`.
  * Giá trị trả ra vẫn là chuỗi ngày để giữ nguyên contract với hook/service hiện có.
@@ -122,12 +126,17 @@ export const DateRangePicker = ({
           numberOfMonths={2}
           locale={vi}
           onSelect={(nextRange) => {
+            const hadRangeStart = Boolean(selectedRange?.from);
+            const hadRangeEnd = Boolean(selectedRange?.to);
+            const isStartingNewRange =
+              isSameDate(nextRange?.from, nextRange?.to) && (!hadRangeStart || hadRangeEnd);
+
             onChange({
               from: formatDateValue(nextRange?.from),
-              to: formatDateValue(nextRange?.to),
+              to: isStartingNewRange ? undefined : formatDateValue(nextRange?.to),
             });
 
-            if (nextRange?.from && nextRange?.to) {
+            if (nextRange?.from && nextRange?.to && !isStartingNewRange) {
               setOpen(false);
             }
           }}

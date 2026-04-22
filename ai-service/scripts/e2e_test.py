@@ -70,12 +70,17 @@ async def main() -> None:
         # 5. Kiểm tra model files
         print("\n--- [5] model_io ---")
         models = model_io.list_all_models()
-        print(f"✓ Models đã train: {models or '(chưa có)'}")
+        print(f"✓ Models đã train: {len(models)} branch(es)")
 
-        for tenant_id in models:
-            meta = model_io.get_train_metadata(tenant_id)
+        for m in models:
+            meta = model_io.get_train_metadata(m["tenant_id"], m["branch_id"])
             if meta:
-                print(f"  {tenant_id}: trained_at={meta.get('trained_at')} | series={meta.get('series_count')}")
+                print(
+                    f"  tenant={m['tenant_id']} branch={m['branch_id']}: "
+                    f"trained_at={meta.get('trained_at')} | "
+                    f"series={meta.get('series_count')} | "
+                    f"mae={meta.get('mae')} | mape={meta.get('mape')}"
+                )
 
     print("\n=== E2E Test XONG ===")
 

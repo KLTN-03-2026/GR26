@@ -21,6 +21,8 @@ export const queryKeys = {
   // Tables
   tables: {
     all: ['tables'] as const,
+    // Prefix danh sách bàn, dùng khi chỉ cần refresh trạng thái bàn mà không đụng khu vực.
+    lists: ['tables', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['tables', 'list', filters] as const,
     detail: (id: string) => ['tables', 'detail', id] as const,
     zones: ['tables', 'zones'] as const,
@@ -69,6 +71,8 @@ export const queryKeys = {
   // Orders
   orders: {
     all: ['orders'] as const,
+    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của bàn.
+    lists: ['orders', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
     active: ['orders', 'active'] as const,
@@ -82,6 +86,13 @@ export const queryKeys = {
     invoiceDetail: (id: string) => ['payments', 'invoice-detail', id] as const,
     invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
     orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
+  },
+
+  // Expenses
+  expenses: {
+    all: ['expenses'] as const,
+    list: (filters?: Record<string, unknown>) => ['expenses', 'list', filters] as const,
+    detail: (id: string) => ['expenses', 'detail', id] as const,
   },
 
   // Inventory
@@ -129,6 +140,7 @@ export const queryKeys = {
   shifts: {
     templates: {
       all: ['shifts', 'templates'] as const,
+      list: (filters?: Record<string, unknown>) => ['shifts', 'templates', 'list', filters] as const,
       detail: (id: string) => ['shifts', 'templates', id] as const,
     },
     schedules: {
@@ -142,7 +154,14 @@ export const queryKeys = {
 
   // Reports
   reports: {
+    // Báo cáo doanh thu tổng quan theo khoảng ngày của một chi nhánh.
     revenue: (filters?: Record<string, unknown>) => ['reports', 'revenue', filters] as const,
+    // Heatmap doanh thu theo từng giờ trong một ngày để dựng chart cột.
+    hourlyHeatmap: (filters?: Record<string, unknown>) => ['reports', 'hourly-heatmap', filters] as const,
+    // Top sản phẩm bán chạy trong ngày của chi nhánh đang chọn.
+    topItems: (filters?: Record<string, unknown>) => ['reports', 'top-items', filters] as const,
+    // Tỷ trọng thanh toán theo phương thức để hiển thị breakdown.
+    paymentBreakdown: (filters?: Record<string, unknown>) => ['reports', 'payment-breakdown', filters] as const,
     inventory: (filters?: Record<string, unknown>) => ['reports', 'inventory', filters] as const,
     hr: (filters?: Record<string, unknown>) => ['reports', 'hr', filters] as const,
   },

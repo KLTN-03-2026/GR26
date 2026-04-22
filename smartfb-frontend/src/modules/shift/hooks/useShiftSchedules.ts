@@ -1,8 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
+import { useAuthStore } from '@modules/auth/stores/authStore';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { shiftService } from '../services/shiftService';
 import type { RegisterShiftPayload } from '../types/shift.types';
 import { useToast } from '@shared/hooks/useToast';
+import type { ApiResponse } from '@shared/types/api.types';
+
+const getShiftScheduleMutationErrorMessage = (error: unknown, fallbackMessage: string) => {
+    if (isAxiosError<ApiResponse<unknown>>(error)) {
+        return error.response?.data?.error?.message ?? fallbackMessage;
+    }
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallbackMessage;
+};
 
 /**
  * Hook quản lý lịch ca (Shift Schedules)
@@ -11,6 +26,7 @@ import { useToast } from '@shared/hooks/useToast';
 export const useShiftSchedules = () => {
     const queryClient = useQueryClient();
     const toast = useToast();
+    const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
 
     /**
      * Lấy lịch ca của chi nhánh trong khoảng ngày
@@ -19,13 +35,17 @@ export const useShiftSchedules = () => {
      */
     const useBranchSchedule = (startDate: string, endDate: string) => {
         return useQuery({
-            queryKey: queryKeys.shifts.schedules.list({ startDate, endDate }),
+            queryKey: queryKeys.shifts.schedules.list({
+                startDate,
+                endDate,
+                branchId: currentBranchId ?? 'all',
+            }),
             queryFn: async () => {
                 const response = await shiftService.getBranchSchedule(startDate, endDate);
                 return response.data ?? [];
             },
             staleTime: 2 * 60 * 1000, // 2 phút
-            enabled: Boolean(startDate && endDate),
+            enabled: Boolean(startDate && endDate && currentBranchId),
         });
     };
 
@@ -57,8 +77,8 @@ export const useShiftSchedules = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts', 'schedules', 'my'] });
             toast.success('Đăng ký ca thành công');
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.error?.message || 'Đăng ký ca thất bại');
+        onError: (error: unknown) => {
+            toast.error(getShiftScheduleMutationErrorMessage(error, 'Đăng ký ca thất bại'));
         },
     });
 
@@ -72,8 +92,8 @@ export const useShiftSchedules = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts', 'schedules', 'my'] });
             toast.success('Check-in thành công');
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.error?.message || 'Check-in thất bại');
+        onError: (error: unknown) => {
+            toast.error(getShiftScheduleMutationErrorMessage(error, 'Check-in thất bại'));
         },
     });
 
@@ -87,8 +107,8 @@ export const useShiftSchedules = () => {
             queryClient.invalidateQueries({ queryKey: ['shifts', 'schedules', 'my'] });
             toast.success('Check-out thành công');
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.error?.message || 'Check-out thất bại');
+        onError: (error: unknown) => {
+            toast.error(getShiftScheduleMutationErrorMessage(error, 'Check-out thất bại'));
         },
     });
 

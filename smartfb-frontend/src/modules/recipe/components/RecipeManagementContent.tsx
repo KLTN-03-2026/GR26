@@ -26,17 +26,14 @@ import { Tabs, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 const RECIPE_TARGET_TYPE_OPTIONS: Array<{
   type: RecipeTargetItemType;
   icon: typeof ChefHat;
-  description: string;
 }> = [
   {
     type: 'SELLABLE',
     icon: ChefHat,
-    description: 'Quản lý công thức cho món bán trực tiếp phục vụ khách.',
   },
   {
     type: 'SUB_ASSEMBLY',
     icon: Boxes,
-    description: 'Quản lý công thức cho bán thành phẩm dùng trong sơ chế, pha cốt hoặc topping nền.',
   },
 ];
 
@@ -251,11 +248,7 @@ export const RecipeManagementContent = () => {
           </TabsList>
         </Tabs>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {
-            RECIPE_TARGET_TYPE_OPTIONS.find((option) => option.type === targetItemType)?.description
-          }
-        </div>
+  
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">

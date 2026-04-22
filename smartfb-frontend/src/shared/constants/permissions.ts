@@ -18,8 +18,13 @@ export const PERMISSIONS = {
   MENU_VIEW: 'MENU_VIEW',
   MENU_EDIT: 'MENU_EDIT',
   // Backend hiện đang phát PAYMENT_CREATE trong JWT; giữ thêm PAYMENT_PROCESS để tương thích token cũ.
+  PAYMENT_VIEW: 'PAYMENT_VIEW',
   PAYMENT_CREATE: 'PAYMENT_CREATE',
   PAYMENT_PROCESS: 'PAYMENT_PROCESS',
+  // Xem danh sách và chi tiết phiếu chi theo chi nhánh đang làm việc.
+  EXPENSE_VIEW: 'EXPENSE_VIEW',
+  // Tạo, sửa, xóa phiếu chi vận hành.
+  EXPENSE_MANAGE: 'EXPENSE_MANAGE',
   KDS_VIEW: 'KDS_VIEW',
   KDS_UPDATE: 'KDS_UPDATE',
   INVENTORY_VIEW: 'INVENTORY_VIEW',
@@ -39,7 +44,11 @@ export const PERMISSIONS = {
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
 // Quyền mở luồng thanh toán cần hỗ trợ cả mã mới từ backend và mã FE cũ để tránh redirect sai route.
-const PAYMENT_ROUTE_PERMISSIONS = [PERMISSIONS.PAYMENT_CREATE, PERMISSIONS.PAYMENT_PROCESS] as const;
+const PAYMENT_ROUTE_PERMISSIONS = [
+  PERMISSIONS.PAYMENT_VIEW,
+  PERMISSIONS.PAYMENT_CREATE,
+  PERMISSIONS.PAYMENT_PROCESS,
+] as const;
 
 /**
  * Gom nhóm quyền tối thiểu để mở từng route staff.
@@ -60,6 +69,7 @@ export const STAFF_ROUTE_PERMISSIONS = {
     ...PAYMENT_ROUTE_PERMISSIONS,
   ],
   PAYMENT: [...PAYMENT_ROUTE_PERMISSIONS],
+  EXPENSES: [PERMISSIONS.EXPENSE_VIEW, PERMISSIONS.EXPENSE_MANAGE, ...PAYMENT_ROUTE_PERMISSIONS],
   KDS: [PERMISSIONS.KDS_VIEW, PERMISSIONS.KDS_UPDATE],
   MENU: [PERMISSIONS.MENU_VIEW],
   RECIPES: [PERMISSIONS.MENU_VIEW],

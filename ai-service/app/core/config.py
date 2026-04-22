@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # --- Database ---
     database_url: str = (
-        "postgresql+asyncpg://smartfnb:password@localhost:5432/smartfnb_db"
+        "postgresql+asyncpg://smartfnb:password@localhost:5433/smartfnb_db"
     )
 
     # --- AI Service ---
@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # --- Model Storage ---
     model_storage_dir: str = "./storage/models"
 
+    # --- Logging ---
+    log_dir: str = "./logs"  # Folder gốc chứa log — tổ chức theo ngày bên trong
+
     # --- Scheduler ---
     train_cron_hour: int = 2
     train_cron_day_of_week: str = "sun"
@@ -52,9 +55,11 @@ class Settings(BaseSettings):
     weather_cache_days: int = 1
 
     # --- NeuralProphet ---
-    np_n_lags: int = 14
+    np_n_lags: int = 28
     np_n_forecasts: int = 7
-    np_epochs: int = 100
+    np_epochs: int = 150
+    np_batch_size: int = 32
+    np_min_days_required: int = 30
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

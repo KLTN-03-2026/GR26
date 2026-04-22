@@ -32,7 +32,6 @@ export const MenuManagementContent = () => {
     isAddonError,
     isAddonFetching,
     isAddonLoading,
-    isBranchConfigError,
     isBranchConfigFetching,
     isBranchConfigLoading,
     isBranchMode,
@@ -202,36 +201,7 @@ export const MenuManagementContent = () => {
           </div>
         </div>
 
-        {isBranchMode ? (
-          <div className="mb-4 rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50 px-4 py-4 shadow-sm">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-gray-900">
-                  Đang áp dụng cấu hình theo chi nhánh: {selectedBranchName}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {canManageMenu
-                    ? 'Giá hiển thị và công tắc bán trên từng card đang dùng cấu hình của chi nhánh này.'
-                    : 'Giá hiển thị và trạng thái bán trên từng card đang dùng cấu hình của chi nhánh này.'}
-                </p>
-              </div>
-
-              <div className="text-xs text-gray-500">
-                {isBranchConfigLoading || isBranchConfigFetching
-                  ? 'Đang đồng bộ cấu hình chi nhánh...'
-                  : isBranchConfigError
-                    ? 'Không thể tải đầy đủ cấu hình chi nhánh. Hệ thống đang tạm hiển thị theo giá gốc.'
-                    : 'Đã đồng bộ cấu hình chi nhánh'}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4 rounded-3xl border border-dashed border-amber-200 bg-white/90 px-4 py-4 text-sm text-gray-600 shadow-sm">
-            {canManageMenu
-              ? 'Chọn một chi nhánh ở sidebar để thiết lập giá bán và trạng thái phục vụ riêng theo từng cơ sở.'
-              : 'Chọn một chi nhánh ở sidebar để xem giá bán và trạng thái phục vụ riêng theo từng cơ sở.'}
-          </div>
-        )}
+       
 
         {paginatedMenus.length === 0 ? (
           <div className="flex min-h-[18rem] items-center justify-center rounded-3xl border border-border bg-card px-6 py-10 text-center shadow-card sm:min-h-[20rem]">
