@@ -20,10 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.socket.client.WebSocketClient;
@@ -109,8 +111,12 @@ public class OrderWebSocketIntegrationTest {
         BlockingQueue<OrderResponse> client2Messages = new LinkedBlockingDeque<>();
 
         try {
+            // Prepare JWT headers for WebSocket connection
+            WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
+            headers.add("Authorization", "Bearer mock-jwt-token");
+            
             // Client 1 connect và subscribe
-            StompSession session1 = stompClient.connect(webSocketUrl, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
+            StompSession session1 = stompClient.connect(webSocketUrl, headers, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
             session1.subscribe("/topic/orders/" + branchId, new StompFrameHandler() {
                 @Override
                 public Type getPayloadType(StompHeaders headers) {
@@ -126,7 +132,7 @@ public class OrderWebSocketIntegrationTest {
             });
 
             // Client 2 connect và subscribe (cùng topic)
-            StompSession session2 = stompClient.connect(webSocketUrl, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
+            StompSession session2 = stompClient.connect(webSocketUrl, headers, new StompSessionHandlerAdapter() {}).get(5, TimeUnit.SECONDS);
             session2.subscribe("/topic/orders/" + branchId, new StompFrameHandler() {
                 @Override
                 public Type getPayloadType(StompHeaders headers) {
