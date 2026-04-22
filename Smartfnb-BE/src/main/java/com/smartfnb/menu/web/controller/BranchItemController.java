@@ -51,6 +51,23 @@ public class BranchItemController {
     }
 
     /**
+     * Lấy toàn bộ danh sách món ăn kèm giá theo chi nhánh.
+     * Để tránh N+1 API gọi để lấy giá từng chi nhánh.
+     *
+     * @param branchId ID chi nhánh
+     * @return danh sách thông tin giá kết hợp của toàn bộ menu
+     */
+    @GetMapping
+    @PreAuthorize("hasPermission(null, 'MENU_VIEW')")
+    @Operation(summary = "Lấy danh sách giá toàn bộ menu tại chi nhánh")
+    public ResponseEntity<ApiResponse<java.util.List<BranchItemResponse>>> listBranchMenuItems(
+            @PathVariable UUID branchId) {
+        
+        java.util.List<BranchItemResponse> result = menuItemQueryHandler.listBranchMenuItems(branchId);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    /**
      * Thiết lập giá bán riêng và trạng thái phục vụ cho một món tại chi nhánh.
      * Dùng upsert: cập nhật nếu đã có cài đặt, tạo mới nếu chưa có.
      * branchPrice = null → xóa giá riêng, quay về dùng base_price.
