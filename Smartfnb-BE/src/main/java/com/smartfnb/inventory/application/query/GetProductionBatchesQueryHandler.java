@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Query Handler lấy danh sách và chi tiết mẻ sản xuất bán thành phẩm.
  * Batch-lookup tên item và tên nhân viên để tránh N+1.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 @Component

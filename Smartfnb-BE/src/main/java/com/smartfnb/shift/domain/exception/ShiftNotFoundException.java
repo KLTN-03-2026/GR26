@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy ca làm việc.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public class ShiftNotFoundException extends SmartFnbException {

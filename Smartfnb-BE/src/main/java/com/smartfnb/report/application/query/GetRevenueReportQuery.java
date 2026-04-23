@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Query: Lấy báo cáo doanh thu.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record GetRevenueReportQuery(

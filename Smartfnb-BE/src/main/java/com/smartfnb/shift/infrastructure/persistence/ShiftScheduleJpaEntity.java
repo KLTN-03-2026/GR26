@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng shift_schedules (ca làm việc thực tế).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity

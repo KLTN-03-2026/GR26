@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>Truy cập: http://localhost:8080/swagger-ui.html</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Configuration

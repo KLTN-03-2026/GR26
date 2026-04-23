@@ -25,7 +25,7 @@ import java.util.UUID;
  * Query Handler xử lý các truy vấn READ-ONLY cho món ăn và branch items.
  * Hỗ trợ tìm kiếm pg_trgm và lấy giá theo chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component

@@ -15,7 +15,7 @@ import java.util.UUID;
  * JPA Entity cho bảng purchase_orders.
  * Vòng đời: DRAFT → SENT → RECEIVED | CANCELLED
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-07
  */
 @Entity

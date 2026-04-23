@@ -18,7 +18,7 @@ import java.util.UUID;
  * @param maxStaff  Số nhân viên tối đa (≥ minStaff)
  * @param color     Màu hex cho UI calendar (tuỳ chọn, VD: "#FF5733")
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record CreateShiftTemplateCommand(

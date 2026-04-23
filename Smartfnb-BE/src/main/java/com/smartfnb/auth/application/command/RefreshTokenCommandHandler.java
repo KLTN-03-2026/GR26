@@ -25,7 +25,7 @@ import java.util.UUID;
  * <p>Lưu ý: Để bảo mật cao hơn (rotate refresh), cần lưu refresh token vào DB.
  * Hiện tại implement stateless — có thể nâng cấp sau.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

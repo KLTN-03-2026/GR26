@@ -15,7 +15,7 @@ import java.time.Instant;
  * }</pre>
  *
  * @param <T> kiểu dữ liệu của trường data
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

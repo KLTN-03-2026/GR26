@@ -12,7 +12,7 @@ import java.util.UUID;
  * Repository cho bảng user_roles.
  * Dùng để gán/thu hồi role cho người dùng trong tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @Repository

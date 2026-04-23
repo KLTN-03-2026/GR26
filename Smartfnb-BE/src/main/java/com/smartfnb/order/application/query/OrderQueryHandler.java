@@ -27,7 +27,7 @@ import jakarta.persistence.criteria.Predicate;
 /**
  * Xử lý các query liên quan đến đơn hàng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-31
  */
 @Component

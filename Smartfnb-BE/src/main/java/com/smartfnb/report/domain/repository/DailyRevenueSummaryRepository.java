@@ -9,7 +9,7 @@ import java.util.UUID;
  * Repository interface cho DailyRevenueSummary.
  * Không import JPA — thuần Java interface.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public interface DailyRevenueSummaryRepository {

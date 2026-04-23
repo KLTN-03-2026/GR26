@@ -21,7 +21,7 @@ import java.util.UUID;
  * <p>Sử dụng JJWT 0.12.x với thuật toán HMAC-SHA256.</p>
  * <p>Access token: 1 giờ | Refresh token: 7 ngày</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

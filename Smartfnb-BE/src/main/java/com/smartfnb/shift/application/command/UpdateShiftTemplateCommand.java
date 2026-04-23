@@ -19,7 +19,7 @@ import java.util.UUID;
  * @param color       Màu hex mới
  * @param active      Trạng thái active (true/false)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record UpdateShiftTemplateCommand(

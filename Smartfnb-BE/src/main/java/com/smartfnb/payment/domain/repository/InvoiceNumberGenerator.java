@@ -6,7 +6,7 @@ import java.util.UUID;
  * Service để sinh ra invoice_number duy nhất.
  * Có thể implement bằng Redis counter hoặc Database sequence.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public interface InvoiceNumberGenerator {

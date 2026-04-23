@@ -10,7 +10,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng table_zones.
  * Tất cả query đều được scope theo branchId để đảm bảo data isolation.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface TableZoneJpaRepository extends JpaRepository<TableZoneJpaEntity, UUID> {

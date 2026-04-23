@@ -14,7 +14,7 @@ import java.util.UUID;
  * <p>Lưu ý: Ưu tiên dùng TenantContext.getCurrentUserId() nếu đã có,
  * vì nhanh hơn và không cần đọc SecurityContext.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 public final class SecurityUtils {

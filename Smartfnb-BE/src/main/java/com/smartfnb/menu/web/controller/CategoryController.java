@@ -23,7 +23,7 @@ import java.util.UUID;
  * REST Controller quản lý danh mục thực đơn.
  * Controller chỉ delegate — không chứa business logic.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @RestController

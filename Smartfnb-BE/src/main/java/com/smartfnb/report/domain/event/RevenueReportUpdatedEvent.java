@@ -9,7 +9,7 @@ import java.util.UUID;
  * Domain Event: Báo cáo doanh thu đã được cập nhật.
  * Consumer: Dashboard, Analytics module.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record RevenueReportUpdatedEvent(

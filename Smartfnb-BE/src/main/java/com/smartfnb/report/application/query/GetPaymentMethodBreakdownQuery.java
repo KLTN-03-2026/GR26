@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Query: Lấy chi tiết thanh toán theo phương thức.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record GetPaymentMethodBreakdownQuery(

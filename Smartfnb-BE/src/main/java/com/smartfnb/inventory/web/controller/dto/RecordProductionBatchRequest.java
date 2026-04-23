@@ -15,7 +15,7 @@ import java.util.UUID;
  * @param unit                 Đơn vị tính đầu ra (phải khớp với unit trong tồn kho)
  * @param note                 Ghi chú mẻ sản xuất (tùy chọn)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 public record RecordProductionBatchRequest(

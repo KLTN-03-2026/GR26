@@ -14,7 +14,7 @@ import java.util.UUID;
  * Implementation của InvoiceRepository.
  * Chuyển đổi giữa Domain Entity Invoice và JPA Entity InvoiceJpaEntity.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

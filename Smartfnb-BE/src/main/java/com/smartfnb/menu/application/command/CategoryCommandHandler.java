@@ -25,7 +25,7 @@ import java.util.UUID;
  * Command Handler xử lý toàn bộ CRUD cho danh mục thực đơn.
  * Bao gồm: tạo, cập nhật, và xóa (soft delete ngầm qua is_active = false).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component

@@ -12,7 +12,7 @@ import java.util.UUID;
  * Lưu trữ OTP (đã hash) dùng cho quên mật khẩu / xác thực email.
  * OTP chỉ sử dụng một lần (is_used) và có thời hạn sử dụng (expires_at).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Entity

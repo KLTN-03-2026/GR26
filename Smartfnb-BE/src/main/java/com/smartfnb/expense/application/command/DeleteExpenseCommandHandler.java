@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Handler cho lệnh xóa mềm/hủy hóa đơn chi.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-17
  */
 @Service

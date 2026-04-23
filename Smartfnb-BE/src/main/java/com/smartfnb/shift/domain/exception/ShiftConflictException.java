@@ -5,7 +5,7 @@ import com.smartfnb.shared.exception.SmartFnbException;
 /**
  * Exception khi nhân viên đăng ký trùng ca làm việc.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public class ShiftConflictException extends SmartFnbException {
