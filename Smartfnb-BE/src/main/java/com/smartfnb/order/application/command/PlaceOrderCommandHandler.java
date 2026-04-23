@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * Xử lý lệnh tạo đơn hàng.
  * Luồng: Validate bàn -> Kiểm tra tồn kho -> Tạo đơn -> Publish event
  *
- * @author vutq
+ * @author SmartF&B Team
  */
 @Component
 @RequiredArgsConstructor

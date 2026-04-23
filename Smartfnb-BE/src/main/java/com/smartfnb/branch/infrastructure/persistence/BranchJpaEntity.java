@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * JPA Entity quản lý chi nhánh của Tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Entity

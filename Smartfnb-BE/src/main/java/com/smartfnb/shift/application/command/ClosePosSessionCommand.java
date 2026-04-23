@@ -16,7 +16,7 @@ import java.util.UUID;
  * @param endingCashActual  Tiền mặt thực tế kiểm đếm
  * @param note              Ghi chú khi đóng ca (tuỳ chọn)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record ClosePosSessionCommand(

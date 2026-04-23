@@ -8,7 +8,7 @@ import java.util.UUID;
  * DTO request tạo bàn mới.
  * branchId lấy từ path variable, tenantId lấy từ JWT.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record CreateTableRequest(

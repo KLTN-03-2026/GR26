@@ -5,7 +5,7 @@ package com.smartfnb.payment.domain.model;
  * Luồng: PENDING → COMPLETED hoặc FAILED
  * Hoàn tiền: COMPLETED → REFUNDED
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public enum PaymentStatus {

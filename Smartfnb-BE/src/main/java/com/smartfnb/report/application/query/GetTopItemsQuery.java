@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Query: Lấy Top 10 sản phẩm bán chạy.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record GetTopItemsQuery(

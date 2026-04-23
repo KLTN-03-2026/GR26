@@ -32,7 +32,7 @@ import com.smartfnb.shared.web.PageResponse;
  *   <li>PUT    /api/v1/staff/{id}/roles     — Gán roles cho nhân viên</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @RestController

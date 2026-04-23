@@ -10,7 +10,7 @@ import java.util.UUID;
  * Request DTO để tạo QR Code thanh toán.
  * Thu ngân chọn phương thức QR (VIETQR hoặc MOMO) → tạo QR code.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record ProcessQRPaymentRequest(

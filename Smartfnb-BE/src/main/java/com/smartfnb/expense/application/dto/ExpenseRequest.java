@@ -7,7 +7,7 @@ import java.time.Instant;
 /**
  * DTO request cho tạo/cập nhật Hóa đơn chi (Expense).
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-17
  */
 public record ExpenseRequest(

@@ -11,7 +11,7 @@ import java.util.UUID;
  *
  * <p>Quy tắc: KHÔNG bao giờ lấy tenantId từ request body — luôn dùng class này.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 public final class TenantContext {

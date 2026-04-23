@@ -24,7 +24,7 @@ import java.util.Map;
  * }</pre>
  * </p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Slf4j

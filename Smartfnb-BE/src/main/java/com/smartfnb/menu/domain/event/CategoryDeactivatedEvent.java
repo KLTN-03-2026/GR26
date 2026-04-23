@@ -7,7 +7,7 @@ import java.util.UUID;
  * Sự kiện được phát khi danh mục bị vô hiệu hóa.
  * Consumer: MenuItem service cascade deactivate tất cả món trong danh mục.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record CategoryDeactivatedEvent(

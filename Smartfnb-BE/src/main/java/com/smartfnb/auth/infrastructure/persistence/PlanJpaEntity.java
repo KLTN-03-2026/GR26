@@ -12,7 +12,7 @@ import java.util.UUID;
  * JPA Entity cho bảng plans.
  * Đại diện cho gói dịch vụ SaaS: Basic / Standard / Premium.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Entity

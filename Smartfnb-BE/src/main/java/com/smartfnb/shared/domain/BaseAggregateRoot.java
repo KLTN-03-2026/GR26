@@ -19,7 +19,7 @@ import java.util.UUID;
  *
  * <p>Quy tắc multi-tenant: mọi query PHẢI filter theo tenantId.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Getter

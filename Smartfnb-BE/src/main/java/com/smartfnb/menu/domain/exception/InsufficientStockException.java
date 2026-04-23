@@ -6,7 +6,7 @@ import com.smartfnb.shared.exception.SmartFnbException;
  * Exception khi tồn kho nguyên liệu không đủ để phục vụ đơn hàng.
  * Dùng trong InventoryCheckService trước khi đặt đơn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public class InsufficientStockException extends SmartFnbException {

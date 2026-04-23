@@ -12,7 +12,7 @@ import lombok.*;
  *
  * <p>Cấu trúc DB: permissions(id VARCHAR(60) PK, module VARCHAR, description VARCHAR)</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27 (sửa: String id thay UUID để match DB schema)
  */
 @Entity

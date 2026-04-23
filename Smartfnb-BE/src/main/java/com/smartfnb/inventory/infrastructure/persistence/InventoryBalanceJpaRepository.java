@@ -17,7 +17,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho inventory_balances.
  * Dùng pessimistic lock khi update để tránh lost update.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 @Repository

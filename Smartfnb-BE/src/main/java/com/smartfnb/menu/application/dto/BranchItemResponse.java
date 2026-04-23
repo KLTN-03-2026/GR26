@@ -10,7 +10,7 @@ import java.util.UUID;
  * DTO response trả về thông tin món ăn kết hợp với giá chi nhánh.
  * effective_price = branchPrice nếu có, ngược lại dùng basePrice.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record BranchItemResponse(

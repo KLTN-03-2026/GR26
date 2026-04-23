@@ -19,7 +19,7 @@ import java.util.UUID;
  * @param isLowStock     true nếu đang dưới ngưỡng cảnh báo
  * @param updatedAt      thời điểm cập nhật cuối
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public record InventoryBalanceResult(

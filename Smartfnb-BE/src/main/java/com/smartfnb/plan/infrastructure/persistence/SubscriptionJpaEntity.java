@@ -13,7 +13,7 @@ import java.util.UUID;
  * <p>Một tenant tại một thời điểm chỉ có 1 subscription ACTIVE.
  * Lịch sử thanh toán/nâng cấp được ghi nhận qua status cũ → EXPIRED.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Entity

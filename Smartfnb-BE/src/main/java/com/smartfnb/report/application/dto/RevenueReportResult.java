@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Kết quả báo cáo doanh thu.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record RevenueReportResult(

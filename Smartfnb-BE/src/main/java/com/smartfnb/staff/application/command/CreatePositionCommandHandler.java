@@ -13,7 +13,7 @@ import java.util.UUID;
 /**
  * Handler xử lý lệnh tạo chức vụ mới (S-15).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

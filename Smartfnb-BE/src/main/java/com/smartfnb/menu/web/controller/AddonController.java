@@ -22,7 +22,7 @@ import java.util.UUID;
 /**
  * REST Controller quản lý Addon/Topping trong thực đơn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @RestController

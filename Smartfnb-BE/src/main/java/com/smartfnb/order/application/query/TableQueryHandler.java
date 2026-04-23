@@ -18,7 +18,7 @@ import java.util.UUID;
  * Query Handler xử lý các truy vấn READ-ONLY cho Table và TableZone.
  * Không có @Transactional — chỉ đọc dữ liệu.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Component

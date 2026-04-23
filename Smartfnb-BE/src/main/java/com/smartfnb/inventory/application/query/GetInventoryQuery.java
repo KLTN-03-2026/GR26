@@ -11,7 +11,7 @@ import java.util.UUID;
  * @param page     trang hiện tại (0-indexed)
  * @param size     số phần tử mỗi trang (tối đa 100)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public record GetInventoryQuery(

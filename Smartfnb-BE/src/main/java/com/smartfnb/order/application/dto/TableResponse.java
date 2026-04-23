@@ -9,7 +9,7 @@ import java.util.UUID;
  * DTO response trả về thông tin bàn.
  * Dùng cho cả danh sách sơ đồ bàn và chi tiết bàn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record TableResponse(

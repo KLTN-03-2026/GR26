@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Controller quản lý chi nhánh của Tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @RestController

@@ -29,7 +29,7 @@ import java.util.UUID;
  * <p>Có thể swap sang S3FileStorageService bằng cách implement FileStorageService
  * và đánh dấu bean phù hợp với @Primary hoặc @ConditionalOnProperty.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-09
  */
 @Slf4j

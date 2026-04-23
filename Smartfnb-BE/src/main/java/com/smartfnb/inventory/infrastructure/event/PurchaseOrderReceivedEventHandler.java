@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>Handler này import từng item vào kho thông qua ImportStockCommandHandler</li>
  * </ol>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-07
  */
 @Component

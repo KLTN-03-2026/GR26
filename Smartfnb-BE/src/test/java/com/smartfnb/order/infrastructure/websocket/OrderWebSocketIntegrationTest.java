@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * - Cả 2 nhận được OrderCreatedEvent broadcast
  * - Cả 2 nhận được OrderStatusChangedEvent broadcast khi status thay đổi
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-31
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

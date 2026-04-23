@@ -11,7 +11,7 @@ import java.util.UUID;
  * Nếu không upload ảnh mới thì giữ nguyên ảnh cũ.
  * type KHÔNG được phép thay đổi sau khi tạo — bỏ qua nếu FE gửi lên.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record UpdateMenuItemRequest(

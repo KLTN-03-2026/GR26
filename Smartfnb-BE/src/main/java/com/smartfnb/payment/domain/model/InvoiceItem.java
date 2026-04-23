@@ -13,7 +13,7 @@ import java.util.UUID;
  * Là snapshot của OrderItem tại thời điểm bán.
  * Không thay đổi sau khi tạo.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Getter

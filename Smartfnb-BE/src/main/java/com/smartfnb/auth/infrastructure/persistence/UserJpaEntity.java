@@ -11,7 +11,7 @@ import java.util.UUID;
  * JPA Entity cho bảng users.
  * Đại diện cho tài khoản người dùng: Owner, Admin, Cashier, Barista, Waiter...
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Entity

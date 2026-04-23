@@ -28,7 +28,7 @@ import java.util.UUID;
  *   <li>PUT    /api/v1/positions/{id} — Cập nhật chức vụ</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @RestController

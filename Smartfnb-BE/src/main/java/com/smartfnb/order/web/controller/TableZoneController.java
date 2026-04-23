@@ -22,7 +22,7 @@ import java.util.UUID;
  * REST Controller quản lý khu vực bàn (Table Zone).
  * Scope theo branchId trong URL path.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @RestController

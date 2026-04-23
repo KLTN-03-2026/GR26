@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 /**
  * DTO request cập nhật khu vực bàn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record UpdateTableZoneRequest(

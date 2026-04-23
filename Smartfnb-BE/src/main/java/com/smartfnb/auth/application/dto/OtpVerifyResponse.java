@@ -6,7 +6,7 @@ package com.smartfnb.auth.application.dto;
  *
  * @param resetToken  token tạm thời (UUID string) — có hiệu lực 15 phút
  * @param message     thông điệp xác nhận
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record OtpVerifyResponse(

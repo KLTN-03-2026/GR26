@@ -22,7 +22,7 @@ import java.util.UUID;
  * @param unit                 Đơn vị tính của đầu ra
  * @param note                 Ghi chú mẻ sản xuất (tùy chọn)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-14
  */
 public record RecordProductionBatchCommand(

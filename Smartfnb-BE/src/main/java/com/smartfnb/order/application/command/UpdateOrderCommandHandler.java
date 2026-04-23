@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Xử lý lệnh cập nhật đơn hàng.
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-11
  */
 @Component

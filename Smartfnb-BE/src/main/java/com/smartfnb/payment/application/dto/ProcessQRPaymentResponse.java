@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * Response DTO khi QR Code được tạo thành công.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record ProcessQRPaymentResponse(

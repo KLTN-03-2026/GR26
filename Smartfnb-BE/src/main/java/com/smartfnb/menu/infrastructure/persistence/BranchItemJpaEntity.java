@@ -13,7 +13,7 @@ import java.util.UUID;
  * Lưu giá bán riêng và trạng thái của món ăn tại từng chi nhánh.
  * branch_price = NULL nghĩa là dùng base_price từ bảng items.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Entity

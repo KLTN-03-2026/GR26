@@ -22,7 +22,7 @@ import java.util.UUID;
  *   <li>Tạo shift schedule với status = SCHEDULED</li>
  * </ol>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

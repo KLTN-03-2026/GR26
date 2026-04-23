@@ -13,7 +13,7 @@ import java.util.UUID;
  * Định nghĩa công thức chế biến: 1 món bán = N nguyên liệu với định lượng cụ thể.
  * Unique: (target_item_id, ingredient_item_id).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Entity

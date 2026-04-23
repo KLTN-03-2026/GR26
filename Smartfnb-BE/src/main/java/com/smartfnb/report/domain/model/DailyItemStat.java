@@ -8,7 +8,7 @@ import java.util.UUID;
  * Thống kê hiệu suất sản phẩm theo ngày tại chi nhánh.
  * Bao gồm: Số lượng bán, Doanh thu, Giá vốn, Biên lợi suất.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record DailyItemStat(

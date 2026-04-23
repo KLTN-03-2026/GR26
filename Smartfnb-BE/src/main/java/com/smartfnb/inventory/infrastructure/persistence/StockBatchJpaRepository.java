@@ -15,7 +15,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho stock_batches.
  * Hỗ trợ truy vấn FIFO — sắp xếp theo imported_at ASC, chỉ lấy batch còn hàng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 @Repository

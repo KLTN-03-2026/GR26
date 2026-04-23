@@ -29,7 +29,7 @@ import java.util.UUID;
  * REST Controller cho Payment Module.
  * Xử lý các API liên quan đến thanh toán (cash, QR), hóa đơn, và search.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @RestController

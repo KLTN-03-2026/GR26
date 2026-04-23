@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy Table hoặc table đã bị soft delete.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public class TableNotFoundException extends SmartFnbException {

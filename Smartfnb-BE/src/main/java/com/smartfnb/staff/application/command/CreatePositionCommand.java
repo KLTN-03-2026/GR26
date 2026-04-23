@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Lệnh tạo chức vụ mới trong tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record CreatePositionCommand(

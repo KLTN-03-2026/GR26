@@ -13,7 +13,7 @@ import java.util.UUID;
  *
  * <p>Sử dụng @IdClass để ánh xạ Composite Primary Key.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27 (sửa composite PK)
  */
 @Entity

@@ -7,7 +7,7 @@ import java.util.UUID;
  * Domain Event phát ra khi QR Payment được xác nhận thành công qua webhook.
  * Dùng để broadcast tới frontend qua WebSocket.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record PaymentCompletedEvent(

@@ -7,7 +7,7 @@ import java.util.UUID;
  * Domain Event phát ra khi trạng thái đơn mua hàng thay đổi.
  * Dùng cho Audit Log.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-07
  */
 public record PurchaseOrderStatusChangedEvent(

@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Xoá mềm: set active = false để không hiển thị trong tương lai
  * nhưng vẫn giữ dữ liệu lịch sử ca đã đăng ký.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

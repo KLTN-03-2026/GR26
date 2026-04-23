@@ -8,7 +8,7 @@ import java.util.UUID;
  * DTO đại diện cho Order được lấy từ Order Module.
  * Dùng để trao đổi dữ liệu giữa Payment và Order modules.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record OrderDto(
@@ -17,7 +17,6 @@ public record OrderDto(
     UUID branchId,
     UUID tableId,
     String orderNumber,
-    String status,
     BigDecimal subtotal,
     BigDecimal discountAmount,
     BigDecimal taxAmount,

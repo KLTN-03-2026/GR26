@@ -8,7 +8,7 @@ import java.util.UUID;
  * Repository interface cho các lô hàng nhập kho (stock_batches).
  * Hỗ trợ FIFO query: lấy batch cũ nhất còn hàng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public interface StockBatchRepository {

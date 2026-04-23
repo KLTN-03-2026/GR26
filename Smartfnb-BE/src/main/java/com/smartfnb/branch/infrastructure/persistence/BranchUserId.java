@@ -13,7 +13,7 @@ import java.util.UUID;
  * Composite Primary Key cho BranchUserJpaEntity.
  * Map tới cột (user_id, branch_id) trong bảng branch_users.
  *
- * @author vutq
+ * @author SmartF&B Team
  */
 @Getter
 @Setter

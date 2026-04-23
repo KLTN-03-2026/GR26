@@ -17,7 +17,7 @@ import java.util.UUID;
  *
  * <p>Thao tác replace-all: xóa toàn bộ roles cũ → thêm roles mới.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

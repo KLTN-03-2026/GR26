@@ -10,7 +10,7 @@ import java.util.UUID;
  *
  * <p>Consumer: InventoryModule — tự động tạo StockBatch cho từng item trong PO.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-07
  */
 public record PurchaseOrderReceivedEvent(

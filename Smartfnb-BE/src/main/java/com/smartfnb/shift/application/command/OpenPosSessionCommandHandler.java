@@ -16,7 +16,7 @@ import java.util.UUID;
  * <p>Business rule: Mỗi branch chỉ được có 1 phiên POS OPEN tại 1 thời điểm.
  * Cashier phải đóng phiên cũ trước khi mở phiên mới.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

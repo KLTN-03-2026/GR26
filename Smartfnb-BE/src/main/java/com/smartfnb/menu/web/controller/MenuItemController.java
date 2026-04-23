@@ -25,7 +25,7 @@ import java.util.UUID;
  * Hỗ trợ tìm kiếm pg_trgm, soft delete và xem công thức chế biến.
  * POST/PUT dùng multipart/form-data để upload ảnh từ máy người dùng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @RestController

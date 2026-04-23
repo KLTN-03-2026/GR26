@@ -62,7 +62,7 @@ import java.util.UUID;
  * - GET /api/v1/reports/hr/violations — Vi phạm
  * - GET /api/v1/reports/hr/checkin-history — Lịch sử checkin
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Tag(name = "Reports", description = "API cho Module Báo cáo & Phân tích")

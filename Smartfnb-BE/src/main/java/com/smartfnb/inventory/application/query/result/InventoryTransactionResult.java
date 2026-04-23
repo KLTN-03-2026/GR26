@@ -21,7 +21,7 @@ import java.util.UUID;
  * @param note          Ghi chú lý do
  * @param createdAt     Thời điểm giao dịch
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-14
  */
 public record InventoryTransactionResult(

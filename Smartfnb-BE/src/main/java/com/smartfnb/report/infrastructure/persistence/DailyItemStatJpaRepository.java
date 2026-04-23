@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * Spring Data JPA Repository cho DailyItemStatJpaEntity.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Repository

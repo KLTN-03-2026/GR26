@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng hourly_revenue_stats (heatmap).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Entity

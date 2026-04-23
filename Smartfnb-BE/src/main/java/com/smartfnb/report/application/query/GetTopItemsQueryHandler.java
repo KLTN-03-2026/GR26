@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * QueryHandler: Lấy Top N sản phẩm bán chạy theo ngày.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Component

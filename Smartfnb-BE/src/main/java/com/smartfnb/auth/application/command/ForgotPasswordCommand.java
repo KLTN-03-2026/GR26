@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * và gửi qua email (tích hợp email provider ở bước sau).
  *
  * @param email địa chỉ email đã đăng ký tài khoản
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record ForgotPasswordCommand(

@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy vai trò trong tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public class RoleNotFoundException extends SmartFnbException {

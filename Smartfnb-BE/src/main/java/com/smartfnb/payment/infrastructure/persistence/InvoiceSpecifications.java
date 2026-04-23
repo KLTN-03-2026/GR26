@@ -11,7 +11,7 @@ import java.util.UUID;
  * Specification để dynamic query Invoice với các điều kiện.
  * Bao gồm: date range (90 ngày), branchId, invoiceNumber.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public class InvoiceSpecifications {

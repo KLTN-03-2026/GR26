@@ -13,7 +13,7 @@ import java.util.UUID;
  * Repository cho bảng users.
  * Mọi query PHẢI filter theo tenantId để đảm bảo data isolation.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Repository
@@ -84,27 +84,4 @@ public interface UserRepository extends JpaRepository<UserJpaEntity, UUID> {
     @Modifying
     @Query("UPDATE UserJpaEntity u SET u.status = 'LOCKED', u.lockedUntil = :lockedUntil WHERE u.id = :userId")
     void lockUser(UUID userId, LocalDateTime lockedUntil);
-
-    // ===================== ACCOUNT MANAGEMENT =====================
-
-    /**
-     * Tìm user theo ID và tenantId — dùng trong Account Management để ngăn IDOR.
-     * Trả NOT FOUND nếu userId không thuộc tenant hiện tại.
-     *
-     * @param id       UUID user
-     * @param tenantId UUID tenant
-     * @return Optional user
-     */
-    Optional<UserJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
-
-    /**
-     * Kiểm tra phone đã dùng bởi user khác trong cùng tenant.
-     * Dùng khi cập nhật profile để tránh duplicate phone.
-     *
-     * @param phone     số điện thoại cần kiểm tra
-     * @param tenantId  tenant scope
-     * @param excludeId ID user hiện tại (loại trừ khỏi kết quả)
-     * @return true nếu phone đã tồn tại ở user khác
-     */
-    boolean existsByPhoneAndTenantIdAndIdNot(String phone, UUID tenantId, UUID excludeId);
 }

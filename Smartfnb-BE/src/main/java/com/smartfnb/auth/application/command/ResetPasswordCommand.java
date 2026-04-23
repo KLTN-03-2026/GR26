@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
  * @param email       địa chỉ email tài khoản
  * @param resetToken  token tạm thời từ bước verify OTP
  * @param newPassword mật khẩu mới tối thiểu 8 ký tự
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record ResetPasswordCommand(

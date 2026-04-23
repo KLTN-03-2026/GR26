@@ -6,7 +6,7 @@ import java.time.LocalDate;
 /**
  * Kết quả thanh toán theo phương thức.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record PaymentMethodBreakdownResult(

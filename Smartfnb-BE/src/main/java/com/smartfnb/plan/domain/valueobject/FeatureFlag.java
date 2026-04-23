@@ -9,7 +9,7 @@ import java.util.Map;
  * Value Object mô tả các tính năng (features) được bật/tắt trong một Gói dịch vụ (Plan).
  * Ánh xạ lấy từ cột `features` (JSONB) của bảng `plans`.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 public record FeatureFlag(

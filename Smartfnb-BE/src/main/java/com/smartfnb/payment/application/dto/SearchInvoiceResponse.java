@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Response DTO cho search Invoice API.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record SearchInvoiceResponse(

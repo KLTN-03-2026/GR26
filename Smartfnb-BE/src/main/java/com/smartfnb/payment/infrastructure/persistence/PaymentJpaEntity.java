@@ -14,7 +14,7 @@ import java.util.UUID;
  * JPA Entity đại diện cho Payment trong database.
  * Mapped từ Domain Entity Payment.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Entity

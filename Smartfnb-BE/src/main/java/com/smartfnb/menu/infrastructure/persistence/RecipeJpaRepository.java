@@ -12,7 +12,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng recipes.
  * Quản lý công thức chế biến: món bán → nguyên liệu + định lượng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public interface RecipeJpaRepository extends JpaRepository<RecipeJpaEntity, UUID> {

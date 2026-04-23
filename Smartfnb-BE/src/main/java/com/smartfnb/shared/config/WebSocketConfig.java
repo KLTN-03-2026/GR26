@@ -12,7 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * - /topic/tables/{branchId}  → cập nhật sơ đồ bàn realtime
  * - /topic/orders/{branchId}  → cập nhật trạng thái đơn hàng realtime (S-10)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Configuration

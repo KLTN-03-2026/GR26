@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Query Handler xử lý các truy vấn READ-ONLY cho công thức chế biến.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Component

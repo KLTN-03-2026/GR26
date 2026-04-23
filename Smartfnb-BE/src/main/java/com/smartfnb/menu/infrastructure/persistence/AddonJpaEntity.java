@@ -15,7 +15,7 @@ import static java.math.BigDecimal.ONE;
  * Đại diện cho topping/addon có thể thêm vào món ăn.
  * Unique: (tenant_id, name).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Entity

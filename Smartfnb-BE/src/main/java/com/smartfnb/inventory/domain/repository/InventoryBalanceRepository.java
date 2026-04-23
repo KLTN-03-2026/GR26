@@ -9,7 +9,7 @@ import java.util.UUID;
  * Repository interface cho tồn kho hiện tại (inventory_balances).
  * Chỉ interface thuần Java — không import JPA.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public interface InventoryBalanceRepository {
