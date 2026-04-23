@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -36,14 +38,14 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID>,
      * Danh sách đơn hàng theo status có phân trang — không eager-load items.
      */
     Page<OrderJpaEntity> findByTenantIdAndBranchIdAndStatus(UUID tenantId, UUID branchId, String status, Pageable pageable);
-      /**                                                                                                                                                   
-      * Đếm số ngày phân biệt có đơn hàng hoàn thành — dùng tính độ tin cậy AI model.                                                                      
-      * Ngày hoạt động nhiều hơn → AI có nhiều data → model đáng tin hơn.                                                                                  
-      *                                                                                                                                                    
-      * @param tenantId UUID tenant                                                                                                                        
-      * @param branchId UUID chi nhánh                                                                                                                     
-      * @return số ngày distinct có đơn COMPLETED                                                                                                          
-      */    
+    /**
+     * Đếm số ngày phân biệt có đơn hàng hoàn thành — dùng tính độ tin cậy AI model.
+     * Ngày hoạt động nhiều hơn → AI có nhiều data → model đáng tin hơn.
+     *
+     * @param tenantId UUID tenant
+     * @param branchId UUID chi nhánh
+     * @return số ngày distinct có đơn COMPLETED
+     */
     @Query(value = """
             SELECT COUNT(DISTINCT CAST(o.completed_at AS date))
             FROM orders o
