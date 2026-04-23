@@ -9,15 +9,20 @@ import {
   ResponsiveContainer,
   ReferenceDot,
 } from 'recharts';
+import { DatePicker } from '@shared/components/common/DatePicker';
 import { Button } from '@shared/components/ui/button';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import type { HourlyRevenueHeatmap } from '../types/report.types';
+
+const HOURLY_SKELETON_KEYS = ['revenue', 'orders', 'peak-hour'];
 
 interface HourlyRevenueChartProps {
   data?: HourlyRevenueHeatmap;
   branchName: string;
   isLoading: boolean;
   isError: boolean;
+  selectedDate: string;
+  onDateChange: (value: string) => void;
   onRetry: () => void;
 }
 
@@ -29,10 +34,23 @@ const formatYAxisTick = (value: number) => {
   return String(value);
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const CustomTooltip = ({ active, payload }: any) => {
+interface HourlyTooltipPayload {
+  payload: {
+    hour: number;
+    revenue: number;
+    orderCount: number;
+  };
+}
+
+interface HourlyTooltipProps {
+  active?: boolean;
+  payload?: HourlyTooltipPayload[];
+}
+
+const CustomTooltip = ({ active, payload }: HourlyTooltipProps) => {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
+
   return (
     <div className="rounded-lg border border-border bg-white px-3 py-2 shadow-lg">
       <p className="text-xs font-bold text-text-primary">{formatHourLabel(item.hour)}</p>
@@ -41,7 +59,6 @@ const CustomTooltip = ({ active, payload }: any) => {
     </div>
   );
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Biểu đồ đường (area chart) doanh thu theo giờ dùng Recharts.
@@ -52,6 +69,8 @@ export const HourlyRevenueChart = ({
   branchName,
   isLoading,
   isError,
+  selectedDate,
+  onDateChange,
   onRetry,
 }: HourlyRevenueChartProps) => {
   const peakHourEntry =
@@ -72,32 +91,46 @@ export const HourlyRevenueChart = ({
 
   return (
     <section className="card space-y-5 p-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <TrendingUp className="h-4 w-4 text-primary" />
             Doanh thu theo giờ
           </div>
           <h3 className="mt-2 text-lg font-semibold text-text-primary">{branchName}</h3>
-          <p className="mt-1 text-sm text-text-secondary">
-            Theo dõi giờ cao điểm để tối ưu phân ca nhân sự và vận hành trong ngày.
-          </p>
         </div>
 
-        {peakHourEntry && hasData ? (
-          <div className="rounded-card bg-primary-light px-4 py-3 text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Giờ cao điểm</p>
-            <p className="mt-1 text-lg font-bold text-text-primary">{formatHourLabel(peakHourEntry.hour)}</p>
-            <p className="text-sm text-text-secondary">{formatVND(peakHourEntry.revenue)}</p>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+          <div className="w-full space-y-1.5 sm:w-[190px]">
+            <label
+              className="text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary"
+              htmlFor="hourly-revenue-date"
+            >
+              Ngày xem theo giờ
+            </label>
+            <DatePicker
+              id="hourly-revenue-date"
+              value={selectedDate}
+              onChange={onDateChange}
+              className="w-full"
+            />
           </div>
-        ) : null}
+
+          {peakHourEntry && hasData ? (
+            <div className="rounded-card bg-primary-light px-4 py-3 text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Giờ cao điểm</p>
+              <p className="mt-1 text-lg font-bold text-text-primary">{formatHourLabel(peakHourEntry.hour)}</p>
+              <p className="text-sm text-text-secondary">{formatVND(peakHourEntry.revenue)}</p>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-card bg-[#f5efe8]" />
+            {HOURLY_SKELETON_KEYS.map((key) => (
+              <div key={key} className="h-20 animate-pulse rounded-card bg-[#f5efe8]" />
             ))}
           </div>
           <div className="h-52 animate-pulse rounded-card bg-[#f5efe8]" />
@@ -139,7 +172,6 @@ export const HourlyRevenueChart = ({
             </div>
           </div>
 
-          {/* ── Recharts Area Chart ─────────────────────────────────── */}
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
@@ -168,7 +200,10 @@ export const HourlyRevenueChart = ({
                   width={52}
                 />
 
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#1f1f1f', strokeDasharray: '3 3', strokeOpacity: 0.3 }} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ stroke: '#1f1f1f', strokeDasharray: '3 3', strokeOpacity: 0.3 }}
+                />
 
                 <Area
                   type="monotone"
@@ -180,7 +215,7 @@ export const HourlyRevenueChart = ({
                   activeDot={{ r: 5, fill: '#1f1f1f', stroke: '#fff', strokeWidth: 2 }}
                 />
 
-                {/* Peak hour marker */}
+                {/* Đánh dấu giờ doanh thu cao nhất để chủ quán nhìn nhanh khung cao điểm. */}
                 {peakHourEntry && hasData && (
                   <ReferenceDot
                     x={formatHourLabel(peakHourEntry.hour)}

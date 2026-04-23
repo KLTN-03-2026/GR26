@@ -93,12 +93,55 @@ def _build_fallback_forecast(history_df: pd.DataFrame) -> pd.DataFrame:
     })
 
 
+def _expand_weekly_to_daily(
+    fc_weekly: pd.DataFrame,
+    periods: int = 7,
+) -> pd.DataFrame:
+    """
+    Chuyển dự báo tuần (4 tuần) thành dự báo ngày để đồng nhất với daily model.
+
+    Chia đều lượng tiêu thụ của 1 tuần cho 7 ngày.
+    Ví dụ: Tuần 1 dự báo 140 kg → mỗi ngày 20 kg.
+
+    Args:
+        fc_weekly: DataFrame với cột ['ds' (weekly timestamp), 'yhat1' (weekly qty)]
+        periods: Số ngày cần lấy (mặc định 7 — tương đương 1 tuần đầu)
+
+    Returns:
+        DataFrame với cột ['ds' (daily), 'yhat1' (daily qty)]
+        Đúng `periods` rows bắt đầu từ ngày đầu tiên của tuần đầu tiên.
+    """
+    rows = []
+    for _, week_row in fc_weekly.iterrows():
+        daily_qty = float(week_row["yhat1"]) / 7.0
+        # Tính ngày đầu tuần từ label W-MON (label là cuối tuần = Monday)
+        # W-MON: chu kỳ Tue → Mon, label = Monday
+        # Ngày bắt đầu của tuần = Monday - 6 ngày = Tuesday tuần trước
+        week_end = pd.Timestamp(week_row["ds"])
+        week_start = week_end - pd.Timedelta(days=6)  # Tuesday
+        for d in range(7):
+            rows.append({
+                "ds": week_start + pd.Timedelta(days=d),
+                "yhat1": daily_qty,
+            })
+
+    if not rows:
+        return pd.DataFrame(columns=["ds", "yhat1"])
+
+    result = pd.DataFrame(rows).head(periods)
+    result = result.sort_values("ds").reset_index(drop=True)
+    return result
+
+
 async def _upsert_forecast_results(
     db: AsyncSession,
     series_id_int: int,
     forecast_df: pd.DataFrame,
     stockout_date: date | None,
     suggested_qty: float,
+    urgency: str,
+    suggested_order_date: date | None,
+    is_fallback: bool,
 ) -> None:
     """
     Upsert kết quả dự báo vào bảng forecast_results — 1 row cho mỗi ngày.
@@ -112,6 +155,9 @@ async def _upsert_forecast_results(
         forecast_df: DataFrame với cột ['ds', 'yhat1'] — 7 rows tương lai
         stockout_date: Ngày dự kiến hết hàng (None = không ước tính trong horizon)
         suggested_qty: Số lượng gợi ý nhập kho
+        urgency: Mức độ cấp bách — ok / warning / critical
+        suggested_order_date: Ngày nên đặt hàng
+        is_fallback: True nếu dùng fallback thay vì model thật
     """
     # Xóa forecast cũ của series này (từ hôm nay trở đi) trước khi ghi mới.
     # Tránh tình trạng config thay đổi (vd NP_N_FORECASTS 14→7) mà rows cũ vẫn còn.
@@ -128,14 +174,19 @@ async def _upsert_forecast_results(
         await db.execute(
             text("""
                 INSERT INTO forecast_results
-                    (series_id, forecast_date, predicted_qty, stockout_date, suggested_qty)
+                    (series_id, forecast_date, predicted_qty, stockout_date, suggested_qty,
+                     urgency, suggested_order_date, is_fallback)
                 VALUES
-                    (:series_id, :forecast_date, :predicted_qty, :stockout_date, :suggested_qty)
+                    (:series_id, :forecast_date, :predicted_qty, :stockout_date, :suggested_qty,
+                     :urgency, :suggested_order_date, :is_fallback)
                 ON CONFLICT (series_id, forecast_date)
                 DO UPDATE SET
-                    predicted_qty = EXCLUDED.predicted_qty,
-                    stockout_date = EXCLUDED.stockout_date,
-                    suggested_qty = EXCLUDED.suggested_qty
+                    predicted_qty        = EXCLUDED.predicted_qty,
+                    stockout_date        = EXCLUDED.stockout_date,
+                    suggested_qty        = EXCLUDED.suggested_qty,
+                    urgency              = EXCLUDED.urgency,
+                    suggested_order_date = EXCLUDED.suggested_order_date,
+                    is_fallback          = EXCLUDED.is_fallback
             """),
             {
                 "series_id": series_id_int,
@@ -143,6 +194,9 @@ async def _upsert_forecast_results(
                 "predicted_qty": predicted_qty,
                 "stockout_date": stockout_date,
                 "suggested_qty": suggested_qty,
+                "urgency": urgency,
+                "suggested_order_date": suggested_order_date,
+                "is_fallback": is_fallback,
             },
         )
 
@@ -185,10 +239,23 @@ async def predict_branch(
         )
         return []
 
-    # Load config đã train để biết n_forecasts, n_lags
+    # Load config đã train để biết n_forecasts, n_lags, use_weather_regressor
     branch_model_config = model_io.get_model_config(tenant_id, branch_id) or {}
     n_forecasts = branch_model_config.get("n_forecasts", settings.np_n_forecasts)
     n_lags = branch_model_config.get("n_lags", settings.np_n_lags)
+    # Backward-compatible: model cũ không có key này → False (không dùng weather)
+    use_weather = bool(branch_model_config.get("use_weather_regressor", False))
+
+    # Đọc series_classification từ metadata (top-level, ngoài "config")
+    # isinstance check: get_train_metadata có thể trả về None hoặc dict — không dùng MagicMock trong test
+    _raw_meta = model_io.get_train_metadata(tenant_id, branch_id)
+    branch_metadata: dict = _raw_meta if isinstance(_raw_meta, dict) else {}
+    classification = branch_metadata.get("series_classification", None)
+    # Backward compat: nếu không có classification → tất cả đi qua daily model
+    if classification is not None:
+        regular_ids: set[str] = set(classification.get("regular", []))
+    else:
+        regular_ids = None  # type: ignore[assignment] — sentinel: treat all as regular
 
     # Kiểm tra n_forecasts có khớp với config branch hiện tại không
     # (config thay đổi sau khi train → cần retrain trước khi predict)
@@ -199,14 +266,17 @@ async def predict_branch(
         )
         return []
 
-    # Load model
-    model = model_io.load_model(tenant_id, branch_id)
-    if model is None:
+    # Load daily model (bắt buộc — hoặc backward compat model.np)
+    model_daily = model_io.load_model(tenant_id, branch_id, model_type="daily")
+    if model_daily is None:
         logger.error(
-            "Load model thất bại: tenant=%s branch=%s → skip predict",
+            "Load model_daily thất bại: tenant=%s branch=%s → skip predict",
             tenant_id, branch_id,
         )
         return []
+
+    # Load weekly model (tùy chọn — None nếu chưa train hoặc không có series weekly)
+    model_weekly = model_io.load_model(tenant_id, branch_id, model_type="weekly")
 
     # ── Bước 2: Lấy danh sách nguyên liệu ──────────────────────────────────
     ingredients = await data_service.get_all_ingredients_of_branch(
@@ -222,6 +292,41 @@ async def predict_branch(
 
     # Lấy đủ history cho n_lags + buffer ngày
     history_days = n_lags + 14
+
+    # ── Bước 2.5: Pre-fetch weather cho toàn branch (1 lần, dùng chung) ────
+    # Cần weather cho: history_days ngày gần đây + n_forecasts ngày tương lai
+    branch_weather_df: pd.DataFrame | None = None
+    if use_weather:
+        try:
+            from datetime import timedelta as _td  # noqa: PLC0415
+            from app.services import weather_service as _weather_svc  # noqa: PLC0415
+
+            today = date.today()
+            history_dates = [today - _td(days=i) for i in range(history_days + 1)]
+            forecast_dates = [today + _td(days=i) for i in range(1, n_forecasts + 1)]
+            all_needed_dates = history_dates + forecast_dates
+
+            # Cập nhật forecast weather mới nhất (8-day ahead)
+            await _weather_svc.fetch_weather_for_branch(branch_id, db)
+            # Fetch historical nếu cần (archive API)
+            if history_dates:
+                await _weather_svc.fetch_historical_weather_for_branch(
+                    branch_id, history_dates[-1], history_dates[0], db
+                )
+            branch_weather_df = await _weather_svc.get_weather_df(
+                branch_id, all_needed_dates, db
+            )
+            if branch_weather_df is not None:
+                logger.info(
+                    "Weather cho predict: branch=%s | %d/%d ngày có data",
+                    branch_id, len(branch_weather_df), len(all_needed_dates),
+                )
+        except Exception as exc:
+            logger.warning(
+                "Không lấy được weather cho predict branch=%s: %s — bỏ qua",
+                branch_id, exc,
+            )
+            branch_weather_df = None
 
     series_repo = SeriesRegistryRepo(db)
     results: list[IngredientPrediction] = []
@@ -272,54 +377,94 @@ async def predict_branch(
             # ── Predict ─────────────────────────────────────────────────
             is_fallback = False
 
+            # Xác định model nào dùng cho series này:
+            # - regular_ids=None (backward compat) → tất cả dùng daily
+            # - series_id_str in regular_ids → daily model
+            # - còn lại → weekly model (nếu có), không thì fallback
+            use_daily_model = (regular_ids is None) or (series_id_str in regular_ids)
+
             if not history_df.empty:
                 try:
-                    # Build future DataFrame (lịch sử + n_forecasts ngày tương lai)
-                    future_df = dataframe_builder.build_future_df(
-                        history_df, series_id_str, periods=n_forecasts,
-                    )
-                    # NeuralProphet predict — trả về DataFrame với yhat1..yhat{n_forecasts}
-                    raw_pred = model.predict(future_df)  # type: ignore[union-attr]
-
-                    # Kết quả đúng nằm ở row lịch sử cuối cùng:
-                    # yhat1=ngày+1, yhat2=ngày+2, ..., yhat{n}=ngày+n.
-                    last_history_date = history_df["ds"].max()
-                    last_hist_row = raw_pred[
-                        raw_pred["ds"] <= last_history_date
-                    ].iloc[-1]
-                    n_fc = n_forecasts
-                    # Bắt đầu từ ngày mai — không phụ thuộc vào last_history_date
-                    # (last_history_date có thể là vài ngày trước hôm nay → forecast bị thiếu ngày)
-                    forecast_dates = pd.date_range(
-                        start=pd.Timestamp(date.today()) + pd.Timedelta(days=1),
-                        periods=n_fc,
-                        freq="D",
-                    )
-                    forecast_values = [
-                        max(
-                            float(last_hist_row[f"yhat{h}"])
-                            if pd.notna(last_hist_row.get(f"yhat{h}"))
-                            else 0.0,
-                            0.0,
+                    if use_daily_model:
+                        # ── Daily predict path ─────────────────────────
+                        future_df = dataframe_builder.build_future_df(
+                            history_df, series_id_str, periods=n_forecasts, freq="D",
                         )
-                        for h in range(1, n_fc + 1)
-                    ]
 
-                    # Thay thế 0-values bằng trung bình các ngày hợp lệ.
-                    # NeuralProphet đôi khi dự báo âm cho các ngày xa (12-14 ngày)
-                    # với nguyên liệu tiêu thụ thấp → bị clip thành 0 → misleading.
-                    # Dùng fallback = mean của các ngày có giá trị > 0.
-                    nonzero_vals = [v for v in forecast_values if v > 0]
-                    fallback_mean = sum(nonzero_vals) / len(nonzero_vals) if nonzero_vals else 0.0
-                    forecast_values = [
-                        v if v > 0 else fallback_mean
-                        for v in forecast_values
-                    ]
+                        # Merge weather regressors nếu model được train kèm weather
+                        if use_weather and branch_weather_df is not None and not branch_weather_df.empty:
+                            future_df = future_df.merge(
+                                branch_weather_df[["ds", "temperature", "precipitation"]],
+                                on="ds", how="left",
+                            )
+                            median_temp = float(branch_weather_df["temperature"].median())
+                            future_df["temperature"] = future_df["temperature"].fillna(median_temp)
+                            future_df["precipitation"] = future_df["precipitation"].fillna(0.0)
 
-                    forecast_df = pd.DataFrame({
-                        "ds": forecast_dates,
-                        "yhat1": forecast_values,
-                    })
+                        raw_pred = model_daily.predict(future_df)  # type: ignore[union-attr]
+
+                        last_history_date = history_df["ds"].max()
+                        last_hist_row = raw_pred[raw_pred["ds"] <= last_history_date].iloc[-1]
+                        n_fc = n_forecasts
+                        forecast_dates = pd.date_range(
+                            start=pd.Timestamp(date.today()) + pd.Timedelta(days=1),
+                            periods=n_fc, freq="D",
+                        )
+                        forecast_values = [
+                            max(
+                                float(last_hist_row[f"yhat{h}"])
+                                if pd.notna(last_hist_row.get(f"yhat{h}")) else 0.0,
+                                0.0,
+                            )
+                            for h in range(1, n_fc + 1)
+                        ]
+                        nonzero_vals = [v for v in forecast_values if v > 0]
+                        fallback_mean = sum(nonzero_vals) / len(nonzero_vals) if nonzero_vals else 0.0
+                        forecast_values = [v if v > 0 else fallback_mean for v in forecast_values]
+                        forecast_df = pd.DataFrame({"ds": forecast_dates, "yhat1": forecast_values})
+
+                    else:
+                        # ── Weekly predict path (intermittent / sparse) ──
+                        if model_weekly is None:
+                            raise RuntimeError("model_weekly chưa được train")
+
+                        # Lấy thêm history để có đủ ≥ 8 tuần (n_lags weekly)
+                        history_weekly = dataframe_builder.aggregate_to_weekly(
+                            pd.DataFrame({
+                                "ds": history_df["ds"],
+                                "y":  history_df["y"],
+                                "ID": series_id_str,
+                            })
+                        )
+                        if history_weekly.empty:
+                            raise RuntimeError("aggregate_to_weekly trả về rỗng")
+
+                        future_df_w = dataframe_builder.build_future_df(
+                            history_weekly[history_weekly["ID"] == series_id_str],
+                            series_id_str, periods=4, freq="W-MON",
+                        )
+                        raw_pred_w = model_weekly.predict(future_df_w)  # type: ignore[union-attr]
+
+                        # Lấy 4 tuần dự báo (future rows: y=NaN)
+                        last_hist_week = history_weekly[history_weekly["ID"] == series_id_str]["ds"].max()
+                        fc_weekly = raw_pred_w[raw_pred_w["ds"] > last_hist_week][["ds", "yhat1"]].head(4)
+
+                        # Clip âm rồi expand về daily
+                        fc_weekly = fc_weekly.copy()
+                        fc_weekly["yhat1"] = fc_weekly["yhat1"].clip(lower=0.0)
+                        forecast_df = _expand_weekly_to_daily(fc_weekly, periods=n_forecasts)
+
+                        # Override dates về ngày thực tế từ ngày mai
+                        forecast_dates = pd.date_range(
+                            start=pd.Timestamp(date.today()) + pd.Timedelta(days=1),
+                            periods=n_forecasts, freq="D",
+                        )
+                        forecast_df = pd.DataFrame({
+                            "ds": forecast_dates,
+                            "yhat1": forecast_df["yhat1"].values[:n_forecasts]
+                                     if len(forecast_df) >= n_forecasts
+                                     else list(forecast_df["yhat1"].values) + [0.0] * (n_forecasts - len(forecast_df)),
+                        })
 
                 except Exception as exc:
                     logger.error(
@@ -361,6 +506,9 @@ async def predict_branch(
             # ── Ghi vào DB ───────────────────────────────────────────────
             await _upsert_forecast_results(
                 db, series_id_int, forecast_df, stockout_date, suggested_qty,
+                urgency=urgency,
+                suggested_order_date=suggested_order_date,
+                is_fallback=is_fallback,
             )
 
             results.append(IngredientPrediction(

@@ -163,6 +163,18 @@ export const queryKeys = {
     // Tỷ trọng thanh toán theo phương thức để hiển thị breakdown.
     paymentBreakdown: (filters?: Record<string, unknown>) => ['reports', 'payment-breakdown', filters] as const,
     inventory: (filters?: Record<string, unknown>) => ['reports', 'inventory', filters] as const,
+    // Tồn kho hiện tại theo chi nhánh.
+    inventoryStock: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'stock', filters] as const,
+    // Lô hàng sắp hết hạn theo ngưỡng ngày.
+    inventoryExpiring: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'expiring', filters] as const,
+    // Hao hụt nguyên liệu trong khoảng ngày.
+    inventoryWaste: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'waste', filters] as const,
     hr: (filters?: Record<string, unknown>) => ['reports', 'hr', filters] as const,
+    // Chấm công tháng theo chi nhánh.
+    hrAttendance: (filters?: Record<string, unknown>) => ['reports', 'hr', 'attendance', filters] as const,
+    // Tổng chi phí nhân sự tháng.
+    hrCost: (filters?: Record<string, unknown>) => ['reports', 'hr', 'cost', filters] as const,
+    // Vi phạm chấm công trong khoảng ngày.
+    hrViolations: (filters?: Record<string, unknown>) => ['reports', 'hr', 'violations', filters] as const,
   },
 } as const;

@@ -1,10 +1,10 @@
-import { Building2, CalendarRange, RefreshCw } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
+import { DatePicker } from '@shared/components/common/DatePicker';
 import {
   DateRangePicker,
   type DateRangePickerValue,
 } from '@shared/components/common/DateRangePicker';
 import { Button } from '@shared/components/ui/button';
-import { Input } from '@shared/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -17,16 +17,21 @@ import { formatDate } from '@shared/utils/formatDate';
 import type { ReportBranchOption } from '../hooks/useRevenueReportFilters';
 
 interface ReportFilterPanelProps {
+  kicker?: string;
+  title?: string;
+  dateRangeLabel?: string;
+  analysisDateLabel?: string;
   branchOptions: ReportBranchOption[];
   selectedBranchId: string;
   selectedBranchName: string;
   dateRange: DateRangePickerValue;
-  analysisDate: string;
+  analysisDate?: string;
   isBranchLoading: boolean;
   isRefreshing: boolean;
+  showAnalysisDate?: boolean;
   onBranchChange: (branchId: string) => void;
   onDateRangeChange: (value: DateRangePickerValue) => void;
-  onAnalysisDateChange: (value: string) => void;
+  onAnalysisDateChange?: (value: string) => void;
   onRefresh: () => void;
 }
 
@@ -35,6 +40,10 @@ interface ReportFilterPanelProps {
  * Tách riêng để page dễ đọc và có thể tái sử dụng nếu sau này thêm report overview.
  */
 export const ReportFilterPanel = ({
+  kicker = 'Doanh thu',
+  title = 'Báo cáo doanh thu theo chi nhánh',
+  dateRangeLabel = 'Khoảng ngày tổng quan',
+  analysisDateLabel = 'Ngày phân tích biểu đồ',
   branchOptions,
   selectedBranchId,
   selectedBranchName,
@@ -42,12 +51,14 @@ export const ReportFilterPanel = ({
   analysisDate,
   isBranchLoading,
   isRefreshing,
+  showAnalysisDate = true,
   onBranchChange,
   onDateRangeChange,
   onAnalysisDateChange,
   onRefresh,
 }: ReportFilterPanelProps) => {
   const formattedAnalysisDate = analysisDate ? formatDate(analysisDate) : 'Chưa chọn ngày';
+  const handleAnalysisDateChange = onAnalysisDateChange ?? (() => undefined);
 
   return (
     <section className="card space-y-2 p-5">
@@ -55,10 +66,10 @@ export const ReportFilterPanel = ({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             <Building2 className="h-3.5 w-3.5" />
-            Doanh thu
+            {kicker}
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-text-primary">Báo cáo doanh thu theo chi nhánh</h2>
+            <h2 className="text-2xl font-bold text-text-primary">{title}</h2>
           </div>
         </div>
 
@@ -74,7 +85,12 @@ export const ReportFilterPanel = ({
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr_0.8fr]">
+      <div
+        className={cn(
+          'grid gap-4',
+          showAnalysisDate ? 'lg:grid-cols-[1.1fr_1fr_0.8fr]' : 'lg:grid-cols-[1.1fr_1fr]',
+        )}
+      >
         <div className="space-y-2">
           <label className="text-sm font-medium text-text-primary" htmlFor="report-branch">
             Chi nhánh
@@ -99,7 +115,7 @@ export const ReportFilterPanel = ({
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-text-primary" htmlFor="report-date-range">
-            Khoảng ngày tổng quan
+            {dateRangeLabel}
           </label>
           <DateRangePicker
             id="report-date-range"
@@ -110,31 +126,32 @@ export const ReportFilterPanel = ({
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-text-primary" htmlFor="report-analysis-date">
-            Ngày phân tích biểu đồ
-          </label>
-          <div className="relative">
-            <CalendarRange className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-text-secondary" />
-            <Input
+        {showAnalysisDate ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text-primary" htmlFor="report-analysis-date">
+              {analysisDateLabel}
+            </label>
+            <DatePicker
               id="report-analysis-date"
-              type="date"
               value={analysisDate}
-              onChange={(event) => onAnalysisDateChange(event.target.value)}
-              className="pl-10"
+              onChange={handleAnalysisDateChange}
+              className="w-full justify-start"
               disabled={isBranchLoading}
             />
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
         <span className="rounded-full bg-white px-3 py-1 shadow-card">
           Chi nhánh đang xem: <span className="font-semibold text-text-primary">{selectedBranchName}</span>
         </span>
-        <span className="rounded-full bg-white px-3 py-1 shadow-card">
-          Dữ liệu chi tiết theo ngày: <span className="font-semibold text-text-primary">{formattedAnalysisDate}</span>
-        </span>
+        {showAnalysisDate ? (
+          <span className="rounded-full bg-white px-3 py-1 shadow-card">
+            Dữ liệu chi tiết theo ngày:{' '}
+            <span className="font-semibold text-text-primary">{formattedAnalysisDate}</span>
+          </span>
+        ) : null}
       </div>
     </section>
   );

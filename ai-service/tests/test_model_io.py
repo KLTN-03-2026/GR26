@@ -66,8 +66,8 @@ class TestSaveModel:
 
             result_path = model_io.save_model(fake_model, "tenant_a", "branch_test")
 
-        # Path format: {tenant_id}/{branch_id}/model.np
-        expected = tmp_path / "tenant_a" / "branch_test" / "model.np"
+        # Path format mới: {tenant_id}/{branch_id}/model_{type}.np
+        expected = tmp_path / "tenant_a" / "branch_test" / "model_daily.np"
         assert result_path == expected
 
     def test_save_calls_neuralprophet_save(self, tmp_path: Path) -> None:

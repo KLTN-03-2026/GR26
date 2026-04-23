@@ -173,6 +173,199 @@ export interface PaymentMethodBreakdown {
   totalOrders: number;
 }
 
+export interface ReportPageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+  pageable?: Record<string, unknown>;
+  sort?: Record<string, unknown>;
+}
+
+export interface InventoryStockReportParams {
+  branchId: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ExpiringItemsReportParams {
+  branchId: string;
+  daysThreshold?: number;
+  page?: number;
+  size?: number;
+}
+
+export interface InventoryWasteReportParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+}
+
+export type InventoryStockStatus = 'OUT_OF_STOCK' | 'LOW' | 'ENOUGH' | string;
+
+export interface InventoryStockReportItemResponse {
+  itemId: string;
+  itemName: string;
+  unit: string | null;
+  currentQty: number | null;
+  minLevel: number | null;
+  unitCost: ReportNumericValue;
+  totalValue: ReportNumericValue;
+  nearestExpiryDate: string | null;
+  status: InventoryStockStatus;
+  branchId: string | null;
+  branchName: string | null;
+}
+
+export interface InventoryStockReportItem extends InventoryStockReportItemResponse {
+  currentQty: number;
+  minLevel: number;
+  unitCost: number;
+  totalValue: number;
+}
+
+export interface ExpiringItemReportResponse {
+  itemId: string;
+  itemName: string;
+  unit: string | null;
+  batchId: string | null;
+  quantityRemaining: number | null;
+  unitCost: ReportNumericValue;
+  expiryDate: string | null;
+  daysToExpire: number | null;
+  urgency: 'CRITICAL' | 'WARNING' | string;
+  branchId: string | null;
+  branchName: string | null;
+}
+
+export interface ExpiringItemReport extends ExpiringItemReportResponse {
+  quantityRemaining: number;
+  unitCost: number;
+  daysToExpire: number;
+}
+
+export interface WasteReportItemResponse {
+  itemId: string;
+  itemName: string;
+  unit: string | null;
+  totalWasteQty: number | null;
+  totalWasteCost: ReportNumericValue;
+  primaryReason: string | null;
+  wastePercentage?: ReportNumericValue;
+  reasonCount?: number | null;
+}
+
+export interface WasteReportItem extends WasteReportItemResponse {
+  totalWasteQty: number;
+  totalWasteCost: number;
+  wastePercentage: number;
+  reasonCount: number;
+}
+
+export interface AttendanceReportParams {
+  branchId: string;
+  month: string;
+  page?: number;
+  size?: number;
+}
+
+export interface HrCostReportParams {
+  branchId: string;
+  month: string;
+}
+
+export interface ViolationsReportParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  violationType?: string;
+  staffId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AttendanceReportItemResponse {
+  staffId: string;
+  staffName: string;
+  position: string | null;
+  positionId: string | null;
+  workingDays: number | null;
+  overtimeHours: ReportNumericValue;
+  absentDays: number | null;
+  leaveDays: number | null;
+  month: string;
+  daysInMonth: number | null;
+  attendancePercentage: number | null;
+  branchId: string | null;
+  branchName: string | null;
+}
+
+export interface AttendanceReportItem extends AttendanceReportItemResponse {
+  workingDays: number;
+  overtimeHours: number;
+  absentDays: number;
+  leaveDays: number;
+  daysInMonth: number;
+  attendancePercentage: number;
+}
+
+export interface HrCostReportResponse {
+  branchId: string | null;
+  branchName: string | null;
+  month: string;
+  totalStaff: number | null;
+  totalShifts?: number | null;
+  totalWorkingHours?: number | null;
+  baseSalaryCost?: ReportNumericValue;
+  overtimeCost?: ReportNumericValue;
+  bonusCost?: ReportNumericValue;
+  deductionsCost?: ReportNumericValue;
+  totalHrCost: ReportNumericValue;
+  costPerStaff?: ReportNumericValue;
+  costPerShift?: ReportNumericValue;
+  previousMonthCost?: ReportNumericValue;
+  costChange?: ReportNumericValue;
+  costTrend?: string | null;
+}
+
+export interface HrCostReport extends HrCostReportResponse {
+  totalStaff: number;
+  totalShifts: number;
+  totalWorkingHours: number;
+  baseSalaryCost: number;
+  overtimeCost: number;
+  bonusCost: number;
+  deductionsCost: number;
+  totalHrCost: number;
+  costPerStaff: number;
+  costPerShift: number;
+  previousMonthCost: number;
+  costChange: number;
+}
+
+export interface ViolationReportItemResponse {
+  staffId: string;
+  staffName: string;
+  position: string | null;
+  date: string | null;
+  shiftName: string | null;
+  shiftStartTime?: string | null;
+  shiftEndTime?: string | null;
+  actualCheckinTime?: string | null;
+  actualCheckoutTime?: string | null;
+  minutesViolation: number | null;
+  violationType: string;
+}
+
+export interface ViolationReportItem extends ViolationReportItemResponse {
+  minutesViolation: number;
+}
+
 /**
  * Chuẩn hóa kiểu số từ backend vì BigDecimal có thể serialize thành `number` hoặc `string`.
  *

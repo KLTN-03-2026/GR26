@@ -1,13 +1,18 @@
 import { Package2, RefreshCcw } from 'lucide-react';
+import { DatePicker } from '@shared/components/common/DatePicker';
 import { Button } from '@shared/components/ui/button';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import type { TopItemsReport } from '../types/report.types';
+
+const TOP_ITEMS_SKELETON_KEYS = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5'];
 
 interface TopItemsChartProps {
   data?: TopItemsReport;
   branchName: string;
   isLoading: boolean;
   isError: boolean;
+  selectedDate: string;
+  onDateChange: (value: string) => void;
   onRetry: () => void;
 }
 
@@ -20,37 +25,54 @@ export const TopItemsChart = ({
   branchName,
   isLoading,
   isError,
+  selectedDate,
+  onDateChange,
   onRetry,
 }: TopItemsChartProps) => {
   const maxRevenue = Math.max(...(data?.topItems.map((item) => item.revenue) ?? [0]));
 
   return (
     <section className="card space-y-5 p-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <Package2 className="h-4 w-4 text-primary" />
             Top sản phẩm bán chạy
           </div>
           <h3 className="mt-2 text-lg font-semibold text-text-primary">{branchName}</h3>
-          <p className="mt-1 text-sm text-text-secondary">
-            Ưu tiên hiển thị theo doanh thu để đội vận hành nhận ra món chủ lực trong ngày.
-          </p>
         </div>
 
-        {data?.topItems.length ? (
-          <div className="rounded-card bg-primary-light px-4 py-3 text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Món dẫn đầu</p>
-            <p className="mt-1 text-base font-bold text-text-primary">{data.topItems[0].itemName}</p>
-            <p className="text-sm text-text-secondary">{formatVND(data.topItems[0].revenue)}</p>
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+          <div className="w-full space-y-1.5 sm:w-[190px]">
+            <label
+              className="text-xs font-semibold uppercase tracking-[0.14em] text-text-secondary"
+              htmlFor="top-items-date"
+            >
+              Ngày xem top món
+            </label>
+            <DatePicker
+              id="top-items-date"
+              value={selectedDate}
+              onChange={onDateChange}
+              className="w-full"
+              align="end"
+            />
           </div>
-        ) : null}
+
+          {data?.topItems.length ? (
+            <div className="rounded-card bg-primary-light px-4 py-3 text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Món dẫn đầu</p>
+              <p className="mt-1 text-base font-bold text-text-primary">{data.topItems[0].itemName}</p>
+              <p className="text-sm text-text-secondary">{formatVND(data.topItems[0].revenue)}</p>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="space-y-2">
+          {TOP_ITEMS_SKELETON_KEYS.map((key) => (
+            <div key={key} className="space-y-2">
               <div className="h-4 w-44 animate-pulse rounded bg-[#f5efe8]" />
               <div className="h-3 animate-pulse rounded-full bg-[#f5efe8]" />
             </div>
