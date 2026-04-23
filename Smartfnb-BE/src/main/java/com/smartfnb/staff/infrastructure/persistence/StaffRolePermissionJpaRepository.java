@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * JPA Repository cho bảng role_permissions (ma trận role ↔ permission).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface StaffRolePermissionJpaRepository

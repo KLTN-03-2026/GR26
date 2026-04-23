@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng shift_templates (ca mẫu của chi nhánh).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity

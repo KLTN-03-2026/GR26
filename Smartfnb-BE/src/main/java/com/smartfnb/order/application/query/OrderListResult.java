@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Kết quả tóm tắt đơn hàng dùng cho danh sách.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-31
  */
 public record OrderListResult(

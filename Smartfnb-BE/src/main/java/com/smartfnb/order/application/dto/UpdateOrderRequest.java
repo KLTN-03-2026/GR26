@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Request DTO để cập nhật thông tin đơn hàng.
  * 
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-11
  */
 public record UpdateOrderRequest(

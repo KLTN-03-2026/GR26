@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Lệnh tạo vai trò (Role) mới trong tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record CreateRoleCommand(

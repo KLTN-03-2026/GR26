@@ -14,7 +14,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng branch_items.
  * Quản lý giá bán và trạng thái của món ăn tại từng chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface BranchItemJpaRepository

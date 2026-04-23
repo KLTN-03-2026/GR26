@@ -10,7 +10,7 @@ import java.util.List;
  * Nhân viên hoàn tất kéo thả nhiều bàn, client gửi 1 request duy nhất
  * để lưu toàn bộ vị trí — tránh gọi nhiều request riêng lẻ.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record UpdateTablePositionsRequest(

@@ -8,7 +8,7 @@ import java.util.UUID;
  * Exception khi không tìm thấy danh mục món ăn.
  * Trả về NOT_FOUND để tránh lộ thông tin nội bộ.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public class CategoryNotFoundException extends SmartFnbException {

@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * Entity con của Order Aggregate Root. (Domain Object)
  * 
- * @author SmartF&B Team
+ * @author vutq
  */
 @Getter
 @Builder

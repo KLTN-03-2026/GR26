@@ -17,7 +17,7 @@ import java.util.UUID;
  * Aggregate Root đại diện cho Đơn hàng.
  * Chứa logic trạng thái đơn hàng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-30
  */
 @Getter

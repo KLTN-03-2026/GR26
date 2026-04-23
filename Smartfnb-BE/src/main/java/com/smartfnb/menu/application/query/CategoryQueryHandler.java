@@ -20,7 +20,7 @@ import java.util.UUID;
  * Query Handler xử lý các truy vấn READ-ONLY cho danh mục.
  * Không có @Transactional — chỉ đọc dữ liệu.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component

@@ -8,7 +8,7 @@ import java.util.UUID;
  *
  * <p>Dùng cho PATCH /api/v1/staff/{id}/status — Bug Fix S-15.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-10
  */
 public record UpdateStaffStatusCommand(

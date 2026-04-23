@@ -5,7 +5,7 @@ import com.smartfnb.shared.exception.SmartFnbException;
 /**
  * Exception khi tên khu vực bàn bị trùng trong cùng chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public class DuplicateZoneNameException extends SmartFnbException {

@@ -10,7 +10,7 @@ import java.util.UUID;
  * Repository cho bảng plans.
  * Dùng để tìm gói dịch vụ khi đăng ký tenant mới.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Repository

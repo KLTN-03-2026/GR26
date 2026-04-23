@@ -9,7 +9,7 @@ import java.util.UUID;
  * Lệnh cập nhật ma trận permission cho một vai trò (S-15 — RBAC matrix).
  * QUAN TRỌNG: Thao tác này ghi audit_log bắt buộc.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record UpdateRolePermissionsCommand(

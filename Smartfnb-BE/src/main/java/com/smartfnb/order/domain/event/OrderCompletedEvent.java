@@ -11,7 +11,7 @@ import java.util.UUID;
  * - InventoryModule: trừ nguyên liệu
  * - ReportModule: cập nhật báo cáo
  *
- * @author SmartF&B Team
+ * @author vutq
  */
 public record OrderCompletedEvent(
     UUID orderId,
@@ -25,6 +25,7 @@ public record OrderCompletedEvent(
 ) {
     public record CompletedOrderItem(
         UUID menuItemId,
+        String itemName,
         int quantity,
         BigDecimal unitPrice,
         List<CompletedAddonItem> addons

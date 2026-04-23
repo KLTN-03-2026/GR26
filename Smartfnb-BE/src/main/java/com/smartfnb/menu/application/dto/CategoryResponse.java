@@ -9,7 +9,7 @@ import java.util.UUID;
  * DTO response trả về thông tin danh mục.
  * Không expose tenantId nội bộ.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record CategoryResponse(

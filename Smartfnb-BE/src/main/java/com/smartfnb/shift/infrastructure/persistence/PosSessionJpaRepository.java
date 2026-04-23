@@ -12,7 +12,7 @@ import java.util.UUID;
  * JPA Repository cho bảng pos_sessions (phiên POS).
  * Quy tắc nghiệp vụ: mỗi branch chỉ có 1 session OPEN tại 1 thời điểm.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface PosSessionJpaRepository

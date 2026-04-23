@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng user_roles (nhân viên được gán vai trò).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity(name = "StaffUserRoleJpaEntity")

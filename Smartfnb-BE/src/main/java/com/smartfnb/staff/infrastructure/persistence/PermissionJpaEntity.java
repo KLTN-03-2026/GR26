@@ -6,7 +6,7 @@ import lombok.*;
 /**
  * JPA Entity cho bảng permissions (danh sách quyền toàn hệ thống — seed data).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity(name = "StaffPermissionJpaEntity")

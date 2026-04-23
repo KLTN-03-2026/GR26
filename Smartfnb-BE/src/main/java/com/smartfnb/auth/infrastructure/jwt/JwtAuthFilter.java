@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  *   <li>Clear TenantContext trong finally block</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

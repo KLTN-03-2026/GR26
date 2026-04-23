@@ -9,7 +9,7 @@ import java.util.UUID;
  * Request để lấy báo cáo doanh thu.
  * Hỗ trợ filter: branch, date range, group by.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record GetRevenueReportRequest(
