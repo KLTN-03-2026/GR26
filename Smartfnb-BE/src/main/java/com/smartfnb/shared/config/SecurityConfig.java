@@ -79,6 +79,9 @@ public class SecurityConfig {
                 // Actuator health — public
                 .requestMatchers("/actuator/health").permitAll()
 
+                // Payment webhooks — public (external providers call this)
+                .requestMatchers(HttpMethod.POST, "/api/v1/payments/qr/webhook").permitAll()
+
                 // File uploads (ảnh món ăn) — public, không cần JWT để hiển thị trong POS
                 .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
 

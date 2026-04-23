@@ -8,6 +8,7 @@ import com.smartfnb.report.domain.event.RevenueReportUpdatedEvent;
 import com.smartfnb.report.domain.repository.DailyRevenueSummaryRepository;
 import com.smartfnb.report.domain.repository.DailyItemStatRepository;
 import com.smartfnb.report.domain.repository.HourlyRevenueStatRepository;
+import com.smartfnb.payment.domain.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -48,7 +49,7 @@ public class RevenueReportEventHandler {
      */
     @EventListener
     public void onOrderCompleted(com.smartfnb.order.domain.event.OrderCompletedEvent event) {
-        log.info("📊 Nhận sự kiện OrderCompletedEvent: orderId={}, amount={}", event.orderId(), event.totalAmount());
+        log.info("Nhận sự kiện OrderCompletedEvent: orderId={}, amount={}", event.orderId(), event.totalAmount());
         
         try {
             LocalDateTime occurredAt = Instant.ofEpochMilli(event.occurredAt().toEpochMilli())
@@ -78,10 +79,88 @@ public class RevenueReportEventHandler {
             // 3. Cập nhật HourlyRevenueStat
             updateHourlyRevenueStat(event.branchId(), date, hour, 1, event.totalAmount());
             
-            log.info("✓ Cập nhật báo cáo doanh thu thành công cho đơn {}", event.orderNumber());
+            log.info("Cập nhật báo cáo doanh thu thành công cho đơn {}", event.orderNumber());
         } catch (Exception e) {
-            log.error("✗ Lỗi khi cập nhật báo cáo: {}", e.getMessage(), e);
+            log.error("Lỗi khi cập nhật báo cáo: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Xử lý sự kiện PaymentCompletedEvent.
+     * Cập nhật payment_breakdown theo đúng phương thức thanh toán (CASH/MOMO/VIETQR/BANKING).
+     *
+     * <p>BUG FIX: Trước đây handler này bị thiếu, nên payment_breakdown.cash mãi = 0
+     * dù đã có đơn tiền mặt hoàn tất.</p>
+     */
+    @EventListener
+    public void onPaymentCompleted(PaymentCompletedEvent event) {
+        log.info("Nhận PaymentCompletedEvent: paymentId={}, method={}, amount={}",
+            event.paymentId(), event.paymentMethod(), event.amount());
+
+        try {
+            LocalDate date = event.occurredAt()
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
+                .toLocalDate();
+
+            updatePaymentBreakdown(event.tenantId(), event.branchId(), date,
+                event.paymentMethod(), event.amount());
+
+            log.info("Cập nhật payment_breakdown.{} += {} thành công",
+                event.paymentMethod().toLowerCase(), event.amount());
+        } catch (Exception e) {
+            log.error("Lỗi khi cập nhật payment breakdown: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Cập nhật đúng field trong payment_breakdown theo paymentMethod.
+     */
+    private void updatePaymentBreakdown(UUID tenantId, UUID branchId, LocalDate date,
+                                        String paymentMethod, BigDecimal amount) {
+        Optional<DailyRevenueSummary> existing = dailyRevenueSummaryRepo.findByBranchIdAndDate(branchId, date);
+
+        if (existing.isEmpty()) {
+            // Không có summary: không tự tạo mới ở đây (OrderCompletedEvent sẽ tạo trước)
+            log.warn("Không tìm thấy DailyRevenueSummary để cập nhật breakdown: branch={}, date={}", branchId, date);
+            return;
+        }
+
+        DailyRevenueSummary old = existing.get();
+        PaymentBreakdown oldBreakdown = old.paymentBreakdown() != null
+            ? old.paymentBreakdown()
+            : new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+
+        // Cập nhật đúng field theo method
+        PaymentBreakdown newBreakdown = switch (paymentMethod) {
+            case "CASH"    -> new PaymentBreakdown(
+                                    oldBreakdown.cash().add(amount),
+                                    oldBreakdown.momo(), oldBreakdown.vietqr(),
+                                    oldBreakdown.banking(), oldBreakdown.other());
+            case "MOMO"    -> new PaymentBreakdown(
+                                    oldBreakdown.cash(),
+                                    oldBreakdown.momo().add(amount),
+                                    oldBreakdown.vietqr(), oldBreakdown.banking(), oldBreakdown.other());
+            case "VIETQR"  -> new PaymentBreakdown(
+                                    oldBreakdown.cash(), oldBreakdown.momo(),
+                                    oldBreakdown.vietqr().add(amount),
+                                    oldBreakdown.banking(), oldBreakdown.other());
+            case "BANKING" -> new PaymentBreakdown(
+                                    oldBreakdown.cash(), oldBreakdown.momo(), oldBreakdown.vietqr(),
+                                    oldBreakdown.banking().add(amount),
+                                    oldBreakdown.other());
+            default        -> new PaymentBreakdown(
+                                    oldBreakdown.cash(), oldBreakdown.momo(), oldBreakdown.vietqr(),
+                                    oldBreakdown.banking(),
+                                    oldBreakdown.other().add(amount));
+        };
+
+        DailyRevenueSummary updated = new DailyRevenueSummary(
+            old.id(), old.tenantId(), old.branchId(), old.date(),
+            old.totalRevenue(), old.totalOrders(), old.avgOrderValue(),
+            newBreakdown,
+            old.costOfGoods(), old.grossProfit()
+        );
+        dailyRevenueSummaryRepo.save(updated);
     }
     
     private void updateDailyRevenueSummary(UUID tenantId, UUID branchId, LocalDate date,

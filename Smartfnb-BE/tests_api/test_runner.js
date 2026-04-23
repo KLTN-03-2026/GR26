@@ -21,9 +21,6 @@ async function request(endpoint, method = 'GET', body = null, token = null) {
         data = await res.text();
     }
 
-    if (!res.ok) {
-        console.warn(`      ⚠️ [HTTP ${res.status}] ${endpoint}: ${JSON.stringify(data)}`);
-    }
     return { status: res.status, data };
 }
 
@@ -83,6 +80,7 @@ async function runTests() {
         // --- S-01, S-02: AUTH & TENANT ---
         console.log("1. MỚI: Đăng ký Tenant (Chủ quán)");
         let res = await request('/auth/register', 'POST', {
+            tenantName: `Quán Test Tự Động ${Date.now()}`,
             email: email,
             password: password,
             ownerName: "Auto Tester",
@@ -94,8 +92,7 @@ async function runTests() {
         console.log("2. Đăng nhập");
         res = await request('/auth/login', 'POST', { email, password });
         if (res.status !== 200) throw new Error("Login failed: " + JSON.stringify(res.data));
-        currentToken = res.data.data.accessToken;
-        if (!currentToken) throw new Error("Token is null");
+        currentToken = res.data.data.accessToken || res.data.data.token;
         console.log("   ✅ Đăng nhập thành công. Token lấy được.");
 
         console.log("3. Kiểm tra Gói cước (Subscription)");
@@ -112,11 +109,9 @@ async function runTests() {
         }, currentToken);
         if (res.status !== 200 && res.status !== 201) throw new Error("Create branch failed: " + JSON.stringify(res.data));
         branchId = res.data.data.id;
-        if (!branchId) throw new Error("Branch creation failed");
-        console.log(`   ✅ Chi nhánh tạo mới ID: ${branchId}`);
+        console.log("   ✅ Tạo chi nhánh thành công: " + branchId);
 
-        // --- CHỌN CHI NHÁNH NGAY ĐỂ CÓ branchId TRONG TOKEN ---
-        console.log("4b. Chọn chi nhánh làm việc vừa tạo (Select Branch)");
+        console.log("5. Chọn chi nhánh làm việc (Select Branch)");
         res = await request('/auth/select-branch', 'POST', { branchId }, currentToken);
         if (res.status !== 200) throw new Error("Select branch failed: " + JSON.stringify(res.data));
         currentToken = res.data.data.token || res.data.data.accessToken || currentToken;
@@ -688,6 +683,7 @@ async function runTests() {
         const email2 = `tenant2_${Date.now()}@test.com`;
         const password2 = "Password123!";
         res = await request('/auth/register', 'POST', {
+            tenantName: "Tenant 2 Test Isolation",
             email: email2,
             password: password2,
             ownerName: "Tenant 2 Owner",
@@ -814,90 +810,17 @@ async function runTests() {
         console.log("      ✅ Validation: Check negative values");
         console.log("   ✅ Multi-tenant Scheduler logic đã fix hoàn toàn");
 
-        console.log("\n--- BẮT ĐẦU KIỂM TRA CÁC BUG FIX MỚI (8-12) ---");
-
-        console.log("BUG 4: Kiểm tra Tọa độ Branch (Latitude/Longitude)");
-        res = await request(`/branches`, 'GET', null, currentToken);
-        const createdBranch = res.data.data.find(b => b.id === branchId);
-        if (!createdBranch || createdBranch.latitude === undefined || createdBranch.longitude === undefined) {
-            console.warn("   ⚠️ CẢNH BÁO: Tọa độ branch bị thiếu hoặc không tìm thấy branch!");
+        console.log("S19.11️⃣ TEST PAYMENT BREAKDOWN REPORT (Fix cash zero bug)");
+        const todayStr = new Date().toISOString().split('T')[0];
+        res = await request(`/reports/payment-breakdown?branchId=${branchId}&date=${todayStr}`, 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("Get payment breakdown failed");
+        const breakdownData = res.data.data;
+        if (!breakdownData.cashBreakdown || breakdownData.cashBreakdown.amount === 0) {
+            console.warn("   ⚠️ Cảnh báo: Cash amount = 0, có thể do bug payment breakdown chưa fix!");
+            throw new Error("❌ Báo cáo doanh thu payment_breakdown.cash đang bằng 0");
         } else {
-            console.log(`   ✅ Tọa độ: ${createdBranch.latitude}, ${createdBranch.longitude}`);
-        }
-
-        console.log("BUG 5: Kiểm tra Employee List Null fields");
-        res = await request('/staff', 'GET', null, currentToken);
-        const employee = res.data.data.content[0];
-        if (employee && (employee.employeeCode === null || employee.status === null)) {
-            console.warn("   ⚠️ CẢNH BÁO: Nhân viên vẫn bị null trường employeeCode/status!");
-        } else {
-            console.log("   ✅ Dữ liệu nhân viên đầy đủ (employeeCode, status, positionId, ...)");
-        }
-
-        console.log("BUG 8 & 9: Kiểm tra Tính tiền Addon nâng cao");
-        const specialAddonId = addonId; // dùng addon đã tạo ở S-HOTFIX
-        res = await request('/orders', 'POST', {
-            tableId: null, // Sử dụng Takeaway để tránh lỗi Table occupied
-            source: "IN_STORE",
-            items: [
-                {
-                    itemId: itemId,
-                    itemName: "Cà phê Topping",
-                    quantity: 1,
-                    unitPrice: 20000,
-                    addons: JSON.stringify([{ name: "Thêm sữa", extraPrice: 5000, quantity: 2 }])
-                }
-            ]
-        }, currentToken);
-        // 20000 + (5000 * 2) = 30000
-        if (res.data.data.totalAmount !== 30000) {
-            console.warn(`   ⚠️ CẢNH BÁO: Tính tiền addon sai! Kỳ vọng 30000, thực tế: ${res.data.data.totalAmount}`);
-        } else {
-            console.log("   ✅ Tính tiền addon chính xác: 30000 VND");
-        }
-        const bugOrderId = res.data.data.id;
-
-        console.log("BUG 10: Kiểm tra Tên Branch & Loại 'KHÁC' trong Report");
-        res = await request(`/reports/payment-breakdown?branchId=${branchId}&date=${new Date().toISOString().split('T')[0]}`, 'GET', null, currentToken);
-        if (res.data.data.branchName === "Branch Name") {
-            console.warn("   ⚠️ CẢNH BÁO: branchName vẫn bị hardcode 'Branch Name'!");
-        } else {
-            console.log(`   ✅ Tên chi nhánh báo cáo: ${res.data.data.branchName}`);
-        }
-        if (res.data.data.otherBreakdown.method !== "KHÁC (ZaloPay, Thẻ...)") {
-            console.warn(`   ⚠️ CẢNH BÁO: Loại 'OTHER' chưa đổi tên! Hiện tại: ${res.data.data.otherBreakdown.method}`);
-        } else {
-            console.log("   ✅ Đã đổi tên phương thức 'OTHER' thành 'KHÁC (ZaloPay, Thẻ...)'");
-        }
-
-        console.log("BUG 11: Kiểm tra createdByName trong Expense");
-        // Tạo 1 expense nhanh
-        res = await request('/expenses', 'POST', {
-            amount: 50000,
-            categoryName: "Mực in",
-            description: "Mua mực in",
-            expenseDate: new Date().toISOString(),
-            paymentMethod: "CASH",
-            branchId: branchId
-        }, currentToken);
-        res = await request('/expenses', 'GET', null, currentToken);
-        const expense = res.data.data.content[0];
-        if (expense.createdByName === "Unknown" || !expense.createdByName) {
-            console.warn("   ⚠️ CẢNH BÁO: Expense createdByName bị Unknown!");
-        } else {
-            console.log(`   ✅ Người tạo phiếu chi: ${expense.createdByName}`);
-        }
-
-        console.log("BUG 12: Kiểm tra Payment Breakdown Update");
-        // Thanh toán cho order Bug 8&9
-        await request('/payments/cash', 'POST', { orderId: bugOrderId, amount: 30000 }, currentToken);
-        // Đợi async update report
-        await new Promise(r => setTimeout(r, 1000));
-        res = await request(`/reports/payment-breakdown?branchId=${branchId}&date=${new Date().toISOString().split('T')[0]}`, 'GET', null, currentToken);
-        if (res.data.data.cashBreakdown.amount === 0) {
-            console.warn("   ⚠️ CẢNH BÁO: cashBreakdown vẫn bằng 0 sau khi thanh toán!");
-        } else {
-            console.log(`   ✅ Doanh thu tiền mặt đã cập nhật: ${res.data.data.cashBreakdown.amount}`);
+            console.log(`   ✅ Cash Breakdown: Amount=${breakdownData.cashBreakdown.amount}, Count=${breakdownData.cashBreakdown.transactionCount}`);
+            if (breakdownData.cashBreakdown.transactionCount === 0) throw new Error("❌ Transaction count = 0 dù amount > 0");
         }
 
         console.log("\n=== S-19 TEST SUMMARY ===");

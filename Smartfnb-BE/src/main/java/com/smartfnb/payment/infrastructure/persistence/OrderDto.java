@@ -17,6 +17,7 @@ public record OrderDto(
     UUID branchId,
     UUID tableId,
     String orderNumber,
+    String status,
     BigDecimal subtotal,
     BigDecimal discountAmount,
     BigDecimal taxAmount,

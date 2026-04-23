@@ -7,6 +7,7 @@ import com.smartfnb.order.domain.model.OrderSource;
 import com.smartfnb.order.domain.model.OrderStatus;
 import com.smartfnb.order.domain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OrderRepositoryImpl implements OrderRepository {
 
     private final OrderJpaRepository jpaRepository;
@@ -51,16 +53,26 @@ public class OrderRepositoryImpl implements OrderRepository {
         // however BaseAggregateRoot properties usually immutable on entity except by JPA.
         // We will just copy standard fields.
         try {
-            if (domain.getVersion() != null) {
+            // Set ID from domain
+            if (domain.getId() != null) {
                 java.lang.reflect.Field idField = com.smartfnb.shared.domain.BaseAggregateRoot.class.getDeclaredField("id");
                 idField.setAccessible(true);
                 idField.set(entity, domain.getId());
             }
             
+            // Fix: Set version correctly for Hibernate @Version
+            if (domain.getVersion() != null) {
+                entity.setVersion(domain.getVersion());
+            } else {
+                entity.setVersion(0L); // NEW orders must start at 0
+            }
+
             java.lang.reflect.Field createdAtField = com.smartfnb.shared.domain.BaseAggregateRoot.class.getDeclaredField("createdAt");
             createdAtField.setAccessible(true);
             createdAtField.set(entity, domain.getCreatedAt());
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            log.error("Lỗi set field via reflection", e);
+        }
 
         entity.setBranchId(domain.getBranchId());
         entity.setPosSessionId(domain.getPosSessionId());
@@ -75,9 +87,8 @@ public class OrderRepositoryImpl implements OrderRepository {
         entity.setTotalAmount(domain.getTotalAmount());
         entity.setNotes(domain.getNotes());
         entity.setCompletedAt(domain.getCompletedAt());
-        entity.setVersion(domain.getVersion());
-
-        // map items
+        
+        // Map items
         if (domain.getItems() != null) {
             List<OrderItemJpaEntity> itemEntities = domain.getItems().stream().map(item -> {
                 OrderItemJpaEntity i = new OrderItemJpaEntity();
