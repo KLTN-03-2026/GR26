@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class GetHourlyRevenueHeatmapQueryHandler {
     
     private final HourlyRevenueStatJpaRepository hourlyRevenueStatRepo;
+    private final com.smartfnb.report.infrastructure.persistence.ReportDataAccessor reportDataAccessor;
     
     public HourlyRevenueHeatmapResult handle(GetHourlyRevenueHeatmapQuery query) {
         log.info("Lấy heatmap doanh thu: branchId={}, date={}", query.branchId(), query.date());
@@ -59,7 +60,7 @@ public class GetHourlyRevenueHeatmapQueryHandler {
         
         return new HourlyRevenueHeatmapResult(
             query.date(),
-            "Branch Name",  // TODO: Lấy tên branch từ database
+            reportDataAccessor.getBranchName(query.branchId()).orElse("Unknown"),
             heatmapData
         );
     }

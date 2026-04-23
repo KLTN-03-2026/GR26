@@ -22,10 +22,6 @@ import jakarta.validation.constraints.Size;
  */
 public record RegisterTenantCommand(
 
-        @NotBlank(message = "Tên chuỗi F&B không được để trống")
-        @Size(max = 255, message = "Tên chuỗi F&B tối đa 255 ký tự")
-        String tenantName,
-
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email không đúng định dạng")
         String email,

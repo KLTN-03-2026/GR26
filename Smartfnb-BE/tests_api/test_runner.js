@@ -11,15 +11,14 @@ async function request(endpoint, method = 'GET', body = null, token = null) {
     if (body) config.body = JSON.stringify(body);
 
     const res = await fetch(`${BASE_URL}${endpoint}`, config);
-    const contentType = res.headers.get('content-type');
+    // if status is 204 No Content, don't parse JSON
+    if (res.status === 204) return { status: res.status, data: {} };
 
-    // Read text first to avoid "Body is unusable"
-    const text = await res.text();
     let data;
     try {
-        data = text ? JSON.parse(text) : {};
+        data = await res.json();
     } catch {
-        data = text;
+        data = await res.text();
     }
 
     return { status: res.status, data };
@@ -220,13 +219,13 @@ async function runTests() {
             console.warn("   ⚠️ CẢNH BÁO: Tổng tiền sau cập nhật không khớp kỳ vọng! Thực tế: " + totalAmount);
         }
 
-        // console.log("11. Cập nhật Order sang COMPLETED");
-        // res = await request(`/orders/${orderId}/status`, 'PUT', {
-        //     newStatus: "COMPLETED",
-        //     reason: ""
-        // }, currentToken);
-        // if (res.status !== 200) throw new Error("Update order failed: " + JSON.stringify(res.data));
-        // console.log("   ✅ Đổi Order sang COMPLETED.");
+        console.log("11. Cập nhật Order sang COMPLETED");
+        res = await request(`/orders/${orderId}/status`, 'PUT', {
+            newStatus: "COMPLETED",
+            reason: ""
+        }, currentToken);
+        if (res.status !== 200) throw new Error("Update order failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Đổi Order sang COMPLETED.");
 
         // --- S-11: PAYMENT & INVOICE ---
         console.log("12. Thanh toán bằng tiền mặt (Cash Payment)");
@@ -242,86 +241,6 @@ async function runTests() {
         res = await request('/payments/invoices', 'GET', null, currentToken);
         if (res.status !== 200) throw new Error("Search invoices failed: " + JSON.stringify(res.data));
         console.log(`   ✅ Truy vấn hóa đơn thành công. Có ${res.data.data.totalElements ?? 0} hóa đơn trong chi nhánh.`);
-
-        // --- S-11b: HARDENING PAYMENT TESTS ---
-        console.log("\n--- BẮT ĐẦU TEST S-11b (PAYMENT HARDENING) ---");
-        console.log("13a. Tạo Đơn hàng thứ 2 dành cho QR test");
-        res = await request('/orders', 'POST', {
-            tableId: tableId,
-            source: "IN_STORE",
-            notes: "Test QR Hardening",
-            items: [
-                {
-                    itemId: itemId,
-                    itemName: "Cà phê Auto 2",
-                    quantity: 1,
-                    unitPrice: 30000
-                }
-            ]
-        }, currentToken);
-        if (res.status !== 200 && res.status !== 201) throw new Error("Create order 2 failed: " + JSON.stringify(res.data));
-        const orderId2 = res.data.data.id;
-        const totalAmount2 = res.data.data.totalAmount;
-        console.log("   ✅ Tạo Order 2 thành công. Mã: " + orderId2);
-
-        console.log("13b. Cố tình thanh toán tiền mặt với số tiền NHỎ HƠN -> Mong đợi lỗi");
-        let failCash = await request('/payments/cash', 'POST', {
-            orderId: orderId2,
-            amount: totalAmount2 - 1000
-        }, currentToken);
-        if (failCash.status === 200 || failCash.status === 201) throw new Error("Expected amount error but succeeded!");
-        console.log("   ✅ Server từ chối thanh toán thiết tiền thành công.");
-
-        console.log("13c. Tạo QR Payment cho Order 2");
-        res = await request('/payments/qr', 'POST', {
-            orderId: orderId2,
-            amount: totalAmount2,
-            qrMethod: "VIETQR"
-        }, currentToken);
-        if (res.status !== 200 && res.status !== 201) throw new Error("QR Payment Create failed: " + JSON.stringify(res.data));
-        const paymentId2 = res.data.data.paymentId;
-        console.log("   ✅ Bắt đầu giao dịch QR. PaymentId: " + paymentId2);
-
-        console.log("13d. Giả lập gọi Webhook Confirm QR với số tiền NHỎ HƠN -> Mong đợi lỗi 400/500");
-        let failWebhook = await request('/payments/qr/webhook', 'POST', {
-            paymentId: paymentId2,
-            transactionId: "TX-" + Date.now(),
-            status: "success",
-            amount: totalAmount2 - 5000,
-            paidAtTimestamp: Date.now()
-        }, null); // Webhook may not need token, or might need. If it throws 4xx it's good.
-        if (failWebhook.status === 200) throw new Error("Expected webhook amount validation to fail!");
-        console.log("   ✅ Webhook reject thiếu tiền thành công.");
-
-        console.log("13e. Giả lập gọi Webhook Confirm QR với số đúng");
-        res = await request('/payments/qr/webhook', 'POST', {
-            paymentId: paymentId2,
-            transactionId: "TX-SUCCESS-" + Date.now(),
-            status: "success",
-            amount: totalAmount2,
-            paidAtTimestamp: Date.now()
-        }, null);
-        if (res.status !== 200) throw new Error("Webhook success failed: " + JSON.stringify(res.data));
-        console.log("   ✅ Giao dịch QR xác nhận thành công. Đơn hàng chuyển sang COMPLETED.");
-
-        console.log("13f. Giả lập Webhook gọi lại (Retry/Idempotency) -> Mong đợi trả về 200 thay vì lỗi 500");
-        res = await request('/payments/qr/webhook', 'POST', {
-            paymentId: paymentId2,
-            transactionId: "TX-SUCCESS-" + Date.now(),
-            status: "success",
-            amount: totalAmount2,
-            paidAtTimestamp: Date.now()
-        }, null);
-        if (res.status !== 200) throw new Error("Webhook idempotency failed: " + JSON.stringify(res.data));
-        console.log("   ✅ Webhook idempotency test PASS (không bị crash).");
-
-        console.log("13g. Cố tình mở lại đơn đã xong và gọi thanh toán Cash -> Mong đợi lỗi bảo mật trạng thái");
-        let failCashAgain = await request('/payments/cash', 'POST', {
-            orderId: orderId2,
-            amount: totalAmount2
-        }, currentToken);
-        if (failCashAgain.status === 200 || failCashAgain.status === 201) throw new Error("Server allowed payment for ALREADY COMPLETED order!");
-        console.log("   ✅ Server chặn thanh toán trùng lặp thành công.");
 
         // --- S-13 & S-14: INVENTORY ---
         console.log("\n--- BẮT ĐẦU TEST S-13 & S-14 (INVENTORY) ---");

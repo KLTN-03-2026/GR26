@@ -254,4 +254,83 @@ public class RevenueReportEventHandler {
         
         hourlyRevenueStatRepo.save(stat);
     }
+
+    /**
+     * Xử lý sự kiện PaymentCompletedEvent.
+     * Cập nhật breakdown hình thức thanh toán báo cáo doanh thu.
+     */
+    @EventListener
+    public void onPaymentCompleted(com.smartfnb.payment.domain.event.PaymentCompletedEvent event) {
+        log.info("📊 Nhận sự kiện PaymentCompletedEvent: paymentId={}, method={}, amount={}", 
+            event.paymentId(), event.paymentMethod(), event.amount());
+        
+        try {
+            LocalDateTime occurredAt = Instant.ofEpochMilli(event.occurredAt().toEpochMilli())
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
+                .toLocalDateTime();
+            LocalDate date = occurredAt.toLocalDate();
+            
+            updatePaymentBreakdown(event.tenantId(), event.branchId(), date, event.amount(), event.paymentMethod());
+            log.info("✓ Cập nhật payment breakdown thành công cho đơn {}", event.orderNumber());
+        } catch (Exception e) {
+            log.error("✗ Lỗi khi cập nhật payment breakdown: {}", e.getMessage(), e);
+        }
+    }
+
+    private void updatePaymentBreakdown(UUID tenantId, UUID branchId, LocalDate date, BigDecimal amount, String method) {
+        Optional<DailyRevenueSummary> existing = dailyRevenueSummaryRepo.findByBranchIdAndDate(branchId, date);
+        
+        DailyRevenueSummary summary;
+        if (existing.isPresent()) {
+            DailyRevenueSummary old = existing.get();
+            PaymentBreakdown oldBreakdown = old.paymentBreakdown() != null ?
+                old.paymentBreakdown() :
+                new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+            
+            BigDecimal cash = oldBreakdown.cash() != null ? oldBreakdown.cash() : BigDecimal.ZERO;
+            BigDecimal momo = oldBreakdown.momo() != null ? oldBreakdown.momo() : BigDecimal.ZERO;
+            BigDecimal vietqr = oldBreakdown.vietqr() != null ? oldBreakdown.vietqr() : BigDecimal.ZERO;
+            BigDecimal banking = oldBreakdown.banking() != null ? oldBreakdown.banking() : BigDecimal.ZERO;
+            BigDecimal other = oldBreakdown.other() != null ? oldBreakdown.other() : BigDecimal.ZERO;
+
+            if ("CASH".equalsIgnoreCase(method)) cash = cash.add(amount);
+            else if ("MOMO".equalsIgnoreCase(method)) momo = momo.add(amount);
+            else if ("VIETQR".equalsIgnoreCase(method)) vietqr = vietqr.add(amount);
+            else if ("BANKING".equalsIgnoreCase(method)) banking = banking.add(amount);
+            else other = other.add(amount); // ZALOPAY and others go here
+
+            PaymentBreakdown newBreakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other);
+            
+            summary = new DailyRevenueSummary(
+                old.id(), old.tenantId(), old.branchId(), old.date(),
+                old.totalRevenue(), old.totalOrders(), old.avgOrderValue(),
+                newBreakdown,
+                old.costOfGoods(),
+                old.grossProfit()
+            );
+        } else {
+            BigDecimal cash = BigDecimal.ZERO;
+            BigDecimal momo = BigDecimal.ZERO;
+            BigDecimal vietqr = BigDecimal.ZERO;
+            BigDecimal banking = BigDecimal.ZERO;
+            BigDecimal other = BigDecimal.ZERO;
+
+            if ("CASH".equalsIgnoreCase(method)) cash = amount;
+            else if ("MOMO".equalsIgnoreCase(method)) momo = amount;
+            else if ("VIETQR".equalsIgnoreCase(method)) vietqr = amount;
+            else if ("BANKING".equalsIgnoreCase(method)) banking = amount;
+            else other = amount; // ZALOPAY and others go here
+
+            PaymentBreakdown breakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other);
+            summary = new DailyRevenueSummary(
+                UUID.randomUUID(), tenantId, branchId, date,
+                BigDecimal.ZERO, 0, BigDecimal.ZERO,
+                breakdown,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO
+            );
+        }
+        
+        dailyRevenueSummaryRepo.save(summary);
+    }
 }

@@ -49,6 +49,22 @@ public class BranchService {
     }
 
     /**
+     * Lấy danh sách chi nhánh mà nhân viên được gán.
+     */
+    @Transactional(readOnly = true)
+    public List<BranchResponse> getAssignedBranches(UUID tenantId, UUID userId) {
+        List<UUID> assignedBranchIds = branchUserRepository.findByUserId(userId)
+                .stream()
+                .map(com.smartfnb.branch.infrastructure.persistence.BranchUserJpaEntity::getBranchId)
+                .toList();
+
+        return branchRepository.findAllById(assignedBranchIds).stream()
+                .filter(b -> b.getTenantId().equals(tenantId)) // Double check tenant
+                .map(BranchResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Tạo mới một chi nhánh cho Tenant.
      * Validate: tenant không được vượt quá số lượng chi nhánh tối đa (maxBranches) của gói Plan.
      */
@@ -79,6 +95,8 @@ public class BranchService {
                 .code(request.code())
                 .address(request.address())
                 .phone(request.phone())
+                .latitude(request.latitude())
+                .longitude(request.longitude())
                 .status("ACTIVE")
                 .build();
 
@@ -103,6 +121,8 @@ public class BranchService {
         branch.setCode(request.code());
         branch.setAddress(request.address());
         branch.setPhone(request.phone());
+        branch.setLatitude(request.latitude());
+        branch.setLongitude(request.longitude());
 
         branch = branchRepository.save(branch);
         return BranchResponse.fromEntity(branch);

@@ -3,6 +3,7 @@ package com.smartfnb.expense.application.query;
 import com.smartfnb.expense.application.dto.ExpenseResponse;
 import com.smartfnb.expense.domain.exception.ExpenseNotFoundException;
 import com.smartfnb.expense.infrastructure.persistence.ExpenseJpaEntity;
+import com.smartfnb.auth.infrastructure.persistence.UserRepository;
 import com.smartfnb.expense.infrastructure.persistence.SpringDataExpenseRepository;
 import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class GetExpenseDetailQueryHandler {
 
     private final SpringDataExpenseRepository springDataRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public ExpenseResponse handle(UUID id, UUID tenantId, UUID branchId) {
@@ -24,6 +26,13 @@ public class GetExpenseDetailQueryHandler {
 
         if (!entity.getTenantId().equals(tenantId) || !entity.getBranchId().equals(branchId)) {
             throw new SmartFnbException("ACCESS_DENIED", "Không có quyền xem phiếu chi này", 403);
+        }
+
+        String createdByName = "Unknown";
+        if (entity.getCreatedBy() != null) {
+            createdByName = userRepository.findById(entity.getCreatedBy())
+                .map(u -> u.getFullName())
+                .orElse("Unknown");
         }
 
         return new ExpenseResponse(
@@ -35,6 +44,7 @@ public class GetExpenseDetailQueryHandler {
             entity.getPaymentMethod(),
             entity.getStatus().name(),
             entity.getCreatedBy(),
+            createdByName,
             entity.getCreatedAt()
         );
     }

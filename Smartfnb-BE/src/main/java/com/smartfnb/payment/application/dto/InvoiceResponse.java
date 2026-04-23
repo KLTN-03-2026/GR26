@@ -14,7 +14,7 @@ import java.util.UUID;
 public record InvoiceResponse(
     UUID id,
     UUID orderId,
-    UUID paymentId,
+    String paymentMethod,
     String invoiceNumber,
     BigDecimal subtotal,
     BigDecimal discount,
