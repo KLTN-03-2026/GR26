@@ -76,33 +76,47 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
                         WHEN COALESCE(ib_bal.quantity, 0) = 0 THEN 'OUT_OF_STOCK'
                         WHEN COALESCE(ib_bal.quantity, 0) <= COALESCE(ib_bal.min_level, 0) THEN 'LOW'
                         ELSE 'ENOUGH'
-                    END as stockStatus
+                    END as stockStatus,
+                    b.id as branchId,
+                    b.name as branchName
                 FROM items i
                 LEFT JOIN inventory_balances ib_bal ON i.id = ib_bal.item_id
                     AND ib_bal.branch_id = :branchId
                     AND ib_bal.tenant_id = :tenantId
+                LEFT JOIN branches b ON b.id = :branchId
                 WHERE i.tenant_id = :tenantId
                   AND i.type IN ('INGREDIENT', 'SUB_ASSEMBLY')
                   AND i.deleted_at IS NULL
-                ORDER BY i.name
+                ORDER BY i.name, i.id
                 """;
 
         Map<String, Object> params = new HashMap<>();
         params.put("branchId", branchId);
         params.put("tenantId", tenantId);
 
-        return jdbcTemplate.query(sql, params, (rs, rowNum) ->
-                InventoryStockDto.builder()
+        return jdbcTemplate.query(sql, params, (rs, rowNum) -> {
+                BigDecimal currentValue = toBigDecimal(rs.getObject("currentValue"));
+                BigDecimal currentQty = toBigDecimal(rs.getObject("currentQuantity"));
+                BigDecimal minLevel = toBigDecimal(rs.getObject("minLevel"));
+                BigDecimal unitCost = BigDecimal.ZERO;
+                if (currentQty.compareTo(BigDecimal.ZERO) > 0) {
+                    unitCost = currentValue.divide(currentQty, 4, java.math.RoundingMode.HALF_UP);
+                }
+                
+                return InventoryStockDto.builder()
                         .itemId(UUID.fromString(rs.getString("itemId")))
                         .itemName(rs.getString("itemName"))
                         .unit(rs.getString("unit"))
-                        .currentQty(toBigDecimal(rs.getObject("currentQuantity")).intValue())
-                        .minLevel(toBigDecimal(rs.getObject("minLevel")).intValue())
-                        .totalValue(toBigDecimal(rs.getObject("currentValue")))
+                        .currentQty(currentQty.intValue())
+                        .minLevel(minLevel.intValue())
+                        .unitCost(unitCost)
+                        .totalValue(currentValue)
                         .nearestExpiryDate(toLocalDate(rs.getObject("nearestExpiryDate")))
                         .status(rs.getString("stockStatus"))
-                        .build()
-        );
+                        .branchId(rs.getString("branchId") != null ? UUID.fromString(rs.getString("branchId")) : branchId)
+                        .branchName(rs.getString("branchName"))
+                        .build();
+        });
     }
 
     @Override
@@ -113,16 +127,22 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
                 SELECT
                     i.id as itemId,
                     i.name as itemName,
+                    i.unit as unit,
+                    sb.id as batchId,
+                    sb.cost_per_unit as unitCost,
                     sb.quantity_remaining as quantityRemaining,
                     sb.expires_at as expiryDate,
-                    EXTRACT(DAY FROM (sb.expires_at - CURRENT_TIMESTAMP))::INTEGER as daysToExpire
+                    EXTRACT(DAY FROM (sb.expires_at - CURRENT_TIMESTAMP))::INTEGER as daysToExpire,
+                    b.id as branchId,
+                    b.name as branchName
                 FROM stock_batches sb
                 JOIN items i ON sb.item_id = i.id
+                JOIN branches b ON sb.branch_id = b.id
                 WHERE sb.branch_id = :branchId
                   AND sb.tenant_id = :tenantId
                   AND sb.quantity_remaining > 0
                   AND sb.expires_at <= :thresholdDate
-                ORDER BY sb.expires_at ASC
+                ORDER BY sb.expires_at ASC, sb.id
                 """;
 
         Map<String, Object> params = new HashMap<>();
@@ -134,10 +154,15 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
                 ExpiringItemsDto.builder()
                         .itemId(UUID.fromString(rs.getString("itemId")))
                         .itemName(rs.getString("itemName"))
+                        .unit(rs.getString("unit"))
+                        .batchId(rs.getString("batchId") != null ? UUID.fromString(rs.getString("batchId")) : null)
+                        .unitCost(toBigDecimal(rs.getObject("unitCost")))
                         .quantityRemaining(toBigDecimal(rs.getObject("quantityRemaining")).intValue())
                         .expiryDate(toLocalDate(rs.getObject("expiryDate")))
                         .daysToExpire(rs.getInt("daysToExpire"))
                         .urgency(rs.getInt("daysToExpire") <= 3 ? "CRITICAL" : "WARNING")
+                        .branchId(rs.getString("branchId") != null ? UUID.fromString(rs.getString("branchId")) : branchId)
+                        .branchName(rs.getString("branchName"))
                         .build()
         );
     }
