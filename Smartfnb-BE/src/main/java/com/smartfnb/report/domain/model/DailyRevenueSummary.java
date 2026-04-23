@@ -8,7 +8,7 @@ import java.util.UUID;
  * Bản ghi doanh thu hàng ngày theo chi nhánh.
  * Được cập nhật bởi RevenueReportScheduler từ sự kiện OrderCompletedEvent.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record DailyRevenueSummary(

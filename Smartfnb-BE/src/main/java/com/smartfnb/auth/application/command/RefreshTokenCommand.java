@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param branchId     (Tuỳ chọn) UUID chi nhánh đang làm việc — FE nên gửi kèm
  *                     để access_token mới giữ nguyên branch context sau refresh.
  *                     Nếu không gửi, FE cần gọi lại /select-branch để lấy branch context.
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record RefreshTokenCommand(

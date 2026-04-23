@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Xử lý nghiệp vụ gói dịch vụ (Plans).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Service

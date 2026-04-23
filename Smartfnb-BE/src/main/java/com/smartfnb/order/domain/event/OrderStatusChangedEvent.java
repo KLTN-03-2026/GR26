@@ -7,7 +7,7 @@ import java.util.UUID;
  * Phát ra khi trạng thái đơn hàng thay đổi.
  * Consumer: WebSocket gateway broadcast
  *
- * @author vutq
+ * @author SmartF&B Team
  */
 public record OrderStatusChangedEvent(
     UUID orderId,

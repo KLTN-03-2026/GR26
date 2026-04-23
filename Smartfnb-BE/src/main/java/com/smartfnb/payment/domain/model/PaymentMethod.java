@@ -4,7 +4,7 @@ package com.smartfnb.payment.domain.model;
  * Phương thức thanh toán trong hệ thống.
  * Bao gồm: Tiền mặt, QR code (VietQR, MoMo), ví điện tử.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public enum PaymentMethod {

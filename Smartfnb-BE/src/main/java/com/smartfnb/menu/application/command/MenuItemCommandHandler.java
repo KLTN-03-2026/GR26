@@ -21,7 +21,7 @@ import java.util.UUID;
  * Hỗ trợ soft delete và thiết lập giá riêng theo chi nhánh.
  * Ảnh được upload qua FileStorageService thay vì nhận URL từ client.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Component

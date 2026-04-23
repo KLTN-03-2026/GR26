@@ -7,7 +7,7 @@ import java.util.UUID;
  * Phát ra khi nhập kho thành công (tạo batch mới).
  * Consumer: ReportModule cập nhật báo cáo kho, SupplierModule tracking.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public record StockImportedEvent(

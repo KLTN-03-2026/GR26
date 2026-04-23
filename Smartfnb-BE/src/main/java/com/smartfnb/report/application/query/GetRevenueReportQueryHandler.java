@@ -23,7 +23,7 @@ import java.util.UUID;
  * Hỗ trợ filter theo branch, date range, group by.
  * BẢO MẬT: Kiểm tra quyền REPORT_REVENUE trước khi trả về.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Component

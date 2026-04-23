@@ -16,7 +16,7 @@ import java.util.UUID;
  * Immutable sau khi tạo — không được sửa, chỉ có thể hoàn tiền.
  * invoice_number là duy nhất và bất biến.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Getter

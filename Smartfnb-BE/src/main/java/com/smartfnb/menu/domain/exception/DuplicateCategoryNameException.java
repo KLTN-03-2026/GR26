@@ -6,7 +6,7 @@ import com.smartfnb.shared.exception.SmartFnbException;
  * Exception khi tên danh mục đã tồn tại trong tenant.
  * Trả về 409 Conflict.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public class DuplicateCategoryNameException extends SmartFnbException {

@@ -110,12 +110,3 @@ app:
   storage:
     upload-dir: ${UPLOAD_DIR:./uploads}         # Mount volume trong Docker
     base-url: ${BASE_URL:http://localhost:8080}  # Base URL trả về trong response
-## ------ AI Service Integration ------                                                                                                                  
-## AI Service (Python FastAPI) chạy riêng ở port 8001                                                                                                    
-## BE chỉ gọi AI Service để trigger train/predict — forecast đọc từ DB                                                                                   
-ai:                                                                                                                                                      
-  service:                                                                                                                                               
-    url: ${AI_SERVICE_URL:http://localhost:8001}                                                                                                         
-    timeout:                                                                                                                                             
-      connect: ${AI_CONNECT_TIMEOUT_MS:5000}                                                                                                             
-      read: ${AI_READ_TIMEOUT_MS:10000}                                                                                                                  

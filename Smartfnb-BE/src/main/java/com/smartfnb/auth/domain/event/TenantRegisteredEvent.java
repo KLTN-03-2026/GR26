@@ -18,7 +18,7 @@ import java.util.UUID;
  * @param ownerUserId UUID owner (user đăng ký)
  * @param planSlug    gói dịch vụ đã chọn (basic, professional, enterprise)
  * @param occurredAt  thời điểm sự kiện xảy ra
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 public record TenantRegisteredEvent(

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * REST Controller quản lý đơn hàng.
  *
- * @author vutq
+ * @author SmartF&B Team
  */
 @RestController
 @RequestMapping("/api/v1/orders")

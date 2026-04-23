@@ -24,7 +24,7 @@ import java.util.UUID;
  * @param status                Trạng thái (CONFIRMED)
  * @param createdAt             Thời điểm tạo record
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-14
  */
 public record ProductionBatchResponse(

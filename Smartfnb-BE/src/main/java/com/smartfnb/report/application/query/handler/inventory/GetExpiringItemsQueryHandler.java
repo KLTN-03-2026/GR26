@@ -19,7 +19,7 @@ import java.util.List;
  * - Sắp xếp theo mức độ khẩn cấp (CRITICAL > WARNING)
  * - Cache: 1 giờ
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04
  */
 @Slf4j

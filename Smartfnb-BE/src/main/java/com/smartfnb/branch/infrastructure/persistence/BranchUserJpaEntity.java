@@ -10,7 +10,7 @@ import java.util.UUID;
  * JPA Entity liên kết 1 User với 1 Branch.
  * Cho phép phân quyền nhân viên theo từng chi nhánh cụ thể.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Entity

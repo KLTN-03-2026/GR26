@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * Query lấy thông tin chi tiết đơn hàng theo ID.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-31
  */
 public record GetOrderByIdQuery(

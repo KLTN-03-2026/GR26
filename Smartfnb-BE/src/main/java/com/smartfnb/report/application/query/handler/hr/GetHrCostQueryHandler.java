@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * - Tính chi phí per staff
  * - Cache: 1 giờ (aggregation ít thay đổi)
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04
  */
 @Slf4j

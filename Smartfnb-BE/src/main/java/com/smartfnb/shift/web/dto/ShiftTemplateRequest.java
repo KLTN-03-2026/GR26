@@ -15,7 +15,7 @@ import java.time.LocalTime;
  * @param color     Màu hex cho UI (#FF5733)
  * @param active    Trạng thái active (mặc định true khi tạo)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record ShiftTemplateRequest(

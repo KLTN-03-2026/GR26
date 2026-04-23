@@ -6,7 +6,7 @@ import java.util.UUID;
  * Query tìm kiếm Invoice với các điều kiện lọc.
  * Bao gồm: date range (90 ngày), invoice number, status.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record SearchInvoiceQuery(

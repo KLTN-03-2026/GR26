@@ -6,7 +6,7 @@ import java.util.UUID;
  * Adapter để gọi Table Module API.
  * Implementation sẽ gọi trực tiếp Table repository hoặc REST API.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public interface TableAdapter {

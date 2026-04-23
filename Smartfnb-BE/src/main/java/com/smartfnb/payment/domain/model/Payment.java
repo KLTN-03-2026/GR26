@@ -14,7 +14,7 @@ import java.util.UUID;
  * Thu ngân tạo Payment → Tạo Invoice → Cập nhật trạng thái bàn.
  * Immutable sau khi COMPLETED.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Getter

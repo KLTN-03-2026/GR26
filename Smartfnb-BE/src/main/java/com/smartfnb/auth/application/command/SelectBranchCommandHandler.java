@@ -20,7 +20,7 @@ import java.util.UUID;
  * Xử lý lệnh chọn chi nhánh làm việc (Select Branch).
  * Cấp lại JWT chứa branchId để sử dụng cho các API cần context chi nhánh.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Service

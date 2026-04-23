@@ -20,7 +20,7 @@ import java.util.UUID;
  * </ul>
  * </p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-31
  */
 @Component

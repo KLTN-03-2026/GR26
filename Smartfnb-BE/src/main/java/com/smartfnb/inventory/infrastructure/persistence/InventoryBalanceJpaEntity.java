@@ -15,7 +15,7 @@ import java.util.UUID;
  * Lưu tồn kho hiện tại của một nguyên liệu tại một chi nhánh cụ thể.
  * Sử dụng Optimistic Locking qua @Version.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 @Entity

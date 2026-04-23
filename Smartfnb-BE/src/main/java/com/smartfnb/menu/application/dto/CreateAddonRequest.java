@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * DTO request tạo Addon/Topping mới.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record CreateAddonRequest(

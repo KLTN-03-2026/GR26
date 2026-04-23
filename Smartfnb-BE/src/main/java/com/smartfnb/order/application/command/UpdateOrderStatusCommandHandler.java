@@ -86,7 +86,7 @@ public class UpdateOrderStatusCommandHandler {
                         }
                     }
                     return new CompletedOrderItem(
-                        item.getItemId(), item.getItemName(), item.getQuantity(), item.getUnitPrice(), parsedAddons);
+                        item.getItemId(), item.getQuantity(), item.getUnitPrice(), parsedAddons);
                 })
                 .toList();
                 

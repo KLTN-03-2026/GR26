@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * Command Handler xử lý CRUD cho Recipe (công thức chế biến).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Component

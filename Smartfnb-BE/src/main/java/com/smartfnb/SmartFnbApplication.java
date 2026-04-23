@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Điểm khởi động ứng dụng SmartF&B.
  * SaaS POS đa chi nhánh — Java 21 Virtual Threads + Spring Boot 3.3 + DDD + CQRS
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @SpringBootApplication

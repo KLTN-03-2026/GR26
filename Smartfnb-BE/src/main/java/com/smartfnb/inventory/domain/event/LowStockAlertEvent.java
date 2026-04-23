@@ -9,7 +9,7 @@ import java.util.UUID;
  *
  * <p>Triggered sau mỗi thao tác trừ kho (SALE_DEDUCT, WASTE, ADJUSTMENT giảm).</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public record LowStockAlertEvent(

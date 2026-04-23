@@ -12,7 +12,7 @@ import java.util.UUID;
  * @param shiftTemplateId UUID ca mẫu
  * @param date            Ngày làm việc
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record RegisterShiftRequest(

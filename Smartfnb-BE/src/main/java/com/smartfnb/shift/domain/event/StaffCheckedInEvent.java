@@ -8,7 +8,7 @@ import java.util.UUID;
  * Domain event phát ra khi nhân viên check-in ca làm việc.
  * Consumer: ReportModule ghi nhận giờ vào, ShiftModule cập nhật status.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record StaffCheckedInEvent(

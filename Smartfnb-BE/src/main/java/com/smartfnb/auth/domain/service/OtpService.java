@@ -26,7 +26,7 @@ import java.util.UUID;
  *   <li>Trước khi cấp OTP mới, vô hiệu hóa tất cả OTP cũ cùng mục đích</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Slf4j

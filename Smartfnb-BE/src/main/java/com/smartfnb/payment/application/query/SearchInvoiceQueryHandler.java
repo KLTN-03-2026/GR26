@@ -19,7 +19,7 @@ import java.util.List;
  * QueryHandler tìm kiếm Invoice theo criteria.
  * Constraints: giới hạn 90 ngày, branchId của nhân viên hiện tại.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Component

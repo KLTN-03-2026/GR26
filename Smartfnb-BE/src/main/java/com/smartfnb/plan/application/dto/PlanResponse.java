@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * DTO phản hồi thông tin chi tiết gói dịch vụ (Plan).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 public record PlanResponse(

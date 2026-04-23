@@ -13,7 +13,7 @@ import java.util.UUID;
  * Dùng chung bảng users để đồng nhất với hệ thống xác thực.
  * Soft delete qua trường deleted_at.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Entity

@@ -12,7 +12,7 @@ import java.util.UUID;
  * Query handler lấy danh sách ca mẫu của chi nhánh (S-16).
  * READ ONLY — không @Transactional.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

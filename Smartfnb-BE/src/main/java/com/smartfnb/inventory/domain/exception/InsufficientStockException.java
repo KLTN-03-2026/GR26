@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  * Exception khi tồn kho nguyên liệu không đủ để thực hiện thao tác.
  * Sử dụng khi SALE_DEDUCT hoặc EXPORT yêu cầu nhiều hơn tồn kho hiện có.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public class InsufficientStockException extends SmartFnbException {

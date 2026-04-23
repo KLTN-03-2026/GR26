@@ -29,7 +29,7 @@ import java.util.UUID;
  *   <li>Đăng nhập thành công → reset failedLoginCount, cập nhật lastLoginAt, cấp JWT</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Slf4j

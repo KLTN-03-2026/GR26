@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Repository interface cho DailyItemStat.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public interface DailyItemStatRepository {

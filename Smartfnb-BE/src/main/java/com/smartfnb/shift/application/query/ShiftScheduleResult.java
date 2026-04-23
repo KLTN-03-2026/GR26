@@ -21,7 +21,7 @@ import java.util.UUID;
  * @param overtimeMinutes Thời gian tăng ca (phút, âm = về sớm)
  * @param note            Ghi chú
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record ShiftScheduleResult(

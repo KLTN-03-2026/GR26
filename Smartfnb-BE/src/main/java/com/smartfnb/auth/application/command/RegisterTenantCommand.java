@@ -17,7 +17,7 @@ import jakarta.validation.constraints.Size;
  * @param ownerName   tên chủ quán
  * @param phone       số điện thoại liên hệ (tùy chọn)
  * @param planSlug    slug gói dịch vụ muốn đăng ký (VD: "basic", "standard", "premium")
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record RegisterTenantCommand(

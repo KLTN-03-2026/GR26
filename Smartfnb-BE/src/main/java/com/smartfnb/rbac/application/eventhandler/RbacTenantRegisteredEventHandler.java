@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * Khi một Tenant mới được tạo, tự động khởi tạo Role OWNER với TẤT CẢ các quyền hệ thống.
  * Gán Role OWNER đó cho user tạo Tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Component

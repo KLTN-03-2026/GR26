@@ -23,7 +23,7 @@ import java.time.Instant;
  *   <li>Publish LowStockAlertEvent nếu cần</li>
  * </ol>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 @Component

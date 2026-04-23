@@ -17,7 +17,7 @@ import java.util.List;
  * Controller quản lý gói dịch vụ (Plans).
  * Chỉ SYSTEM_ADMIN mới được thực hiện các thao tác CRUD.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @RestController

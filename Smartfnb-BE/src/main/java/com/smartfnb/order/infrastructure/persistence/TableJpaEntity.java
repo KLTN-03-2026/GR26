@@ -14,7 +14,7 @@ import java.util.UUID;
  * Đại diện cho bàn trong chi nhánh với hỗ trợ Drag & Drop (position_x/y)
  * và soft delete (deleted_at).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Entity

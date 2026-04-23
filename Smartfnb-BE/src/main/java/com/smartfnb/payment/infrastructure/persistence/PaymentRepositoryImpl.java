@@ -15,7 +15,7 @@ import java.util.UUID;
  * Implementation của PaymentRepository.
  * Chuyển đổi giữa Domain Entity Payment và JPA Entity PaymentJpaEntity.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Component

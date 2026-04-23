@@ -13,7 +13,7 @@ import java.util.UUID;
  * Implementation của DailyRevenueSummaryRepository.
  * Chuyển đổi giữa JPA Entity và Domain Model.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Component

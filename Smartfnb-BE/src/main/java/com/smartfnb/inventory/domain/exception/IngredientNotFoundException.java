@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy nguyên liệu / Item trong kho.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 public class IngredientNotFoundException extends SmartFnbException {

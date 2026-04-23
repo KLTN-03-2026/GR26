@@ -11,7 +11,7 @@ package com.smartfnb.auth.application.dto;
  * @param userId        UUID người dùng vừa đăng ký/đăng nhập
  * @param tenantId      UUID tenant sở hữu người dùng
  * @param role          role của người dùng trong tenant
- * @author vutq
+ * @author SmartF&amp;B Team
  * @since 2026-03-26
  */
 public record AuthResponse(

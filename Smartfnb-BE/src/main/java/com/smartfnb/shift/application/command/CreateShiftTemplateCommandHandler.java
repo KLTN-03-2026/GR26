@@ -21,7 +21,7 @@ import java.util.UUID;
  *   <li>Tạo và lưu entity</li>
  * </ol>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

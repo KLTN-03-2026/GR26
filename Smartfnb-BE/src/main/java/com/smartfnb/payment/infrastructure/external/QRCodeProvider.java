@@ -7,7 +7,7 @@ import java.util.UUID;
  * Interface cho external QR Code provider (VietQR, MoMo).
  * Implementation sẽ gọi API của payment gateway tương ứng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public interface QRCodeProvider {

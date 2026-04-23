@@ -13,7 +13,7 @@ import java.util.UUID;
  * hệ số scale khi ghi nhận mẻ sản xuất SUB_ASSEMBLY.
  * Hai field này chỉ bắt buộc với recipe của item type SUB_ASSEMBLY; để null với SELLABLE.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record CreateRecipeRequest(

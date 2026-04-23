@@ -17,7 +17,7 @@ import java.util.UUID;
  * @param active          Trạng thái hoạt động
  * @param durationMinutes Thời lượng ca (phút)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record ShiftTemplateResult(

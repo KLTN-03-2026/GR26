@@ -11,7 +11,7 @@ import java.util.UUID;
  * Repository cho bảng permissions.
  * Được dùng bởi PermissionService để load danh sách quyền của user.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Repository

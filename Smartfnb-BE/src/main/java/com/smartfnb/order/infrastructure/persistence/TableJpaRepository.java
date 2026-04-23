@@ -14,7 +14,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng tables.
  * Hỗ trợ soft delete, batch position update và query theo trạng thái bàn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public interface TableJpaRepository extends JpaRepository<TableJpaEntity, UUID> {

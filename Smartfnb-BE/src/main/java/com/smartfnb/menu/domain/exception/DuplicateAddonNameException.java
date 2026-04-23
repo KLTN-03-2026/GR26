@@ -5,7 +5,7 @@ import com.smartfnb.shared.exception.SmartFnbException;
 /**
  * Exception khi tên Addon/Topping đã tồn tại trong tenant.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public class DuplicateAddonNameException extends SmartFnbException {

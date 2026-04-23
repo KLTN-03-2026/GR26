@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * Exception được ném khi QR Payment hết hạn (quá 3 phút).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public class QRPaymentExpiredException extends RuntimeException {

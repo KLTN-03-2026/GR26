@@ -8,7 +8,7 @@ import java.util.UUID;
  * Request DTO từ webhook payment gateway.
  * Gateway sẽ POST với thông tin xác nhận thanh toán QR.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record ConfirmQRPaymentWebhookRequest(

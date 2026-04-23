@@ -3,7 +3,7 @@ package com.smartfnb.order.domain.model;
 /**
  * Trạng thái của từng món trong đơn.
  *
- * @author vutq
+ * @author SmartF&B Team
  */
 public enum OrderItemStatus {
     PENDING,

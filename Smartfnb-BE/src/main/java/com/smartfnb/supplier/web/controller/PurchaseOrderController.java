@@ -39,7 +39,7 @@ import java.util.UUID;
  *   <li>POST   /api/v1/purchase-orders/{id}/cancel  — Huỷ PO</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-07
  */
 @RestController

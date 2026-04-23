@@ -11,7 +11,7 @@ import java.util.UUID;
  * Request DTO tạo nhân viên mới.
  * tenantId và createdByUserId được lấy từ JWT, không nhận từ client.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 import com.fasterxml.jackson.annotation.JsonAlias;

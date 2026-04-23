@@ -16,7 +16,7 @@ import java.util.UUID;
  * Đại diện cho món ăn/đồ uống có thể bán (type = SELLABLE).
  * Hỗ trợ soft delete qua trường deleted_at.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 @Entity

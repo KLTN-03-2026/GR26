@@ -8,7 +8,7 @@ import java.util.UUID;
  * Consumer: WebSocket -> Broadcast thông báo bếp realtime
  *           NotificationModule -> Thông báo bếp
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-31
  */
 public record OrderCreatedEvent(

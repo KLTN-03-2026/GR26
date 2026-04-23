@@ -22,7 +22,7 @@ import java.util.UUID;
  *   <li>{@code CustomPermissionEvaluator} — kiểm tra quyền runtime</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Slf4j

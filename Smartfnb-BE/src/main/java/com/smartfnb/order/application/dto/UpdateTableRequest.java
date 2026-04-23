@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * DTO request cập nhật bàn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public record UpdateTableRequest(

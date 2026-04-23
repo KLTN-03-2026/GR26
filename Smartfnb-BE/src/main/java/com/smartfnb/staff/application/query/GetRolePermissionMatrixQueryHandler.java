@@ -11,7 +11,7 @@ import java.util.UUID;
  * Handler truy vấn ma trận Role-Permission toàn tenant (S-15).
  * READ ONLY — không @Transactional.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

@@ -7,7 +7,6 @@ import com.smartfnb.payment.infrastructure.external.QRCodeProvider;
 import com.smartfnb.payment.infrastructure.persistence.OrderAdapter;
 import com.smartfnb.payment.infrastructure.persistence.OrderDto;
 import com.smartfnb.shared.TenantContext;
-import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,7 @@ import java.util.UUID;
  * 3. Gọi QR provider để tạo QR code
  * 4. Trả về QR code URL + Payment info cho frontend
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Component
@@ -51,27 +50,15 @@ public class ProcessQRPaymentCommandHandler {
         // 2. Fetch Order
         OrderDto order = orderAdapter.getOrderById(command.orderId());
         if (order == null) {
-            throw new SmartFnbException("ORDER_NOT_FOUND", "Đơn hàng không tìm thấy: " + command.orderId(), 404);
+            throw new RuntimeException("Đơn hàng không tìm thấy: " + command.orderId());
         }
 
         // 3. Kiểm tra số tiền thanh toán
         if (command.amount().compareTo(order.totalAmount()) < 0) {
-            throw new SmartFnbException("PAYMENT_AMOUNT_INSUFFICIENT",
+            throw new RuntimeException(
                 String.format("Số tiền thanh toán %.0f thấp hơn tổng cộng %.0f",
-                    command.amount(), order.totalAmount()), 400);
+                    command.amount(), order.totalAmount()));
         }
-
-        // 3.5. Kiểm tra trạng thái đơn hàng và lịch sử thanh toán
-        if ("COMPLETED".equalsIgnoreCase(order.status()) || "CANCELLED".equalsIgnoreCase(order.status())) {
-            throw new SmartFnbException("PAYMENT_INVALID_ORDER_STATUS", 
-                "Không thể thanh toán. Đơn hàng đang ở trạng thái: " + order.status(), 400);
-        }
-        paymentRepository.findByOrderId(command.orderId()).ifPresent(existingPayment -> {
-            if (existingPayment.isCompleted()) {
-                throw new SmartFnbException("PAYMENT_ALREADY_COMPLETED", 
-                    "Đơn hàng này đã được thanh toán thành công trước đó.", 400);
-            }
-        });
 
         // 4. Tạo Payment mới (status = PENDING)
         Payment payment = Payment.createQRPayment(

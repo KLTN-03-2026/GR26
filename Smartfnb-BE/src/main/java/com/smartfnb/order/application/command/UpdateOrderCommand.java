@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Lệnh cập nhật đơn hàng.
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-11
  */
 public record UpdateOrderCommand(

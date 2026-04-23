@@ -26,7 +26,7 @@ import java.util.UUID;
  *   <li>PUT  /api/v1/roles/{id}/permissions — Cập nhật permissions (+ audit_log)</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @RestController

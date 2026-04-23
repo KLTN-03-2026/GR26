@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Service xử lý các nghiệp vụ liên quan đến chi nhánh.
  * Bao gồm logic kiểm tra số lượng chi nhánh theo gói dịch vụ (Plan) đang sử dụng.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Service

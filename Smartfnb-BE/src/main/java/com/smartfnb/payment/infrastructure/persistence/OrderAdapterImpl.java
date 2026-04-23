@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Triển khai OrderAdapter để giao tiếp với Order Module.
  * Lấy dữ liệu trực tiếp qua OrderRepository thay vì API call (vì Modular Monolith).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 @Component
@@ -31,12 +31,8 @@ public class OrderAdapterImpl implements OrderAdapter {
     @Override
     public OrderDto getOrderById(UUID orderId) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        return getOrderById(orderId, tenantId);
-    }
-
-    @Override
-    public OrderDto getOrderById(UUID orderId, UUID tenantId) {
-        log.debug("Payment Module đang lấy Order {} từ Order Module (Tenant: {})", orderId, tenantId);
+        
+        log.debug("Payment Module đang lấy Order {} từ Order Module", orderId);
         
         Order order = orderRepository.findByIdAndTenantId(orderId, tenantId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -47,7 +43,6 @@ public class OrderAdapterImpl implements OrderAdapter {
                 order.getBranchId(),
                 order.getTableId(),
                 order.getOrderNumber(),
-                order.getStatus() != null ? order.getStatus().name() : "UNKNOWN",
                 order.getSubtotal(),
                 order.getDiscountAmount(),
                 order.getTaxAmount(),

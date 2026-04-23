@@ -4,7 +4,7 @@ package com.smartfnb.payment.domain.model;
  * Trạng thái của QR Code.
  * QR được khởi tạo → chờ thanh toán (3 phút) → thanh toán thành công/thất bại.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public enum QRCodeStatus {

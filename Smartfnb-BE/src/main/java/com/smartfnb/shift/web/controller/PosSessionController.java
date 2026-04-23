@@ -30,7 +30,7 @@ import java.util.UUID;
  *   <li>POST /api/v1/pos-sessions/{id}/close — Đóng phiên POS cuối ca</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @RestController

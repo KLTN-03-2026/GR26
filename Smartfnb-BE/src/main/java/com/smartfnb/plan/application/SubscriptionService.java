@@ -21,7 +21,7 @@ import java.util.UUID;
  * Dịch vụ quản lý các gói đăng ký của Tenant (Subscription).
  * Nơi xử lý TenantRegisteredEvent để cấp phát gói mặc định.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-27
  */
 @Service

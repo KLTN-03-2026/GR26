@@ -11,7 +11,7 @@ import java.math.BigDecimal;
  * @param endingCashActual Tiền mặt thực tế kiểm đếm (≥ 0)
  * @param note             Ghi chú khi đóng ca (tùy chọn)
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record ClosePosSessionRequest(

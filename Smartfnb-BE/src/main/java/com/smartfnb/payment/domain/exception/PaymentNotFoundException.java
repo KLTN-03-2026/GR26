@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception được ném khi Payment không tồn tại.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public class PaymentNotFoundException extends SmartFnbException {

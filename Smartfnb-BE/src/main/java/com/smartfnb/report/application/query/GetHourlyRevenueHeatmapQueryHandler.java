@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * QueryHandler: Lấy heatmap doanh thu theo giờ.
  * Dữ liệu dùng để render biểu đồ theo giờ (0-23) trong ngày.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Component

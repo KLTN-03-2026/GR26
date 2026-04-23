@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * - Phân trang: mặc định page=0, pageSize=50
  * - Cache: 2 giờ
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04
  */
 @Slf4j

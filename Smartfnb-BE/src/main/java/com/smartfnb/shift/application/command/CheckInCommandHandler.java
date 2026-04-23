@@ -25,7 +25,7 @@ import java.time.LocalTime;
  *   <li>Status phải là SCHEDULED</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

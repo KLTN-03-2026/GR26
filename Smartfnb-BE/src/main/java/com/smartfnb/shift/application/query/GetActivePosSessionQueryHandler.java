@@ -13,7 +13,7 @@ import java.util.UUID;
  * Query handler lấy thông tin phiên POS (S-16).
  * READ ONLY — không @Transactional.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Component

@@ -23,7 +23,7 @@ import java.util.UUID;
  * Job này là FALLBACK nếu các event từ OrderCompletedEvent bị mất.
  * Hiện tại: Job sẽ query từ bảng orders và tính toán lại dari scratch.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 @Component

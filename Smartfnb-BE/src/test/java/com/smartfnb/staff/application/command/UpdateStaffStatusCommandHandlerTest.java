@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
  *   <li>✅ Tenant isolation: chỉ tìm nhân viên trong đúng tenant</li>
  * </ol>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-10
  */
 @ExtendWith(MockitoExtension.class)

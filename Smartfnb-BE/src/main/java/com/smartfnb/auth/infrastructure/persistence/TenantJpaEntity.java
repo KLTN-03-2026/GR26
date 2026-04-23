@@ -12,7 +12,7 @@ import java.util.UUID;
  * Đại diện cho một chuỗi F&B (chủ quán đăng ký = 1 tenant).
  * Không kế thừa BaseAggregateRoot vì tenants là root không có tenantId ngoài.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 @Entity

@@ -19,7 +19,7 @@ import java.util.List;
  * - Phân loại nguyên nhân lãng phí
  * - Cache: 3 giờ (ít thay đổi)
  * 
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04
  */
 @Slf4j

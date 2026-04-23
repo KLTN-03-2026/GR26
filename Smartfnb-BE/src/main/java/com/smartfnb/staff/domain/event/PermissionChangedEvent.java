@@ -8,7 +8,7 @@ import java.util.UUID;
  * Domain event phát ra khi phân quyền vai trò thay đổi.
  * Consumer: AuditModule ghi audit_log, AuthModule cập nhật cache permissions.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record PermissionChangedEvent(

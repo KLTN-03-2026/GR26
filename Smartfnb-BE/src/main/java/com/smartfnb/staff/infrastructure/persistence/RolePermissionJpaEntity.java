@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng role_permissions (ma trận role ↔ permission).
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @Entity(name = "StaffRolePermissionJpaEntity")

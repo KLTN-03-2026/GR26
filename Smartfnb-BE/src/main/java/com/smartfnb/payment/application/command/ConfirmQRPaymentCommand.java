@@ -7,7 +7,7 @@ import java.util.UUID;
  * Command xác nhận thanh toán QR qua webhook.
  * Payment gateway sẽ gọi callback endpoint với thông tin này.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record ConfirmQRPaymentCommand(

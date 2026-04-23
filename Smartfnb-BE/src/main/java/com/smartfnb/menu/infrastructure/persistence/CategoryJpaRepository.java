@@ -12,7 +12,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng categories.
  * Tất cả query đều bao gồm tenantId để đảm bảo multi-tenant isolation.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-28
  */
 public interface CategoryJpaRepository extends JpaRepository<CategoryJpaEntity, UUID> {

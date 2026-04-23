@@ -21,7 +21,7 @@ import java.util.UUID;
  * @param note                 Ghi chú khi đóng ca
  * @param status               Trạng thái: OPEN | CLOSED
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 public record PosSessionResult(

@@ -7,7 +7,7 @@ import java.util.List;
  * Tránh expose implementation details của Pageable ra ngoài API.
  *
  * @param <T> kiểu dữ liệu mỗi phần tử trong danh sách
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-03-26
  */
 public record PageResponse<T>(

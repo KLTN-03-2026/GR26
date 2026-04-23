@@ -8,7 +8,7 @@ import java.util.List;
  * Kết quả heatmap doanh thu theo giờ.
  * Dùng để render biểu đồ: trục X là giờ (0-23), trục Y là doanh thu/số đơn.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-16
  */
 public record HourlyRevenueHeatmapResult(

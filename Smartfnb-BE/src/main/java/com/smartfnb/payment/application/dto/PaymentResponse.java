@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Response DTO thông tin Payment.
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-01
  */
 public record PaymentResponse(

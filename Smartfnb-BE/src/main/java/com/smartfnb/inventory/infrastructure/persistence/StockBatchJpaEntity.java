@@ -16,7 +16,7 @@ import java.util.UUID;
  *
  * <p>FIFO: khi xuất kho, lấy batch có imported_at nhỏ nhất còn quantity_remaining > 0.</p>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-03
  */
 @Entity

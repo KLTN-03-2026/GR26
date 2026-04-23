@@ -28,7 +28,7 @@ import java.util.UUID;
  *   <li>DELETE /api/v1/shift-templates/{id}   — Deactivate ca mẫu</li>
  * </ul>
  *
- * @author vutq
+ * @author SmartF&B Team
  * @since 2026-04-06
  */
 @RestController
