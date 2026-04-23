@@ -36,4 +36,21 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, UUID>,
      * Danh sách đơn hàng theo status có phân trang — không eager-load items.
      */
     Page<OrderJpaEntity> findByTenantIdAndBranchIdAndStatus(UUID tenantId, UUID branchId, String status, Pageable pageable);
+      /**                                                                                                                                                   
+      * Đếm số ngày phân biệt có đơn hàng hoàn thành — dùng tính độ tin cậy AI model.                                                                      
+      * Ngày hoạt động nhiều hơn → AI có nhiều data → model đáng tin hơn.                                                                                  
+      *                                                                                                                                                    
+      * @param tenantId UUID tenant                                                                                                                        
+      * @param branchId UUID chi nhánh                                                                                                                     
+      * @return số ngày distinct có đơn COMPLETED                                                                                                          
+      */    
+    @Query(value = """
+            SELECT COUNT(DISTINCT CAST(o.completed_at AS date))
+            FROM orders o
+            WHERE o.tenant_id = :tenantId
+              AND o.branch_id = :branchId
+              AND o.status = 'COMPLETED'
+              AND o.completed_at IS NOT NULL
+            """, nativeQuery = true)
+    long countDistinctCompletedOrderDays(@Param("tenantId") UUID tenantId, @Param("branchId") UUID branchId);
 }
