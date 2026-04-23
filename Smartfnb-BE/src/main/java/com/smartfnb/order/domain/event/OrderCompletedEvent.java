@@ -25,6 +25,7 @@ public record OrderCompletedEvent(
 ) {
     public record CompletedOrderItem(
         UUID menuItemId,
+        String itemName,
         int quantity,
         BigDecimal unitPrice,
         List<CompletedAddonItem> addons
