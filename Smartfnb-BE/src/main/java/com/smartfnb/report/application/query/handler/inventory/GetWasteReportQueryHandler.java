@@ -35,11 +35,6 @@ public class GetWasteReportQueryHandler {
      * @param query: GetWasteReportQuery (branchId, tenantId, startDate, endDate)
      * @return List<WasteReportDto> with waste metrics and categorization
      */
-    @Cacheable(
-            value = "waste_report",
-            key = "#query.branchId.toString() + ':' + #query.startDate.toString() + ':' + #query.endDate.toString()",
-            cacheManager = "reportCacheManager"  // 3 hours TTL
-    )
     public List<WasteReportDto> handle(GetWasteReportQuery query) {
         log.info("Fetching waste report: branch={}, period={} to {}",
                 query.getBranchId(), query.getStartDate(), query.getEndDate());

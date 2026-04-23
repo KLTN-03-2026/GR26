@@ -75,9 +75,12 @@ public class HrReportRepositoryImpl implements HrReportRepository {
                     COUNT(CASE WHEN ss.status = 'COMPLETED' THEN 1 END) as workingDays,
                     COALESCE(SUM(ss.overtime_minutes / 60.0), 0) as overtimeHours,
                     COUNT(CASE WHEN ss.status = 'ABSENT' THEN 1 END) as absentDays,
-                    0 as leaveDays
+                    0 as leaveDays,
+                    b.id as branchId,
+                    b.name as branchName
                 FROM users u
                 JOIN branch_users bu ON u.id = bu.user_id
+                JOIN branches b ON bu.branch_id = b.id
                 LEFT JOIN positions pos ON u.position_id = pos.id
                 LEFT JOIN shift_schedules ss ON u.id = ss.user_id
                     AND EXTRACT(YEAR FROM ss.date) = :year
@@ -85,7 +88,7 @@ public class HrReportRepositoryImpl implements HrReportRepository {
                 WHERE bu.branch_id = :branchId
                   AND u.tenant_id = :tenantId
                   AND u.deleted_at IS NULL
-                GROUP BY u.id, u.full_name, pos.name, pos.id
+                GROUP BY u.id, u.full_name, pos.name, pos.id, b.id, b.name
                 ORDER BY u.full_name
                 """;
 
@@ -115,7 +118,8 @@ public class HrReportRepositoryImpl implements HrReportRepository {
                 .month(monthStr)
                 .daysInMonth(daysInMonth)
                 .attendancePercentage(percentage)
-                .branchId(branchId)
+                .branchId(rs.getString("branchId") != null ? UUID.fromString(rs.getString("branchId")) : branchId)
+                .branchName(rs.getString("branchName"))
                 .build();
         });
     }
