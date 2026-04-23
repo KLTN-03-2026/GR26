@@ -10,7 +10,7 @@ import java.util.UUID;
  * Service helper để lấy thông tin branch + item từ các module khác.
  * Thực hiện lazy load data từ database để avoid N+1 query.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Component

@@ -14,7 +14,7 @@ import java.util.UUID;
  * @param newQuantity số lượng tuyệt đối mới (>= 0)
  * @param reason      lý do điều chỉnh (bắt buộc — audit requirement)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 public record AdjustStockRequest(

@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng roles (vai trò theo tenant).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity(name = "StaffRoleJpaEntity")

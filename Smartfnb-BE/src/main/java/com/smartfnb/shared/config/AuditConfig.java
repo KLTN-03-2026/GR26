@@ -13,7 +13,7 @@ import java.util.UUID;
  * Cấu hình JPA Auditing để tự động set createdBy trong BaseAggregateRoot.
  * AuditorAware lấy userId hiện tại từ SecurityContext.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Configuration

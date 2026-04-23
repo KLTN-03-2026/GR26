@@ -30,7 +30,7 @@ import java.util.UUID;
  * - daily_item_stats (hiệu suất sản phẩm)
  * - hourly_revenue_stats (doanh thu theo giờ)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Component

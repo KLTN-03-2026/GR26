@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception được ném khi Invoice không tồn tại.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public class InvoiceNotFoundException extends SmartFnbException {

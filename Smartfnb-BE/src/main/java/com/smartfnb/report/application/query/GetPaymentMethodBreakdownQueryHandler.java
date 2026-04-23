@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * QueryHandler: Lấy chi tiết thanh toán theo phương thức (Cash, MOMO, VIETQR, Banking).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Component

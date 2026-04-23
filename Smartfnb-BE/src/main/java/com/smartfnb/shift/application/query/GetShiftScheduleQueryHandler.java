@@ -14,7 +14,7 @@ import java.util.UUID;
  * Hỗ trợ filter theo branch+date range hoặc user+date range.
  * READ ONLY — không @Transactional.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

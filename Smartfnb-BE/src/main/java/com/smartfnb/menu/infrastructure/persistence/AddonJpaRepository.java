@@ -11,7 +11,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng addons.
  * Tất cả query đều bao gồm tenantId để đảm bảo multi-tenant isolation.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface AddonJpaRepository extends JpaRepository<AddonJpaEntity, UUID> {

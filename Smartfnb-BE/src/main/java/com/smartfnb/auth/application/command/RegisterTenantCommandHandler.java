@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  *   <li>Tạo và trả JWT ngay (không cần đăng nhập lại)</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

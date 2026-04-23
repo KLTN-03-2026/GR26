@@ -9,7 +9,7 @@ import java.util.UUID;
  * JPA Repository cho bảng audit_logs — dùng trong Staff module.
  * Reuse entity AuditLogJpaEntity từ inventory module (cùng bảng audit_logs).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface StaffAuditLogJpaRepository extends JpaRepository<AuditLogJpaEntity, UUID> {

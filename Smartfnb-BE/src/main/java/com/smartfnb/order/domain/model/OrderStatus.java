@@ -4,7 +4,7 @@ package com.smartfnb.order.domain.model;
  * Trạng thái của đơn hàng.
  * PENDING -> PROCESSING -> COMPLETED | CANCELLED
  *
- * @author SmartF&B Team
+ * @author vutq
  */
 public enum OrderStatus {
     PENDING,

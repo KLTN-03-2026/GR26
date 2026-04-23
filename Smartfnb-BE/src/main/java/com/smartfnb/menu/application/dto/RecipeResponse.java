@@ -12,7 +12,7 @@ import java.util.UUID;
  * <p>Bổ sung {@code baseOutputQuantity} và {@code baseOutputUnit} vào response
  * để frontend hiển thị và cho phép user kiểm tra sản lượng chuẩn của SUB_ASSEMBLY recipe.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record RecipeResponse(

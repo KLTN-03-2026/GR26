@@ -11,7 +11,7 @@ import java.util.UUID;
  * Lệnh tạo nhân viên mới.
  * tenantId lấy từ JWT — client không được gửi.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record CreateStaffCommand(

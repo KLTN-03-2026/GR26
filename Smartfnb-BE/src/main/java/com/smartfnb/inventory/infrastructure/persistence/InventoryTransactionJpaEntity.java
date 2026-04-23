@@ -15,7 +15,7 @@ import java.util.UUID;
  * Ghi lịch sử mọi biến động kho: IMPORT, SALE_DEDUCT, WASTE, ADJUSTMENT.
  * Đây là audit trail bất biến — không được sửa sau khi tạo.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Entity

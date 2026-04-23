@@ -9,7 +9,7 @@ import java.util.UUID;
  *           InventoryModule -> hoàn kho (nếu cần)
  *           ReportModule -> cập nhật báo cáo
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-31
  */
 public record OrderCancelledEvent(

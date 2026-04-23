@@ -16,7 +16,7 @@ import java.util.UUID;
  * Format: INV-{BRANCH_CODE}-{YYYYMMDD}-{COUNTER}
  * Ví dụ: INV-XYZ-20260401-000001
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

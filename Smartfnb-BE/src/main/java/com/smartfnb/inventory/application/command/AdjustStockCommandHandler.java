@@ -25,7 +25,7 @@ import java.time.Instant;
  *   <li>Publish LowStockAlertEvent nếu sau adjust còn dưới ngưỡng</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Component

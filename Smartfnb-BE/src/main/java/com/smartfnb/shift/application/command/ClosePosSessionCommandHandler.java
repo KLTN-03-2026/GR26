@@ -21,7 +21,7 @@ import java.util.UUID;
  *       để cộng dồn cash orders trong tương lai)</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

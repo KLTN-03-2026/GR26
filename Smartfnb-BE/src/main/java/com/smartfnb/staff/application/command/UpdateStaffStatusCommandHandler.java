@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * handler này chỉ thay đổi {@code status} mà KHÔNG set {@code deleted_at}.
  * Nhân viên bị khóa vẫn hiện trong danh sách nếu FE lọc theo {@code status=INACTIVE}.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-10
  */
 @Component

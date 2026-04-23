@@ -19,7 +19,7 @@ import java.util.UUID;
  * REST Controller quản lý giá bán và trạng thái của món ăn theo chi nhánh.
  * Cho phép Owner/Admin cài giá riêng tại từng cơ sở.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @RestController

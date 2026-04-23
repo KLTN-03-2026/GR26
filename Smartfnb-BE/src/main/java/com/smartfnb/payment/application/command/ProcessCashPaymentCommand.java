@@ -7,7 +7,7 @@ import java.util.UUID;
  * Command xử lý thanh toán bằng tiền mặt.
  * Thu ngân nhập số tiền nhận được → tạo Payment + Invoice.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record ProcessCashPaymentCommand(

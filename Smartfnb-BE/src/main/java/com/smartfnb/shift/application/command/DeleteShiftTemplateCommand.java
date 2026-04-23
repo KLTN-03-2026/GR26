@@ -12,7 +12,7 @@ import java.util.UUID;
  * @param templateId UUID ca mẫu cần xoá
  * @param deletedBy  UUID người thực hiện
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record DeleteShiftTemplateCommand(

@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * Controller để Tenant tra cứu thông tin gói dịch vụ đang sử dụng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @RestController

@@ -24,7 +24,7 @@ import java.util.UUID;
  * 3. Gọi QR provider để tạo QR code
  * 4. Trả về QR code URL + Payment info cho frontend
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

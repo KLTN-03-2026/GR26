@@ -14,7 +14,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho production_batches.
  * Hỗ trợ filter theo chi nhánh và bán thành phẩm.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 @Repository

@@ -10,7 +10,7 @@ import java.util.UUID;
  * Request DTO cập nhật thông tin nhân viên.
  * Tất cả fields nullable — chỉ cập nhật field được gửi.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record UpdateStaffRequest(

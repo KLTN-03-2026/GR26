@@ -11,7 +11,7 @@ import java.util.UUID;
  * JPA Entity cho bảng pos_sessions (phiên mở quầy POS).
  * Quản lý tiền mặt đầu/cuối ca — mỗi branch chỉ có 1 session OPEN.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity

@@ -10,7 +10,7 @@ import java.util.UUID;
  * JPA Repository cho bảng roles.
  * Kết hợp với role_permissions cho RBAC matrix operations.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface StaffRoleJpaRepository extends JpaRepository<RoleJpaEntity, UUID> {

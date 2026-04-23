@@ -28,7 +28,7 @@ import java.util.UUID;
  * 2. Tạo Invoice từ Order + Payment
  * 3. Publish InvoiceCreatedEvent
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

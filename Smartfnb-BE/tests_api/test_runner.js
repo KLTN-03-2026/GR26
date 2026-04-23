@@ -821,8 +821,92 @@ async function runTests() {
 
         console.log("\n==========================================");
         console.log("🎉 S-19 REPORTS & ANALYTICS - TẤT CẢ 7 ISSUES ĐÃ FIX & PASS TEST!");
-        console.log("🚀 TOÀN BỘ HỆ THỐNG (S-01 → S-19) HOẠT ĐỘNG HOÀN CHỈNH!");
         console.log("==========================================");
+
+        // ===== S-ACCOUNT: ACCOUNT MANAGEMENT CRUD =====
+        console.log("\n\n=== S-ACCOUNT: QUẢN LÝ TÀI KHOẢN CÁ NHÂN ===\n");
+
+        console.log("ACCT.1 GET /account/me — Lấy profile người dùng hiện tại");
+        res = await request('/account/me', 'GET', null, currentToken);
+        if (res.status !== 200) throw new Error("GET /account/me failed: " + JSON.stringify(res.data));
+        const myProfile = res.data.data;
+        if (!myProfile.id || !myProfile.fullName || !myProfile.email) {
+            throw new Error("GET /account/me thiếu field bắt buộc (id, fullName, email): " + JSON.stringify(myProfile));
+        }
+        if (myProfile.passwordHash || myProfile.posPin) {
+            throw new Error("❌ BẢO MẬT: GET /account/me trả về passwordHash hoặc posPin!");
+        }
+        console.log(`   ✅ Lấy profile thành công. fullName=${myProfile.fullName}, email=${myProfile.email}, status=${myProfile.status}`);
+
+        console.log("ACCT.2 PUT /account/me — Cập nhật fullName và phone");
+        const newFullName = "Auto Tester (Updated)";
+        const newPhone = "0912345678";
+        res = await request('/account/me', 'PUT', {
+            fullName: newFullName,
+            phone: newPhone
+        }, currentToken);
+        if (res.status !== 200) throw new Error("PUT /account/me failed: " + JSON.stringify(res.data));
+        const updatedProfile = res.data.data;
+        if (updatedProfile.fullName !== newFullName || updatedProfile.phone !== newPhone) {
+            throw new Error(`PUT /account/me: fullName/phone không được cập nhật đúng. Thực tế: ${JSON.stringify(updatedProfile)}`);
+        }
+        console.log(`   ✅ Cập nhật profile thành công. fullName mới: ${updatedProfile.fullName}`);
+
+        console.log("ACCT.3 PUT /account/me — Validate: fullName rỗng → 400");
+        failRes = await request('/account/me', 'PUT', { fullName: '' }, currentToken);
+        if (failRes.status === 200) throw new Error("Server phải từ chối fullName rỗng nhưng lại trả 200!");
+        console.log(`   ✅ Validation lỗi fullName rỗng được bắt đúng: ${failRes.status}`);
+
+        console.log("ACCT.4 PUT /account/me/password — Đổi mật khẩu thành công");
+        const newPassword = "NewPassword2!";
+        res = await request('/account/me/password', 'PUT', {
+            currentPassword: password,
+            newPassword: newPassword
+        }, currentToken);
+        if (res.status !== 200) throw new Error("PUT /account/me/password failed: " + JSON.stringify(res.data));
+        console.log("   ✅ Đổi mật khẩu thành công.");
+
+        console.log("ACCT.4b Đăng nhập lại với mật khẩu mới để xác nhận");
+        res = await request('/auth/login', 'POST', { email, password: newPassword });
+        if (res.status !== 200) throw new Error("Đăng nhập lại sau đổi mật khẩu thất bại: " + JSON.stringify(res.data));
+        const newToken = res.data.data.accessToken || res.data.data.token;
+        console.log("   ✅ Đăng nhập với mật khẩu mới thành công — mật khẩu đã được lưu đúng.");
+
+        console.log("ACCT.5 PUT /account/me/password — Mật khẩu hiện tại sai → 400");
+        failRes = await request('/account/me/password', 'PUT', {
+            currentPassword: "wrongPassword99!",
+            newPassword: "AnotherNew1!"
+        }, newToken);
+        if (failRes.status === 200) throw new Error("Server phải từ chối mật khẩu hiện tại sai nhưng lại trả 200!");
+        console.log(`   ✅ Mật khẩu hiện tại sai bị từ chối đúng: status=${failRes.status}, code=${failRes.data?.error?.code}`);
+
+        console.log("ACCT.6 PUT /account/me/password — Mật khẩu mới == mật khẩu cũ → 400");
+        failRes = await request('/account/me/password', 'PUT', {
+            currentPassword: newPassword,
+            newPassword: newPassword    // TRÙNG mật khẩu hiện tại
+        }, newToken);
+        if (failRes.status === 200) throw new Error("Server phải từ chối mật khẩu mới trùng mật khẩu cũ nhưng lại trả 200!");
+        console.log(`   ✅ Mật khẩu mới trùng mật khẩu cũ bị từ chối: status=${failRes.status}, code=${failRes.data?.error?.code}`);
+
+        console.log("ACCT.7 IDOR Test — Dùng token Tenant 2 GET /account/me không thấy dữ liệu Tenant 1");
+        res = await request('/account/me', 'GET', null, tenant2Token);
+        if (res.status !== 200) throw new Error("Tenant 2 GET /account/me failed: " + JSON.stringify(res.data));
+        const t2Profile = res.data.data;
+        if (t2Profile.email === email) {
+            throw new Error("❌ IDOR VULNERABILITY: Tenant 2 có thể thấy dữ liệu của Tenant 1!");
+        }
+        console.log(`   ✅ IDOR Prevention OK: Tenant 2 chỉ thấy profile của chính họ (${t2Profile.email})`);
+
+        console.log("\n=== S-ACCOUNT SUMMARY ===");
+        console.log("✅ ACCT.1: GET /account/me - profile trả về đúng field, không lộ sensitive data");
+        console.log("✅ ACCT.2: PUT /account/me - cập nhật fullName/phone thành công");
+        console.log("✅ ACCT.3: Validation - fullName rỗng bị từ chối");
+        console.log("✅ ACCT.4: PUT /account/me/password - đổi mật khẩu thành công");
+        console.log("✅ ACCT.4b: Đăng nhập lại với mật khẩu mới - xác nhận mật khẩu đã lưu đúng");
+        console.log("✅ ACCT.5: Mật khẩu hiện tại sai bị từ chối");
+        console.log("✅ ACCT.6: Mật khẩu mới trùng mật khẩu cũ bị từ chối");
+        console.log("✅ ACCT.7: IDOR Prevention - tenant isolation OK");
+        console.log("\n🎉 TẤT CẢ MODULES (S-01 → S-19 → S-ACCOUNT) HOẠT ĐỘNG HOÀN CHỈNH!");
 
     } catch (e) {
         console.error("\n❌ LỖI TRONG QUÁ TRÌNH TEST:");

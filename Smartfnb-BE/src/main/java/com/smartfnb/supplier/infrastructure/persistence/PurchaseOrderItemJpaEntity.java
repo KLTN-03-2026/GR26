@@ -10,7 +10,7 @@ import java.util.UUID;
  * JPA Entity cho bảng purchase_order_items.
  * Mỗi dòng là một nguyên liệu trong đơn mua hàng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-07
  */
 @Entity

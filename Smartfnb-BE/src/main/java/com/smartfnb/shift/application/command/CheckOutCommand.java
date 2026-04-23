@@ -12,7 +12,7 @@ import java.util.UUID;
  * @param scheduleId UUID shift schedule
  * @param userId     UUID nhân viên check-out (phải là user_id trong schedule)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record CheckOutCommand(

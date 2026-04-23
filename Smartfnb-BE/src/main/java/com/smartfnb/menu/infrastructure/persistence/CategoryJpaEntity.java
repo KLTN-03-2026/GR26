@@ -15,7 +15,7 @@ import java.util.UUID;
  * Đại diện cho danh mục món ăn/đồ uống trong thực đơn.
  * Unique: (tenant_id, name).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Entity

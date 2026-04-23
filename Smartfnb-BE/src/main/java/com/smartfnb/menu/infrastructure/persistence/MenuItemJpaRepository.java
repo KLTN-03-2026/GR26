@@ -15,7 +15,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng items (menu items).
  * Hỗ trợ Specification để tìm kiếm động và pg_trgm search.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface MenuItemJpaRepository

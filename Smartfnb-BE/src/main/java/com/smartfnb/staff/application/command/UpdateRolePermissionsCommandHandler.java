@@ -26,7 +26,7 @@ import java.util.List;
  *   <li>Publish PermissionChangedEvent</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

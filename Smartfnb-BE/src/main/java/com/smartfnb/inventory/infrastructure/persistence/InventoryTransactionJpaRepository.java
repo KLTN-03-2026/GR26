@@ -15,7 +15,7 @@ import java.util.UUID;
  * Chỉ INSERT — không UPDATE (audit trail bất biến).
  * Hỗ trợ query phân trang cho lịch sử giao dịch kho.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Repository

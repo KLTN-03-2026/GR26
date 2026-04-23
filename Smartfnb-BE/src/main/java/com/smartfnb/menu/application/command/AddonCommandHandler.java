@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * Command Handler xử lý CRUD cho Addon/Topping.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component
