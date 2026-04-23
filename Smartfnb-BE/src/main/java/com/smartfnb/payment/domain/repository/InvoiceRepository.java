@@ -8,7 +8,7 @@ import java.util.UUID;
  * Repository interface cho Invoice Aggregate.
  * Định nghĩa các phương thức truy vấn mà infrastructure phải implement.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public interface InvoiceRepository {

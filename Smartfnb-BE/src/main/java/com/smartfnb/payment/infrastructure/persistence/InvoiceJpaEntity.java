@@ -16,7 +16,7 @@ import java.util.UUID;
  * JPA Entity đại diện cho Invoice trong database.
  * Mapped từ Domain Entity Invoice.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Entity

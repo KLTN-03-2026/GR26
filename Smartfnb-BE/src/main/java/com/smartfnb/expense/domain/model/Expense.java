@@ -13,7 +13,7 @@ import java.util.UUID;
  * Aggregate Root đại diện cho Hóa đơn chi.
  * Quản lý các khoản chi tiêu vận hành của chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-17
  */
 @Getter

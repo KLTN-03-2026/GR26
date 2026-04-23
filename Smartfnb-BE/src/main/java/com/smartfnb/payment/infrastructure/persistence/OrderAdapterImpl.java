@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Triển khai OrderAdapter để giao tiếp với Order Module.
  * Lấy dữ liệu trực tiếp qua OrderRepository thay vì API call (vì Modular Monolith).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

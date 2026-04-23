@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Lệnh gán vai trò cho nhân viên.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record AssignRoleToStaffCommand(

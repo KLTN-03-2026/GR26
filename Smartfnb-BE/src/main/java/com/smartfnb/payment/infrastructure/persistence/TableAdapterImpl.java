@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * Triển khai TableAdapter để giao tiếp với Table Module (ằm trong Order Module).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

@@ -16,7 +16,7 @@ import java.util.UUID;
  * Ghi nhận mỗi mẻ sản xuất bán thành phẩm (SUB_ASSEMBLY).
  * Là audit trail bán thành đổi — CONFIRMED ngay khi tạo, không có DRAFT.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 @Entity

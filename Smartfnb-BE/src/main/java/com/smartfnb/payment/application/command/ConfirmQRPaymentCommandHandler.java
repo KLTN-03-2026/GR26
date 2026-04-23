@@ -31,7 +31,7 @@ import java.util.UUID;
  * 4. Tạo Invoice (giống như cash payment)
  * 5. Publish events
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

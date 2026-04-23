@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
  * DTO request tạo khu vực bàn mới.
  * branchId lấy từ path variable, tenantId lấy từ JWT.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record CreateTableZoneRequest(

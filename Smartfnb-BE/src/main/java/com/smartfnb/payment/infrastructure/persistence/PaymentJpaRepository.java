@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Spring Data JPA Repository cho PaymentJpaEntity.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UUID> {

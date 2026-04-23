@@ -9,7 +9,7 @@ import java.util.UUID;
  * Request DTO để xử lý thanh toán tiền mặt.
  * Thu ngân nhập thông tin thanh toán từ POS.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record ProcessCashPaymentRequest(

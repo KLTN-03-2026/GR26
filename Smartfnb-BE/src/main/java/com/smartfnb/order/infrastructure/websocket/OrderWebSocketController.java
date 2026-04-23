@@ -18,7 +18,7 @@ import java.util.UUID;
  * Client gửi message tới /app/orders/change-status để cập nhật trạng thái đơn hàng.
  * Broadcast kết quả qua /topic/orders/{branchId} cho tất cả client cùng chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-31
  */
 @Controller

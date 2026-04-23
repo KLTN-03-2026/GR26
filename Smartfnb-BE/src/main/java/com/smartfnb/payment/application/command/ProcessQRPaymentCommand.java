@@ -7,7 +7,7 @@ import java.util.UUID;
  * Command xử lý tạo QR Code thanh toán.
  * VietQR, MoMo, ZaloPay QR được khởi tạo với timeout 3 phút.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record ProcessQRPaymentCommand(

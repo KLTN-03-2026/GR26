@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Spring Data JPA Repository cho InvoiceJpaEntity.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public interface InvoiceJpaRepository extends JpaRepository<InvoiceJpaEntity, UUID>,

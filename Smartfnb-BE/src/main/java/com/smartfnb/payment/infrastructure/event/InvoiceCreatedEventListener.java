@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Event Listener để xử lý InvoiceCreatedEvent.
  * Cập nhật Table.status = CLEANING sau khi hóa đơn được tạo.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Component

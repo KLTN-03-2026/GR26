@@ -36,7 +36,7 @@ import java.util.UUID;
  *   <li>Log delta (actual - expected) để theo dõi hao hụt chất lượng</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 @Component

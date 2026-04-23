@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Reset token: UUID random được lưu trong memory (ConcurrentHashMap).
  * Trong production nên lưu Redis với TTL 15 phút.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

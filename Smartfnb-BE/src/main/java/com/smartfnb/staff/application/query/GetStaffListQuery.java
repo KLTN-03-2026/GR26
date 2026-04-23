@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * Query lấy danh sách nhân viên trong tenant/chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record GetStaffListQuery(

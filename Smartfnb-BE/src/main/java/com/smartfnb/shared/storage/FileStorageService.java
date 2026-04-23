@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
  *   <li>{@code delete()} — xóa file theo URL đã lưu (dùng khi update ảnh cũ)</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-09
  */
 public interface FileStorageService {

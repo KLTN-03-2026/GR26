@@ -11,7 +11,7 @@ import java.util.UUID;
  * Lớp Composite Key cho bảng user_roles.
  * Tránh lỗi SchemaManagementException: missing column [id].
  * 
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @Data

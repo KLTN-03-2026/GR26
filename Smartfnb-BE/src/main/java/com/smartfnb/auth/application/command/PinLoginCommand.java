@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
  *
  * @param userId UUID nhân viên dạng string (chọn từ danh sách trên màn hình POS)
  * @param pin    PIN 4–6 số gốc — sẽ được verify với BCrypt hash
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27 (security fix: removed tenantId from body)
  */
 public record PinLoginCommand(

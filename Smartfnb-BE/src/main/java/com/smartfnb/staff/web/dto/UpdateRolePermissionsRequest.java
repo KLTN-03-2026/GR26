@@ -9,7 +9,7 @@ import java.util.UUID;
  * Request DTO cập nhật ma trận permissions cho một role.
  * Dùng replace-all: toàn bộ permissions cũ bị thay thế bằng danh sách mới.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record UpdateRolePermissionsRequest(

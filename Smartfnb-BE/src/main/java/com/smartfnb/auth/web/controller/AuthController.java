@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>Quy tắc: Controller KHÔNG chứa logic nghiệp vụ.
  * Chỉ nhận request, @Valid validate input, delegate sang Handler.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

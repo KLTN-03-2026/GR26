@@ -27,7 +27,7 @@ import java.io.Serializable;
  * Sử dụng JWT stateless — không có session.
  * Bật @PreAuthorize và @PostAuthorize cho phân quyền chi tiết.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Configuration

@@ -13,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * <p>Khi dùng Docker, upload-dir được mount qua named volume nên file
  * sẽ persist qua các lần restart container.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-09
  */
 @Slf4j

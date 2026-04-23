@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng daily_revenue_summaries.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Entity

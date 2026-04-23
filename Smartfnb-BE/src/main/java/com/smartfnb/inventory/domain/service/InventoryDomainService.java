@@ -23,7 +23,7 @@ import java.util.UUID;
  *
  * <p>Class này không trực tiếp là CommandHandler — được inject vào các Handler.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Service

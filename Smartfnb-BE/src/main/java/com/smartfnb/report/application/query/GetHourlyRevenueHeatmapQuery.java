@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Query: Lấy heatmap doanh thu theo giờ.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record GetHourlyRevenueHeatmapQuery(
