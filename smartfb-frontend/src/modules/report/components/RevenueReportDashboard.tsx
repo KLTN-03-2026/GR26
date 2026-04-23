@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { TrendingUp, Receipt, Wallet, PiggyBank, RefreshCcw, AlertCircle } from 'lucide-react';
 import { useHourlyRevenueHeatmap } from '@modules/report/hooks/useHourlyRevenueHeatmap';
 import { usePaymentMethodBreakdown } from '@modules/report/hooks/usePaymentMethodBreakdown';
@@ -7,20 +7,21 @@ import { useRevenueReportFilters } from '@modules/report/hooks/useRevenueReportF
 import { useTopItemsReport } from '@modules/report/hooks/useTopItemsReport';
 import { Button } from '@shared/components/ui/button';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
-import { formatDate } from '@shared/utils/formatDate';
 import { HourlyRevenueChart } from './HourlyRevenueChart';
 import { PaymentBreakdownChart } from './PaymentBreakdownChart';
 import { ReportFilterPanel } from './ReportFilterPanel';
+import { ReportNavigationTabs } from './ReportNavigationTabs';
 import { TopItemsChart } from './TopItemsChart';
 
 interface KpiCardProps {
   label: string;
   value: string;
-  description: string;
   icon: ReactNode;
 }
 
-const KpiCard = ({ label, value, description, icon }: KpiCardProps) => {
+const KPI_SKELETON_KEYS = ['total-revenue', 'gross-profit', 'order-count', 'average-order-value'];
+
+const KpiCard = ({ label, value, icon }: KpiCardProps) => {
   return (
     <div className="card space-y-3 p-5">
       <div className="flex items-center justify-between gap-3">
@@ -32,7 +33,6 @@ const KpiCard = ({ label, value, description, icon }: KpiCardProps) => {
           {icon}
         </div>
       </div>
-      <p className="text-sm text-text-secondary">{description}</p>
     </div>
   );
 };
@@ -53,17 +53,15 @@ export const RevenueReportDashboard = () => {
     isBranchError,
     setSelectedBranchId,
     setDateRange,
-    setAnalysisDate,
     refetchBranches,
   } = useRevenueReportFilters();
+  const [hourlyDate, setHourlyDate] = useState(() => analysisDate);
+  const [paymentBreakdownDate, setPaymentBreakdownDate] = useState(() => analysisDate);
+  const [topItemsDate, setTopItemsDate] = useState(() => analysisDate);
 
   const startDate = dateRange.from ?? analysisDate;
   const endDate = dateRange.to ?? dateRange.from ?? analysisDate;
   const selectedBranchName = selectedBranch?.name ?? 'Chưa chọn chi nhánh';
-  const formattedDateRange =
-    startDate === endDate
-      ? formatDate(startDate)
-      : `${formatDate(startDate)} - ${formatDate(endDate)}`;
 
   const revenueReportQuery = useRevenueReport(
     selectedBranchId
@@ -80,7 +78,7 @@ export const RevenueReportDashboard = () => {
     selectedBranchId
       ? {
           branchId: selectedBranchId,
-          date: analysisDate,
+          date: hourlyDate,
         }
       : undefined,
   );
@@ -89,7 +87,7 @@ export const RevenueReportDashboard = () => {
     selectedBranchId
       ? {
           branchId: selectedBranchId,
-          date: analysisDate,
+          date: topItemsDate,
           limit: 5,
         }
       : undefined,
@@ -99,7 +97,7 @@ export const RevenueReportDashboard = () => {
     selectedBranchId
       ? {
           branchId: selectedBranchId,
-          date: analysisDate,
+          date: paymentBreakdownDate,
         }
       : undefined,
   );
@@ -162,17 +160,18 @@ export const RevenueReportDashboard = () => {
 
   return (
     <div className="space-y-6 pb-8">
+      <ReportNavigationTabs />
+
       <ReportFilterPanel
         branchOptions={branchOptions}
         selectedBranchId={selectedBranchId}
         selectedBranchName={selectedBranchName}
         dateRange={dateRange}
-        analysisDate={analysisDate}
         isBranchLoading={isBranchLoading}
         isRefreshing={isRefreshing}
+        showAnalysisDate={false}
         onBranchChange={setSelectedBranchId}
         onDateRangeChange={setDateRange}
-        onAnalysisDateChange={setAnalysisDate}
         onRefresh={() => {
           void handleRefresh();
         }}
@@ -180,8 +179,8 @@ export const RevenueReportDashboard = () => {
 
       {revenueReportQuery.isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="card h-36 animate-pulse bg-[#f5efe8]" />
+          {KPI_SKELETON_KEYS.map((key) => (
+            <div key={key} className="card h-36 animate-pulse bg-[#f5efe8]" />
           ))}
         </div>
       ) : revenueReportQuery.isError ? (
@@ -205,61 +204,63 @@ export const RevenueReportDashboard = () => {
           <KpiCard
             label="Tổng doanh thu"
             value={formatVND(revenueReportQuery.data?.totalRevenue ?? 0)}
-            description={`Khoảng ngày ${formattedDateRange}`}
             icon={<TrendingUp className="h-5 w-5" />}
           />
           <KpiCard
-            label="Lợi nhuận gộp"
+            label="Tổng Lợi nhuận"
             value={formatVND(revenueReportQuery.data?.totalGrossProfit ?? 0)}
-            description="Tổng lợi nhuận gộp backend đã tổng hợp cho chi nhánh."
             icon={<PiggyBank className="h-5 w-5" />}
           />
           <KpiCard
             label="Tổng đơn"
             value={formatNumber(revenueReportQuery.data?.totalOrders ?? 0)}
-            description="Số order đã đóng góp vào doanh thu trong khoảng ngày."
             icon={<Receipt className="h-5 w-5" />}
           />
           <KpiCard
             label="Giá trị đơn trung bình"
             value={formatVND(revenueReportQuery.data?.avgOrderValue ?? 0)}
-            description="Dùng để theo dõi xu hướng upsell theo chi nhánh."
             icon={<Wallet className="h-5 w-5" />}
           />
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
-        <HourlyRevenueChart
-          data={hourlyHeatmapQuery.data}
-          branchName={selectedBranchName}
-          isLoading={hourlyHeatmapQuery.isLoading}
-          isError={hourlyHeatmapQuery.isError}
-          onRetry={() => {
-            void hourlyHeatmapQuery.refetch();
-          }}
-        />
+      <HourlyRevenueChart
+        data={hourlyHeatmapQuery.data}
+        branchName={selectedBranchName}
+        isLoading={hourlyHeatmapQuery.isLoading}
+        isError={hourlyHeatmapQuery.isError}
+        selectedDate={hourlyDate}
+        onDateChange={setHourlyDate}
+        onRetry={() => {
+          void hourlyHeatmapQuery.refetch();
+        }}
+      />
 
+      <div className="grid gap-6 xl:grid-cols-2">
         <PaymentBreakdownChart
           data={paymentBreakdownQuery.data}
           branchName={selectedBranchName}
           isLoading={paymentBreakdownQuery.isLoading}
           isError={paymentBreakdownQuery.isError}
+          selectedDate={paymentBreakdownDate}
+          onDateChange={setPaymentBreakdownDate}
           onRetry={() => {
             void paymentBreakdownQuery.refetch();
           }}
         />
-      </div>
 
-      <TopItemsChart
-        data={topItemsQuery.data}
-        branchName={selectedBranchName}
-        isLoading={topItemsQuery.isLoading}
-        isError={topItemsQuery.isError}
-        onRetry={() => {
-          void topItemsQuery.refetch();
-        }}
-      />
+        <TopItemsChart
+          data={topItemsQuery.data}
+          branchName={selectedBranchName}
+          isLoading={topItemsQuery.isLoading}
+          isError={topItemsQuery.isError}
+          selectedDate={topItemsDate}
+          onDateChange={setTopItemsDate}
+          onRetry={() => {
+            void topItemsQuery.refetch();
+          }}
+        />
+      </div>
     </div>
   );
 };

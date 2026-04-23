@@ -31,7 +31,7 @@ from app.services.data_service import (
     get_consumption_for_branch,
 )
 from app.utils import dataframe_builder
-from app.utils.model_io import save_model
+from app.utils.model_io import save_model, update_train_metadata
 
 logger = get_logger(__name__)
 
@@ -179,6 +179,54 @@ def _build_neuralprophet_model(config: dict, n_lags: int, yearly_seasonality: bo
     return model
 
 
+def _build_neuralprophet_model_weekly(epochs: int = 150):  # type: ignore[return]
+    """
+    Tạo NeuralProphet instance cho weekly model (intermittent/sparse series).
+
+    Cấu hình tối ưu cho dữ liệu theo tuần:
+    - n_forecasts=4: dự báo 4 tuần tới (~1 tháng)
+    - n_lags=8: nhìn lại 8 tuần (~2 tháng) để học pattern
+    - weekly_seasonality=False: data đã là weekly — không có trong-tuần variation
+    - yearly_seasonality=False: cần ≥ 104 tuần (2 năm) mới có ý nghĩa
+    - normalize="soft": scale series về [0,1] — cùng lý do với daily model
+    - loss_func="Huber": robust với spike trong weekly data
+
+    Args:
+        epochs: Số epoch train (mặc định 150)
+    """
+    try:
+        from neuralprophet import NeuralProphet  # type: ignore[import]
+    except ImportError as exc:
+        raise RuntimeError("NeuralProphet chưa được cài") from exc
+
+    import torch, numpy as np, random
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+
+    model = NeuralProphet(
+        n_forecasts=4,                  # Dự báo 4 tuần tới
+        n_lags=8,                       # Nhìn lại 8 tuần (~2 tháng)
+        weekly_seasonality=False,       # Data đã là weekly — không có pattern trong tuần
+        daily_seasonality=False,
+        yearly_seasonality=False,       # Cần ≥ 104 tuần mới học được
+        epochs=epochs,
+        batch_size=32,
+        learning_rate=0.001,
+        impute_missing=True,
+        normalize="soft",
+        loss_func="Huber",
+        ar_reg=0.01,
+        seasonality_reg=1.0,
+    )
+
+    # Thêm ngày lễ Việt Nam — vẫn ảnh hưởng đến tiêu thụ dù data theo tuần
+    model.add_country_holidays("VN")
+
+    logger.info("NeuralProphet weekly config: n_lags=8 | n_forecasts=4 | epochs=%d", epochs)
+    return model
+
+
 def _filter_valid_series(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     """
     Lọc bỏ các ingredient series không đủ ngày data để train.
@@ -218,6 +266,7 @@ def train_branch_model(
     config: dict,
     n_lags: int,
     yearly_seasonality: bool,
+    weather_df: pd.DataFrame | None = None,
 ) -> dict:
     """
     Train NeuralProphet Global Model cho 1 chi nhánh (tất cả ingredient của branch).
@@ -229,6 +278,8 @@ def train_branch_model(
         config: dict config train (n_forecasts, epochs, weekly_seasonality, start_date).
         n_lags: tự tính từ _auto_n_lags(active_days) — không nhận từ user config.
         yearly_seasonality: True khi branch có ≥ 730 ngày data.
+        weather_df: DataFrame [ds, temperature, precipitation] từ weather cache.
+                    None → không dùng weather regressor (bình thường).
 
     Returns:
         dict với keys: mae, mape, model_path, series_count, series_skipped
@@ -279,88 +330,165 @@ def train_branch_model(
                 info["upper_bound"],
             )
 
-    # Bước 3: Tạo model với config của branch
-    model = _build_neuralprophet_model(config, n_lags, yearly_seasonality)
+    # Bước 2.5: Phân loại demand pattern → tách regular / intermittent / sparse
+    groups = dataframe_builder.split_by_demand_pattern(df_clean)
+    regular_ids = set(groups["regular"]["ID"].unique()) if not groups["regular"].empty else set()
+    intermittent_ids = set(groups["intermittent"]["ID"].unique()) if not groups["intermittent"].empty else set()
+    sparse_ids = set(groups["sparse"]["ID"].unique()) if not groups["sparse"].empty else set()
 
-    # Bước 4: Train — NeuralProphet tự detect Global Model khi có cột 'ID'
-    try:
-        metrics = model.fit(df_clean, freq="D")
-    except Exception as exc:
-        raise RuntimeError(f"Train thất bại: {exc}") from exc
-
-    # Bước 5a: Lấy MAE từ metrics cuối epoch
-    mae: float | None = None
-    try:
-        if metrics is not None and not metrics.empty and "MAE" in metrics.columns:
-            mae = float(metrics["MAE"].iloc[-1])
-            logger.info("Train xong: MAE=%.4f", mae)
-    except Exception:
-        logger.warning("Không lấy được MAE từ metrics")
-
-    # Bước 5b: Tính metrics dự báo từ in-sample predictions
-    # 3 metrics song song:
-    # - WAPE (primary): sum|error| / sum(actual) — metric chuẩn cho intermittent demand
-    # - MAPE (active): chỉ tính trên ngày y>0 — loại bỏ inflate từ zero-days
-    # - MAPE (all): công thức cũ giữ để so sánh backward-compatible
-    mape: float | None = None
-    wape: float | None = None
-    try:
-        pred_df = model.predict(df_clean)
-        if "yhat1" in pred_df.columns and "y" in pred_df.columns:
-            valid = pred_df.dropna(subset=["yhat1", "y"])
-            if not valid.empty:
-                abs_errors = (valid["yhat1"] - valid["y"]).abs()
-                total_actual = valid["y"].sum()
-
-                # WAPE — metric chính cho bài toán kho có intermittent demand
-                # WAPE = tổng sai lệch / tổng tiêu thụ thực
-                if total_actual > 0:
-                    wape = float(abs_errors.sum() / total_actual * 100)
-
-                # MAPE trên tất cả ngày (kể cả y=0) — backward-compatible
-                mape_all = float(
-                    (abs_errors / (valid["y"] + 1)).mean() * 100
-                )
-
-                # MAPE chỉ trên ngày có tiêu thụ (y > 0)
-                active = valid[valid["y"] > 0]
-                mape_active: float | None = None
-                if not active.empty:
-                    mape_active = float(
-                        ((active["yhat1"] - active["y"]).abs() / active["y"]).mean() * 100
-                    )
-
-                # WAPE là metric chính lưu vào DB
-                mape = wape if wape is not None else mape_all
-
-                logger.info(
-                    "Metrics: WAPE=%.2f%% | MAPE(y>0)=%.2f%% | MAPE(all)=%.2f%% | active=%d/%d rows",
-                    wape or 0,
-                    mape_active or 0,
-                    mape_all,
-                    len(active) if not active.empty else 0,
-                    len(valid),
-                )
-    except Exception:
-        logger.warning("Không tính được metrics dự báo — bỏ qua")
-
-    # Bước 6: Lưu model kèm config (bao gồm n_lags đã dùng) để validate khi predict
-    train_config_to_save = {**config, "n_lags": n_lags, "yearly_seasonality": yearly_seasonality}
-    model_path = save_model(
-        model,
-        tenant_id,
-        branch_id,
-        series_count=n_series,
-        mae=mae,
-        mape=mape,
-        config=train_config_to_save,
+    logger.info(
+        "Pattern: %d regular (daily) | %d intermittent (weekly) | %d sparse (weekly)",
+        len(regular_ids), len(intermittent_ids), len(sparse_ids),
     )
-    logger.info("Model đã lưu: %s", model_path)
+
+    # ── Bước 3: Train daily model (regular series) ──────────────────────────
+    mae: float | None = None
+    mape: float | None = None
+    model_path_daily: str | None = None
+
+    if not groups["regular"].empty:
+        df_regular = groups["regular"]
+
+        # Merge weather regressors nếu có đủ data (chỉ cho daily model)
+        use_weather = False
+        if weather_df is not None and not weather_df.empty:
+            df_merged = df_regular.merge(
+                weather_df[["ds", "temperature", "precipitation"]],
+                on="ds",
+                how="left",
+            )
+            weather_coverage = df_merged["temperature"].notna().mean()
+            if weather_coverage >= 0.7:
+                median_temp = float(df_merged["temperature"].median())
+                df_merged["temperature"] = df_merged["temperature"].fillna(median_temp)
+                df_merged["precipitation"] = df_merged["precipitation"].fillna(0.0)
+                df_regular = df_merged
+                use_weather = True
+                logger.info(
+                    "Tích hợp weather regressors (daily): coverage=%.0f%% | median_temp=%.1f°C",
+                    weather_coverage * 100, median_temp,
+                )
+            else:
+                logger.warning("Weather coverage %.0f%% < 70%% — bỏ qua weather regressor", weather_coverage * 100)
+
+        model_daily = _build_neuralprophet_model(config, n_lags, yearly_seasonality)
+        if use_weather:
+            model_daily.add_future_regressor("temperature")
+            model_daily.add_future_regressor("precipitation")
+
+        try:
+            metrics_daily = model_daily.fit(df_regular, freq="D")
+            if metrics_daily is not None and not metrics_daily.empty and "MAE" in metrics_daily.columns:
+                mae = float(metrics_daily["MAE"].iloc[-1])
+        except Exception as exc:
+            raise RuntimeError(f"Train daily model thất bại: {exc}") from exc
+
+        # WAPE cho daily model
+        try:
+            pred_df = model_daily.predict(df_regular)
+            if "yhat1" in pred_df.columns and "y" in pred_df.columns:
+                valid = pred_df.dropna(subset=["yhat1", "y"])
+                if not valid.empty:
+                    abs_errors = (valid["yhat1"] - valid["y"]).abs()
+                    total_actual = valid["y"].sum()
+                    wape_val = float(abs_errors.sum() / total_actual * 100) if total_actual > 0 else None
+                    mape_all = float((abs_errors / (valid["y"] + 1)).mean() * 100)
+                    active = valid[valid["y"] > 0]
+                    mape_active = float(((active["yhat1"] - active["y"]).abs() / active["y"]).mean() * 100) if not active.empty else None
+                    mape = wape_val if wape_val is not None else mape_all
+                    logger.info(
+                        "Daily metrics: WAPE=%.2f%% | MAPE(y>0)=%.2f%% | MAPE(all)=%.2f%%",
+                        wape_val or 0, mape_active or 0, mape_all,
+                    )
+        except Exception:
+            logger.warning("Không tính được metrics daily — bỏ qua")
+
+        daily_config = {
+            **config,
+            "n_lags": n_lags,
+            "yearly_seasonality": yearly_seasonality,
+            "use_weather_regressor": use_weather,
+        }
+        path_obj = save_model(
+            model_daily, tenant_id, branch_id,
+            series_count=len(regular_ids),
+            mae=mae, mape=mape,
+            config=daily_config,
+            model_type="daily",
+        )
+        model_path_daily = str(path_obj)
+
+    # ── Bước 4: Train weekly model (intermittent + sparse) ──────────────────
+    model_path_weekly: str | None = None
+    weekly_ids = intermittent_ids | sparse_ids
+
+    if weekly_ids:
+        df_weekly_input = pd.concat(
+            [g for g in [groups["intermittent"], groups["sparse"]] if not g.empty],
+            ignore_index=True,
+        )
+        df_weekly = dataframe_builder.aggregate_to_weekly(df_weekly_input)
+
+        if not df_weekly.empty:
+            # Kiểm tra tuần tối thiểu (≥ 4 tuần để train có ý nghĩa)
+            min_weeks = int(df_weekly.groupby("ID")["ds"].nunique().min())
+            if min_weeks >= 4:
+                weekly_epochs = config.get("epochs", 150)
+                model_weekly = _build_neuralprophet_model_weekly(epochs=weekly_epochs)
+
+                try:
+                    model_weekly.fit(df_weekly, freq="W-MON")
+                except Exception as exc:
+                    logger.warning("Train weekly model thất bại: %s — bỏ qua", exc)
+                    model_weekly = None
+
+                if model_weekly is not None:
+                    weekly_config = {
+                        "n_forecasts": 4,
+                        "n_lags": 8,
+                        "model_freq": "W-MON",
+                        "series_ids": list(weekly_ids),
+                    }
+                    path_obj_w = save_model(
+                        model_weekly, tenant_id, branch_id,
+                        series_count=len(weekly_ids),
+                        config=weekly_config,
+                        model_type="weekly",
+                    )
+                    model_path_weekly = str(path_obj_w)
+            else:
+                logger.warning(
+                    "Weekly series ngắn nhất chỉ có %d tuần (cần ≥ 4) — bỏ qua weekly model",
+                    min_weeks,
+                )
+
+    # Bước 5: Cập nhật metadata với series_classification + model_paths
+    series_classification = {
+        "regular":      list(regular_ids),
+        "intermittent": list(intermittent_ids),
+        "sparse":       list(sparse_ids),
+    }
+    update_train_metadata(tenant_id, branch_id, {
+        "series_classification": series_classification,
+        "model_paths": {
+            "daily":  model_path_daily,
+            "weekly": model_path_weekly,
+        },
+    })
+
+    # Lấy model_path chính (ưu tiên daily) để log và trả về
+    model_path = model_path_daily or model_path_weekly or ""
+    logger.info(
+        "Train xong: daily=%s | weekly=%s | regular=%d | intermittent=%d | sparse=%d",
+        "✓" if model_path_daily else "✗",
+        "✓" if model_path_weekly else "✗",
+        len(regular_ids), len(intermittent_ids), len(sparse_ids),
+    )
 
     return {
         "mae": mae,
         "mape": mape,
-        "model_path": str(model_path),
+        "model_path": model_path,
         "series_count": n_series,
         "series_skipped": series_skipped,
     }
@@ -473,8 +601,31 @@ async def run_train_for_branch(
                 f"Không có data tiêu thụ cho branch {branch_id}"
             )
 
+        # Bước 3.5: Fetch historical weather cho toàn bộ khoảng train
+        # Weather là optional — lỗi API không block quá trình train
+        weather_df: pd.DataFrame | None = None
+        try:
+            from app.services import weather_service as _weather_svc  # noqa: PLC0415
+            train_dates = sorted(df["ds"].dt.date.unique().tolist())
+            if train_dates:
+                await _weather_svc.fetch_historical_weather_for_branch(
+                    branch_id, train_dates[0], train_dates[-1], db
+                )
+                weather_df = await _weather_svc.get_weather_df(branch_id, train_dates, db)
+                if weather_df is not None:
+                    logger.info(
+                        "Đã fetch weather: branch=%s | %d/%d ngày có data",
+                        branch_id, len(weather_df), len(train_dates),
+                    )
+        except Exception as exc:
+            logger.warning("Bỏ qua weather data cho training: %s", exc)
+            weather_df = None
+
         # Bước 4: Train model
-        result = train_branch_model(df, tenant_id, branch_id, config, n_lags, yearly_seasonality)
+        result = train_branch_model(
+            df, tenant_id, branch_id, config, n_lags, yearly_seasonality,
+            weather_df=weather_df,
+        )
 
         # Bước 5: Ghi vào model_registry
         await _register_branch_model(db, tenant_id, branch_id, result)

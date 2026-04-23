@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
@@ -21,9 +21,7 @@ import {
   resolveOrderSource,
   toDialogMenuItem,
   toDraftItem,
-  toDraftItemsFromOrder,
   toOrderItemCommand,
-  toUpdateOrderItemCommand,
 } from '@modules/order/components/order-page/orderPage.utils';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
@@ -31,23 +29,14 @@ import type {
   DraftOrderMeta,
   OrderAddonSelection,
   OrderDraftItem,
-  OrderListItemResponse,
-  OrderResponse,
   OrderTableContext,
 } from '@modules/order/types/order.types';
-import {
-  AUTO_CANCEL_EMPTY_CART_REASON,
-  buildOrderRouteSearchParams,
-  isSameOrderContext,
-  resolveTableContextFromOrder,
-} from '@modules/order/utils';
+import { buildOrderRouteSearchParams } from '@modules/order/utils';
 import { useZones } from '@modules/table/hooks/useZones';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { ROUTES } from '@shared/constants/routes';
 import { useDebounce } from '@shared/hooks/useDebounce';
-import { useOrderDetail } from './useOrderDetail';
 import { useOrderPricing } from './useOrderPricing';
-import { useTableActiveOrder } from './useTableActiveOrder';
 
 interface OrderDialogSubmitPayload {
   quantity: number;
@@ -96,28 +85,9 @@ interface UseOrderPageControllerResult {
   handleSubmitItem: (payload: OrderDialogSubmitPayload) => Promise<void>;
 }
 
-const toOrderListItemCache = (order: OrderResponse): OrderListItemResponse => ({
-  id: order.id,
-  orderNumber: order.orderNumber,
-  tableId: order.tableId,
-  tableName: order.tableName,
-  status: order.status,
-  totalAmount: order.totalAmount,
-  createdAt: order.createdAt,
-});
-
-const isOpenOrder = (order: OrderResponse) => {
-  // Order đã hoàn tất hoặc đã hủy không còn được xem là order active của bàn.
-  return order.status !== 'COMPLETED' && order.status !== 'CANCELLED';
-};
-
-// Response sau tạo/sửa order là source of truth tạm thời, tránh GET detail lại ngay sau mutation.
-const ORDER_DETAIL_SYNC_STALE_TIME = 15 * 1000;
-
 /**
- * Hook điều phối toàn bộ nghiệp vụ của màn `OrderPage`.
- * Page chỉ nên render layout và chuyển action xuống UI component,
- * còn flow tạo/cập nhật/hủy/thanh toán order phải nằm ở module order.
+ * Hook điều phối màn `OrderPage` theo flow cart local.
+ * Món được giữ trong Zustand cart; order backend chỉ được tạo khi người dùng bấm đi thanh toán.
  */
 export const useOrderPageController = (): UseOrderPageControllerResult => {
   const navigate = useNavigate();
@@ -147,7 +117,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     clearDraft,
     setTableContext,
     setDraftOrder,
-    setCart,
     upsertCartItem,
     removeFromCart,
     setSyncingDraft,
@@ -162,7 +131,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   }, [zones]);
 
   const routeBranchName = searchParams.get('branchName')?.trim() ?? '';
-  const routeOrderId = searchParams.get('orderId')?.trim() ?? '';
   const routeTableId = searchParams.get('tableId')?.trim() ?? '';
   const routeTableName = searchParams.get('tableName')?.trim() ?? '';
   const routeZoneId = searchParams.get('zoneId')?.trim() ?? '';
@@ -196,68 +164,14 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     setTableContext(nextTableContext);
   }, [nextTableContext, setTableContext]);
 
-  const isRouteContextReady = useMemo(() => {
-    return isSameOrderContext(tableContext, nextTableContext);
-  }, [nextTableContext, tableContext]);
-
-  const tableActiveOrderQuery = useTableActiveOrder(routeTableId, {
-    enabled: isRouteContextReady,
-  });
-  const resolvedActiveOrderId = useMemo(() => {
-    if (!routeTableId) {
-      return null;
-    }
-
-    /**
-     * Khi query theo bàn vẫn đang fetch, không tin dữ liệu cache cũ.
-     * Chỉ dùng `orderId` sau khi query của đúng `tableId` hiện tại đã ổn định.
-     */
-    if (tableActiveOrderQuery.isFetching) {
-      return null;
-    }
-
-    return tableActiveOrderQuery.data?.id ?? null;
-  }, [routeTableId, tableActiveOrderQuery.data?.id, tableActiveOrderQuery.isFetching]);
-
-  const effectiveOrderId = useMemo(() => {
-    // Khi route đang mang `orderId`, luôn ưu tiên giá trị trên URL để tránh phụ thuộc state cũ.
-    if (routeOrderId) {
-      return routeOrderId;
-    }
-
-    if (routeTableId) {
-      /**
-       * Với route theo bàn, chỉ dùng order resolve từ chính `tableId` hiện tại.
-       * Không fallback sang `draftOrder.orderId` vì đó có thể là order của bàn trước.
-       */
-      return resolvedActiveOrderId;
-    }
-
-    if (isFreshTakeawayRoute) {
-      return null;
-    }
-
-    return draftOrder.orderId;
-  }, [
-    draftOrder.orderId,
-    isFreshTakeawayRoute,
-    routeOrderId,
-    routeTableId,
-    resolvedActiveOrderId,
-  ]);
-
-  /**
-   * Nút tạo đơn mang về cần mở giỏ hàng trắng, không dùng lại context cũ.
-   * Sau khi reset xong sẽ dọn query param để refresh trang không bị clear lặp lại.
-   */
   useEffect(() => {
-    if (!isFreshTakeawayRoute || !isRouteContextReady || nextTableContext.tableId) {
+    if (!isFreshTakeawayRoute || nextTableContext.tableId) {
       return;
     }
 
     clearDraft();
     navigate(ROUTES.POS_ORDER, { replace: true });
-  }, [clearDraft, isFreshTakeawayRoute, isRouteContextReady, navigate, nextTableContext.tableId]);
+  }, [clearDraft, isFreshTakeawayRoute, navigate, nextTableContext.tableId]);
 
   const menuItems = useMemo(() => {
     return (menuQuery.data?.data ?? [])
@@ -267,10 +181,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         price: item.effectivePrice ?? item.branchPrice ?? item.price,
       }));
   }, [menuQuery.data?.data]);
-
-  const menuItemsById = useMemo(() => {
-    return new Map(menuItems.map((item) => [item.id, item]));
-  }, [menuItems]);
 
   const categories = useMemo(() => {
     return (categoriesQuery.data?.data ?? []).filter((category) => category.isActive !== false);
@@ -330,277 +240,46 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     taxRate: ORDER_TAX_RATE,
   });
 
-  const hasPlacedOrder = Boolean(draftOrder.orderId);
-  const isPlacedOrderFinalized =
-    draftOrder.status === 'COMPLETED' || draftOrder.status === 'CANCELLED';
-  const orderDetailQuery = useOrderDetail(effectiveOrderId, {
-    enabled:
-      isRouteContextReady &&
-      !isFreshTakeawayRoute &&
-      (!routeTableId || !tableActiveOrderQuery.isFetching),
-    staleTime: ORDER_DETAIL_SYNC_STALE_TIME,
-  });
-
-  /**
-   * Chỉ block loading ở lần đầu vào trang chưa có dữ liệu cache.
-   * Dùng `.isLoading` thay `.isFetching` để refetch sau invalidate (thêm món, hủy đơn...)
-   * không làm hiện spinner toàn trang — vì lúc refetch cache cũ vẫn còn.
-   */
-  const isRecoveringExistingOrder =
-    (Boolean(routeTableId) && tableActiveOrderQuery.isLoading) ||
-    (Boolean(effectiveOrderId) && orderDetailQuery.isLoading && !draftOrder.orderId);
   const hasLoadingState =
-    menuQuery.isLoading ||
-    categoriesQuery.isLoading ||
-    addonsQuery.isLoading ||
-    isRecoveringExistingOrder;
-  const hasErrorState =
-    menuQuery.isError ||
-    categoriesQuery.isError ||
-    addonsQuery.isError ||
-    tableActiveOrderQuery.isError ||
-    (Boolean(effectiveOrderId) && orderDetailQuery.isError);
+    menuQuery.isLoading || categoriesQuery.isLoading || addonsQuery.isLoading;
+  const hasErrorState = menuQuery.isError || categoriesQuery.isError || addonsQuery.isError;
+  const hasPlacedOrder = Boolean(draftOrder.orderId);
+  const isPlacedOrderFinalized = false;
 
   const clearActiveSelections = () => {
     setActiveMenuItemId(null);
     setActiveCartItemId(null);
   };
 
-  const replaceOrderRoute = (
-    context: OrderTableContext | null | undefined,
-    orderId?: string | null
-  ) => {
-    const nextSearchParams = buildOrderRouteSearchParams(context, orderId);
-    const nextSearch = nextSearchParams.toString();
-
-    if (nextSearch === searchParams.toString()) {
+  const ensureLocalDraftStarted = () => {
+    if (draftOrder.createdAt) {
       return;
     }
 
-    navigate(nextSearch ? `${ROUTES.POS_ORDER}?${nextSearch}` : ROUTES.POS_ORDER, {
-      replace: true,
-    });
-  };
-
-  const syncOrderQueryCache = (order: OrderResponse, tableId?: string | null) => {
-    const normalizedTableId = tableId?.trim() || order.tableId?.trim() || '';
-
-    queryClient.setQueryData(queryKeys.orders.detail(order.id), order);
-
-    if (normalizedTableId) {
-      queryClient.setQueryData(
-        queryKeys.orders.activeByTable(normalizedTableId),
-        isOpenOrder(order) ? toOrderListItemCache(order) : null
-      );
-    }
-  };
-
-  const invalidateOrderListQueries = () => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
-  };
-
-  const invalidateTableStatusQueries = (tableId?: string | null) => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
-
-    if (tableId?.trim()) {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tables.detail(tableId.trim()),
-      });
-    }
-  };
-
-  /**
-   * Đồng bộ đơn hàng từ backend về state local để FE chỉ render theo dữ liệu thật của API.
-   */
-  const applyOrderResponseToDraft = (order: OrderResponse): OrderTableContext => {
-    const resolvedContext = resolveTableContextFromOrder(order, nextTableContext);
-
-    setTableContext(resolvedContext);
     setDraftOrder({
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      status: order.status,
-      createdAt: order.createdAt ?? new Date().toISOString(),
+      orderId: null,
+      orderNumber: null,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
     });
-    setCart(toDraftItemsFromOrder(order, menuItemsById));
-    replaceOrderRoute(resolvedContext, order.id);
-
-    return resolvedContext;
   };
-
-  /**
-   * Tạo order ngay khi cart đang rỗng và người dùng thêm món đầu tiên.
-   */
-  const createOrderFromCart = async (
-    nextCart: OrderDraftItem[],
-    successMessage: string
-  ): Promise<OrderResponse | null> => {
-    if (nextCart.length === 0) {
-      return null;
-    }
-
-    setSyncingDraft(true);
-
-    try {
-      const response = await orderService.placeOrder({
-        tableId: (tableContext?.tableId ?? nextTableContext.tableId) ?? undefined,
-        source: resolveOrderSource(tableContext?.tableId ?? nextTableContext.tableId),
-        items: nextCart.map(toOrderItemCommand),
-      });
-
-      if (!response.success) {
-        return null;
-      }
-
-      const resolvedTableId = response.data.tableId ?? nextTableContext.tableId;
-
-      applyOrderResponseToDraft(response.data);
-      syncOrderQueryCache(response.data, resolvedTableId);
-      invalidateOrderListQueries();
-      invalidateTableStatusQueries(resolvedTableId);
-      toast.success(successMessage);
-
-      return response.data;
-    } catch {
-      // Toast lỗi chung đã được axios interceptor xử lý.
-      return null;
-    } finally {
-      setSyncingDraft(false);
-    }
-  };
-
-  /**
-   * Với đơn đã tạo, mọi thay đổi tiếp theo phải gọi API update để backend luôn là source of truth.
-   */
-  const updatePlacedOrder = async (
-    nextCart: OrderDraftItem[],
-    successMessage: string
-  ): Promise<OrderResponse | null> => {
-    if (!draftOrder.orderId || nextCart.length === 0) {
-      return null;
-    }
-
-    setSyncingDraft(true);
-
-    try {
-      const response = await orderService.updateOrder(draftOrder.orderId, {
-        tableId: (tableContext?.tableId ?? nextTableContext.tableId) ?? undefined,
-        items: nextCart.map(toUpdateOrderItemCommand),
-      });
-
-      if (!response.success) {
-        return null;
-      }
-
-      const resolvedTableId = response.data.tableId ?? nextTableContext.tableId;
-
-      applyOrderResponseToDraft(response.data);
-      syncOrderQueryCache(response.data, resolvedTableId);
-      invalidateOrderListQueries();
-      toast.success(successMessage);
-
-      return response.data;
-    } catch {
-      // Toast lỗi chung đã được axios interceptor xử lý.
-      return null;
-    } finally {
-      setSyncingDraft(false);
-    }
-  };
-
-  /**
-   * Nếu giỏ hàng bị làm trống thì FE tự hủy order để không giữ lại order rỗng trên hệ thống.
-   */
-  const cancelCurrentOrder = async (
-    reason: string | undefined,
-    successMessage: string
-  ): Promise<boolean> => {
-    if (!draftOrder.orderId) {
-      clearDraft();
-      replaceOrderRoute(nextTableContext);
-      return true;
-    }
-
-    setSyncingDraft(true);
-
-    try {
-      const response = await orderService.cancelOrder(draftOrder.orderId, {
-        reason,
-      });
-
-      if (!response.success) {
-        return false;
-      }
-
-      const cancelledTableId = tableContext?.tableId ?? nextTableContext.tableId ?? null;
-
-      syncOrderQueryCache(response.data, cancelledTableId);
-      clearDraft();
-      replaceOrderRoute(nextTableContext);
-      invalidateOrderListQueries();
-      invalidateTableStatusQueries(cancelledTableId);
-      toast.success(successMessage);
-
-      return true;
-    } catch {
-      // Toast lỗi chung đã được axios interceptor xử lý.
-      return false;
-    } finally {
-      setSyncingDraft(false);
-    }
-  };
-
-  const applyOrderResponseToDraftEffect = useEffectEvent((order: OrderResponse) => {
-    applyOrderResponseToDraft(order);
-  });
-
-  useEffect(() => {
-    if (!orderDetailQuery.data) {
-      return;
-    }
-
-    applyOrderResponseToDraftEffect(orderDetailQuery.data);
-  }, [orderDetailQuery.data]);
 
   const handleOpenItemDialog = (menuItemId: string) => {
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc. Không thể chỉnh món trên đơn này.');
-      return;
-    }
-
     setActiveCartItemId(null);
     setActiveMenuItemId(menuItemId);
   };
 
   const handleEditCartItem = (draftItemId: string) => {
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc. Không thể chỉnh món trên đơn này.');
-      return;
-    }
-
     setActiveMenuItemId(null);
     setActiveCartItemId(draftItemId);
   };
 
   const handleDeleteCartItem = async (item: OrderDraftItem) => {
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc. Không thể xóa món trên đơn này.');
-      return;
-    }
-
     const nextCart = cart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
 
-    if (hasPlacedOrder) {
-      if (nextCart.length === 0) {
-        await cancelCurrentOrder(
-          AUTO_CANCEL_EMPTY_CART_REASON,
-          'Đã hủy đơn vì không còn món nào trong giỏ'
-        );
-        return;
-      }
-
-      await updatePlacedOrder(nextCart, `Đã xóa ${item.name} khỏi đơn hàng`);
+    if (nextCart.length === 0) {
+      clearDraft();
+      toast.success(`Đã xóa ${item.name} và làm trống giỏ hàng`);
       return;
     }
 
@@ -609,34 +288,10 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   };
 
   const handleChangeItemQuantity = async (item: OrderDraftItem, delta: number) => {
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc. Không thể đổi số lượng món trên đơn này.');
-      return;
-    }
-
     const nextQuantity = item.quantity + delta;
 
     if (nextQuantity <= 0) {
       await handleDeleteCartItem(item);
-      return;
-    }
-
-    if (hasPlacedOrder) {
-      const nextCart = cart.map((cartItem) =>
-        cartItem.draftItemId === item.draftItemId
-          ? {
-              ...cartItem,
-              quantity: nextQuantity,
-              lineTotal: calculateLineTotal(
-                cartItem.unitPrice,
-                nextQuantity,
-                getSafeAddons(cartItem)
-              ),
-            }
-          : cartItem
-      );
-
-      await updatePlacedOrder(nextCart, `Đã cập nhật số lượng ${item.name}`);
       return;
     }
 
@@ -645,6 +300,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       quantity: nextQuantity,
       lineTotal: calculateLineTotal(item.unitPrice, nextQuantity, getSafeAddons(item)),
     });
+    ensureLocalDraftStarted();
   };
 
   const handleSubmitItem = async (payload: OrderDialogSubmitPayload) => {
@@ -652,11 +308,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       selectedMenuItem ?? (editingCartItem ? toDialogMenuItem(editingCartItem) : null);
 
     if (!targetMenuItem) {
-      return;
-    }
-
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc. Không thể chỉnh món trên đơn này.');
       return;
     }
 
@@ -669,7 +320,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       editingCartItem?.orderItemId
     );
 
-    // Khi không ở chế độ edit, cùng món + cùng topping + cùng ghi chú sẽ được gộp số lượng.
+    // Khi không ở chế độ edit, cùng món + cùng topping + cùng ghi chú sẽ được gộp số lượng trong cart local.
     const matchedCartItem =
       editingCartItem ??
       cart.find((cartItem) => isSameCartLine(cartItem, submittedDraftItem)) ??
@@ -678,38 +329,16 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       matchedCartItem && !editingCartItem
         ? mergeCartLineQuantity(matchedCartItem, submittedDraftItem)
         : submittedDraftItem;
-    const nextCart = matchedCartItem
-      ? cart.map((item) =>
-          item.draftItemId === matchedCartItem.draftItemId ? nextDraftItem : item
-        )
-      : [...cart, nextDraftItem];
 
-    if (hasPlacedOrder) {
-      const syncedOrder = await updatePlacedOrder(
-        nextCart,
-        matchedCartItem ? 'Đã cập nhật món trên hệ thống' : 'Đã thêm món vào đơn hàng'
-      );
-
-      if (!syncedOrder) {
-        return;
-      }
-
-      clearActiveSelections();
-      return;
-    }
-
-    const createdOrder = await createOrderFromCart(nextCart, 'Đã tạo đơn hàng với món đầu tiên');
-
-    if (!createdOrder) {
-      return;
-    }
-
+    upsertCartItem(nextDraftItem);
+    ensureLocalDraftStarted();
     clearActiveSelections();
+    toast.success(matchedCartItem ? 'Đã cập nhật món trong giỏ hàng' : 'Đã thêm món vào giỏ hàng');
   };
 
   const handleOpenInvoice = () => {
     if (cart.length === 0) {
-      toast.error('Chưa có món trong đơn để in hóa đơn tạm');
+      toast.error('Chưa có món trong giỏ để in hóa đơn tạm');
       return;
     }
 
@@ -718,79 +347,119 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      toast.error('Chưa có món trong đơn');
+      toast.error('Chưa có món trong giỏ hàng');
       return;
     }
 
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc nên không thể tiếp tục thanh toán từ màn này.');
-      return;
-    }
+    const activeContext = tableContext ?? nextTableContext;
 
     if (draftOrder.orderId) {
-      const paymentSearchParams = buildOrderRouteSearchParams(
-        tableContext ?? nextTableContext,
-        draftOrder.orderId
-      );
-
+      const paymentSearchParams = buildOrderRouteSearchParams(activeContext, draftOrder.orderId);
       navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
       return;
     }
 
-    const createdOrder = await createOrderFromCart(cart, 'Đã tạo đơn hàng trên hệ thống');
+    setSyncingDraft(true);
 
-    if (!createdOrder) {
-      return;
+    try {
+      const tableId = activeContext.tableId?.trim() || undefined;
+      const response = await orderService.placeOrder({
+        tableId,
+        source: resolveOrderSource(tableId),
+        items: cart.map(toOrderItemCommand),
+      });
+
+      if (!response.success) {
+        toast.error(response.error?.message ?? 'Không thể tạo đơn hàng để thanh toán');
+        return;
+      }
+
+      setDraftOrder({
+        orderId: response.data.id,
+        orderNumber: response.data.orderNumber,
+        status: response.data.status,
+        createdAt: response.data.createdAt ?? draftOrder.createdAt ?? new Date().toISOString(),
+      });
+      queryClient.setQueryData(queryKeys.orders.detail(response.data.id), response.data);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
+
+      if (response.data.tableId?.trim()) {
+        queryClient.setQueryData(
+          queryKeys.orders.activeByTable(response.data.tableId),
+          {
+            id: response.data.id,
+            orderNumber: response.data.orderNumber,
+            tableId: response.data.tableId,
+            tableName: response.data.tableName,
+            status: response.data.status,
+            totalAmount: response.data.totalAmount,
+            createdAt: response.data.createdAt,
+          }
+        );
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tables.detail(response.data.tableId),
+        });
+      }
+
+      const paymentSearchParams = buildOrderRouteSearchParams(activeContext, response.data.id);
+      navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
+    } catch {
+      // Axios interceptor đã hiển thị lỗi chung, toast này giữ ngữ cảnh nghiệp vụ cho POS.
+      toast.error('Không thể tạo đơn hàng để chuyển sang thanh toán');
+    } finally {
+      setSyncingDraft(false);
     }
-
-    const paymentSearchParams = buildOrderRouteSearchParams(
-      resolveTableContextFromOrder(createdOrder, nextTableContext),
-      createdOrder.id
-    );
-
-    navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
   };
 
   const handleCancelPlacedOrder = async () => {
     if (!draftOrder.orderId) {
       clearDraft();
       clearActiveSelections();
-      replaceOrderRoute(nextTableContext);
       toast.success('Đã làm trống giỏ hàng hiện tại');
       return;
     }
 
-    if (isPlacedOrderFinalized) {
-      toast.error('Đơn đã kết thúc nên không thể hủy thêm.');
-      return;
+    setSyncingDraft(true);
+
+    try {
+      const response = await orderService.cancelOrder(draftOrder.orderId, {
+        reason: 'CANCEL_CREATED_ORDER_BEFORE_PAYMENT',
+      });
+
+      if (!response.success) {
+        toast.error(response.error?.message ?? 'Không thể hủy đơn đã tạo');
+        return;
+      }
+
+      const cancelledTableId = response.data.tableId ?? tableContext?.tableId ?? nextTableContext.tableId;
+      clearDraft();
+      clearActiveSelections();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
+
+      if (cancelledTableId?.trim()) {
+        queryClient.setQueryData(queryKeys.orders.activeByTable(cancelledTableId), null);
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.tables.detail(cancelledTableId),
+        });
+      }
+
+      toast.success('Đã hủy đơn và làm trống giỏ hàng');
+    } catch {
+      toast.error('Không thể hủy đơn đã tạo');
+    } finally {
+      setSyncingDraft(false);
     }
-
-    const reason = window.prompt('Lý do hủy đơn (có thể bỏ trống):', '');
-    if (reason === null) {
-      return;
-    }
-
-    const isCancelled = await cancelCurrentOrder(
-      reason.trim() || undefined,
-      'Đã hủy đơn và reset giỏ hàng của bàn hiện tại'
-    );
-
-    if (!isCancelled) {
-      return;
-    }
-
-    clearActiveSelections();
   };
 
   const checkoutButtonLabel = isSyncingDraft
-    ? 'Đang đồng bộ đơn...'
-    : isPlacedOrderFinalized
-      ? draftOrder.status === 'COMPLETED'
-        ? 'Đơn đã hoàn tất'
-        : 'Đơn đã hủy'
-      : hasPlacedOrder
-        ? 'Tiếp tục thanh toán'
-        : 'Tạo đơn và thanh toán';
+    ? 'Đang tạo đơn...'
+    : hasPlacedOrder
+      ? 'Tiếp tục thanh toán'
+      : 'thanh toán';
 
   return {
     addons,

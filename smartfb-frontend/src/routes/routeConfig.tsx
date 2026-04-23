@@ -6,7 +6,10 @@ import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import BranchesPage from '@pages/owner/BranchesPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
 import CreateStaffPage from '@pages/owner/CreateStaffPage';
+import DashboardPage from '@pages/owner/DashboardPage';
+import HrReportPage from '@pages/owner/HrReportPage';
 import InventoryPage from '@pages/owner/InventoryPage';
+import InventoryReportPage from '@pages/owner/InventoryReportPage';
 import MenuPage from '@pages/owner/MenuPage';
 import RecipesPage from '@pages/owner/RecipesPage';
 import RevenuePage from '@pages/owner/RevenuePage';
@@ -95,11 +98,10 @@ export const adminRoutes: RouteConfigItem[] = [
 ];
 
 export const ownerRoutes: RouteConfigItem[] = [
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.OWNER.DASHBOARD,
     'Dashboard',
-    'Dashboard Chủ quán',
-    'Trang dashboard owner đang được tách riêng khỏi file routes.'
+    <DashboardPage />
   ),
   createRoute(ROUTES.OWNER.TABLES, 'Quản lý bàn', <TablesPage />),
   createRoute(
@@ -148,7 +150,22 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(
     ROUTES.OWNER.REPORTS,
     'Báo cáo',
+    <Navigate to={ROUTES.OWNER.REPORT_REVENUE} replace />
+  ),
+  createRoute(
+    ROUTES.OWNER.REPORT_REVENUE,
+    'Báo cáo doanh thu',
     <RevenuePage />
+  ),
+  createRoute(
+    ROUTES.OWNER.REPORT_INVENTORY,
+    'Báo cáo kho',
+    <InventoryReportPage />
+  ),
+  createRoute(
+    ROUTES.OWNER.REPORT_HR,
+    'Báo cáo nhân sự',
+    <HrReportPage />
   ),
   createPlaceholderRoute(
     ROUTES.OWNER.SETTINGS,

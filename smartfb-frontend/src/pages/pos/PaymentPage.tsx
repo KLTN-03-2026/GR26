@@ -1,48 +1,30 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
-import type { MenuItem } from '@modules/menu/types/menu.types';
-import {
-  ORDER_TAX_RATE,
-  toDraftItemsFromOrder,
-} from '@modules/order/components/order-page/orderPage.utils';
+import { ORDER_TAX_RATE } from '@modules/order/components/order-page/orderPage.utils';
 import { PaymentEmptyState } from '@modules/order/components/payment-page/PaymentEmptyState';
 import { PaymentOrderSummary } from '@modules/order/components/payment-page/PaymentOrderSummary';
 import {
   PaymentSidebar,
   type PaymentMethod,
 } from '@modules/order/components/payment-page/PaymentSidebar';
-import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
+import { PaymentSuccessState } from '@modules/order/components/payment-page/PaymentSuccessState';
 import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
+import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
-import type { OrderResponse, OrderTableContext } from '@modules/order/types/order.types';
+import type { OrderTableContext } from '@modules/order/types/order.types';
 import { useProcessCashPayment } from '@modules/payment/hooks/useProcessCashPayment';
+import { queryKeys } from '@shared/constants/queryKeys';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
-import { queryKeys } from '@shared/constants/queryKeys';
 
-const resolvePaymentTableContextFromOrder = (
-  order: OrderResponse,
-  fallbackContext: OrderTableContext
-): OrderTableContext => {
-  if (order.source === 'IN_STORE' && order.tableId) {
-    return {
-      ...fallbackContext,
-      tableId: order.tableId,
-      tableName: order.tableName?.trim() || fallbackContext.tableName,
-    };
-  }
-
-  return {
-    ...fallbackContext,
-    tableId: null,
-    tableName: '',
-    zoneId: undefined,
-    zoneName: '',
-  };
-};
+interface PaymentResultState {
+  status: 'success' | 'error';
+  title: string;
+  description: string;
+  shouldClearDraft: boolean;
+}
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -50,7 +32,13 @@ export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const currentRole = useAuthStore((state) => state.user?.role);
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
-  const { cart, tableContext, draftOrder, clearDraftAndContext } = useOrderStore();
+  const {
+    cart,
+    tableContext,
+    draftOrder,
+    clearDraftAndContext,
+    setDraftOrder,
+  } = useOrderStore();
 
   const routeOrderId = searchParams.get('orderId')?.trim() ?? '';
   const routeTableId = searchParams.get('tableId')?.trim() ?? '';
@@ -69,33 +57,11 @@ export default function PaymentPage() {
     };
   }, [currentBranchId, routeBranchName, routeTableId, routeTableName, routeZoneId]);
 
-  const effectiveOrderId = routeOrderId || draftOrder.orderId || '';
-  const emptyMenuItemMap = useMemo(() => new Map<string, MenuItem>(), []);
-  const orderDetailQuery = useOrderDetail(effectiveOrderId, {
-    enabled: Boolean(effectiveOrderId) && (cart.length === 0 || draftOrder.orderId !== effectiveOrderId),
-  });
-
-  const recoveredCart = useMemo(() => {
-    if (!orderDetailQuery.data) {
-      return [];
-    }
-
-    return toDraftItemsFromOrder(orderDetailQuery.data, emptyMenuItemMap);
-  }, [emptyMenuItemMap, orderDetailQuery.data]);
-
-  const displayCart = cart.length > 0 ? cart : recoveredCart;
-  const displayOrderId =
-    (draftOrder.orderId ?? orderDetailQuery.data?.id ?? routeOrderId) || null;
-  const displayOrderNumber =
-    draftOrder.orderNumber ?? orderDetailQuery.data?.orderNumber ?? null;
-  const displayCreatedAt =
-    draftOrder.createdAt ?? orderDetailQuery.data?.createdAt ?? null;
-  const displayTableContext = tableContext
-    ? tableContext
-    : orderDetailQuery.data
-      ? resolvePaymentTableContextFromOrder(orderDetailQuery.data, fallbackTableContext)
-      : fallbackTableContext;
-  const hasCreatedOrder = Boolean(displayOrderId);
+  const displayCart = cart;
+  const displayTableContext = tableContext ?? fallbackTableContext;
+  const displayOrderId = draftOrder.orderId ?? routeOrderId;
+  const displayOrderNumber = draftOrder.orderNumber ?? null;
+  const displayCreatedAt = draftOrder.createdAt ?? new Date().toISOString();
 
   const { subtotal, vatAmount, totalAmount } = useOrderPricing({
     cart: displayCart,
@@ -104,87 +70,143 @@ export default function PaymentPage() {
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
   const [amountReceivedDraft, setAmountReceivedDraft] = useState<string | null>(null);
-  const [isMockProcessing, setIsMockProcessing] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<PaymentResultState | null>(null);
   const processCashPaymentMutation = useProcessCashPayment();
   const amountReceived = amountReceivedDraft ?? (totalAmount > 0 ? String(totalAmount) : '');
   const amountReceivedValue = Number(amountReceived) || 0;
   const changeAmount = Math.max(0, amountReceivedValue - totalAmount);
-  const isProcessing = processCashPaymentMutation.isPending || isMockProcessing;
-  const isRecoveringPaymentOrder =
-    Boolean(effectiveOrderId) &&
-    displayCart.length === 0 &&
-    orderDetailQuery.isLoading;
+  const isProcessing = processCashPaymentMutation.isPending;
   const tableManagementRoute =
     currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
 
-  /**
-   * Sau khi thanh toán thành công cần xóa toàn bộ context active của bàn hiện tại
-   * rồi quay thẳng về màn quản lý bàn để người dùng không quay lại order cũ.
-   */
-  const finalizeSuccessfulPayment = () => {
-    const paidOrderId = displayOrderId;
-    const paidTableId = displayTableContext.tableId ?? null;
-
-    clearDraftAndContext();
-
-    if (paidOrderId) {
-      queryClient.removeQueries({ queryKey: queryKeys.orders.detail(paidOrderId) });
+  const invalidateOrderAndTableQueries = (orderId?: string | null, tableId?: string | null) => {
+    if (orderId?.trim()) {
+      queryClient.removeQueries({ queryKey: queryKeys.orders.detail(orderId.trim()) });
     }
 
-    if (paidTableId) {
-      queryClient.setQueryData(queryKeys.orders.activeByTable(paidTableId), null);
+    if (tableId?.trim()) {
+      queryClient.setQueryData(queryKeys.orders.activeByTable(tableId.trim()), null);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(tableId.trim()) });
     }
 
     void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
     void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
     void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+  };
 
-    if (paidTableId) {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(paidTableId) });
+  const navigateToTableManagement = (shouldClearDraft: boolean) => {
+    if (shouldClearDraft) {
+      clearDraftAndContext();
     }
 
     navigate(tableManagementRoute, { replace: true });
   };
 
+  const showPaymentResult = (result: PaymentResultState) => {
+    setPaymentResult(result);
+
+    window.setTimeout(() => {
+      navigateToTableManagement(result.shouldClearDraft);
+    }, 2000);
+  };
+
+  const resetOrderAfterPaymentFailure = async (orderId: string, tableId?: string | null) => {
+    try {
+      /**
+       * Nếu thanh toán thất bại, hủy order đã tạo ở bước đi thanh toán để bàn không bị giữ OCCUPIED.
+       */
+      await orderService.cancelOrder(orderId, {
+        reason: 'PAYMENT_FAILED_AFTER_ORDER_CREATED',
+      });
+    } catch {
+      // Không chặn màn kết quả thất bại; invalidate bên dưới sẽ giúp màn bàn đọc lại trạng thái thật.
+    } finally {
+      setDraftOrder({
+        orderId: null,
+        orderNumber: null,
+        status: 'PENDING',
+        createdAt: draftOrder.createdAt ?? displayCreatedAt,
+      });
+      invalidateOrderAndTableQueries(orderId, tableId ?? displayTableContext.tableId);
+    }
+  };
+
   const canConfirmPayment =
-    hasCreatedOrder &&
+    Boolean(displayOrderId) &&
     displayCart.length > 0 &&
     !isProcessing &&
     (selectedMethod !== 'cash' || amountReceivedValue >= totalAmount);
 
   const handleConfirmPayment = () => {
-    if (!canConfirmPayment || !displayOrderId) {
+    if (!canConfirmPayment) {
+      return;
+    }
+
+    if (!displayOrderId) {
+      showPaymentResult({
+        status: 'error',
+        title: 'Chưa có đơn hàng để thanh toán',
+        description:
+          'Vui lòng quay lại màn order và bấm đi thanh toán để hệ thống tạo đơn trước.',
+        shouldClearDraft: false,
+      });
       return;
     }
 
     if (selectedMethod !== 'cash') {
-      // Chỉ gắn API thật cho tiền mặt ở task này.
-      setIsMockProcessing(true);
-      window.setTimeout(() => {
-        setIsMockProcessing(false);
-        toast.success('Thanh toán thành công');
-        finalizeSuccessfulPayment();
-      }, 1200);
+      const showUnsupportedMethodResult = async () => {
+        await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+        showPaymentResult({
+          status: 'error',
+          title: 'Thanh toán thất bại',
+          description:
+            'Phương thức thẻ hoặc QR chưa kết nối API thật. Vui lòng chọn tiền mặt để hoàn tất giao dịch.',
+          shouldClearDraft: false,
+        });
+      };
+
+      void showUnsupportedMethodResult();
       return;
     }
 
-    void processCashPaymentMutation
-      .mutateAsync({
-        orderId: displayOrderId,
-        amount: amountReceivedValue,
-      })
-      .then((response) => {
+    const processPayment = async () => {
+      try {
+        const response = await processCashPaymentMutation.mutateAsync({
+          orderId: displayOrderId,
+          amount: amountReceivedValue,
+        });
+
         if (!response.success) {
-          toast.error(response.error?.message ?? 'Không thể xử lý thanh toán tiền mặt');
+          await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+          showPaymentResult({
+            status: 'error',
+            title: 'Thanh toán thất bại',
+            description: response.error?.message ?? 'Không thể xử lý thanh toán tiền mặt.',
+            shouldClearDraft: false,
+          });
           return;
         }
 
-        toast.success('Thanh toán tiền mặt thành công');
-        finalizeSuccessfulPayment();
-      })
-      .catch(() => {
-        // Axios interceptor đã xử lý toast lỗi chung.
-      });
+        invalidateOrderAndTableQueries(displayOrderId, displayTableContext.tableId);
+        showPaymentResult({
+          status: 'success',
+          title: 'Thanh toán thành công',
+          description: 'Đơn hàng đã được thanh toán và hoàn tất trên hệ thống.',
+          shouldClearDraft: true,
+        });
+      } catch {
+        await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+        showPaymentResult({
+          status: 'error',
+          title: 'Thanh toán thất bại',
+          description:
+            'Có lỗi xảy ra trong quá trình thanh toán. Vui lòng kiểm tra lại hệ thống.',
+          shouldClearDraft: false,
+        });
+      }
+    };
+
+    void processPayment();
   };
 
   const handleSelectMethod = (method: PaymentMethod) => {
@@ -196,53 +218,19 @@ export default function PaymentPage() {
     }
   };
 
-  if (isRecoveringPaymentOrder) {
+  if (paymentResult) {
     return (
-      <div className="flex min-h-[560px] items-center justify-center rounded-[32px] bg-white p-10 shadow-sm">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-          <p className="font-medium text-slate-500">Đang tải lại đơn hàng để thanh toán...</p>
-        </div>
-      </div>
+      <PaymentSuccessState
+        status={paymentResult.status}
+        title={paymentResult.title}
+        description={paymentResult.description}
+        onPrint={paymentResult.status === 'success' ? () => window.print() : undefined}
+        onCreateNewOrder={() => navigateToTableManagement(paymentResult.shouldClearDraft)}
+      />
     );
   }
 
-  if (orderDetailQuery.isError && displayCart.length === 0) {
-    return (
-      <div className="flex min-h-[560px] items-center justify-center rounded-[32px] bg-white p-10 shadow-sm">
-        <div className="max-w-md text-center">
-          <h1 className="text-3xl font-black text-slate-900">Không thể tải đơn hàng</h1>
-          <p className="mt-3 text-slate-500">
-            Đơn thanh toán không thể đồng bộ lại từ hệ thống. Vui lòng thử lại hoặc quay về màn tạo đơn.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => void orderDetailQuery.refetch()}
-              className="rounded-full bg-orange-500 px-5 py-2.5 font-semibold text-white hover:bg-orange-600"
-            >
-              Tải lại
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  searchParams.toString()
-                    ? `${ROUTES.POS_ORDER}?${searchParams.toString()}`
-                    : ROUTES.POS_ORDER
-                )
-              }
-              className="rounded-full border border-slate-200 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Quay lại tạo đơn
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (displayCart.length === 0 || !hasCreatedOrder) {
+  if (displayCart.length === 0 || !displayOrderId) {
     return (
       <PaymentEmptyState
         onBackToOrder={() =>
