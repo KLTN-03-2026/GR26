@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import com.smartfnb.plan.application.SubscriptionService;
+import com.smartfnb.plan.application.dto.SubscriptionResponse;
+import com.smartfnb.shared.exception.SmartFnbException;
 
 /**
  * Handler xử lý lệnh tạo nhân viên mới (S-15).
@@ -38,6 +41,7 @@ public class CreateStaffCommandHandler {
     private final PositionJpaRepository positionJpaRepository;
     private final StaffAuditLogJpaRepository auditLogJpaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Tạo nhân viên mới trong tenant.
@@ -50,6 +54,17 @@ public class CreateStaffCommandHandler {
     @Transactional
     public UUID handle(CreateStaffCommand command) {
         log.info("Tạo nhân viên mới: phone={}, tenant={}", command.phone(), command.tenantId());
+
+        // Kiểm tra giới hạn nhân viên của gói dịch vụ
+        SubscriptionResponse sub = subscriptionService.getCurrentSubscription(command.tenantId());
+        Integer maxStaff = sub.plan().maxStaff();
+        if (maxStaff != null) {
+            long count = staffJpaRepository.countByTenantIdAndStatus(command.tenantId(), "ACTIVE");
+            if (count >= maxStaff) {
+                throw new SmartFnbException("PLAN_LIMIT_EXCEEDED",
+                        "Gói hiện tại giới hạn tối đa " + maxStaff + " nhân viên. Vui lòng nâng cấp.", 403);
+            }
+        }
 
         // 1. Kiểm tra phone unique trong tenant
         boolean phoneExists = staffJpaRepository.existsByTenantIdAndPhoneExcluding(

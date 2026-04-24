@@ -17,7 +17,9 @@ public record PlanResponse(
         String name,
         String slug,
         BigDecimal priceMonthly,
-        int maxBranches,
+        Integer maxBranches,
+        Integer maxStaff,
+        Integer maxMenuItems,
         FeatureFlag features,
         boolean isActive
 ) {
@@ -28,6 +30,8 @@ public record PlanResponse(
                 entity.getSlug(),
                 entity.getPriceMonthly(),
                 entity.getMaxBranches(),
+                entity.getMaxStaff(),
+                entity.getMaxMenuItems(),
                 FeatureFlag.fromJson(entity.getFeatures()),
                 entity.isActive()
         );

@@ -13,7 +13,9 @@ public record PlanRequest(
         @NotBlank(message = "Tên gói không được để trống") String name,
         @NotBlank(message = "Slug gói không được để trống") String slug,
         @NotNull(message = "Giá gói không được để trống") @Min(value = 0, message = "Giá không được nhỏ hơn 0") BigDecimal priceMonthly,
-        @Min(value = 1, message = "Số lượng chi nhánh tối thiểu là 1") int maxBranches,
+        @Min(value = 0, message = "Số lượng chi nhánh tối thiểu là 0") Integer maxBranches,
+        @Min(value = 0, message = "Số lượng nhân viên tối thiểu là 0") Integer maxStaff,
+        @Min(value = 0, message = "Số lượng món ăn tối thiểu là 0") Integer maxMenuItems,
         Map<String, Boolean> features,
         boolean isActive
 ) {}
