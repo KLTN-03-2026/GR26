@@ -1,1 +1,1 @@
-export { TableDetailDrawer } from './TableDetailDrawer';
+export * from './TableDetailDrawer';

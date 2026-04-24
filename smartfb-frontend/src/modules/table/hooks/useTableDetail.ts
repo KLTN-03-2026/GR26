@@ -1,20 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { tableService } from '../services/tableService';
-import type { TableItem } from '../types/table.types'; 
+import type { TableDetail } from '../types/table.types';
 
-/**
- * Hook lấy chi tiết bàn theo `tableId`.
- *
- * @param tableId - ID bàn cần tải chi tiết để hiển thị drawer hoặc dialog
- */
 export const useTableDetail = (tableId: string) => {
-  return useQuery<TableItem, Error>({
+  return useQuery<TableDetail, Error>({
     queryKey: queryKeys.tables.detail(tableId),
     queryFn: async () => {
-      // service.getById đã trả về TableItem, không cần check success
-      const table = await tableService.getById(tableId);
-      return table;
+      const response = await tableService.getById(tableId);
+      if (!response.success) {
+        throw new Error('Không thể lấy chi tiết bàn');
+      }
+      return response.data;
     },
     staleTime: 5 * 60 * 1000,
     enabled: Boolean(tableId),

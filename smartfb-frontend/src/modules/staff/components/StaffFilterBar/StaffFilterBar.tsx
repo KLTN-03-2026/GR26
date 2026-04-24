@@ -1,79 +1,82 @@
 import { Plus } from 'lucide-react';
-import type { StaffFilters } from '@modules/staff/types/staff.types';
 import { FilterTag } from '../FilterTag';
+import type { StaffFilters } from '../../types/staff.types';
 import { SearchBar } from './SearchBar';
 import { FilterDropdown } from './FilterDropdown';
 
-interface PositionOption {
-  id: string;
-  name: string;
-}
-
 interface StaffFilterBarProps {
   filters: StaffFilters;
-  positions: PositionOption[];
+  positions: { id: string; name: string }[];
+  branches: { id: string; name: string }[];
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onPositionChange: (value: string) => void;
+  onBranchChange: (value: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
   onAddStaff: () => void;
 }
 
+/**
+ * Thanh filter cho danh sách nhân viên
+ * Đã cập nhật theo Module 4 Spec (positionId)
+ */
 export const StaffFilterBar = ({
   filters,
   positions,
+  branches,
   onSearchChange,
   onStatusChange,
   onPositionChange,
+  onBranchChange,
   onClearFilters,
   hasActiveFilters,
   onAddStaff,
 }: StaffFilterBarProps) => {
-  // Tìm label cho status
-  const getStatusLabel = (status?: string) => {
-    if (status === 'ACTIVE') return 'Đang làm';
-    if (status === 'INACTIVE') return 'Đã nghỉ';
-    return '';
-  };
-
-  // Tìm label cho position (dựa trên positionId)
-  const getPositionLabel = (positionId?: string) => {
-    if (!positionId) return null;
-    return positions.find((position) => position.id === positionId)?.name ?? positionId;
-  };
-
-  const statusLabel = getStatusLabel(filters.status);
-  const positionLabel = getPositionLabel(filters.positionId);
+  const statusLabel = filters.status === 'active' ? 'Đang làm' 
+    : filters.status === 'inactive' ? 'Đã nghỉ' 
+    : '';
+  const positionLabel = positions.find(p => p.id === filters.positionId)?.name;
+  const branchLabel = branches.find(b => b.id === filters.branchId)?.name;
 
   const statusOptions = [
-    { value: 'ACTIVE', label: 'Đang làm' },
-    { value: 'INACTIVE', label: 'Đã nghỉ' },
+    { value: 'active', label: 'Đang làm' },
+    { value: 'inactive', label: 'Đã nghỉ' },
   ];
 
-  // Dùng `positionId` làm value để đồng bộ với API filter của backend.
-  const positionOptions = positions.map((position) => ({
-    value: position.id,
-    label: position.name,
+  const positionOptions = positions.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
+
+  const branchOptions = branches.map((branch) => ({
+    value: branch.id,
+    label: branch.name,
   }));
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <SearchBar
-          value={filters.keyword || ''}
+          value={filters.search}
           onChange={onSearchChange}
           placeholder="Tìm kiếm theo tên hoặc số điện thoại..."
         />
         <div className="flex gap-2 flex-wrap">
           <FilterDropdown
-            value={filters.status || 'all'}
+            value={filters.branchId}
+            onChange={onBranchChange}
+            options={branchOptions}
+            defaultLabel="Tất cả chi nhánh"
+          />
+          <FilterDropdown
+            value={filters.status}
             onChange={onStatusChange}
             options={statusOptions}
             defaultLabel="Trạng thái"
           />
           <FilterDropdown
-            value={filters.positionId || 'all'}
+            value={filters.positionId}
             onChange={onPositionChange}
             options={positionOptions}
             defaultLabel="Chức vụ"
@@ -87,21 +90,23 @@ export const StaffFilterBar = ({
           Thêm nhân viên
         </button>
       </div>
-      
       {hasActiveFilters && (
         <div className="flex gap-2 items-center flex-wrap">
-          {filters.keyword && (
-            <FilterTag label={`Tìm: "${filters.keyword}"`} onRemove={() => onSearchChange('')} />
+          {filters.search && (
+            <FilterTag label={`Tìm: "${filters.search}"`} onRemove={() => onSearchChange('')} />
           )}
-          {positionLabel && positionLabel !== 'all' && (
+          {branchLabel && filters.branchId !== 'all' && (
+            <FilterTag label={branchLabel} onRemove={() => onBranchChange('all')} />
+          )}
+          {positionLabel && filters.positionId !== 'all' && (
             <FilterTag label={positionLabel} onRemove={() => onPositionChange('all')} />
           )}
-          {filters.status && (
+          {filters.status !== 'all' && (
             <FilterTag label={statusLabel} onRemove={() => onStatusChange('all')} />
           )}
           <button
             onClick={onClearFilters}
-            className="text-xs text-orange-600 hover:text-orange-700 font-medium px-2 py-1"
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1"
           >
             Xóa hết
           </button>

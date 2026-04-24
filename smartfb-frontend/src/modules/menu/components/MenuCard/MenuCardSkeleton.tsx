@@ -9,12 +9,12 @@ interface MenuCardSkeletonProps {
  */
 export const MenuCardSkeleton = ({ className }: MenuCardSkeletonProps) => {
   return (
-    <div className={cn('flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white', className)}>
+    <div className={cn('bg-white rounded-xl border border-gray-200 overflow-hidden', className)}>
       {/* Image Skeleton */}
-      <div className="aspect-[3/4] animate-pulse bg-gray-200 md:aspect-[4/3]" />
+      <div className="aspect-square bg-gray-200 animate-pulse" />
 
       {/* Content Skeleton */}
-      <div className="flex flex-1 flex-col space-y-3 p-4">
+      <div className="p-4 space-y-3">
         {/* Category */}
         <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
 
@@ -22,7 +22,7 @@ export const MenuCardSkeleton = ({ className }: MenuCardSkeletonProps) => {
         <div className="h-5 w-3/4 bg-gray-200 rounded animate-pulse" />
 
         {/* Price and GP Toggle */}
-        <div className="mt-auto flex items-center justify-between pt-4">
+        <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="h-2 w-12 bg-gray-200 rounded animate-pulse" />
             <div className="h-5 w-20 bg-gray-200 rounded animate-pulse" />

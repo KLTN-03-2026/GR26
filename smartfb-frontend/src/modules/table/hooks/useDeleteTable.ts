@@ -3,18 +3,17 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { useToast } from '@shared/hooks/useToast';
 import { tableService } from '../services/tableService';
 
-/**
- * Hook xóa một bàn khỏi hệ thống.
- * Thành công sẽ refresh cache danh sách bàn để sơ đồ và bảng quản lý đồng bộ ngay.
- */
 export const useDeleteTable = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await tableService.delete(id);
-      return id;
+      const response = await tableService.delete(id);
+      if (!response.success) {
+        throw new Error('Không thể xóa bàn');
+      }
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });

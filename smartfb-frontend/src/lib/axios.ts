@@ -17,12 +17,22 @@ let refreshRequestPromise: Promise<BackendAuthResponse> | null = null;
 /**
  * Tạo axios client với cấu hình base dùng chung cho toàn app.
  *
+<<<<<<< HEAD
+ * @returns Axios instance đã gắn baseURL, timeout và content-type mặc định
+=======
  * @returns Axios instance đã gắn baseURL và timeout mặc định
+>>>>>>> origin/main
  */
 const createApiClient = (): AxiosInstance => {
   return axios.create({
     baseURL: API_BASE_URL,
     timeout: API_TIMEOUT,
+<<<<<<< HEAD
+    headers: {
+      'Content-Type': 'application/json',
+    },
+=======
+>>>>>>> origin/main
   });
 };
 
@@ -107,6 +117,8 @@ const getApiErrorMessage = (responseData?: ApiResponse<unknown>): string | undef
   return responseData?.error?.message ?? responseData?.message;
 };
 
+<<<<<<< HEAD
+=======
 /**
  * Nhận diện payload multipart để tránh bị ép serialize sang JSON.
  *
@@ -123,13 +135,17 @@ const isFormDataPayload = (payload: unknown): payload is FormData => {
 // ============================================
 // 🔧 ĐÀO THU THIÊN SỬA - THÊM HEADER X-BRANCH-ID
 // ============================================
+>>>>>>> origin/main
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const { session, user } = useAuthStore.getState();
     const accessToken = session?.accessToken;
     const tenantId = session?.tenantId ?? user?.tenantId;
+<<<<<<< HEAD
+=======
     // Lấy branchId từ store
     const branchId = session?.branchId ?? user?.branchId;
+>>>>>>> origin/main
 
     if (accessToken) {
       config.headers.Authorization = `${session?.tokenType ?? 'Bearer'} ${accessToken}`;
@@ -139,6 +155,8 @@ axiosInstance.interceptors.request.use(
       config.headers['X-Tenant-Id'] = tenantId;
     }
 
+<<<<<<< HEAD
+=======
     // Thêm header X-Branch-Id cho request
     if (branchId) {
       config.headers['X-Branch-Id'] = branchId;
@@ -150,6 +168,7 @@ axiosInstance.interceptors.request.use(
       config.headers.delete('Content-Type');
     }
 
+>>>>>>> origin/main
     return config;
   },
   (requestError) => Promise.reject(requestError)
@@ -161,7 +180,11 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
     if (
+<<<<<<< HEAD
+      error.response?.status === 401 &&
+=======
       (error.response?.status === 401  || error.response?.status === 403 )&& 
+>>>>>>> origin/main
       originalRequest &&
       !originalRequest._retry &&
       isRefreshableRequest(originalRequest.url)
@@ -174,10 +197,13 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization =
           `${refreshedSession.tokenType} ${refreshedSession.accessToken}`;
         originalRequest.headers['X-Tenant-Id'] = refreshedSession.tenantId;
+<<<<<<< HEAD
+=======
         // Thêm branchId vào header khi retry
         if (refreshedSession.branchId) {
           originalRequest.headers['X-Branch-Id'] = refreshedSession.branchId;
         }
+>>>>>>> origin/main
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {

@@ -1,9 +1,12 @@
+import type { BranchDetail } from '../data/branchDetails';
+
 /**
  * Trạng thái chi nhánh theo backend
  * ACTIVE: Đang hoạt động
  * INACTIVE: Ngừng hoạt động
+ * TEMPORARILY_CLOSED: Tạm đóng chi nhánh
  */
-export type BranchStatus = 'ACTIVE' | 'INACTIVE';
+export type BranchStatus = 'ACTIVE' | 'INACTIVE' | 'TEMPORARILY_CLOSED';
 
 /**
  * Branch entity theo backend response
@@ -13,17 +16,17 @@ export interface Branch {
   tenantId: string;
   name: string;
   code: string;
-  address: string | null;
-  phone: string | null;
+  address: string;
+  phone: string;
   status: BranchStatus;
   createdAt: string;
 }
 
 /**
- * Trạng thái dùng cho filter của màn hình danh sách chi nhánh.
- * Bám sát enum backend để tránh map sai trạng thái.
+ * Trạng thái hiển thị ở UI danh sách chi nhánh.
+ * Khác với `BranchStatus` vì màn hình quản trị đang dùng nhãn rút gọn `active/inactive`.
  */
-export type BranchFilterStatus = BranchStatus;
+export type BranchFilterStatus = BranchDetail['status'];
 
 export type BranchFilters = {
   search: string;
@@ -31,12 +34,8 @@ export type BranchFilters = {
   location: string | 'all';
 };
 
-/**
- * Item hiển thị trên bảng branch.
- * `location` được suy ra từ địa chỉ để phục vụ filter ở UI.
- */
-export type BranchListItem = Branch & {
-  location: string;
+export type BranchListItem = BranchDetail & {
+  revenueDisplay: string;
 };
 
 export type PaginationState = {
@@ -85,8 +84,14 @@ export type CreateBranchFormData = Step1BasicInfoData;
 export type EditBranchFormData = {
   name: string;
   code: string;
+  taxCode: string;
   address: string;
+  city: string;
   phone: string;
+  openTime: string;
+  closeTime: string;
+  managerId?: string;
+  isOpened?: boolean;
 };
 
 /**
@@ -101,10 +106,9 @@ export type CreateBranchPayload = {
 };
 
 /**
- * Payload gửi lên khi cập nhật chi nhánh.
- * Backend dùng chung `BranchRequest` cho create và update nên FE phải gửi đủ field.
+ * Payload gửi lên khi cập nhật chi nhánh
  */
-export type UpdateBranchPayload = CreateBranchPayload;
+export type UpdateBranchPayload = Partial<CreateBranchPayload>;
 
 /**
  * Payload gán user vào chi nhánh

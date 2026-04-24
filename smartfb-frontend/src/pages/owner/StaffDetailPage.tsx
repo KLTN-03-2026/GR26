@@ -9,12 +9,16 @@ import { ActivityLogSection } from "@modules/staff/components/staff-detail/Activ
 import { ShiftScheduleSection } from "@modules/staff/components/staff-detail/ShiftScheduleSection";
 import { EditStaffDialog } from "@modules/staff/components/EditStaffDialog";
 
+/**
+ * Page hiển thị chi tiết nhân viên
+ * URL: /owner/staff/:id
+ */
 export default function StaffDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const { data: staffDetail, isLoading, isError, refetch } = useStaffDetail(id || "");
+  const { data, isLoading, isError, refetch } = useStaffDetail(id || "");
 
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
@@ -25,12 +29,6 @@ export default function StaffDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Không tìm thấy ID nhân viên</p>
-        <Button 
-          onClick={() => navigate(ROUTES.OWNER.STAFF)}
-          className="mt-4"
-        >
-          Quay lại danh sách
-        </Button>
       </div>
     );
   }
@@ -46,33 +44,14 @@ export default function StaffDetailPage() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="spinner spinner-lg" />
-      </div>
-    );
-  }
-
-  if (!staffDetail) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Không có dữ liệu nhân viên</p>
-        <Button 
-          onClick={() => navigate(ROUTES.OWNER.STAFF)}
-          className="mt-4"
-        >
-          Quay lại danh sách
-        </Button>
-      </div>
-    );
-  }
-
   const handleEdit = () => {
     setIsEditDialogOpen(true);
   };
 
-  const staffFullName = staffDetail.fullName || "Chi tiết nhân viên";
+  const handleViewAllActivity = () => {
+    // TODO: Mở page/modal xem tất cả hoạt động
+    console.log("View all activity for:", id);
+  };
 
   return (
     <div className="space-y-6 pb-8">
@@ -86,32 +65,40 @@ export default function StaffDetailPage() {
           Quay lại
         </button>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 font-medium">{staffFullName}</span>
+        <span className="text-gray-900 font-medium">
+          {data?.staff.fullName || "Chi tiết nhân viên"}
+        </span>
       </div>
 
       {/* Staff Info Card */}
-      <StaffInfoCard staff={staffDetail} onEdit={handleEdit} />
-      
-      <EditStaffDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        staff={staffDetail}
-        onSuccess={handleEditSuccess}
-      />
+      {data?.staff && (
+        <>
+          <StaffInfoCard staff={data.staff} onEdit={handleEdit} />
+          <EditStaffDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            staff={data.staff}
+            onSuccess={handleEditSuccess}
+          />
+        </>
+      )}
 
-      {/* Activity Log & Shift Schedule - Tạm thời ẩn vì chưa có API */}
+      {/* Activity Log & Shift Schedule */}
       <div className="grid grid-cols-3 gap-6">
+        {/* Activity Log - 2/3 width */}
         <div className="col-span-2">
           <ActivityLogSection
-            logs={[]}
-            isLoading={false}
-            onViewAll={() => {}}
+            logs={data?.activityLogs || []}
+            isLoading={isLoading}
+            onViewAll={handleViewAllActivity}
           />
         </div>
+
+        {/* Shift Schedule - 1/3 width */}
         <div className="col-span-1">
           <ShiftScheduleSection
-            shifts={[]}
-            isLoading={false}
+            shifts={data?.shifts || []}
+            isLoading={isLoading}
           />
         </div>
       </div>

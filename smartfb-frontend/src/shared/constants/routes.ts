@@ -50,6 +50,8 @@ export const ROUTES = {
     RECIPES: '/pos/recipes',
     INVENTORY: '/pos/inventory',
     MY_SHIFTS: '/pos/my-shifts',
+    SHIFT_REGISTRATION: '/pos/shift-registration',
+    SUPPLIERS: '/pos/suppliers',
   },
 
   // Shared routes (Owner + Staff)

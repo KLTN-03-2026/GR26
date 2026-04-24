@@ -1,20 +1,4 @@
-import {
-  Building2,
-  MapPin,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  Power,
-  PowerOff,
-  Circle,
-  Square,
-  Users,
-} from 'lucide-react';
-import type {
-  TableDisplayItem,
-  TableStatus,
-} from '@modules/table/types/table.types';
+import { Users, MapPin, MoreVertical, Edit, Trash2, Eye, Power, PowerOff } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import {
   DropdownMenu,
@@ -22,179 +6,106 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@shared/components/ui/dropdown-menu';
+import type { TableItem } from '../../types/table.types';
+// import { TableStatusValues } from '../../types/table.types';
 
 interface TableCardProps {
-  table: TableDisplayItem;
-  onSelectTable: (table: TableDisplayItem) => void;
-  onEdit: (table: TableDisplayItem) => void;
+  table: TableItem;
+  onEdit: (table: TableItem) => void;
   onDelete: (id: string, name: string) => void;
-  onToggleStatus: (id: string, currentStatus: TableStatus) => void;
+  onToggleStatus: (id: string, currentStatus: string) => void;
   onViewDetail: (id: string) => void;
 }
 
-/**
- * Màu bàn ưu tiên nhận biết nhanh:
- * bàn trống dùng xanh dương nhạt, bàn không trống dùng vàng, bàn bảo trì dùng xám.
- */
 const getStatusConfig = (status: string, usageStatus: string) => {
-  if (status === 'inactive') {
-    return {
-      dotColor: 'bg-gray-400',
-      surfaceClass: 'border-gray-200 bg-gray-100/80',
-      hoverClass: 'hover:border-gray-300 hover:shadow-gray-200/60',
-    };
+  if (usageStatus === 'occupied') {
+    return { label: 'Đang dùng', color: 'bg-red-100 text-red-700 border-red-200' };
   }
-
-  if (usageStatus === 'available') {
-    return {
-      dotColor: 'bg-sky-500',
-      surfaceClass: 'border-sky-100 bg-sky-50/90',
-      hoverClass: 'hover:border-sky-200 hover:shadow-sky-100',
-    };
-  }
-
-  if (usageStatus === 'unpaid') {
-    return {
-      dotColor: 'bg-amber-500',
-      surfaceClass: 'border-amber-100 bg-amber-50/90',
-      hoverClass: 'hover:border-amber-200 hover:shadow-amber-100',
-    };
-  }
-
   if (usageStatus === 'reserved') {
-    return {
-      dotColor: 'bg-amber-500',
-      surfaceClass: 'border-amber-100 bg-amber-50/90',
-      hoverClass: 'hover:border-amber-200 hover:shadow-amber-100',
-    };
+    return { label: 'Đã đặt', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' };
   }
-
-  return {
-    dotColor: 'bg-amber-500',
-    surfaceClass: 'border-amber-100 bg-amber-50/90',
-    hoverClass: 'hover:border-amber-200 hover:shadow-amber-100',
-  };
+  if (usageStatus === 'unpaid') {
+    return { label: 'Chưa thanh toán', color: 'bg-orange-100 text-orange-700 border-orange-200' };
+  }
+  if (status === 'inactive') {
+    return { label: 'Bảo trì', color: 'bg-gray-100 text-gray-500 border-gray-200' };
+  }
+  return { label: 'Trống', color: 'bg-green-100 text-green-700 border-green-200' };
 };
 
-const ShapeMarker = ({ shape }: { shape: string }) =>
-  shape === 'square' ? (
-    <Square className="h-3.5 w-3.5 text-gray-400" />
-  ) : (
-    <Circle className="h-3.5 w-3.5 text-gray-400" />
-  );
-
-export const TableCard = ({
-  table,
-  onSelectTable,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  onViewDetail,
-}: TableCardProps) => {
+export const TableCard = ({ table, onEdit, onDelete, onToggleStatus, onViewDetail }: TableCardProps) => {
   const statusConfig = getStatusConfig(table.status, table.usageStatus);
   const isInactive = table.status === 'inactive';
-  const canDelete = table.usageStatus !== 'occupied' && table.usageStatus !== 'unpaid';
-
-  const handleCardClick = () => {
-    // Bàn tạm ngưng không cho vào luồng order, giữ hành vi xem chi tiết để người dùng kiểm tra trạng thái.
-    if (isInactive) {
-      onViewDetail(table.id);
-      return;
-    }
-
-    onSelectTable(table);
-  };
 
   return (
     <div
-      className={`group relative min-h-[136px] cursor-pointer overflow-hidden rounded-[20px] border-2 bg-white transition-all duration-300
-        ${statusConfig.surfaceClass}
-        ${isInactive ? 'opacity-70' : `hover:-translate-y-1 ${statusConfig.hoverClass} hover:shadow-md`}
-      `}
-      onClick={handleCardClick}
+      className={`bg-white rounded-xl border-2 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${
+        isInactive ? 'border-gray-200 opacity-60' : 'border-gray-100 hover:border-primary/30'
+      }`}
+      onClick={() => onViewDetail(table.id)}
     >
-      <div className="p-3">
-        <div className="mb-2.5 flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-            <div className={`h-3.5 w-3.5 rounded-full ${statusConfig.dotColor}`} />
-            {/* <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-              {table.status === 'inactive' ? 'Ngưng' : 'Hoạt động'}
-            </span> */}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm">
-              <Users className="h-3 w-3 text-gray-400" />
-              {table.capacity} chỗ
-            </span>
-            <div onClick={(event) => event.stopPropagation()}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-full hover:bg-black/5"
-                  >
-                    <MoreVertical className="h-3.5 w-3.5 text-gray-400" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44 rounded-xl border-gray-100 shadow-lg">
-                  <DropdownMenuItem onClick={() => onViewDetail(table.id)} className="cursor-pointer gap-2">
-                    <Eye className="h-4 w-4 text-blue-500" />
-                    Xem chi tiết
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit(table)} className="cursor-pointer gap-2">
-                    <Edit className="h-4 w-4 text-amber-500" />
-                    Chỉnh sửa
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onToggleStatus(table.id, table.status)} className="cursor-pointer gap-2">
-                    {isInactive ? (
-                      <>
-                        <Power className="h-4 w-4 text-green-500" />
-                        Kích hoạt
-                      </>
-                    ) : (
-                      <>
-                        <PowerOff className="h-4 w-4 text-red-500" />
-                        Tạm ngưng
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDelete(table.id, table.name)}
-                    className="cursor-pointer gap-2 text-red-600"
-                    disabled={!canDelete}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Xóa bàn
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-bold text-gray-800">{table.name}</h3>
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => onViewDetail(table.id)} className="gap-2">
+                  <Eye className="h-4 w-4" />
+                  Xem chi tiết
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(table)} className="gap-2">
+                  <Edit className="h-4 w-4" />
+                  Chỉnh sửa
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onToggleStatus(table.id, table.status)} className="gap-2">
+                  {isInactive ? (
+                    <>
+                      <Power className="h-4 w-4" />
+                      Kích hoạt
+                    </>
+                  ) : (
+                    <>
+                      <PowerOff className="h-4 w-4" />
+                      Tạm ngưng
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onDelete(table.id, table.name)}
+                  className="gap-2 text-red-600"
+                  disabled={table.usageStatus === 'occupied' || table.usageStatus === 'unpaid'}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Xóa bàn
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <h3 className="truncate text-lg font-black leading-none tracking-tight text-gray-900">
-            {table.name}
-          </h3>
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+          <MapPin className="w-3.5 h-3.5" />
+          <span>{table.areaName}</span>
+        </div>
 
-          <div className="space-y-1.5 text-xs text-gray-600">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              <span className="truncate">{table.zoneName}</span>
-            </div>
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+          <Users className="w-3.5 h-3.5" />
+          <span>Sức chứa: {table.capacity} người</span>
+        </div>
 
-            <div className="flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              <span className="truncate">{table.branchName}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <ShapeMarker shape={table.shape} />
-              <span>{table.shape === 'square' ? 'Vuông' : 'Tròn'}</span>
-            </div>
-          </div>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
+            {statusConfig.label}
+          </span>
+          {table.usageStatus === 'occupied' && (
+            <span className="text-xs text-gray-400">Đang phục vụ</span>
+          )}
         </div>
       </div>
     </div>

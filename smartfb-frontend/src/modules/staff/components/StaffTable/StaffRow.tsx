@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2, Lock, Unlock } from 'lucide-react';
 import { TableRow, TableCell } from '@shared/components/ui/table';
 import {
   DropdownMenu,
@@ -9,30 +9,37 @@ import {
 } from '@shared/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
-import type { StaffSummary } from '../../types/staff.types';
+import type { StaffListItem } from '../../types/staff.types';
 import { DeleteStaffDialog } from '../DeleteStaffDialog';
 import { EditStaffDialog } from '../EditStaffDialog';
+import { ToggleStaffStatusDialog } from '../ToggleStaffStatusDialog';
 import { useStaffDetail } from '../../hooks/useStaffDetail';
+import type { StaffDetailFull } from '../../data/staffDetailMock';
 
 interface StaffRowProps {
-  staff: StaffSummary;
-  onRefresh?: () => void;
+  staff: StaffListItem;
 }
 
-export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
+/**
+ * Row hiển thị thông tin một nhân viên trong bảng
+ * Đã cập nhật theo Module 4 Spec (fullName, positionName)
+ */
+export const StaffRow = ({ staff }: StaffRowProps) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showToggleDialog, setShowToggleDialog] = useState(false);
   
-  const { data: staffDetail } = useStaffDetail(staff.id);
+  const { data: staffDetailData } = useStaffDetail(staff.id);
+  const staffDetail = staffDetailData?.staff;
 
   const handleRowClick = () => {
-    navigate(ROUTES.OWNER.STAFF_DETAIL.replace(':id', staff.id));
+    navigate(`${ROUTES.OWNER.STAFF}/${staff.id}`);
   };
 
   const handleViewDetail = () => {
-    navigate(ROUTES.OWNER.STAFF_DETAIL.replace(':id', staff.id));
+    navigate(`${ROUTES.OWNER.STAFF}/${staff.id}`);
     setOpen(false);
   };
 
@@ -46,15 +53,10 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
     setOpen(false);
   };
 
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'ACTIVE': return { text: 'Đang làm', className: 'badge-completed' };
-      case 'INACTIVE': return { text: 'Đã nghỉ', className: 'badge-warning' };
-      default: return { text: status, className: 'badge-secondary' };
-    }
+  const handleToggleStatus = () => {
+    setShowToggleDialog(true);
+    setOpen(false);
   };
-
-  const statusInfo = getStatusDisplay(staff.status);
 
   return (
     <>
@@ -65,23 +67,23 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
         <TableCell className="font-medium text-gray-900 truncate">
           {staff.fullName}
         </TableCell>
-        {/* <TableCell className="text-gray-600 text-sm">
-          {staff.employeeCode || '---'}
-        </TableCell> */}
+        <TableCell className="text-gray-600 text-sm truncate">
+          {staff.email}
+        </TableCell>
         <TableCell className="text-gray-600 text-sm">
           {staff.phone}
         </TableCell>
-        <TableCell className="text-gray-600 text-sm truncate">
-          {staff.email || '---'}
-        </TableCell>
         <TableCell className="text-sm">
           <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-            {staff.positionName || 'Chưa phân công'}
+            {staff.positionName}
           </span>
         </TableCell>
+        <TableCell className="text-sm">
+          {staff.branchName}
+        </TableCell>
         <TableCell>
-          <span className={`badge ${statusInfo.className}`}>
-            {statusInfo.text}
+          <span className={`badge ${staff.status === 'active' ? 'badge-completed' : 'badge-warning'}`}>
+            {staff.status === 'active' ? 'Đang làm' : 'Đã nghỉ'}
           </span>
         </TableCell>
         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -101,6 +103,17 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
                 Chỉnh sửa
               </DropdownMenuItem>
               <DropdownMenuItem 
+                onSelect={handleToggleStatus}
+                className={staff.status === 'active' ? 'text-orange-600' : 'text-green-600'}
+              >
+                {staff.status === 'active' ? (
+                  <Lock className="w-4 h-4 mr-2" />
+                ) : (
+                  <Unlock className="w-4 h-4 mr-2" />
+                )}
+                {staff.status === 'active' ? 'Khóa' : 'Mở khóa'}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
                 onSelect={handleDelete}
                 className="text-red-600"
               >
@@ -111,29 +124,28 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
           </DropdownMenu>
         </TableCell>
       </TableRow>
-
       <DeleteStaffDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         staffId={staff.id}
         staffName={staff.fullName}
-        onSuccess={() => {
-          setShowDeleteDialog(false);
-          onRefresh?.();
-        }}
       />
-
       {showEditDialog && staffDetail && (
         <EditStaffDialog
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
-          staff={staffDetail}
-          onSuccess={() => {
-            setShowEditDialog(false);
-            onRefresh?.();
-          }}
+          staff={staffDetail as StaffDetailFull}
+          onSuccess={() => setShowEditDialog(false)}
         />
       )}
+      <ToggleStaffStatusDialog
+        open={showToggleDialog}
+        onOpenChange={setShowToggleDialog}
+        staffId={staff.id}
+        staffName={staff.fullName}
+        currentStatus={staff.status}
+        onSuccess={() => setShowToggleDialog(false)}
+      />
     </>
   );
 };

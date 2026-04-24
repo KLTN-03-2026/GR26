@@ -1,27 +1,36 @@
-import { useCallback, useMemo, useState } from 'react';
-import type { PaginationState, TableItem, TableFilters } from '../types/table.types';
+import { useMemo, useState, useCallback } from 'react';
+import type { TableDetail } from '../data/tableDetails';
+import type { TableFilters, PaginationState } from '../types/table.types';
 
 const PAGE_SIZE = 12;
 
-/**
- * Hook quản lý filter và phân trang cho danh sách bàn trong một chi nhánh.
- */
-export const useTableFilters = <T extends TableItem>(tables: T[]) => {
+export const useTableFilters = (tables: TableDetail[]) => {
   const [filters, setFilters] = useState<TableFilters>({
     search: '',
-    state: 'all',
+    status: 'all',
     area: 'all',
+    usageStatus: 'all',
+    branch: 'all',
   });
 
-  const [paginationState, setPaginationState] = useState<PaginationState>({
-    // UI page bắt đầu từ 1 để đồng nhất với phân trang hiển thị.
+  const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
     pageSize: PAGE_SIZE,
     total: 0,
   });
 
+  const areas = useMemo(() => {
+    const setAreas = new Set(tables.map(table => table.areaName));
+    return Array.from(setAreas);
+  }, [tables]);
+
+  const branches = useMemo(() => {
+    const setBranches = new Set(tables.map(table => table.branchName));
+    return Array.from(setBranches);
+  }, [tables]);
+
   const filteredTables = useMemo(() => {
-    const result = tables.filter(table => {
+    return tables.filter(table => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         if (!table.name.toLowerCase().includes(searchLower)) {
@@ -29,73 +38,72 @@ export const useTableFilters = <T extends TableItem>(tables: T[]) => {
         }
       }
 
-      if (filters.area !== 'all' && table.zoneId !== filters.area) {
+      if (filters.status !== 'all' && table.status !== filters.status) {
         return false;
       }
 
-      if (filters.state === 'active') {
-        return table.status === 'active';
+      if (filters.area !== 'all' && table.areaName !== filters.area) {
+        return false;
       }
 
-      if (filters.state === 'occupied') {
-        return table.status === 'active' && (table.usageStatus === 'occupied' || table.usageStatus === 'unpaid');
+      if (filters.usageStatus !== 'all' && table.usageStatus !== filters.usageStatus) {
+        return false;
       }
 
-      if (filters.state === 'inactive') {
-        return table.status === 'inactive';
+      if (filters.branch !== 'all' && table.branchName !== filters.branch) {
+        return false;
       }
 
       return true;
     });
-
-    return result;
   }, [tables, filters]);
 
   const { paginatedTables, totalItems } = useMemo(() => {
     const total = filteredTables.length;
-    const start = (paginationState.page - 1) * paginationState.pageSize;
-    const end = start + paginationState.pageSize;
+    const start = (pagination.page - 1) * pagination.pageSize;
+    const end = start + pagination.pageSize;
 
     return {
       paginatedTables: filteredTables.slice(start, end),
       totalItems: total,
     };
-  }, [filteredTables, paginationState.page, paginationState.pageSize]);
+  }, [filteredTables, pagination.page, pagination.pageSize]);
 
-  const pagination = useMemo<PaginationState>(() => ({
-    ...paginationState,
-    total: totalItems,
-  }), [paginationState, totalItems]);
+  useMemo(() => {
+    if (pagination.total !== totalItems) {
+      setPagination(prev => ({ ...prev, total: totalItems }));
+    }
+  }, [totalItems, pagination.total]);
 
   const updateFilter = useCallback((key: keyof TableFilters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setPaginationState(prev => ({ ...prev, page: 1 }));
+    setPagination(prev => ({ ...prev, page: 1 }));
   }, []);
 
   const clearFilters = useCallback(() => {
-    setFilters({
-      search: '',
-      state: 'all',
-      area: 'all',
-    });
-    setPaginationState(prev => ({ ...prev, page: 1 }));
-  }, []);
+    setFilters({ search: '', status: 'all', area: 'all', usageStatus: 'all', branch: 'all' });
+    setPagination(prev => ({ ...prev, page: 1, total: tables.length }));
+  }, [tables.length]);
 
   const updatePage = useCallback((page: number) => {
-    setPaginationState(prev => ({ ...prev, page }));
+    setPagination(prev => ({ ...prev, page }));
   }, []);
 
   const hasActiveFilters = useMemo(() => {
     return (
       filters.search !== '' ||
-      filters.state !== 'all' ||
-      filters.area !== 'all'
+      filters.status !== 'all' ||
+      filters.area !== 'all' ||
+      filters.usageStatus !== 'all' ||
+      filters.branch !== 'all'
     );
   }, [filters]);
 
   return {
     filters,
     pagination,
+    areas,
+    branches,
     tables: paginatedTables,
     totalItems,
     hasActiveFilters,

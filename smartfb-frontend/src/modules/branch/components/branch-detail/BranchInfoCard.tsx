@@ -1,108 +1,188 @@
-import { Building2, CalendarDays, MapPin, Pencil, Phone } from 'lucide-react';
-import { Button } from '@shared/components/ui/button';
-import type { Branch } from '@modules/branch/types/branch.types';
+import { Pencil, Phone, Mail } from "lucide-react";
+import { Button } from "@shared/components/ui/button";
+import type { BranchDetailFull } from "@modules/branch/data/branchDetailMock";
 
 interface BranchInfoCardProps {
-  branch: Branch;
+  branch: BranchDetailFull;
   onEdit?: () => void;
 }
 
-const formatDateTime = (value: string) =>
-  new Date(value).toLocaleString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-const getStatusMeta = (status: Branch['status']) =>
-  status === 'ACTIVE'
-    ? {
-        label: 'Đang hoạt động',
-        badgeClassName: 'bg-emerald-100 text-emerald-700',
-      }
-    : {
-        label: 'Ngừng hoạt động',
-        badgeClassName: 'bg-amber-100 text-amber-700',
-      };
+const formatTime = (time: string) => time;
 
 /**
- * Card hiển thị thông tin chi nhánh dựa trên response thực tế từ backend.
+ * Card hiển thị thông tin chi tiết chi nhánh
+ * Bao gồm: cover image, thông tin cơ bản, manager info
  */
 export const BranchInfoCard = ({ branch, onEdit }: BranchInfoCardProps) => {
-  const statusMeta = getStatusMeta(branch.status);
+  const {
+    code,
+    name,
+    taxCode,
+    address,
+    city,
+    phone,
+    openTime,
+    closeTime,
+    coverImage,
+    manager,
+    isOpened,
+  } = branch;
+
+  const fullAddress = `${address}, ${city}`;
+  const openingHours = `${formatTime(openTime)} - ${formatTime(closeTime)}`;
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-card">
-      <div className="flex flex-col gap-4 border-b border-border px-6 py-5 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-            <Building2 className="h-3.5 w-3.5" />
-            Tổng quan
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-text-primary">{branch.name}</h2>
-            <p className="mt-1 text-sm text-text-secondary">
-              Mã chi nhánh: <span className="font-medium text-text-primary">{branch.code}</span>
-            </p>
-          </div>
-          <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusMeta.badgeClassName}`}>
-            {statusMeta.label}
-          </span>
-        </div>
+    <div className="bg-white rounded-2xl overflow-hidden">
+      {/* Header với nút chỉnh sửa */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Thông tin chi nhánh
+        </h2>
         {onEdit && (
           <Button
             variant="outline"
             size="sm"
             onClick={onEdit}
-            className="gap-2 self-start"
+            className="gap-2"
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="w-4 h-4" />
             Chỉnh sửa
           </Button>
         )}
       </div>
 
-      <div className="grid gap-4 px-6 py-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-muted/20 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
-            <MapPin className="h-4 w-4 text-primary" />
-            Địa chỉ
+      <div className="grid grid-cols-3 p-4 gap-2">
+        {/* Cover Image */}
+        {coverImage && (
+          <div className="col-span-2">
+            <div className="w-full h-full rounded-xl overflow-hidden bg-gray-100">
+              <img
+                src={coverImage}
+                alt={name}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
-          <p className="text-base font-medium text-text-primary">
-            {branch.address || 'Chưa cập nhật địa chỉ'}
-          </p>
-        </div>
+        )}
 
-        <div className="rounded-2xl border border-border bg-muted/20 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
-            <Phone className="h-4 w-4 text-primary" />
-            Điện thoại
-          </div>
-          <p className="text-base font-medium text-text-primary">
-            {branch.phone || 'Chưa cập nhật số điện thoại'}
-          </p>
-        </div>
+        {/* Thông tin chi nhánh */}
+        <div className="px-6">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Mã chi nhánh */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Mã chi nhánh
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{code}</p>
+            </div>
 
-        <div className="rounded-2xl border border-border bg-muted/20 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            Ngày tạo
-          </div>
-          <p className="text-base font-medium text-text-primary">
-            {formatDateTime(branch.createdAt)}
-          </p>
-        </div>
+            {/* Tên chi nhánh */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Tên chi nhánh
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{name}</p>
+            </div>
 
-        <div className="rounded-2xl border border-border bg-muted/20 p-4">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
-            <Building2 className="h-4 w-4 text-primary" />
-            Mã tenant
+            {/* Mã số thuế */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Mã số thuế
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{taxCode}</p>
+            </div>
+
+            {/* Giờ hoạt động */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Giờ hoạt động
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{openingHours}</p>
+            </div>
+
+            {/* Trạng thái cửa hàng */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Trạng thái cửa hàng
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                    isOpened
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isOpened ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  />
+                  {isOpened ? "Mở cửa" : "Đóng cửa"}
+                </span>
+              </div>
+            </div>
+            {/* Điện thoại */}
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Điện thoại
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{phone}</p>
+            </div>
+            {/* Địa chỉ */}
+            <div className="col-span-2">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Địa chỉ
+              </label>
+              <p className="mt-1 font-semibold text-gray-900">{fullAddress}</p>
+            </div>
           </div>
-          <p className="break-all text-sm font-medium text-text-primary">
-            {branch.tenantId}
-          </p>
+        </div>
+      </div>
+      {/* Divider */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="space-y-4">
+          {/* Quản lý chi nhánh */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                {manager.avatar ? (
+                  <img
+                    src={manager.avatar}
+                    alt={manager.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <span className="text-sm font-medium">
+                      {manager.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Quản lý chi nhánh</p>
+                <p className="font-semibold text-gray-900">{manager.name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              >
+                <Phone className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              >
+                <Mail className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

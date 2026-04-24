@@ -22,8 +22,8 @@ export const SubMenuItem: FC<SubMenuItemProps> = ({ item, isActive }) => {
       className={cn(
         'flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-150',
         ' font-medium tracking-wide ml-4',
-        !isActive && 'text-text-secondary hover:bg-hover-light hover:text-text-primary',
-        isActive && 'bg-primary text-white'
+        !isActive && 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
+        isActive && 'bg-orange-500 text-white'
       )}
     >
       {Icon && <Icon className="w-4 h-4 shrink-0" />}

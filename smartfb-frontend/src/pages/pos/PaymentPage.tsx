@@ -1,285 +1,407 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  CreditCard, 
+  Wallet, 
+  Smartphone, 
+  ArrowLeft, 
+  CheckCircle2, 
+  ChevronRight, 
+  Receipt, 
+  Percent, 
+  User, 
+  Table2,
+  Banknote,
+  QrCode,
+  Loader2
+} from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/shared/constants/routes';
+import { useOrderStore } from '@/modules/order/stores/orderStore';
+import { orderService } from '@/modules/order/services/orderService';
+import { paymentService } from '@/modules/order/services/paymentService';
+import type { OrderResponse, PaymentMethod } from '@/modules/order/types/order.types';
 import toast from 'react-hot-toast';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '@modules/auth/stores/authStore';
-import type { MenuItem } from '@modules/menu/types/menu.types';
-import {
-  ORDER_TAX_RATE,
-  toDraftItemsFromOrder,
-} from '@modules/order/components/order-page/orderPage.utils';
-import { PaymentEmptyState } from '@modules/order/components/payment-page/PaymentEmptyState';
-import { PaymentOrderSummary } from '@modules/order/components/payment-page/PaymentOrderSummary';
-import {
-  PaymentSidebar,
-  type PaymentMethod,
-} from '@modules/order/components/payment-page/PaymentSidebar';
-import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
-import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
-import { useOrderStore } from '@modules/order/stores/orderStore';
-import type { OrderResponse, OrderTableContext } from '@modules/order/types/order.types';
-import { useProcessCashPayment } from '@modules/payment/hooks/useProcessCashPayment';
-import { ROLES } from '@shared/constants/roles';
-import { ROUTES } from '@shared/constants/routes';
-import { queryKeys } from '@shared/constants/queryKeys';
 
-const resolvePaymentTableContextFromOrder = (
-  order: OrderResponse,
-  fallbackContext: OrderTableContext
-): OrderTableContext => {
-  if (order.source === 'IN_STORE' && order.tableId) {
-    return {
-      ...fallbackContext,
-      tableId: order.tableId,
-      tableName: order.tableName?.trim() || fallbackContext.tableName,
-    };
-  }
+const PAYMENT_METHODS = [
+  { id: 'cash', name: 'Tiền mặt', icon: <Wallet className="w-6 h-6 text-green-500" /> },
+  { id: 'card', name: 'Thẻ ngân hàng', icon: <CreditCard className="w-6 h-6 text-blue-500" /> },
+  { id: 'qr', name: 'Chuyển khoản / QR', icon: <Smartphone className="w-6 h-6 text-orange-500" /> },
+];
 
-  return {
-    ...fallbackContext,
-    tableId: null,
-    tableName: '',
-    zoneId: undefined,
-    zoneName: '',
-  };
-};
-
-export default function PaymentPage() {
+const PaymentPage: React.FC = () => {
+  const { orderId } = useParams<{ orderId: string }>();
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CASH');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [orderData, setOrderData] = useState<OrderResponse | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
+  
+  const [amountReceived, setAmountReceived] = useState<number | ''>('');
+  const [qrStep, setQrStep] = useState<'IDLE' | 'GENERATING' | 'READY'>('IDLE');
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  
+  const { clearCart } = useOrderStore();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const currentRole = useAuthStore((state) => state.user?.role);
-  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
-  const { cart, tableContext, draftOrder, clearDraftAndContext } = useOrderStore();
 
-  const routeOrderId = searchParams.get('orderId')?.trim() ?? '';
-  const routeTableId = searchParams.get('tableId')?.trim() ?? '';
-  const routeTableName = searchParams.get('tableName')?.trim() ?? '';
-  const routeZoneId = searchParams.get('zoneId')?.trim() ?? '';
-  const routeBranchName = searchParams.get('branchName')?.trim() ?? '';
-
-  const fallbackTableContext = useMemo<OrderTableContext>(() => {
-    return {
-      tableId: routeTableId || null,
-      tableName: routeTableName,
-      zoneId: routeZoneId || undefined,
-      zoneName: '',
-      branchId: currentBranchId,
-      branchName: routeBranchName || 'Chi nhánh hiện tại',
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) return;
+      setIsLoadingOrder(true);
+      try {
+        const response = await orderService.getById(orderId);
+        if (response.success && response.data) {
+          setOrderData(response.data);
+        } else {
+          toast.error('Không tìm thấy thông tin đơn hàng');
+          navigate(ROUTES.POS_ORDER);
+        }
+      } catch (error) {
+        console.error('Fetch order failed:', error);
+        toast.error('Lỗi khi tải thông tin đơn hàng');
+      } finally {
+        setIsLoadingOrder(false);
+      }
     };
-  }, [currentBranchId, routeBranchName, routeTableId, routeTableName, routeZoneId]);
 
-  const effectiveOrderId = routeOrderId || draftOrder.orderId || '';
-  const emptyMenuItemMap = useMemo(() => new Map<string, MenuItem>(), []);
-  const orderDetailQuery = useOrderDetail(effectiveOrderId, {
-    enabled: Boolean(effectiveOrderId) && (cart.length === 0 || draftOrder.orderId !== effectiveOrderId),
-  });
+    fetchOrder();
+  }, [orderId, navigate]);
 
-  const recoveredCart = useMemo(() => {
-    if (!orderDetailQuery.data) {
-      return [];
+  const total = orderData?.totalAmount || 0;
+  const subtotal = useMemo(() => {
+    if (!orderData) return 0;
+    return orderData.items.reduce((sum, item) => sum + item.totalPrice, 0);
+  }, [orderData]);
+  const tax = total - subtotal;
+
+  const changeAmount = useMemo(() => {
+    if (typeof amountReceived !== 'number' || !total) return 0;
+    return Math.max(0, amountReceived - total);
+  }, [amountReceived, total]);
+
+  const canConfirm = useMemo(() => {
+    if (selectedMethod === 'CASH') {
+      return typeof amountReceived === 'number' && amountReceived >= total;
     }
+    return true;
+  }, [selectedMethod, amountReceived, total]);
 
-    return toDraftItemsFromOrder(orderDetailQuery.data, emptyMenuItemMap);
-  }, [emptyMenuItemMap, orderDetailQuery.data]);
-
-  const displayCart = cart.length > 0 ? cart : recoveredCart;
-  const displayOrderId =
-    (draftOrder.orderId ?? orderDetailQuery.data?.id ?? routeOrderId) || null;
-  const displayOrderNumber =
-    draftOrder.orderNumber ?? orderDetailQuery.data?.orderNumber ?? null;
-  const displayCreatedAt =
-    draftOrder.createdAt ?? orderDetailQuery.data?.createdAt ?? null;
-  const displayTableContext = tableContext
-    ? tableContext
-    : orderDetailQuery.data
-      ? resolvePaymentTableContextFromOrder(orderDetailQuery.data, fallbackTableContext)
-      : fallbackTableContext;
-  const hasCreatedOrder = Boolean(displayOrderId);
-
-  const { subtotal, vatAmount, totalAmount } = useOrderPricing({
-    cart: displayCart,
-    taxRate: ORDER_TAX_RATE,
-  });
-
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
-  const [amountReceivedDraft, setAmountReceivedDraft] = useState<string | null>(null);
-  const [isMockProcessing, setIsMockProcessing] = useState(false);
-  const processCashPaymentMutation = useProcessCashPayment();
-  const amountReceived = amountReceivedDraft ?? (totalAmount > 0 ? String(totalAmount) : '');
-  const amountReceivedValue = Number(amountReceived) || 0;
-  const changeAmount = Math.max(0, amountReceivedValue - totalAmount);
-  const isProcessing = processCashPaymentMutation.isPending || isMockProcessing;
-  const isRecoveringPaymentOrder =
-    Boolean(effectiveOrderId) &&
-    displayCart.length === 0 &&
-    orderDetailQuery.isLoading;
-  const tableManagementRoute =
-    currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
-
-  /**
-   * Sau khi thanh toán thành công cần xóa toàn bộ context active của bàn hiện tại
-   * rồi quay thẳng về màn quản lý bàn để người dùng không quay lại order cũ.
-   */
-  const finalizeSuccessfulPayment = () => {
-    const paidOrderId = displayOrderId;
-    const paidTableId = displayTableContext.tableId ?? null;
-
-    clearDraftAndContext();
-
-    if (paidOrderId) {
-      queryClient.removeQueries({ queryKey: queryKeys.orders.detail(paidOrderId) });
-    }
-
-    if (paidTableId) {
-      queryClient.setQueryData(queryKeys.orders.activeByTable(paidTableId), null);
-    }
-
-    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
-    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
-
-    if (paidTableId) {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(paidTableId) });
-    }
-
-    navigate(tableManagementRoute, { replace: true });
-  };
-
-  const canConfirmPayment =
-    hasCreatedOrder &&
-    displayCart.length > 0 &&
-    !isProcessing &&
-    (selectedMethod !== 'cash' || amountReceivedValue >= totalAmount);
-
-  const handleConfirmPayment = () => {
-    if (!canConfirmPayment || !displayOrderId) {
-      return;
-    }
-
-    if (selectedMethod !== 'cash') {
-      // Chỉ gắn API thật cho tiền mặt ở task này.
-      setIsMockProcessing(true);
-      window.setTimeout(() => {
-        setIsMockProcessing(false);
-        toast.success('Thanh toán thành công');
-        finalizeSuccessfulPayment();
-      }, 1200);
-      return;
-    }
-
-    void processCashPaymentMutation
-      .mutateAsync({
-        orderId: displayOrderId,
-        amount: amountReceivedValue,
-      })
-      .then((response) => {
-        if (!response.success) {
-          toast.error(response.error?.message ?? 'Không thể xử lý thanh toán tiền mặt');
-          return;
+  useEffect(() => {
+    const fetchQR = async () => {
+      if (selectedMethod === 'VIETQR' && orderId) {
+        setQrStep('GENERATING');
+        try {
+          const response = await paymentService.generateQRPayment(orderId);
+          if (response.success && response.data) {
+            setQrCode(response.data.qrCode);
+            setQrStep('READY');
+          }
+        } catch (error) {
+          console.error('Generate QR failed:', error);
+          toast.error('Lỗi khi sinh mã QR');
+          setQrStep('IDLE');
         }
+      } else {
+        setQrStep('IDLE');
+        setQrCode(null);
+      }
+    };
 
-        toast.success('Thanh toán tiền mặt thành công');
-        finalizeSuccessfulPayment();
-      })
-      .catch(() => {
-        // Axios interceptor đã xử lý toast lỗi chung.
-      });
-  };
+    fetchQR();
+  }, [selectedMethod, orderId]);
 
-  const handleSelectMethod = (method: PaymentMethod) => {
-    setSelectedMethod(method);
+  const handlePay = async () => {
+    if (!orderId || !orderData) return;
+    
+    setIsProcessing(true);
+    try {
+      // 1. Khởi tạo thanh toán
+      const initRes = await paymentService.initiatePayment(orderId, total, selectedMethod);
+      if (initRes.success && initRes.data) {
+        const paymentId = initRes.data.id;
 
-    if (method === 'cash') {
-      // Với tiền mặt, mặc định điền đủ số tiền cần thanh toán để thu ngân chỉ sửa khi thật sự cần.
-      setAmountReceivedDraft(null);
+        // 2. Xác nhận thanh toán (nếu là Tiền mặt)
+        if (selectedMethod === 'CASH') {
+          const confirmRes = await paymentService.confirmPayment(paymentId, {
+            amountReceived,
+            changeAmount
+          });
+          if (!confirmRes.success) {
+            throw new Error(confirmRes.message || 'Xác nhận thất bại');
+          }
+        }
+        
+        // 3. Với VietQR, trong thực tế thường có webhook hoặc polling.
+        // Ở đây giả định sau khi init/generate QR, ta đợi success logic.
+        // Cho mục đích demo/skeleton, ta coi như thành công nếu cash confirm ok.
+        
+        setIsSuccess(true);
+        clearCart();
+        toast.success('Thanh toán thành công!');
+      }
+    } catch (error: any) {
+      console.error('Payment failed:', error);
+      toast.error(error.message || 'Thanh toán thất bại');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  if (isRecoveringPaymentOrder) {
+  if (isSuccess) {
     return (
-      <div className="flex min-h-[560px] items-center justify-center rounded-[32px] bg-white p-10 shadow-sm">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-          <p className="font-medium text-slate-500">Đang tải lại đơn hàng để thanh toán...</p>
+      <div className="flex flex-col items-center justify-center h-full bg-white rounded-[32px] p-12 text-center shadow-sm">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="w-32 h-32 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100"
+        >
+          <CheckCircle2 className="w-16 h-16" />
+        </motion.div>
+        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Thanh toán hoàn tất!</h1>
+        <p className="text-slate-500 text-lg mb-8 max-w-md font-medium">Đơn hàng đã được xử lý thành công. Hóa đơn đã được gửi đến hàng đợi in.</p>
+        <div className="flex gap-4">
+          <Button 
+            variant="outline" 
+            className="h-14 px-8 rounded-2xl border-2 font-bold hover:bg-slate-50 transition-all"
+          >
+            <Receipt className="mr-2 w-5 h-5" />
+            In hóa đơn
+          </Button>
+          <Button 
+            className="h-14 px-8 rounded-2xl bg-orange-500 hover:bg-orange-600 font-bold shadow-lg shadow-orange-100 transition-all"
+            onClick={() => navigate(ROUTES.POS_ORDER)}
+          >
+            Đơn hàng mới
+          </Button>
         </div>
       </div>
     );
   }
 
-  if (orderDetailQuery.isError && displayCart.length === 0) {
+  if (isLoadingOrder) {
     return (
-      <div className="flex min-h-[560px] items-center justify-center rounded-[32px] bg-white p-10 shadow-sm">
-        <div className="max-w-md text-center">
-          <h1 className="text-3xl font-black text-slate-900">Không thể tải đơn hàng</h1>
-          <p className="mt-3 text-slate-500">
-            Đơn thanh toán không thể đồng bộ lại từ hệ thống. Vui lòng thử lại hoặc quay về màn tạo đơn.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => void orderDetailQuery.refetch()}
-              className="rounded-full bg-orange-500 px-5 py-2.5 font-semibold text-white hover:bg-orange-600"
-            >
-              Tải lại
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  searchParams.toString()
-                    ? `${ROUTES.POS_ORDER}?${searchParams.toString()}`
-                    : ROUTES.POS_ORDER
-                )
-              }
-              className="rounded-full border border-slate-200 px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Quay lại tạo đơn
-            </button>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full">
+        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-bold">Đang tải thông tin đơn hàng...</p>
       </div>
-    );
-  }
-
-  if (displayCart.length === 0 || !hasCreatedOrder) {
-    return (
-      <PaymentEmptyState
-        onBackToOrder={() =>
-          navigate(
-            searchParams.toString()
-              ? `${ROUTES.POS_ORDER}?${searchParams.toString()}`
-              : ROUTES.POS_ORDER
-          )
-        }
-      />
     );
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-10rem)] grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <PaymentOrderSummary
-        cart={displayCart}
-        tableContext={displayTableContext}
-        orderNumber={displayOrderNumber}
-        createdAt={displayCreatedAt}
-        onBack={() => navigate(-1)}
-      />
+    <div className="flex h-full gap-6 overflow-hidden p-2">
+      <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+        <header className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate(-1)}
+            className="rounded-2xl w-12 h-12 hover:bg-white hover:shadow-sm"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Thanh toán</h1>
+            <p className="text-slate-500 font-medium">Xác nhận giao dịch và in hóa đơn</p>
+          </div>
+        </header>
 
-      <PaymentSidebar
-        selectedMethod={selectedMethod}
-        amountReceived={amountReceived}
-        orderNumber={displayOrderNumber}
-        totalAmount={totalAmount}
-        subtotal={subtotal}
-        vatAmount={vatAmount}
-        changeAmount={changeAmount}
-        canConfirmPayment={canConfirmPayment}
-        isProcessing={isProcessing}
-        onSelectMethod={handleSelectMethod}
-        onAmountReceivedChange={(value) => setAmountReceivedDraft(value)}
-        onConfirmPayment={handleConfirmPayment}
-      />
+        <div className="flex-1 bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col gap-8 overflow-hidden">
+          <div className="flex flex-col gap-4 overflow-hidden">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <Receipt className="w-6 h-6 text-orange-500" />
+              Chi tiết đơn hàng
+            </h2>
+            <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 custom-scrollbar">
+              {!orderData || orderData.items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-slate-300 italic">
+                  Không có sản phẩm nào
+                </div>
+              ) : (
+                orderData.items.map(item => (
+                  <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                    <div className="flex items-center gap-4">
+                      <span className="w-10 h-10 bg-white shadow-sm flex items-center justify-center rounded-xl font-black text-slate-700">{item.quantity}</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800">{item.itemName}</span>
+                        <span className="text-xs text-slate-400 font-medium">{item.unitPrice.toLocaleString('vi-VN')} ₫ / món</span>
+                      </div>
+                    </div>
+                    <span className="font-black text-slate-900">{item.totalPrice.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="pt-6 border-t-2 border-slate-50 flex flex-col gap-3 mt-auto">
+            <div className="flex justify-between text-slate-500 font-medium">
+              <span>Tạm tính</span>
+              <span>{subtotal.toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div className="flex justify-between text-slate-500 font-medium">
+              <span>VAT (8%)</span>
+              <span>{tax.toLocaleString('vi-VN')} ₫</span>
+            </div>
+            <div className="flex justify-between text-4xl font-black text-slate-900 mt-2 tracking-tighter">
+              <span>Tổng thanh toán</span>
+              <span className="text-orange-500">{total.toLocaleString('vi-VN')} ₫</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-[480px] flex flex-col gap-6">
+        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col gap-8 h-full">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-slate-800">Phương thức thanh toán</h2>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => setSelectedMethod('CASH')}
+                className={`flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all duration-300 ${
+                  selectedMethod === 'CASH' 
+                    ? 'border-orange-500 bg-orange-50 shadow-xl shadow-orange-500/5 lg:scale-[1.02]' 
+                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-200'
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${selectedMethod === 'CASH' ? 'bg-white' : 'bg-slate-100'}`}>
+                  <Wallet className="w-6 h-6 text-green-500" />
+                </div>
+                <span className="font-bold text-lg text-slate-800">Tiền mặt</span>
+                {selectedMethod === 'CASH' && (
+                  <motion.div layoutId="check" className="ml-auto">
+                    <CheckCircle2 className="w-7 h-7 text-orange-500" />
+                  </motion.div>
+                )}
+              </button>
+
+              <button
+                onClick={() => setSelectedMethod('VIETQR')}
+                className={`flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all duration-300 ${
+                  selectedMethod === 'VIETQR' 
+                    ? 'border-orange-500 bg-orange-50 shadow-xl shadow-orange-500/5 lg:scale-[1.02]' 
+                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-200'
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${selectedMethod === 'VIETQR' ? 'bg-white' : 'bg-slate-100'}`}>
+                  <Smartphone className="w-6 h-6 text-orange-500" />
+                </div>
+                <span className="font-bold text-lg text-slate-800">VietQR</span>
+                {selectedMethod === 'VIETQR' && (
+                  <motion.div layoutId="check" className="ml-auto">
+                    <CheckCircle2 className="w-7 h-7 text-orange-500" />
+                  </motion.div>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {selectedMethod === 'CASH' && (
+              <motion.div 
+                key="cash-ui"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex flex-col gap-4 bg-slate-50 p-6 rounded-[24px] border border-slate-100"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Banknote className="w-5 h-5 text-green-500" />
+                  <span className="font-bold text-slate-700">Thanh toán tiền mặt</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-1">Số tiền khách đưa</label>
+                  <div className="relative">
+                    <Input 
+                      type="number"
+                      placeholder="Nhập số tiền..."
+                      className="h-14 pl-6 pr-12 rounded-2xl bg-white border-slate-100 text-xl font-black text-slate-800 focus-visible:ring-orange-500"
+                      value={amountReceived}
+                      onChange={(e) => setAmountReceived(Number(e.target.value) || '')}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mt-2 px-1">
+                  <span className="text-slate-500 font-medium">Tiền thừa trả khách:</span>
+                  <span className="text-xl font-black text-emerald-500">{changeAmount.toLocaleString('vi-VN')} ₫</span>
+                </div>
+              </motion.div>
+            )}
+
+            {selectedMethod === 'VIETQR' && (
+              <motion.div 
+                key="qr-ui"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex flex-col items-center gap-4 bg-slate-50 p-6 rounded-[24px] border border-slate-100"
+              >
+                <div className="w-full flex items-center gap-2 mb-2">
+                  <QrCode className="w-5 h-5 text-orange-500" />
+                  <span className="font-bold text-slate-700">Mã QR VietQR động</span>
+                </div>
+                
+                <div className="w-48 h-48 bg-white rounded-3xl p-3 shadow-inner flex items-center justify-center border-2 border-dashed border-slate-200">
+                  {qrStep === 'GENERATING' ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Đang sinh mã...</span>
+                    </div>
+                  ) : (
+                    <motion.img 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      src={qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SMARTFNB_ORDER_${total}`}
+                      alt="VietQR"
+                      className="w-full h-full object-contain"
+                    />
+                  )}
+                </div>
+                
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trạng thái giao dịch</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-sm font-bold text-blue-600">Đang chờ thanh toán...</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="mt-auto pt-6 border-t border-slate-50">
+            <Button 
+              disabled={isProcessing || !canConfirm || !orderData}
+              onClick={handlePay}
+              className={`w-full h-16 rounded-[24px] text-xl font-black shadow-xl transition-all active:scale-95 group ${
+                canConfirm 
+                  ? 'bg-slate-900 hover:bg-orange-500 text-white shadow-slate-200' 
+                  : 'bg-slate-100 text-slate-400 shadow-none'
+              }`}
+            >
+              {isProcessing ? (
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  Đang xác thực...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {!canConfirm ? 'Vui lòng nhập đủ tiền' : 'Xác nhận Đã thanh toán'}
+                  {canConfirm && <ChevronRight className="w-7 h-7 group-hover:translate-x-1 transition-transform" />}
+                </div>
+              )}
+            </Button>
+            <p className="text-center text-slate-400 text-[11px] font-medium leading-relaxed mt-4 px-4">
+              Xác nhận thanh toán sẽ cập nhật trạng thái đơn hàng và in hóa đơn GTGT.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default PaymentPage;
