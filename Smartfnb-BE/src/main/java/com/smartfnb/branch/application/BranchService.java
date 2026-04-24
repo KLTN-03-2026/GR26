@@ -75,17 +75,19 @@ public class BranchService {
         // 1. Kiểm tra gói subscription hiện tại
         SubscriptionResponse currentSub = subscriptionService.getCurrentSubscription(tenantId);
         
-        // 2. Đọc cấu hình maxBranches từ Plan
-        int maxBranches = currentSub.plan().maxBranches();
+        // 2. Đọc cấu hình maxBranches từ Plan (có thể null nếu là Premium)
+        Integer maxBranches = currentSub.plan().maxBranches();
 
-        // 3. Đếm số chi nhánh hiện tại
-        long currentBranchCount = branchRepository.countByTenantId(tenantId);
+        // Validate nếu có giới hạn
+        if (maxBranches != null) {
+            // 3. Đếm số chi nhánh hiện tại (chỉ đếm ACTIVE để không tính các chi nhánh đã xoá/tạm dừng)
+            long currentBranchCount = branchRepository.countByTenantIdAndStatus(tenantId, "ACTIVE");
 
-        // 4. Validate
-        if (currentBranchCount >= maxBranches) {
-            throw new SmartFnbException("PLAN_LIMIT_EXCEEDED", 
-                    "Số lượng chi nhánh đã đạt giới hạn của gói dịch vụ hiện tại (" + maxBranches + "). Vui lòng nâng cấp gói.", 
-                    403);
+            if (currentBranchCount >= maxBranches) {
+                throw new SmartFnbException("PLAN_LIMIT_EXCEEDED", 
+                        "Số lượng chi nhánh đã đạt giới hạn của gói dịch vụ hiện tại (" + maxBranches + "). Vui lòng nâng cấp gói.", 
+                        403);
+            }
         }
 
         // 5. Tạo mới chi nhánh

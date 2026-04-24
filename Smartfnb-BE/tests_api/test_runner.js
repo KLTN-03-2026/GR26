@@ -1064,6 +1064,75 @@ async function runTests() {
             if (res.status !== 200) throw new Error("Reactivate tenant thất bại");
             console.log("   ✅ Reactivate tenant thành công.");
         }
+        // --- S-PLAN-LIMITS ---
+        console.log("\n=== S-PLAN-LIMITS: Kiểm tra tính đúng đắn của giới hạn gói (Gói Free) ===");
+        const freeEmail = `free_tenant_${Date.now()}@test.com`;
+        res = await request('/auth/register', 'POST', {
+            tenantName: "Quán Free Mode",
+            email: freeEmail,
+            password: "Password123!",
+            ownerName: "Free Owner",
+            planSlug: "free"
+        });
+        if (res.status !== 200 && res.status !== 201) throw new Error("Register Free Tenant failed");
+
+        res = await request('/auth/login', 'POST', { email: freeEmail, password: "Password123!" });
+        if (res.status !== 200) throw new Error("Login Free Tenant failed");
+        let freeToken = res.data.data.accessToken || res.data.data.token;
+        const freeTenantId = res.data.data.tenantId;
+
+        console.log("   ✅ Đăng ký Tenant Free thành công.");
+
+        // Tạo 1 Category để test
+        res = await request('/menu/categories', 'POST', { name: "Free Cat", displayOrder: 1, isActive: true }, freeToken);
+        const freeCatId = res.data.data.id;
+
+        console.log("-> Test Limit: Menu Items (Max 10)");
+        for (let i = 1; i <= 10; i++) {
+            res = await requestMultipart('/menu/items', 'POST', { categoryId: freeCatId, name: `Món Free ${i}`, basePrice: 10000, unit: "Ly" }, null, freeToken);
+            if (res.status !== 200 && res.status !== 201) throw new Error(`[Free Limit] Lỗi khi tạo món thứ ${i}`);
+        }
+        console.log("   ✅ Đã tạo thành công 10 món ẩm thực.");
+
+        // Món 11 phải fail
+        res = await requestMultipart('/menu/items', 'POST', { categoryId: freeCatId, name: "Món Free 11 (Vượt Limit)", basePrice: 10000, unit: "Ly" }, null, freeToken);
+        if (res.status === 403 && res.data?.error?.code === 'PLAN_LIMIT_EXCEEDED') {
+            console.log("   ✅ Đã CHẶN đúng tạo món thứ 11 (403 PLAN_LIMIT_EXCEEDED).");
+        } else {
+            throw new Error(`[Free Limit] Test Menu Limit FAILED. Expected 403, got ${res.status}. Data: ${JSON.stringify(res.data)}`);
+        }
+
+        console.log("-> Test Limit: Staff (Max 3)");
+        // Lấy list position để tạo
+        res = await request('/positions', 'POST', { name: "Pos", description: "Pos" }, freeToken);
+        const freePosId = res.data.data;
+
+        for (let i = 1; i <= 2; i++) {
+            res = await request('/staff', 'POST', { positionId: freePosId, fullName: `Staff Free ${i}`, email: `stafffree${i}_${Date.now()}@test.com`, phone: `090000000${i}`, employeeCode: `F-${i}`, hireDate: "2026-05-01" }, freeToken);
+            if (res.status !== 200 && res.status !== 201) throw new Error(`[Free Limit] Lỗi khi tạo nhân viên thứ ${i} (Data: ${JSON.stringify(res.data)})`);
+        }
+        console.log("   ✅ Đã tạo thành công 2 nhân viên (sẵn 1 Owner). Tổng: 3.");
+
+        // Nhân viên thứ 3 phải fail (sẽ vượt 3)
+        res = await request('/staff', 'POST', { positionId: freePosId, fullName: `Staff Free 3`, email: `stafffree3_${Date.now()}@test.com`, phone: `0900000003`, employeeCode: `F-3`, hireDate: "2026-05-01" }, freeToken);
+        if (res.status === 403 && res.data?.error?.code === 'PLAN_LIMIT_EXCEEDED') {
+            console.log("   ✅ Đã CHẶN đúng tạo nhân viên thứ 3 (403 PLAN_LIMIT_EXCEEDED).");
+        } else {
+            throw new Error(`[Free Limit] Test Staff Limit FAILED. Expected 403, got ${res.status}. Data: ${JSON.stringify(res.data)}`);
+        }
+
+        console.log("-> Test Limit: Branches (Max 1)");
+        res = await request('/branches', 'POST', { name: "Free Branch 1", code: "FB1", address: "" }, freeToken);
+        if (res.status !== 200 && res.status !== 201) throw new Error("[Free Limit] Lỗi khi tạo chi nhánh thứ 1");
+        console.log("   ✅ Đã tạo thành công 1 chi nhánh (Limit: 1).");
+
+        res = await request('/branches', 'POST', { name: "Free Branch 2 (Vượt)", code: "FB2", address: "" }, freeToken);
+        if (res.status === 403 && res.data?.error?.code === 'PLAN_LIMIT_EXCEEDED') {
+            console.log("   ✅ Đã CHẶN đúng tạo chi nhánh thứ 2 (403 PLAN_LIMIT_EXCEEDED).");
+        } else {
+            throw new Error(`[Free Limit] Test Branch Limit FAILED. Expected 403, got ${res.status}`);
+        }
+        console.log("   🎉 Tính năng Dynamic Plan Limits hoạt động Hoàn Hảo!");
 
         console.log("\n=== S-ADMIN SUMMARY ===");
         console.log("✅ ADMIN.1-2: Plan Management CRUD - PASSED");

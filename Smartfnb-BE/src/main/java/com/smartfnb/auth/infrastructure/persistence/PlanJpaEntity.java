@@ -41,10 +41,18 @@ public class PlanJpaEntity {
     @Column(name = "price_monthly", nullable = false)
     private BigDecimal priceMonthly;
 
-    /** Số chi nhánh tối đa được tạo */
-    @Column(name = "max_branches", nullable = false)
+    /** Số chi nhánh tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_branches")
     @Builder.Default
-    private int maxBranches = 1;
+    private Integer maxBranches = 1;
+
+    /** Số nhân viên tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_staff")
+    private Integer maxStaff;
+
+    /** Số món ăn tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_menu_items")
+    private Integer maxMenuItems;
 
     /**
      * Feature flags dạng JSON.

@@ -53,6 +53,8 @@ public class PlanService {
                 .slug(request.slug())
                 .priceMonthly(request.priceMonthly())
                 .maxBranches(request.maxBranches())
+                .maxStaff(request.maxStaff())
+                .maxMenuItems(request.maxMenuItems())
                 .isActive(request.isActive())
                 .build();
 

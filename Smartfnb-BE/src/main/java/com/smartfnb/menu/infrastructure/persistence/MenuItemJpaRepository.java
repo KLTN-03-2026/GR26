@@ -114,4 +114,9 @@ public interface MenuItemJpaRepository
            "AND m.type = 'SELLABLE' AND m.isActive = true AND m.deletedAt IS NULL " +
            "ORDER BY m.name ASC")
     List<MenuItemJpaEntity> findAllActiveByTenant(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Đếm số lượng món ăn chưa bị xóa của tenant.
+     */
+    long countByTenantIdAndDeletedAtIsNull(UUID tenantId);
 }

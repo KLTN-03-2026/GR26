@@ -93,6 +93,8 @@ public class PlanAdminService {
         entity.setName(request.name());
         entity.setPriceMonthly(request.priceMonthly());
         entity.setMaxBranches(request.maxBranches());
+        entity.setMaxStaff(request.maxStaff());
+        entity.setMaxMenuItems(request.maxMenuItems());
         entity.setActive(request.isActive());
 
         // Cập nhật features: chuyển Map<String,Boolean> → FeatureFlag → JSON

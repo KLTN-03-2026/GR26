@@ -74,4 +74,14 @@ public interface StaffJpaRepository
      * @return Danh sách nhân viên
      */
     List<StaffJpaEntity> findByTenantIdAndStatus(UUID tenantId, String status);
+
+    /**
+     * Đếm số nhân viên theo trạng thái.
+     */
+    long countByTenantIdAndStatus(UUID tenantId, String status);
+
+    /**
+     * Đếm tổng số nhân viên của tenant.
+     */
+    long countByTenantId(UUID tenantId);
 }

@@ -26,9 +26,17 @@ public record UpdatePlanRequest(
         @Positive(message = "Giá gói phải lớn hơn 0")
         BigDecimal priceMonthly,
 
-        /** Số chi nhánh tối đa — tối thiểu 1 */
-        @Min(value = 1, message = "Số chi nhánh tối đa phải ít nhất là 1")
-        int maxBranches,
+        /** Số chi nhánh tối đa (null = không giới hạn) */
+        @Min(value = 0, message = "Số chi nhánh tối đa phải >= 0")
+        Integer maxBranches,
+
+        /** Số nhân viên tối đa (null = không giới hạn) */
+        @Min(value = 0, message = "Số nhân viên tối đa phải >= 0")
+        Integer maxStaff,
+
+        /** Số món ăn tối đa (null = không giới hạn) */
+        @Min(value = 0, message = "Số món ăn tối đa phải >= 0")
+        Integer maxMenuItems,
 
         /**
          * Feature flags theo từng tính năng.
