@@ -20,6 +20,9 @@ import com.smartfnb.report.application.query.inventory.*;
 import com.smartfnb.report.application.query.hr.*;
 import com.smartfnb.report.application.query.handler.inventory.*;
 import com.smartfnb.report.application.query.handler.hr.*;
+import com.smartfnb.report.application.dto.financial.FinancialInvoiceDto;
+import com.smartfnb.report.application.query.financial.GetFinancialInvoicesQuery;
+import com.smartfnb.report.application.query.handler.financial.GetFinancialInvoicesQueryHandler;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.web.ApiResponse;
 import jakarta.validation.Valid;
@@ -77,6 +80,7 @@ public class ReportController {
     private final GetHourlyRevenueHeatmapQueryHandler getHourlyRevenueHeatmapQueryHandler;
     private final GetTopItemsQueryHandler getTopItemsQueryHandler;
     private final GetPaymentMethodBreakdownQueryHandler getPaymentMethodBreakdownQueryHandler;
+    private final GetFinancialInvoicesQueryHandler getFinancialInvoicesQueryHandler;
     
     // S-19 Handlers (Inventory Reports)
     private final GetInventoryStockQueryHandler getInventoryStockQueryHandler;
@@ -199,6 +203,41 @@ public class ReportController {
         
         GetPaymentMethodBreakdownQuery query = new GetPaymentMethodBreakdownQuery(branchId, reportDate);
         PaymentMethodBreakdownResult result = getPaymentMethodBreakdownQueryHandler.handle(query);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    /**
+     * Lấy báo cáo hóa đơn tài chính (Thu / Chi).
+     * @param startDate Ngày bắt đầu
+     * @param endDate Ngày kết thúc
+     */
+    @Operation(summary = "Lịch sử hóa đơn Thu/Chi", description = "Lấy danh sách kết hợp hóa đơn thu (từ thu ngân) và chi (chi phí) có lọc theo ngày.")
+    @GetMapping("/financial/invoices")
+    @PreAuthorize("hasAuthority('REPORT_REVENUE') or hasAuthority('REPORT_FINANCIAL') or hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<Page<FinancialInvoiceDto>>> getFinancialInvoices(
+            @RequestParam(required = false) UUID branchId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        UUID effectiveBranchId = (branchId != null) ? branchId : TenantContext.getCurrentBranchId();
+        log.info("GET /reports/financial/invoices: branchId={}, startDate={}, endDate={}", effectiveBranchId, startDate, endDate);
+        
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate must be before or equal to endDate");
+        }
+
+        GetFinancialInvoicesQuery query = GetFinancialInvoicesQuery.builder()
+            .tenantId(TenantContext.getCurrentTenantId())
+            .branchId(effectiveBranchId)
+            .startDate(startDate)
+            .endDate(endDate)
+            .page(page)
+            .pageSize(size)
+            .build();
+        
+        Page<FinancialInvoiceDto> result = getFinancialInvoicesQueryHandler.handle(query);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
