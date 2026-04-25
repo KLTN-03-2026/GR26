@@ -12,7 +12,7 @@ import lombok.Getter;
  *   throw new SmartFnbException("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng với id: " + orderId);
  * }</pre>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Getter

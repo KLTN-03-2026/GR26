@@ -73,4 +73,5 @@ Smartfnb-BE/uploads/
 
 AI_PROJECT_STRUCTURE.md
 CLAUDE_CODE_PROMPT.md
-scripts/*
+scripts/**.dump
+*.txt

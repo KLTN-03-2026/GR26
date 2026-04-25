@@ -32,10 +32,12 @@ class TrainResult(BaseModel):
 
     tenant_id: str
     status: Literal["success", "skipped", "failed"]  # Kết quả train
-    series_count: int                                  # Số series đã train
+    series_count: int                                  # Số series đã train thành công
     mae: float | None                                  # MAE cuối cùng (None nếu failed)
+    mape: float | None = None                          # MAPE % — dễ giải thích hơn MAE (VD: 8.7%)
     duration_seconds: float                            # Thời gian train (giây)
     model_path: str | None                             # Path file .np đã lưu
+    series_skipped: list[str] = []                     # Series bị skip do không đủ data (< 30 ngày)
     error: str | None = None                           # Mô tả lỗi nếu failed
 
 

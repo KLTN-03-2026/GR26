@@ -9,7 +9,7 @@ import java.math.BigDecimal;
  * DTO request thiết lập giá riêng cho món ăn tại một chi nhánh.
  * branchId lấy từ path variable; itemId lấy từ path variable.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record SetBranchItemPriceRequest(

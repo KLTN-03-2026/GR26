@@ -18,7 +18,7 @@ import java.util.UUID;
 /**
  * Controller quản lý chi nhánh của Tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @RestController
@@ -37,9 +37,19 @@ public class BranchController {
     @PreAuthorize("hasPermission(null, 'BRANCH_VIEW') or hasPermission(null, 'BRANCH_EDIT')")
     public ResponseEntity<ApiResponse<List<BranchResponse>>> getAllBranches() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-         return ResponseEntity.ok(ApiResponse.ok(
-                branchService.getAllBranchesByTenant(tenantId)
-        ));
+        String currentRole = TenantContext.getCurrentRole();
+        
+        // Nếu là OWNER hoặc chưa có role cụ thể (super_admin) thì lấy tất cả, ngược lại chỉ lấy branch được gán
+        if ("OWNER".equals(currentRole) || "SUPER_ADMIN".equals(currentRole)) {
+            return ResponseEntity.ok(ApiResponse.ok(
+                    branchService.getAllBranchesByTenant(tenantId)
+            ));
+        } else {
+            UUID userId = TenantContext.getCurrentUserId();
+            return ResponseEntity.ok(ApiResponse.ok(
+                    branchService.getAssignedBranches(tenantId, userId)
+            ));
+        }
     }
 
     /**

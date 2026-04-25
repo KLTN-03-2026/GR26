@@ -4,7 +4,7 @@ package com.smartfnb.expense.domain.model;
  * Trạng thái của Hóa đơn chi.
  * Sử dụng soft delete (deleted flag) thay vì CANCELLED status.
  * 
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-17
  */
 public enum ExpenseStatus {

@@ -12,7 +12,7 @@ import java.util.UUID;
  * @param startingCash    Tiền mặt đầu ca (≥ 0)
  * @param shiftScheduleId UUID ca làm việc liên kết (tuỳ chọn)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record OpenPosSessionRequest(

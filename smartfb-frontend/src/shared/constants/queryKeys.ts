@@ -88,6 +88,13 @@ export const queryKeys = {
     orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
   },
 
+  // Expenses
+  expenses: {
+    all: ['expenses'] as const,
+    list: (filters?: Record<string, unknown>) => ['expenses', 'list', filters] as const,
+    detail: (id: string) => ['expenses', 'detail', id] as const,
+  },
+
   // Inventory
   inventory: {
     balances: {
@@ -147,8 +154,27 @@ export const queryKeys = {
 
   // Reports
   reports: {
+    // Báo cáo doanh thu tổng quan theo khoảng ngày của một chi nhánh.
     revenue: (filters?: Record<string, unknown>) => ['reports', 'revenue', filters] as const,
+    // Heatmap doanh thu theo từng giờ trong một ngày để dựng chart cột.
+    hourlyHeatmap: (filters?: Record<string, unknown>) => ['reports', 'hourly-heatmap', filters] as const,
+    // Top sản phẩm bán chạy trong ngày của chi nhánh đang chọn.
+    topItems: (filters?: Record<string, unknown>) => ['reports', 'top-items', filters] as const,
+    // Tỷ trọng thanh toán theo phương thức để hiển thị breakdown.
+    paymentBreakdown: (filters?: Record<string, unknown>) => ['reports', 'payment-breakdown', filters] as const,
     inventory: (filters?: Record<string, unknown>) => ['reports', 'inventory', filters] as const,
+    // Tồn kho hiện tại theo chi nhánh.
+    inventoryStock: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'stock', filters] as const,
+    // Lô hàng sắp hết hạn theo ngưỡng ngày.
+    inventoryExpiring: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'expiring', filters] as const,
+    // Hao hụt nguyên liệu trong khoảng ngày.
+    inventoryWaste: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'waste', filters] as const,
     hr: (filters?: Record<string, unknown>) => ['reports', 'hr', filters] as const,
+    // Chấm công tháng theo chi nhánh.
+    hrAttendance: (filters?: Record<string, unknown>) => ['reports', 'hr', 'attendance', filters] as const,
+    // Tổng chi phí nhân sự tháng.
+    hrCost: (filters?: Record<string, unknown>) => ['reports', 'hr', 'cost', filters] as const,
+    // Vi phạm chấm công trong khoảng ngày.
+    hrViolations: (filters?: Record<string, unknown>) => ['reports', 'hr', 'violations', filters] as const,
   },
 } as const;

@@ -12,7 +12,7 @@ import java.util.UUID;
  * Đại diện cho khu vực/tầng trong chi nhánh (VD: Tầng 1, Sân thượng, VIP).
  * Unique constraint: (branch_id, name).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Entity

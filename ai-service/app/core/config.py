@@ -55,9 +55,11 @@ class Settings(BaseSettings):
     weather_cache_days: int = 1
 
     # --- NeuralProphet ---
-    np_n_lags: int = 14
+    np_n_lags: int = 28
     np_n_forecasts: int = 7
-    np_epochs: int = 100
+    np_epochs: int = 150
+    np_batch_size: int = 32
+    np_min_days_required: int = 30
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

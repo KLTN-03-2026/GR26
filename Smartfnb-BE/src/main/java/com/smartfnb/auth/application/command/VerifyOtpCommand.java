@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
  *
  * @param email  địa chỉ email tài khoản
  * @param otp    mã OTP 6 số nhận được
- * @author SmartF&amp;B Team
+ * @author vutq
  * @since 2026-03-26
  */
 public record VerifyOtpCommand(

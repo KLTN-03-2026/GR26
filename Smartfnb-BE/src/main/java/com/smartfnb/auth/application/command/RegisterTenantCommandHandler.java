@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  *   <li>Tạo và trả JWT ngay (không cần đăng nhập lại)</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j
@@ -83,10 +83,12 @@ public class RegisterTenantCommandHandler {
                 .orElseThrow(() -> new SmartFnbException("PLAN_NOT_FOUND",
                         "Gói dịch vụ '" + command.planSlug() + "' không tồn tại"));
 
+        String defaultTenantName = command.ownerName() + " Store";
+
         // 3. Tạo Tenant
         var tenant = TenantJpaEntity.builder()
-                .name(command.tenantName())
-                .slug(generateSlug(command.tenantName()))
+                .name(defaultTenantName)
+                .slug(generateSlug(defaultTenantName))
                 .email(command.email())
                 .phone(command.phone())
                 .planId(plan.getId())

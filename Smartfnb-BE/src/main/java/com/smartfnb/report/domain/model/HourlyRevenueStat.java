@@ -8,7 +8,7 @@ import java.util.UUID;
  * Thống kê doanh thu theo giờ của ngày.
  * Dùng để render heatmap: trục X là giờ (0-23), trục Y là giá trị doanh thu/số đơn.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record HourlyRevenueStat(

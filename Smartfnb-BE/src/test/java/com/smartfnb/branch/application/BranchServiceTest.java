@@ -49,7 +49,7 @@ class BranchServiceTest {
     @BeforeEach
     void setUp() {
         tenantId = UUID.randomUUID();
-        request = new BranchRequest("Chi Nhánh Tôn Đức Thắng", "Tôn Đức Thắng, Q1", "0987654321", null);
+        request = new BranchRequest("Chi Nhánh Tôn Đức Thắng", "Tôn Đức Thắng, Q1", "0987654321", null, null, null);
     }
 
     @Test
@@ -57,7 +57,7 @@ class BranchServiceTest {
     void createBranch_Success_WhenUnderLimit() {
         // Arrange
         PlanResponse planResponse = new PlanResponse(
-                UUID.randomUUID(), "Basic", "basic", java.math.BigDecimal.ZERO, 3, new com.smartfnb.plan.domain.valueobject.FeatureFlag(true, false, false, false, false), true);
+                UUID.randomUUID(), "Basic", "basic", java.math.BigDecimal.ZERO, 3, null, null, new com.smartfnb.plan.domain.valueobject.FeatureFlag(true, false, false, false, false), true);
         SubscriptionResponse subResp = new SubscriptionResponse(
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
         
@@ -85,7 +85,7 @@ class BranchServiceTest {
     void createBranch_ThrowsException_WhenLimitExceeded() {
         // Arrange
         PlanResponse planResponse = new PlanResponse(
-                UUID.randomUUID(), "Basic", "basic", java.math.BigDecimal.ZERO, 1, new com.smartfnb.plan.domain.valueobject.FeatureFlag(true, false, false, false, false), true);
+                UUID.randomUUID(), "Basic", "basic", java.math.BigDecimal.ZERO, 1, null, null, new com.smartfnb.plan.domain.valueobject.FeatureFlag(true, false, false, false, false), true);
         SubscriptionResponse subResp = new SubscriptionResponse(
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
 
@@ -107,7 +107,7 @@ class BranchServiceTest {
     void createBranch_DefaultTo1Branch_WhenFeatureFlagIsMissing() {
         // Arrange
         PlanResponse planResponse = new PlanResponse(
-                UUID.randomUUID(), "MissingCfg", "miss", java.math.BigDecimal.ZERO, 1, new com.smartfnb.plan.domain.valueobject.FeatureFlag(false, false, false, false, false), true);
+                UUID.randomUUID(), "MissingCfg", "miss", java.math.BigDecimal.ZERO, 1, null, null, new com.smartfnb.plan.domain.valueobject.FeatureFlag(false, false, false, false, false), true);
         SubscriptionResponse subResp = new SubscriptionResponse(
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
 

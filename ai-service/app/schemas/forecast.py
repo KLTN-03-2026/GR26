@@ -17,6 +17,16 @@ class DayForecast(BaseModel):
     predicted_qty: float  # Tiêu thụ dự kiến theo đơn vị nguyên liệu
 
 
+class DayWeather(BaseModel):
+    """Thông tin thời tiết dự báo cho 1 ngày."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    date: date
+    temperature: float | None   # Nhiệt độ tối đa (°C)
+    precipitation: float | None  # Lượng mưa (mm)
+
+
 class IngredientForecast(BaseModel):
     """Dự báo cho 1 nguyên liệu trong 7 ngày tới — dùng trong API response đọc từ DB."""
 
@@ -40,14 +50,17 @@ class ForecastResponse(BaseModel):
 
     Bao gồm toàn bộ dự báo 7 ngày cho từng nguyên liệu của chi nhánh,
     kèm computed counts để FE hiển thị badge cảnh báo nhanh.
+    Thêm thông tin địa chỉ chi nhánh và dự báo thời tiết từng ngày.
     """
 
     model_config = ConfigDict(from_attributes=True)
 
     branch_id: str
     branch_name: str
+    branch_address: str | None            # Địa chỉ chi nhánh — None nếu chưa có
     generated_at: datetime                # Thời điểm predict job chạy
     last_trained_at: datetime | None      # Từ train_metadata.json — None nếu chưa train
+    weather_forecast: list[DayWeather]    # Thời tiết từng ngày trong kỳ dự báo
     ingredients: list[IngredientForecast]
 
     @computed_field  # type: ignore[misc]

@@ -82,7 +82,7 @@ const getCurrentBranchId = (): string => {
   const branchId = user?.branchId || session?.branchId;
 
   if (!branchId) {
-    throw new Error('Chưa chọn chi nhánh. Vui lòng đăng nhập và chọn chi nhánh làm việc.');
+    throw new Error('Chưa chọn chi nhánh. Vui lòng chọn chi nhánh làm việc.');
   }
 
   return branchId;

@@ -13,7 +13,7 @@ import java.util.UUID;
  * <p>Mỗi role thuộc về một tenant cụ thể (tenantId).
  * Các role hệ thống chuẩn: OWNER, MANAGER, CASHIER, BARISTA, WAITER.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @Entity

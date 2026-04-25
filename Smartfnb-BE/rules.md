@@ -35,7 +35,7 @@ Bạn hiểu rõ nghiệp vụ dự án **SmartF&B** — nền tảng quản lý
  * @param command lệnh tạo đơn hàng từ tầng web
  * @return kết quả chứa orderId và order_number
  * @throws InsufficientStockException nếu nguyên liệu không đủ
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-11
  */
 public PlaceOrderResult handle(PlaceOrderCommand command) { ... }

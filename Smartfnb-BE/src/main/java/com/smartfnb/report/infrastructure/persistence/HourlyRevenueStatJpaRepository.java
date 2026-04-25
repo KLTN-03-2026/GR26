@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * Spring Data JPA Repository cho HourlyRevenueStatJpaEntity.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Repository

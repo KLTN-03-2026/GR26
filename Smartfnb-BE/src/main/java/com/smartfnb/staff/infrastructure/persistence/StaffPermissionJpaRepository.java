@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * JPA Repository cho bảng permissions (seed data — chỉ đọc).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface StaffPermissionJpaRepository extends JpaRepository<PermissionJpaEntity, String> {

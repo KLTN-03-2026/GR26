@@ -22,7 +22,7 @@ import java.util.UUID;
  * Hỗ trợ CRUD bàn (soft delete) và endpoint Drag & Drop batch update vị trí.
  * Sau mỗi thao tác thay đổi layout bàn, broadcast qua WebSocket.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @RestController

@@ -12,7 +12,7 @@ import java.util.UUID;
  * JPA Entity cho bảng plans.
  * Đại diện cho gói dịch vụ SaaS: Basic / Standard / Premium.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Entity
@@ -41,10 +41,18 @@ public class PlanJpaEntity {
     @Column(name = "price_monthly", nullable = false)
     private BigDecimal priceMonthly;
 
-    /** Số chi nhánh tối đa được tạo */
-    @Column(name = "max_branches", nullable = false)
+    /** Số chi nhánh tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_branches")
     @Builder.Default
-    private int maxBranches = 1;
+    private Integer maxBranches = 1;
+
+    /** Số nhân viên tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_staff")
+    private Integer maxStaff;
+
+    /** Số món ăn tối đa được tạo (NULL = không giới hạn) */
+    @Column(name = "max_menu_items")
+    private Integer maxMenuItems;
 
     /**
      * Feature flags dạng JSON.

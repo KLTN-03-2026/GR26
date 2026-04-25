@@ -107,7 +107,7 @@ export const Sidebar: FC<SidebarProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsBranchDropdownOpen(!isBranchDropdownOpen)}
-            onBlur={() => setTimeout(() => setIsBranchDropdownOpen(false), 200)}
+            onBlur={() => () => setIsBranchDropdownOpen(false)}
             className={cn(
               'w-full flex items-center gap-2 rounded-full border px-3 py-2 transition-all duration-150',
               'text-sm font-medium',

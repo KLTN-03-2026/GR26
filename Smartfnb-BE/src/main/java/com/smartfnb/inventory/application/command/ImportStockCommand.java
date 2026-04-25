@@ -21,7 +21,7 @@ import java.util.UUID;
  * @param expiresAt   hạn sử dụng (nullable)
  * @param note        ghi chú nhập kho
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 public record ImportStockCommand(

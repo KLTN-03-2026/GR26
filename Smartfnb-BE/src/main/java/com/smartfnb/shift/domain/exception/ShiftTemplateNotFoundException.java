@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy ShiftTemplate.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public class ShiftTemplateNotFoundException extends SmartFnbException {

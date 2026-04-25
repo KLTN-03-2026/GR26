@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Query Handler lấy lịch sử giao dịch kho có phân trang và filter.
  * Enrich tên nguyên liệu và tên nhân viên qua batch-lookup để tránh N+1.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-14
  */
 @Component

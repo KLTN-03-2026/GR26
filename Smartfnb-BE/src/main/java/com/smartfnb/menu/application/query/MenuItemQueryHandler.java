@@ -25,7 +25,7 @@ import java.util.UUID;
  * Query Handler xử lý các truy vấn READ-ONLY cho món ăn và branch items.
  * Hỗ trợ tìm kiếm pg_trgm và lấy giá theo chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component
@@ -118,5 +118,27 @@ public class MenuItemQueryHandler {
                 .findByIdBranchIdAndIdItemId(branchId, itemId);
 
         return BranchItemResponse.from(item, branchItem.orElse(null), branchId);
+    }
+
+    /**
+     * Lấy danh sách toàn bộ món ăn tại một chi nhánh, kèm giá kết hợp (nếu có).
+     */
+    public List<BranchItemResponse> listBranchMenuItems(UUID branchId) {
+        UUID tenantId = TenantContext.requireCurrentTenantId();
+
+        // Lấy tất cả menu items đang active của tenant
+        List<MenuItemJpaEntity> activeItems = menuItemJpaRepository.findAllActiveByTenant(tenantId);
+        
+        // Lấy tất cả branch items đè giá của chi nhánh này
+        java.util.Map<UUID, BranchItemJpaEntity> branchItemsMap = branchItemJpaRepository.findByIdBranchId(branchId)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        b -> b.getId().getItemId(),
+                        b -> b
+                ));
+
+        return activeItems.stream()
+                .map(item -> BranchItemResponse.from(item, branchItemsMap.get(item.getId()), branchId))
+                .toList();
     }
 }

@@ -10,9 +10,14 @@ import java.util.UUID;
 public interface BranchJpaRepository extends JpaRepository<BranchJpaEntity, UUID> {
     
     /**
-     * Đếm số chi nhánh hiện có của 1 Tenant (để validate max_branches).
+     * Đếm số chi nhánh hiện có của 1 Tenant (để validate tổng quát).
      */
     long countByTenantId(UUID tenantId);
+
+    /**
+     * Đếm số chi nhánh theo trạng thái.
+     */
+    long countByTenantIdAndStatus(UUID tenantId, String status);
 
     /**
      * Lấy danh sách toàn bộ chi nhánh của Tenant.

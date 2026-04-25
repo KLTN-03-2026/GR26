@@ -26,7 +26,7 @@ import java.time.LocalTime;
  *   <li>Status phải là CHECKED_IN</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

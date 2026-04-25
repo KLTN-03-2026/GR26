@@ -10,7 +10,7 @@ import java.util.UUID;
  * tenantId không nhận từ client — lấy từ JWT qua TenantContext.
  * imageUrl không nhận từ đây — nhận qua @RequestPart("image") MultipartFile.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record CreateMenuItemRequest(

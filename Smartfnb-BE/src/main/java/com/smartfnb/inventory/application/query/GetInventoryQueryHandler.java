@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * </ul>
  * </p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Component

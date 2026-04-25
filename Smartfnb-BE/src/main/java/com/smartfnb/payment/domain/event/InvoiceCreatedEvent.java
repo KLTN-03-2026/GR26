@@ -10,7 +10,7 @@ import java.util.UUID;
  * - Ghi log audit
  * - Gửi thông báo cho khách hàng
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record InvoiceCreatedEvent(

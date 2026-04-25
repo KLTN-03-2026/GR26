@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * Service xử lý các nghiệp vụ liên quan đến chi nhánh.
  * Bao gồm logic kiểm tra số lượng chi nhánh theo gói dịch vụ (Plan) đang sử dụng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @Service
@@ -49,6 +49,22 @@ public class BranchService {
     }
 
     /**
+     * Lấy danh sách chi nhánh mà nhân viên được gán.
+     */
+    @Transactional(readOnly = true)
+    public List<BranchResponse> getAssignedBranches(UUID tenantId, UUID userId) {
+        List<UUID> assignedBranchIds = branchUserRepository.findByUserId(userId)
+                .stream()
+                .map(com.smartfnb.branch.infrastructure.persistence.BranchUserJpaEntity::getBranchId)
+                .toList();
+
+        return branchRepository.findAllById(assignedBranchIds).stream()
+                .filter(b -> b.getTenantId().equals(tenantId)) // Double check tenant
+                .map(BranchResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Tạo mới một chi nhánh cho Tenant.
      * Validate: tenant không được vượt quá số lượng chi nhánh tối đa (maxBranches) của gói Plan.
      */
@@ -59,17 +75,19 @@ public class BranchService {
         // 1. Kiểm tra gói subscription hiện tại
         SubscriptionResponse currentSub = subscriptionService.getCurrentSubscription(tenantId);
         
-        // 2. Đọc cấu hình maxBranches từ Plan
-        int maxBranches = currentSub.plan().maxBranches();
+        // 2. Đọc cấu hình maxBranches từ Plan (có thể null nếu là Premium)
+        Integer maxBranches = currentSub.plan().maxBranches();
 
-        // 3. Đếm số chi nhánh hiện tại
-        long currentBranchCount = branchRepository.countByTenantId(tenantId);
+        // Validate nếu có giới hạn
+        if (maxBranches != null) {
+            // 3. Đếm số chi nhánh hiện tại (chỉ đếm ACTIVE để không tính các chi nhánh đã xoá/tạm dừng)
+            long currentBranchCount = branchRepository.countByTenantIdAndStatus(tenantId, "ACTIVE");
 
-        // 4. Validate
-        if (currentBranchCount >= maxBranches) {
-            throw new SmartFnbException("PLAN_LIMIT_EXCEEDED", 
-                    "Số lượng chi nhánh đã đạt giới hạn của gói dịch vụ hiện tại (" + maxBranches + "). Vui lòng nâng cấp gói.", 
-                    403);
+            if (currentBranchCount >= maxBranches) {
+                throw new SmartFnbException("PLAN_LIMIT_EXCEEDED", 
+                        "Số lượng chi nhánh đã đạt giới hạn của gói dịch vụ hiện tại (" + maxBranches + "). Vui lòng nâng cấp gói.", 
+                        403);
+            }
         }
 
         // 5. Tạo mới chi nhánh
@@ -79,6 +97,8 @@ public class BranchService {
                 .code(request.code())
                 .address(request.address())
                 .phone(request.phone())
+                .latitude(request.latitude())
+                .longitude(request.longitude())
                 .status("ACTIVE")
                 .build();
 
@@ -103,6 +123,8 @@ public class BranchService {
         branch.setCode(request.code());
         branch.setAddress(request.address());
         branch.setPhone(request.phone());
+        branch.setLatitude(request.latitude());
+        branch.setLongitude(request.longitude());
 
         branch = branchRepository.save(branch);
         return BranchResponse.fromEntity(branch);

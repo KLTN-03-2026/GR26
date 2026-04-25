@@ -10,7 +10,7 @@ import java.util.UUID;
  * DTO response trả về thông tin item (SELLABLE | INGREDIENT | SUB_ASSEMBLY).
  * Không expose tenantId nội bộ.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record MenuItemResponse(

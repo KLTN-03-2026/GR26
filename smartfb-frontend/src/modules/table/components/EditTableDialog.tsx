@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,7 +25,6 @@ import {
 import { useEditTable } from '../hooks/useEditTable';
 import type { TableItem, TableArea, UpdateTablePayload } from '../types/table.types';
 
-
 // SỬA: Schema dùng zoneId thay vì areaName
 const editTableSchema = z.object({
   name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
@@ -49,6 +49,11 @@ interface EditTableDialogProps {
 
 export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }: EditTableDialogProps) => {
   const { mutate: editTable, isPending, isError, error } = useEditTable();
+
+  const hasActiveOrder =
+    table.usageStatus === 'occupied' ||
+    table.usageStatus === 'unpaid' ||
+    table.usageStatus === 'reserved';
 
   const {
     register,
@@ -83,11 +88,12 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
   const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: EditTableFormData) => {
+    if (hasActiveOrder) return;
     const payload: UpdateTablePayload = {
       name: data.name,
-      zoneId: data.zoneId,  // ĐỔI: areaId -> zoneId
+      zoneId: data.zoneId,
       capacity: data.capacity,
-      isActive: data.isActive,  // ĐỔI: status -> isActive
+      isActive: data.isActive,
     };
     
     editTable(
@@ -111,11 +117,24 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
           </DialogDescription>
         </DialogHeader>
 
+        {hasActiveOrder && (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <div className="text-sm">
+              <p className="font-semibold text-amber-800">Không thể chỉnh sửa bàn này</p>
+              <p className="mt-0.5 text-amber-700">
+                Bàn đang có đơn hàng ({table.usageStatus === 'unpaid' ? 'chờ thanh toán' : table.usageStatus === 'reserved' ? 'đã đặt trước' : 'đang phục vụ'}).
+                Vui lòng hoàn tất hoặc hủy đơn trước khi chỉnh sửa.
+              </p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
               <Label htmlFor="name">Tên bàn</Label>
-              <Input id="name" {...register('name')} />
+              <Input id="name" {...register('name')} disabled={hasActiveOrder} />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
@@ -124,6 +143,7 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
               <Select
                 value={selectedZoneId}
                 onValueChange={(value) => setValue('zoneId', value, { shouldDirty: true })}
+                disabled={hasActiveOrder}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn khu vực" />
@@ -149,6 +169,7 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
                 onValueChange={(value) =>
                   setValue('capacity', value, { shouldDirty: true, shouldValidate: true })
                 }
+                disabled={hasActiveOrder}
               />
               {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>
@@ -160,6 +181,7 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
                 onValueChange={(value) => 
                   setValue('isActive', value === 'active', { shouldDirty: true })
                 }
+                disabled={hasActiveOrder}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn trạng thái" />
@@ -183,7 +205,7 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={!isDirty || isPending}>
+            <Button type="submit" disabled={!isDirty || isPending || hasActiveOrder}>
               {isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
           </DialogFooter>

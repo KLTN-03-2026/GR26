@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy TableZone hoặc zone không thuộc branch của tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public class TableZoneNotFoundException extends SmartFnbException {

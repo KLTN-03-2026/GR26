@@ -21,7 +21,7 @@ import java.util.UUID;
  * REST Controller quản lý Hóa đơn chi (Expense Module).
  * Xử lý các API liên quan đến các phiếu chi tiêu (mua nguyên liệu, trả lương...).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-17
  */
 @RestController

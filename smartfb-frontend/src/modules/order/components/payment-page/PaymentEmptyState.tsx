@@ -10,9 +10,11 @@ export const PaymentEmptyState = ({ onBackToOrder }: PaymentEmptyStateProps) => 
     <div className="flex min-h-[560px] items-center justify-center rounded-[32px] bg-white p-10 shadow-sm">
       <div className="max-w-md text-center">
         <ReceiptText className="mx-auto h-16 w-16 text-slate-300" />
-        <h1 className="mt-6 text-3xl font-black text-slate-900">Chưa có đơn hợp lệ để thanh toán</h1>
+        <h1 className="mt-6 text-3xl font-black text-slate-900">
+          Chưa có giỏ hàng hợp lệ để thanh toán
+        </h1>
         <p className="mt-3 text-slate-500">
-          Quay lại màn tạo đơn để chọn món và tạo đơn trên hệ thống trước khi thanh toán.
+          Quay lại màn order để chọn món trước khi tạo đơn và thanh toán.
         </p>
         <Button
           type="button"

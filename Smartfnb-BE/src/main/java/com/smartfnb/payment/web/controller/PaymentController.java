@@ -29,7 +29,7 @@ import java.util.UUID;
  * REST Controller cho Payment Module.
  * Xử lý các API liên quan đến thanh toán (cash, QR), hóa đơn, và search.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @RestController
@@ -139,7 +139,7 @@ public class PaymentController {
                 .body(ApiResponse.fail("QR_PAYMENT_ERROR", e.getMessage()));
         }
     }
-
+ 
     /**
      * API xác nhận thanh toán thủ công.
      * Dành cho Thu ngân tự kiểm tra sổ phụ ngân hàng và bấm xác nhận khi App không báo webhook.
@@ -302,10 +302,14 @@ public class PaymentController {
             ))
             .toList();
 
+        String paymentMethod = paymentRepository.findById(invoice.getPaymentId())
+            .map(p -> p.getMethod().name())
+            .orElse("UNKNOWN");
+
         return new InvoiceResponse(
             invoice.getId(),
             invoice.getOrderId(),
-            invoice.getPaymentId(),
+            paymentMethod,
             invoice.getInvoiceNumber(),
             invoice.getSubtotal(),
             invoice.getDiscount(),

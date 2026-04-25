@@ -15,13 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import com.smartfnb.plan.application.SubscriptionService;
+import com.smartfnb.plan.application.dto.SubscriptionResponse;
+import com.smartfnb.shared.exception.SmartFnbException;
 
 /**
  * Command Handler xử lý CRUD cho MenuItem và BranchItem.
  * Hỗ trợ soft delete và thiết lập giá riêng theo chi nhánh.
  * Ảnh được upload qua FileStorageService thay vì nhận URL từ client.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component
@@ -32,6 +35,7 @@ public class MenuItemCommandHandler {
     private final MenuItemJpaRepository menuItemJpaRepository;
     private final BranchItemJpaRepository branchItemJpaRepository;
     private final FileStorageService fileStorageService;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Tạo món ăn mới trong thực đơn.
@@ -47,6 +51,17 @@ public class MenuItemCommandHandler {
         UUID tenantId = TenantContext.requireCurrentTenantId();
 
         log.info("Tạo món ăn mới '{}' cho tenant {}", request.name(), tenantId);
+
+        // Kiểm tra giới hạn món ăn của gói dịch vụ
+        SubscriptionResponse sub = subscriptionService.getCurrentSubscription(tenantId);
+        Integer maxMenuItems = sub.plan().maxMenuItems();
+        if (maxMenuItems != null) {
+            long count = menuItemJpaRepository.countByTenantIdAndDeletedAtIsNull(tenantId);
+            if (count >= maxMenuItems) {
+                throw new SmartFnbException("PLAN_LIMIT_EXCEEDED",
+                        "Gói hiện tại giới hạn tối đa " + maxMenuItems + " món ăn. Vui lòng nâng cấp.", 403);
+            }
+        }
 
         // Validate unique tên trong tenant
         if (menuItemJpaRepository.existsByTenantIdAndNameAndDeletedAtIsNull(tenantId, request.name())) {

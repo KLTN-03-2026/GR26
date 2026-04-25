@@ -13,7 +13,7 @@ import java.util.UUID;
  * JPA Entity đại diện cho InvoiceItem trong database.
  * Là chi tiết từng hạng mục trong Invoice.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Entity

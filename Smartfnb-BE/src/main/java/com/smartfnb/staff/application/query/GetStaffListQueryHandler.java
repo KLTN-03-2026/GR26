@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Handler truy vấn danh sách nhân viên (S-15).
  * READ ONLY — không @Transactional.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

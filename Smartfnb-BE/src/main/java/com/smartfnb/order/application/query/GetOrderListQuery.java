@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Query lấy danh sách đơn hàng theo bộ lọc.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-31
  */
 public record GetOrderListQuery(

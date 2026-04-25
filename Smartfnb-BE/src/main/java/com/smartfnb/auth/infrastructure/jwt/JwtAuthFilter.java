@@ -21,8 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Filter xác thực JWT cho mọi HTTP request.
@@ -38,7 +36,7 @@ import java.util.stream.Stream;
  *   <li>Clear TenantContext trong finally block</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j
@@ -145,9 +143,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * @return danh sách SimpleGrantedAuthority
      */
     private List<SimpleGrantedAuthority> buildAuthorities(String role, List<String> permissions) {
-        var roleAuthority = Stream.of(new SimpleGrantedAuthority("ROLE_" + role));
-        var permAuthorities = permissions.stream()
-                .map(SimpleGrantedAuthority::new);
-        return Stream.concat(roleAuthority, permAuthorities).collect(Collectors.toList());
+        var authorities = new java.util.ArrayList<SimpleGrantedAuthority>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+        permissions.forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
+        return authorities;
     }
 }

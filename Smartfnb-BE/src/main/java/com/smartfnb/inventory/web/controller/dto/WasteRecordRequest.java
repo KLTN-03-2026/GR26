@@ -14,7 +14,7 @@ import java.util.UUID;
  * @param quantity số lượng hao hụt (phải > 0)
  * @param reason   lý do hao hụt (bắt buộc)
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 public record WasteRecordRequest(

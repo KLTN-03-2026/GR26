@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * Exception khi không tìm thấy Addon/Topping.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public class AddonNotFoundException extends SmartFnbException {

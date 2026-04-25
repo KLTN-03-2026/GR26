@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * Adapter tích hợp module Menu/Inventory.
  * 
- * @author SmartF&B Team
+ * @author vutq
  */
 @Service
 @RequiredArgsConstructor

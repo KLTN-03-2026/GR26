@@ -15,7 +15,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng items (menu items).
  * Hỗ trợ Specification để tìm kiếm động và pg_trgm search.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface MenuItemJpaRepository
@@ -114,4 +114,9 @@ public interface MenuItemJpaRepository
            "AND m.type = 'SELLABLE' AND m.isActive = true AND m.deletedAt IS NULL " +
            "ORDER BY m.name ASC")
     List<MenuItemJpaEntity> findAllActiveByTenant(@Param("tenantId") UUID tenantId);
+
+    /**
+     * Đếm số lượng món ăn chưa bị xóa của tenant.
+     */
+    long countByTenantIdAndDeletedAtIsNull(UUID tenantId);
 }

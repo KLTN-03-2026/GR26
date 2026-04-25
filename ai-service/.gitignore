@@ -11,3 +11,6 @@ venv/*
 storage/models/*
 lightning_logs/*
 logs/
+
+tests/*
+.pytest_cache
