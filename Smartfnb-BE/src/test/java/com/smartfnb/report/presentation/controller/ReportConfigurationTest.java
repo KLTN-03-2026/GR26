@@ -1,6 +1,7 @@
 package com.smartfnb.report.presentation.controller;
 
 import com.smartfnb.report.infrastructure.config.ReportCacheConfig;
+import com.smartfnb.report.infrastructure.config.ReportCacheNames;
 import com.smartfnb.report.infrastructure.scheduler.MonthlyPayrollScheduler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,5 +82,30 @@ public class ReportConfigurationTest {
     void testPayrollCachePrivacy() {
         assertNotNull(sensitiveCacheManager.getCache("hr:payroll"),
             "Payroll cache should be in sensitive cache manager for privacy");
+    }
+
+    /**
+     * Regression test: BUG-2026-04-25
+     * Xác nhận cache names dùng convention "inventory:*" (dấu hai chấm),
+     * KHÔNG phải "inventory_movement" hay "cogs_report" (dấu gạch dưới).
+     *
+     * Nếu test này fail nghĩa là ai đó đã xóa cache khỏi config mà không cập nhật handler.
+     */
+    @Test
+    @DisplayName("inventory:movement cache must exist (not inventory_movement)")
+    void testInventoryMovementCacheNameConvention() {
+        assertNotNull(reportCacheManager.getCache(ReportCacheNames.INVENTORY_MOVEMENT),
+            "Cache 'inventory:movement' phải tồn tại (convention dấu hai chấm)");
+        assertNull(reportCacheManager.getCache("inventory_movement"),
+            "Cache 'inventory_movement' KHÔNG được tồn tại — sử dụng 'inventory:movement'");
+    }
+
+    @Test
+    @DisplayName("inventory:cogs cache must exist (not cogs_report)")
+    void testCogsCacheNameConvention() {
+        assertNotNull(reportCacheManager.getCache(ReportCacheNames.INVENTORY_COGS),
+            "Cache 'inventory:cogs' phải tồn tại (convention dấu hai chấm)");
+        assertNull(reportCacheManager.getCache("cogs_report"),
+            "Cache 'cogs_report' KHÔNG được tồn tại — sử dụng 'inventory:cogs'");
     }
 }

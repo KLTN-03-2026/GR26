@@ -3,6 +3,7 @@ package com.smartfnb.report.application.query.handler.inventory;
 import com.smartfnb.report.application.dto.inventory.InventoryMovementDto;
 import com.smartfnb.report.application.query.inventory.GetInventoryMovementQuery;
 import com.smartfnb.report.domain.repository.InventoryReportRepository;
+import com.smartfnb.report.infrastructure.config.ReportCacheNames;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -37,7 +38,7 @@ public class GetInventoryMovementQueryHandler {
      * @return Page<InventoryMovementDto> grouped by period
      */
     @Cacheable(
-            value = "inventory_movement",
+            value = ReportCacheNames.INVENTORY_MOVEMENT,
             key = "#query.branchId.toString() + ':' + #query.startDate.toString() + ':' + #query.endDate.toString() + ':' + #query.getGroupBy() + ':' + #query.page",
             cacheManager = "reportCacheManager"  // 2 hours TTL
     )
