@@ -10,6 +10,7 @@ import java.util.UUID;
  *
  * @param id              UUID shift schedule
  * @param userId          UUID nhân viên
+ * @param userName        Tên đầy đủ nhân viên (JOIN từ bảng users)
  * @param shiftTemplateId UUID ca mẫu
  * @param branchId        UUID chi nhánh
  * @param date            Ngày làm việc
@@ -27,6 +28,7 @@ import java.util.UUID;
 public record ShiftScheduleResult(
         UUID id,
         UUID userId,
+        String userName,
         UUID shiftTemplateId,
         UUID branchId,
         LocalDate date,

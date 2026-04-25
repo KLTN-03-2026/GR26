@@ -374,7 +374,7 @@ public class ReportController {
         
         GetWasteReportQuery query = GetWasteReportQuery.builder()
             .tenantId(TenantContext.getCurrentTenantId())
-            .branchId(branchId)
+            .branchId(effectiveBranchId)
             .startDate(startDate)
             .endDate(endDate)
             .build();
@@ -407,7 +407,7 @@ public class ReportController {
         
         GetCogsQuery query = GetCogsQuery.builder()
             .tenantId(TenantContext.getCurrentTenantId())
-            .branchId(branchId)
+            .branchId(effectiveBranchId)
             .startDate(startDate)
             .endDate(endDate)
             .page(page)
@@ -526,7 +526,7 @@ public class ReportController {
         
         GetHrCostQuery query = GetHrCostQuery.builder()
             .tenantId(TenantContext.getCurrentTenantId())
-            .branchId(branchId)
+            .branchId(effectiveBranchId)
             .month(yearMonth)
             .build();
         

@@ -3,6 +3,7 @@ package com.smartfnb.report.application.query.handler.inventory;
 import com.smartfnb.report.application.dto.inventory.CogsDto;
 import com.smartfnb.report.application.query.inventory.GetCogsQuery;
 import com.smartfnb.report.domain.repository.InventoryReportRepository;
+import com.smartfnb.report.infrastructure.config.ReportCacheNames;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -37,7 +38,7 @@ public class GetCogsQueryHandler {
      * @return Page<CogsDto> with FIFO-based unit costs
      */
     @Cacheable(
-            value = "cogs_report",
+            value = ReportCacheNames.INVENTORY_COGS,
             key = "#query.branchId.toString() + ':' + #query.startDate.toString() + ':' + #query.endDate.toString() + ':' + #query.page",
             cacheManager = "reportCacheManager"  // 1 hour TTL
     )
