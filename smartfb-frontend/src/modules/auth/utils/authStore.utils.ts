@@ -47,15 +47,34 @@ const isNonEmptyString = (value: unknown): value is string => {
   return typeof value === 'string' && value.trim().length > 0;
 };
 
+// Các biến thể role admin backend dùng cho khu vực quản trị SaaS.
+const BACKEND_ADMIN_ROLES = new Set(['admin', 'system_admin', 'role_admin', 'role_system_admin']);
+
 /**
  * Chuẩn hóa role backend về enum role frontend đang dùng.
  */
 export const normalizeRole = (role: string): Role => {
-  switch (role.trim().toLowerCase()) {
-    case ROLES.ADMIN:
-      return ROLES.ADMIN;
+  const normalizedRole = role.trim().toLowerCase();
+
+  if (BACKEND_ADMIN_ROLES.has(normalizedRole)) {
+    return ROLES.ADMIN;
+  }
+
+  switch (normalizedRole) {
     case ROLES.OWNER:
+    case 'role_owner':
       return ROLES.OWNER;
+    case ROLES.STAFF:
+    case 'role_staff':
+    case 'branch_manager':
+    case 'cashier':
+    case 'barista':
+    case 'waiter':
+    case 'role_branch_manager':
+    case 'role_cashier':
+    case 'role_barista':
+    case 'role_waiter':
+      return ROLES.STAFF;
     default:
       return ROLES.STAFF;
   }

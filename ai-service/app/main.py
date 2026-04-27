@@ -47,16 +47,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — cho phép BE Spring Boot (port 8080) và FE React (port 5173) gọi
+# CORS — danh sách origin đọc từ settings (ALLOWED_ORIGINS trong .env)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "http://localhost:5173",
-    ],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Tenant-Id",
+        "X-Branch-Id",
+    ],
 )
 
 # Mount routers

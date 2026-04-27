@@ -16,6 +16,7 @@ export const useDeleteExpense = () => {
     mutationFn: (expenseId: string) => expenseService.delete(expenseId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reports.financialInvoicesAll });
       success('Xóa phiếu chi thành công', 'Phiếu chi đã được ẩn khỏi danh sách.');
     },
     onError: (err) => {

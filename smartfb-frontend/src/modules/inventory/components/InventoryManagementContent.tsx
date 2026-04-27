@@ -213,28 +213,43 @@ export const InventoryManagementContent = () => {
 
       {/* Tabs chính */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <div className="mb-4 rounded-card border border-border bg-card p-3 shadow-card">
-          <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <TabsList className="inline-flex h-auto min-w-max rounded-full border border-border bg-slate-100 p-1">
-              {inventoryTabOptions
-                .filter((tab) => tab.visible)
-                .map((tab) => {
-                  const Icon = tab.icon;
+        {/* Mobile + Tablet: dropdown select */}
+        <div className="mb-4 lg:hidden">
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value as typeof activeTab)}
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-text-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {inventoryTabOptions
+              .filter((tab) => tab.visible)
+              .map((tab) => (
+                <option key={tab.value} value={tab.value}>
+                  {tab.label}
+                </option>
+              ))}
+          </select>
+        </div>
 
-                  return (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className="h-auto flex-none gap-2 rounded-full border-0 px-3.5 py-2 text-xs font-medium text-text-secondary shadow-none transition-colors hover:text-text-primary data-[state=active]:bg-white data-[state=active]:text-text-primary data-[state=active]:shadow-sm sm:px-4 sm:text-sm"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="sm:hidden">{tab.mobileLabel}</span>
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-            </TabsList>
-          </div>
+        {/* Desktop: underline tabs */}
+        <div className="mb-4 hidden border-b border-border lg:block">
+          <TabsList className="flex h-auto gap-0 rounded-none border-0 bg-transparent p-0">
+            {inventoryTabOptions
+              .filter((tab) => tab.visible)
+              .map((tab) => {
+                const Icon = tab.icon;
+
+                return (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="-mb-px h-auto gap-2 rounded-t-md border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-text-secondary shadow-none transition-colors hover:bg-primary/5 hover:text-primary data-[state=active]:border-primary data-[state=active]:bg-white data-[state=active]:font-semibold data-[state=active]:text-primary data-[state=active]:shadow-none"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+          </TabsList>
         </div>
 
         <TabsContent value="ingredients" className="space-y-4">

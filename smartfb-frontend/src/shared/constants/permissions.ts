@@ -17,6 +17,8 @@ export const PERMISSIONS = {
   ORDER_CANCEL: 'ORDER_CANCEL',
   MENU_VIEW: 'MENU_VIEW',
   MENU_EDIT: 'MENU_EDIT',
+  // Xem và chỉnh sửa cấu hình chi nhánh, gồm cấu hình cổng thanh toán PayOS.
+  BRANCH_EDIT: 'BRANCH_EDIT',
   // Backend hiện đang phát PAYMENT_CREATE trong JWT; giữ thêm PAYMENT_PROCESS để tương thích token cũ.
   PAYMENT_VIEW: 'PAYMENT_VIEW',
   PAYMENT_CREATE: 'PAYMENT_CREATE',
@@ -80,6 +82,13 @@ export const STAFF_ROUTE_PERMISSIONS = {
     PERMISSIONS.INVENTORY_WASTE,
   ],
   MY_SHIFTS: [PERMISSIONS.SCHEDULE_VIEW, PERMISSIONS.SHIFT_VIEW],
+  // Dùng lại quyền kho — xem dự báo AI là một dạng xem tồn kho nâng cao.
+  AI_FORECAST: [
+    PERMISSIONS.INVENTORY_VIEW,
+    PERMISSIONS.INVENTORY_IMPORT,
+    PERMISSIONS.INVENTORY_ADJUST,
+    PERMISSIONS.INVENTORY_WASTE,
+  ],
   // Route tạo/chỉnh đơn chỉ dành cho user có quyền tạo đơn.
   POS_ORDER: [PERMISSIONS.ORDER_CREATE],
   POS_PAYMENT: [...PAYMENT_ROUTE_PERMISSIONS],

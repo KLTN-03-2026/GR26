@@ -2,9 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { reportService } from '../services/reportService';
 import type {
+  CogsReportItem,
+  CogsReportItemResponse,
+  CogsReportParams,
   ExpiringItemReport,
   ExpiringItemReportResponse,
   ExpiringItemsReportParams,
+  InventoryMovementReportItem,
+  InventoryMovementReportItemResponse,
+  InventoryMovementReportParams,
   InventoryStockReportItem,
   InventoryStockReportItemResponse,
   InventoryStockReportParams,
@@ -86,6 +92,64 @@ export const useExpiringItemsReport = (params?: ExpiringItemsReportParams) => {
       return mapPageResponse(response.data, mapExpiringItem);
     },
     enabled: Boolean(params?.branchId),
+    staleTime: 60 * 1000,
+  });
+};
+
+const mapInventoryMovementItem = (
+  item: InventoryMovementReportItemResponse,
+): InventoryMovementReportItem => ({
+  ...item,
+  beginningBalance: item.beginningBalance ?? 0,
+  importQty: item.importQty ?? 0,
+  exportQty: item.exportQty ?? 0,
+  endingBalance: item.endingBalance ?? 0,
+  beginningValue: normalizeReportNumber(item.beginningValue),
+  importValue: normalizeReportNumber(item.importValue),
+  exportValue: normalizeReportNumber(item.exportValue),
+  endingValue: normalizeReportNumber(item.endingValue),
+  variance: item.variance ?? 0,
+});
+
+const mapCogsItem = (item: CogsReportItemResponse): CogsReportItem => ({
+  ...item,
+  qtyUsed: item.qtyUsed ?? 0,
+  unitCost: normalizeReportNumber(item.unitCost),
+  totalCost: normalizeReportNumber(item.totalCost),
+});
+
+/**
+ * Hook lấy báo cáo biến động kho: Nhập/Xuất/Tồn đầu kỳ → cuối kỳ.
+ *
+ * @param params - Chi nhánh, khoảng ngày và cách nhóm (daily/weekly/monthly)
+ */
+export const useInventoryMovementReport = (params?: InventoryMovementReportParams) => {
+  return useQuery({
+    queryKey: queryKeys.reports.inventoryMovement(params ? { ...params } : undefined),
+    queryFn: async () => {
+      if (!params) throw new Error('Thiếu tham số báo cáo biến động kho');
+      const response = await reportService.getInventoryMovementReport(params);
+      return mapPageResponse(response.data, mapInventoryMovementItem);
+    },
+    enabled: Boolean(params?.branchId && params.startDate && params.endDate),
+    staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Hook lấy báo cáo giá vốn hàng bán (COGS) theo phương pháp FIFO.
+ *
+ * @param params - Chi nhánh và khoảng ngày cần xem
+ */
+export const useCogsReport = (params?: CogsReportParams) => {
+  return useQuery({
+    queryKey: queryKeys.reports.inventoryCogs(params ? { ...params } : undefined),
+    queryFn: async () => {
+      if (!params) throw new Error('Thiếu tham số báo cáo COGS');
+      const response = await reportService.getCogsReport(params);
+      return mapPageResponse(response.data, mapCogsItem);
+    },
+    enabled: Boolean(params?.branchId && params.startDate && params.endDate),
     staleTime: 60 * 1000,
   });
 };

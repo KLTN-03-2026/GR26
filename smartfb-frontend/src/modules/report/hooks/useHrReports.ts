@@ -5,9 +5,15 @@ import type {
   AttendanceReportItem,
   AttendanceReportItemResponse,
   AttendanceReportParams,
+  CheckinHistoryItem,
+  CheckinHistoryItemResponse,
+  CheckinHistoryParams,
   HrCostReport,
   HrCostReportParams,
   HrCostReportResponse,
+  PayrollReportItem,
+  PayrollReportItemResponse,
+  PayrollReportParams,
   ReportPageResponse,
   ViolationReportItem,
   ViolationReportItemResponse,
@@ -60,6 +66,19 @@ const mapViolationItem = (
   ...item,
   minutesViolation: item.minutesViolation ?? 0,
 });
+
+const mapPayrollItem = (item: PayrollReportItemResponse): PayrollReportItem => ({
+  ...item,
+  workingDays: item.workingDays ?? 0,
+  baseSalary: normalizeReportNumber(item.baseSalary),
+  overtimeHours: normalizeReportNumber(item.overtimeHours),
+  overtimePay: normalizeReportNumber(item.overtimePay),
+  totalBonuses: normalizeReportNumber(item.totalBonuses),
+  totalDeductions: normalizeReportNumber(item.totalDeductions),
+  grossSalary: normalizeReportNumber(item.grossSalary),
+});
+
+const mapCheckinHistoryItem = (item: CheckinHistoryItemResponse): CheckinHistoryItem => item;
 
 /**
  * Hook lấy báo cáo chấm công tháng theo chi nhánh.
@@ -118,6 +137,42 @@ export const useViolationsReport = (params?: ViolationsReportParams) => {
 
       const response = await reportService.getViolationsReport(params);
       return mapPageResponse(response.data, mapViolationItem);
+    },
+    enabled: Boolean(params?.branchId && params.startDate && params.endDate),
+    staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Hook lấy bảng lương tháng theo chi nhánh.
+ *
+ * @param params - Chi nhánh, tháng và staffId (tùy chọn)
+ */
+export const usePayrollReport = (params?: PayrollReportParams) => {
+  return useQuery({
+    queryKey: queryKeys.reports.hrPayroll(params ? { ...params } : undefined),
+    queryFn: async () => {
+      if (!params) throw new Error('Thiếu tham số bảng lương');
+      const response = await reportService.getPayrollReport(params);
+      return mapPageResponse(response.data, mapPayrollItem);
+    },
+    enabled: Boolean(params?.branchId && params.month),
+    staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Hook lấy lịch sử check-in chi tiết từng ca làm việc.
+ *
+ * @param params - Chi nhánh, khoảng ngày và staffId (tùy chọn)
+ */
+export const useCheckinHistoryReport = (params?: CheckinHistoryParams) => {
+  return useQuery({
+    queryKey: queryKeys.reports.hrCheckinHistory(params ? { ...params } : undefined),
+    queryFn: async () => {
+      if (!params) throw new Error('Thiếu tham số lịch sử check-in');
+      const response = await reportService.getCheckinHistoryReport(params);
+      return mapPageResponse(response.data, mapCheckinHistoryItem);
     },
     enabled: Boolean(params?.branchId && params.startDate && params.endDate),
     staleTime: 60 * 1000,

@@ -12,7 +12,7 @@ import { useRecordWaste } from '@modules/inventory/hooks/useRecordWaste';
 import { useUpdateThreshold } from '@modules/inventory/hooks/useUpdateThreshold';
 import type {
   AdjustStockPayload,
-  ImportStockPayload,
+  ImportStockFlowPayload,
   InventoryBalance,
   InventoryFilters,
   InventoryItemOption,
@@ -20,6 +20,7 @@ import type {
   UpdateThresholdPayload,
   WasteRecordPayload,
 } from '@modules/inventory/types/inventory.types';
+import { useToast } from '@shared/hooks/useToast';
 import { usePermission } from '@shared/hooks/usePermission';
 
 const INVENTORY_PAGE_SIZE = 12;
@@ -52,7 +53,10 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     data: semiProductOptions = [],
     refetch: refetchSemiProductOptions,
   } = useInventorySemiProductOptions();
-  const { mutate: importStock, isPending: isImporting } = useImportStock();
+  const { success } = useToast();
+  const { mutateAsync: importStock, isPending: isImportingStock } = useImportStock({
+    showSuccessToast: false,
+  });
   const { mutate: adjustStock, isPending: isAdjusting } = useAdjustStock();
   const { mutate: recordProductionBatch, isPending: isRecordingProduction } = useRecordProductionBatch();
   const { mutate: recordWaste, isPending: isRecordingWaste } = useRecordWaste();
@@ -264,14 +268,18 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     setIsProductionDialogOpen(true);
   };
 
-  const handleImportSubmit = (payload: ImportStockPayload) => {
-    importStock(payload, {
-      onSuccess: () => {
-        setIsImportDialogOpen(false);
-        setActiveActionBranchId(null);
-        setSelectedItemId(undefined);
-      },
-    });
+  const handleImportSubmit = async (payload: ImportStockFlowPayload) => {
+    try {
+      await importStock(payload.stockPayload);
+    } catch {
+      return;
+    }
+
+    setIsImportDialogOpen(false);
+    setActiveActionBranchId(null);
+    setSelectedItemId(undefined);
+
+    success('Nhập kho thành công', 'Tồn kho đã được cập nhật theo lô nhập mới.');
   };
 
   const handleAdjustSubmit = (payload: AdjustStockPayload) => {
@@ -339,7 +347,7 @@ export const useInventoryManagement = (section: InventoryManagementSection = 'in
     isError,
     isFetching,
     isImportDialogOpen,
-    isImporting,
+    isImporting: isImportingStock,
     isLoading,
     isProductionDialogOpen,
     isRecordingProduction,

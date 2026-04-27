@@ -1,25 +1,31 @@
 import {
   AlertCircle,
   ArrowRight,
-  ClipboardList,
+  BrainCircuit,
   PackageSearch,
+  PiggyBank,
   Receipt,
   RefreshCcw,
   TrendingUp,
+  Trophy,
   Users2,
   Wallet,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { useForecastSummary } from '@modules/forecast/hooks/useForecast';
 import { useExpiringItemsReport, useInventoryStockReport } from '@modules/report/hooks/useInventoryReports';
 import { useRevenueReport } from '@modules/report/hooks/useRevenueReport';
 import { useRevenueReportFilters } from '@modules/report/hooks/useRevenueReportFilters';
+import { useTopItemsReport } from '@modules/report/hooks/useTopItemsReport';
+import { WeatherWidget } from '@modules/forecast/components/WeatherWidget';
 import { Button } from '@shared/components/ui/button';
 import { ROUTES } from '@shared/constants/routes';
+import { cn } from '@shared/utils/cn';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
+import { getTodayDateValue } from '@shared/utils/datePresets';
 import { ReportMetricCard } from './ReportMetricCard';
 
-const today = format(new Date(), 'yyyy-MM-dd');
+const today = getTodayDateValue();
 
 const reportLinks = [
   {
@@ -39,6 +45,12 @@ const reportLinks = [
     description: 'Chấm công, chi phí nhân sự và vi phạm ca làm theo tháng.',
     path: ROUTES.OWNER.REPORT_HR,
     icon: Users2,
+  },
+  {
+    title: 'Dự báo AI',
+    description: 'Dự báo tiêu thụ nguyên liệu 7 ngày tới, ngày hết hàng dự kiến và gợi ý nhập kho.',
+    path: ROUTES.OWNER.AI_FORECAST,
+    icon: BrainCircuit,
   },
 ] as const;
 
@@ -74,6 +86,10 @@ export const ReportsOverviewDashboard = () => {
       ? { branchId: selectedBranchId, daysThreshold: 7, page: 0, size: 20 }
       : undefined,
   );
+  const topItemsQuery = useTopItemsReport(
+    selectedBranchId ? { branchId: selectedBranchId, date: today, limit: 3 } : undefined,
+  );
+  const forecastSummaryQuery = useForecastSummary(selectedBranchId ?? undefined);
 
   const stockItems = stockQuery.data?.content ?? [];
   const lowStockCount = stockItems.filter((item) => item.status === 'LOW').length;
@@ -88,6 +104,8 @@ export const ReportsOverviewDashboard = () => {
       revenueQuery.refetch(),
       stockQuery.refetch(),
       expiringQuery.refetch(),
+      topItemsQuery.refetch(),
+      forecastSummaryQuery.refetch(),
     ]);
   };
 
@@ -139,14 +157,14 @@ export const ReportsOverviewDashboard = () => {
           onClick={() => {
             void handleRefresh();
           }}
-          disabled={revenueQuery.isFetching || stockQuery.isFetching || expiringQuery.isFetching}
+          disabled={revenueQuery.isFetching || stockQuery.isFetching || expiringQuery.isFetching || topItemsQuery.isFetching || forecastSummaryQuery.isFetching}
         >
           <RefreshCcw className="h-4 w-4" />
           Làm mới
         </Button>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 xl:grid-cols-5">
         <ReportMetricCard
           label="Doanh thu hôm nay"
           value={formatVND(revenueQuery.data?.totalRevenue ?? 0)}
@@ -154,11 +172,18 @@ export const ReportsOverviewDashboard = () => {
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <ReportMetricCard
+          label="Lợi nhuận gộp"
+          value={formatVND(revenueQuery.data?.totalGrossProfit ?? 0)}
+          helper="Doanh thu trừ chi phí nguyên liệu trong ngày."
+          icon={<PiggyBank className="h-5 w-5" />}
+          tone="success"
+        />
+        <ReportMetricCard
           label="Tổng đơn"
           value={formatNumber(revenueQuery.data?.totalOrders ?? 0)}
           helper="Đơn đã được tổng hợp vào báo cáo ngày."
           icon={<Receipt className="h-5 w-5" />}
-          tone="success"
+          tone="neutral"
         />
         <ReportMetricCard
           label="Giá trị đơn trung bình"
@@ -176,7 +201,10 @@ export const ReportsOverviewDashboard = () => {
         />
       </div>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      {/* Widget thời tiết — chỉ render khi AI Service có dữ liệu, không block loading chính */}
+      {selectedBranchId && <WeatherWidget branchId={selectedBranchId} />}
+
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {reportLinks.map((item) => {
           const Icon = item.icon;
 
@@ -201,49 +229,108 @@ export const ReportsOverviewDashboard = () => {
         })}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <div className="mb-3 flex items-center gap-3">
-            <ClipboardList className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-text-primary">Tình trạng dữ liệu</h3>
+      <section className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
+        {/* Top 3 món bán chạy hôm nay */}
+        <div className="card overflow-hidden">
+          <div className="border-b border-border p-5">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold text-text-primary">Top 3 món hôm nay</h3>
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">{today} · {branchName}</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="card p-4">
-              <p className="text-sm text-text-secondary">Doanh thu</p>
-              <p className="mt-2 font-semibold text-text-primary">
-                {revenueQuery.isLoading ? 'Đang tải' : revenueQuery.isError ? 'Lỗi' : 'Sẵn sàng'}
-              </p>
-            </div>
-            <div className="card p-4">
-              <p className="text-sm text-text-secondary">Tồn kho</p>
-              <p className="mt-2 font-semibold text-text-primary">
-                {stockQuery.isLoading ? 'Đang tải' : stockQuery.isError ? 'Lỗi' : 'Sẵn sàng'}
-              </p>
-            </div>
-            <div className="card p-4">
-              <p className="text-sm text-text-secondary">Hàng hết hạn</p>
-              <p className="mt-2 font-semibold text-text-primary">
-                {expiringQuery.isLoading ? 'Đang tải' : expiringQuery.isError ? 'Lỗi' : 'Sẵn sàng'}
-              </p>
-            </div>
+          <div className="p-5">
+            {topItemsQuery.isLoading ? (
+              <div className="h-28 animate-pulse rounded-card bg-cream" />
+            ) : topItemsQuery.isError || !topItemsQuery.data?.topItems.length ? (
+              <p className="text-sm text-text-secondary">Chưa có dữ liệu bán hàng hôm nay.</p>
+            ) : (
+              <div className="space-y-4">
+                {topItemsQuery.data.topItems.slice(0, 3).map((item, idx) => (
+                  <div key={item.itemId} className="flex items-center gap-4">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-text-primary">{item.itemName}</p>
+                      <p className="text-xs text-text-secondary">{formatNumber(item.qtySold)} phần đã bán</p>
+                    </div>
+                    <span className="font-semibold text-text-primary">{formatVND(item.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="card p-5">
-          <h3 className="text-lg font-semibold text-text-primary">Điều hướng nhanh</h3>
-          <div className="mt-4 space-y-3">
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link to={ROUTES.POS_MANAGEMENT}>
-                Quản lý đơn hàng
-                <ArrowRight className="h-4 w-4" />
+        {/* Cột phải: Dự báo AI + Điều hướng nhanh */}
+        <div className="space-y-4">
+          <div className="card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <BrainCircuit className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-text-primary">Dự báo AI</h3>
+              </div>
+              <Link
+                to={ROUTES.OWNER.AI_FORECAST}
+                className="flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                Xem chi tiết
+                <ArrowRight className="h-3 w-3" />
               </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link to={ROUTES.OWNER.INVENTORY}>
-                Quản lý kho
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {forecastSummaryQuery.isLoading ? (
+                <div className="h-20 animate-pulse rounded-card bg-cream" />
+              ) : forecastSummaryQuery.isError || !forecastSummaryQuery.data ? (
+                <p className="text-sm text-text-secondary">Chưa có dữ liệu dự báo.</p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">Cần nhập ngay</span>
+                    <span className={cn('badge', forecastSummaryQuery.data.urgent_count > 0 ? 'badge-cancelled' : 'badge-success')}>
+                      {forecastSummaryQuery.data.urgent_count} nguyên liệu
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">Sắp hết</span>
+                    <span className={cn('badge', forecastSummaryQuery.data.warning_count > 0 ? 'badge-warning' : 'badge-success')}>
+                      {forecastSummaryQuery.data.warning_count} nguyên liệu
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">Đủ hàng</span>
+                    <span className="badge badge-success">
+                      {forecastSummaryQuery.data.ok_count} nguyên liệu
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="card p-5">
+            <h3 className="text-lg font-semibold text-text-primary">Điều hướng nhanh</h3>
+            <div className="mt-4 space-y-3">
+              <Button asChild variant="outline" className="w-full justify-between">
+                <Link to={ROUTES.POS_MANAGEMENT}>
+                  Quản lý đơn hàng
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full justify-between">
+                <Link to={ROUTES.OWNER.INVENTORY}>
+                  Quản lý kho
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full justify-between">
+                <Link to={ROUTES.OWNER.AI_FORECAST}>
+                  Dự báo AI kho
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

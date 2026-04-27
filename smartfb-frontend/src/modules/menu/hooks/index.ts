@@ -1,3 +1,4 @@
+export { useActiveMenus } from './useActiveMenus';
 export { useAddons } from './useAddons';
 export { useBranchMenuItems } from './useBranchMenuItems';
 export { useCreateAddon } from './useCreateAddon';

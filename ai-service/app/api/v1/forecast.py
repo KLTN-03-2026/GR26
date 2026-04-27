@@ -48,6 +48,8 @@ _SQL_BRANCH_FORECAST = text(
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
+        fr.lower_bound,
+        fr.upper_bound,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
@@ -71,6 +73,8 @@ _SQL_INGREDIENT_FORECAST = text(
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
+        fr.lower_bound,
+        fr.upper_bound,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
@@ -123,6 +127,8 @@ def _rows_to_ingredient_forecasts(
             DayForecast(
                 forecast_date=row.forecast_date,
                 predicted_qty=float(row.predicted_qty),
+                lower_bound=float(row.lower_bound) if row.lower_bound is not None else None,
+                upper_bound=float(row.upper_bound) if row.upper_bound is not None else None,
             )
         )
 

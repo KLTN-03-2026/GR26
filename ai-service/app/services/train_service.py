@@ -35,8 +35,32 @@ from app.utils.model_io import save_model, update_train_metadata
 
 logger = get_logger(__name__)
 
-# Ngưỡng tối thiểu số ngày data để train có ý nghĩa thống kê.
-MIN_DAYS_REQUIRED = 30
+# Ngưỡng tối thiểu số ngày data theo kỳ dự báo.
+# Quy tắc: min_data ≈ n_lags × 5~6 để có đủ training sample, tránh overfit.
+# FE dùng giá trị này để hiển thị progress bar "chi nhánh đủ điều kiện AI chưa".
+MIN_DAYS_BY_FORECAST: dict[int, int] = {
+    7:  90,   # n_lags=14  → 14×6=84  → làm tròn 90
+    14: 150,  # n_lags=28  → 28×5=140 → làm tròn 150
+    21: 180,  # n_lags=28  → 28×6=168 → làm tròn 180
+}
+# Fallback khi n_forecasts không nằm trong bảng trên
+MIN_DAYS_REQUIRED = 90
+
+
+def get_min_days_required(n_forecasts: int) -> int:
+    """
+    Trả về số ngày data tối thiểu cần có để train với kỳ dự báo n_forecasts.
+
+    Càng dự báo xa → n_lags lớn hơn → cần nhiều data hơn để có đủ training sample.
+    Nếu n_forecasts không có trong bảng, fallback về MIN_DAYS_REQUIRED (90).
+
+    Args:
+        n_forecasts: Số ngày dự báo (thường là 7, 14, hoặc 21)
+
+    Returns:
+        Số ngày tối thiểu cần có đơn hàng
+    """
+    return MIN_DAYS_BY_FORECAST.get(n_forecasts, MIN_DAYS_REQUIRED)
 
 # Ngưỡng tối thiểu số series để dùng Global Model (< ngưỡng này thì skip)
 MIN_SERIES_REQUIRED = 1
@@ -52,11 +76,15 @@ def _auto_n_lags(active_days: int) -> int:
     n_lags lớn hơn → model học được pattern xa hơn trong quá khứ,
     nhưng cần đủ data để train có ý nghĩa.
 
+    Quy tắc: n_lags không nên vượt quá 25% tổng số ngày data.
+    Nếu không, model sẽ thiếu sample để học → overfit.
+
     Bậc:
-        < 45 ngày  → 3   (data rất ít, nhìn lại ít để tránh overfit)
-        >= 45 ngày → 7   (đủ để thấy pattern hàng tuần)
-        >= 90 ngày → 14  (default — thấy 2 vòng pattern 2 tuần)
-        >= 180 ngày → 28 (nửa năm data — thấy được pattern tháng)
+        < 45 ngày   →  3  (data rất ít, nhìn lại ít để tránh overfit)
+        >= 45 ngày  →  7  (đủ để thấy pattern hàng tuần)
+        >= 90 ngày  → 14  (default — thấy 2 vòng pattern 2 tuần)
+        >= 180 ngày → 28  (nửa năm data — thấy được pattern tháng)
+        >= 365 ngày → 90  (1 năm+ data — học được pattern theo quý / mùa vụ)
 
     Args:
         active_days: Số ngày chi nhánh có đơn hàng
@@ -64,6 +92,8 @@ def _auto_n_lags(active_days: int) -> int:
     Returns:
         Giá trị n_lags phù hợp
     """
+    if active_days >= 365:
+        return 90
     if active_days >= 180:
         return 28
     if active_days >= 90:
@@ -73,13 +103,14 @@ def _auto_n_lags(active_days: int) -> int:
     return 3
 
 
-def validate_training_data(df: pd.DataFrame) -> tuple[bool, str]:
+def validate_training_data(df: pd.DataFrame, min_days: int = MIN_DAYS_REQUIRED) -> tuple[bool, str]:
     """
     Kiểm tra DataFrame đủ điều kiện train NeuralProphet.
 
     Args:
         df: DataFrame với cột ['ds', 'y', 'ID']
             ID dạng "s{int}" (e.g. "s42") — từ AiSeriesRegistry
+        min_days: Số ngày tối thiểu mỗi series cần có — tính từ get_min_days_required(n_forecasts)
 
     Returns:
         (True, "") nếu đủ điều kiện
@@ -105,11 +136,11 @@ def validate_training_data(df: pd.DataFrame) -> tuple[bool, str]:
         return False, f"Cột 'y' có {neg_count} giá trị âm — tiêu thụ không thể âm"
 
     # Kiểm tra series ngắn nhất có đủ ngày không
-    min_days = df.groupby("ID")["ds"].nunique().min()
-    if min_days < MIN_DAYS_REQUIRED:
+    min_series_days = df.groupby("ID")["ds"].nunique().min()
+    if min_series_days < min_days:
         return False, (
-            f"Series ngắn nhất chỉ có {min_days} ngày — "
-            f"cần ít nhất {MIN_DAYS_REQUIRED} ngày"
+            f"Series ngắn nhất chỉ có {min_series_days} ngày — "
+            f"cần ít nhất {min_days} ngày với kỳ dự báo này"
         )
 
     n_series = df["ID"].nunique()
@@ -166,6 +197,7 @@ def _build_neuralprophet_model(config: dict, n_lags: int, yearly_seasonality: bo
         loss_func="Huber",                      # Robust với outlier spike — L1 cho error lớn, L2 cho nhỏ
         ar_reg=0.01,                            # L2 regularization AR weights — tránh overfit data ngắn
         seasonality_reg=1.0,                    # Smooth seasonality — không fit noise tuần thành pattern
+        quantiles=[0.1, 0.9],                   # Khoảng tin cậy 80% — lower/upper bound cho FE chart
     )
 
     # Thêm ngày lễ Việt Nam — BẮT BUỘC cho dự báo tại VN
@@ -218,6 +250,7 @@ def _build_neuralprophet_model_weekly(epochs: int = 150):  # type: ignore[return
         loss_func="Huber",
         ar_reg=0.01,
         seasonality_reg=1.0,
+        quantiles=[0.1, 0.9],           # Khoảng tin cậy 80% cho weekly series
     )
 
     # Thêm ngày lễ Việt Nam — vẫn ảnh hưởng đến tiêu thụ dù data theo tuần
@@ -227,15 +260,16 @@ def _build_neuralprophet_model_weekly(epochs: int = 150):  # type: ignore[return
     return model
 
 
-def _filter_valid_series(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+def _filter_valid_series(df: pd.DataFrame, min_days: int = MIN_DAYS_REQUIRED) -> tuple[pd.DataFrame, list[str]]:
     """
     Lọc bỏ các ingredient series không đủ ngày data để train.
 
-    Series có < MIN_DAYS_REQUIRED ngày unique sẽ bị loại.
+    Series có < min_days ngày unique sẽ bị loại.
     Log rõ từng series bị skip để debug dễ hơn.
 
     Args:
         df: DataFrame với cột [ds, y, ID]
+        min_days: Ngưỡng tối thiểu số ngày — lấy từ get_min_days_required(n_forecasts)
 
     Returns:
         Tuple (df_filtered, skipped_ids):
@@ -243,12 +277,12 @@ def _filter_valid_series(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         - skipped_ids: List series_id bị skip (dạng "s{int}") — để điền vào TrainResult.
     """
     series_days = df.groupby("ID")["ds"].nunique()
-    valid_ids = series_days[series_days >= MIN_DAYS_REQUIRED].index.tolist()
-    skip_series = series_days[series_days < MIN_DAYS_REQUIRED]
+    valid_ids = series_days[series_days >= min_days].index.tolist()
+    skip_series = series_days[series_days < min_days]
     skipped_ids: list[str] = [str(sid) for sid in skip_series.index]
 
     for sid, n_days in skip_series.items():
-        logger.warning("Skip %s: chỉ %d ngày (cần %d)", sid, n_days, MIN_DAYS_REQUIRED)
+        logger.warning("Skip %s: chỉ %d ngày (cần %d)", sid, n_days, min_days)
 
     if valid_ids:
         logger.info(
@@ -288,10 +322,11 @@ def train_branch_model(
         ValueError: Data không hợp lệ sau filter
         RuntimeError: Train thất bại
     """
-    # Bước 1: Lọc series đủ điều kiện — nhận cả list series bị skip
-    df, series_skipped = _filter_valid_series(df)
+    # Bước 1: Lọc series đủ điều kiện — ngưỡng min_days theo n_forecasts
+    min_days = get_min_days_required(config["n_forecasts"])
+    df, series_skipped = _filter_valid_series(df, min_days=min_days)
 
-    is_valid, reason = validate_training_data(df)
+    is_valid, reason = validate_training_data(df, min_days=min_days)
     if not is_valid:
         raise ValueError(f"Data không đủ điều kiện train: {reason}")
 

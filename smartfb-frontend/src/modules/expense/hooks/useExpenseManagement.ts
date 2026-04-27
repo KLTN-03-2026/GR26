@@ -27,8 +27,10 @@ const EMPTY_EXPENSE_PAGE: ExpensePageResponse<ExpenseItem> = {
 
 /**
  * Hook điều phối toàn bộ state và mutation của màn hình chi tiêu.
+ *
+ * @param loadExpenseList - Bật/tắt query danh sách phiếu chi khi màn chỉ cần mutation/dialog
  */
-export const useExpenseManagement = () => {
+export const useExpenseManagement = (loadExpenseList: boolean = true) => {
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const { data: branchList = [] } = useBranches();
   const { can, isOwner } = usePermission();
@@ -60,7 +62,7 @@ export const useExpenseManagement = () => {
     isError,
     isFetching,
     refetch,
-  } = useExpenses(filters, Boolean(currentBranchId) && canViewExpenses);
+  } = useExpenses(filters, loadExpenseList && Boolean(currentBranchId) && canViewExpenses);
 
   const currentBranchName = useMemo(() => {
     if (!currentBranchId) {

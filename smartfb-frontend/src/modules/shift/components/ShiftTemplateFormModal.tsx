@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useState, useEffect } from 'react';
+import { type KeyboardEvent, useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -7,6 +7,7 @@ import {
     DialogTitle,
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
+import { SearchableCombobox, type SearchableComboboxOption } from '@shared/components/common/SearchableCombobox';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { useShiftTemplates } from '../hooks/useShiftTemplates';
@@ -21,6 +22,43 @@ interface ShiftTemplateFormModalProps {
 
 const DEFAULT_START_TIME = '09:00';
 const DEFAULT_END_TIME = '17:00';
+const SHIFT_TIME_STEP_MINUTES = 30;
+
+const getShiftTimeDescription = (hour: number) => {
+    if (hour < 11) {
+        return 'Buổi sáng';
+    }
+
+    if (hour < 14) {
+        return 'Buổi trưa';
+    }
+
+    if (hour < 18) {
+        return 'Buổi chiều';
+    }
+
+    return 'Buổi tối';
+};
+
+/**
+ * Danh sách mốc giờ cố định để owner chọn ca nhanh và tránh nhập sai format giờ.
+ */
+const SHIFT_TIME_OPTIONS: SearchableComboboxOption[] = Array.from(
+    { length: (24 * 60) / SHIFT_TIME_STEP_MINUTES },
+    (_, index) => {
+        const totalMinutes = index * SHIFT_TIME_STEP_MINUTES;
+        const hour = Math.floor(totalMinutes / 60);
+        const minute = totalMinutes % 60;
+        const value = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+        return {
+            value,
+            label: value,
+            description: getShiftTimeDescription(hour),
+            keywords: [value.replace(':', ''), `${hour}h${minute ? minute : ''}`],
+        };
+    },
+);
 
 const formatTimeForInput = (time: LocalTime | null | undefined, fallback: string): string => {
     if (typeof time?.hour !== 'number' || typeof time?.minute !== 'number') {
@@ -32,6 +70,30 @@ const formatTimeForInput = (time: LocalTime | null | undefined, fallback: string
 
 const parseTimeFromInput = (time: string): string => {
     return `${time}:00`;
+};
+
+const getInitialFormData = (editingTemplate?: ShiftTemplate | null) => {
+    if (!editingTemplate) {
+        return {
+            name: '',
+            startTime: DEFAULT_START_TIME,
+            endTime: DEFAULT_END_TIME,
+            minStaff: 1,
+            maxStaff: 5,
+            color: '#1890ff',
+            active: true,
+        };
+    }
+
+    return {
+        name: editingTemplate.name,
+        startTime: formatTimeForInput(editingTemplate.startTime, DEFAULT_START_TIME),
+        endTime: formatTimeForInput(editingTemplate.endTime, DEFAULT_END_TIME),
+        minStaff: editingTemplate.minStaff,
+        maxStaff: editingTemplate.maxStaff,
+        color: editingTemplate.color,
+        active: editingTemplate.active,
+    };
 };
 
 /**
@@ -47,43 +109,9 @@ export const ShiftTemplateFormModal = ({
     const isEditing = !!editingTemplate;
     const isPending = isCreating || isUpdating;
 
-    const [formData, setFormData] = useState({
-        name: '',
-        startTime: DEFAULT_START_TIME,
-        endTime: DEFAULT_END_TIME,
-        minStaff: 1,
-        maxStaff: 5,
-        color: '#1890ff',
-        active: true,
-    });
+    const [formData, setFormData] = useState(() => getInitialFormData(editingTemplate));
 
     const [errors, setErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
-
-    // Reset form khi mở modal hoặc editingTemplate thay đổi
-    useEffect(() => {
-        if (open && editingTemplate) {
-            setFormData({
-                name: editingTemplate.name,
-                startTime: formatTimeForInput(editingTemplate.startTime, DEFAULT_START_TIME),
-                endTime: formatTimeForInput(editingTemplate.endTime, DEFAULT_END_TIME),
-                minStaff: editingTemplate.minStaff,
-                maxStaff: editingTemplate.maxStaff,
-                color: editingTemplate.color,
-                active: editingTemplate.active,
-            });
-        } else if (open && !editingTemplate) {
-            setFormData({
-                name: '',
-                startTime: DEFAULT_START_TIME,
-                endTime: DEFAULT_END_TIME,
-                minStaff: 1,
-                maxStaff: 5,
-                color: '#1890ff',
-                active: true,
-            });
-        }
-        setErrors({});
-    }, [open, editingTemplate]);
 
     const validate = (): boolean => {
         const nextErrors: Partial<Record<keyof typeof formData, string>> = {};
@@ -187,26 +215,28 @@ export const ShiftTemplateFormModal = ({
                             <Label htmlFor="shift-start-time">
                                 Giờ bắt đầu <span className="text-red-500">*</span>
                             </Label>
-                            <Input
+                            <SearchableCombobox
                                 id="shift-start-time"
-                                type="time"
                                 value={formData.startTime}
-                                onChange={(event) =>
-                                    setFormData({ ...formData, startTime: event.target.value })
-                                }
+                                options={SHIFT_TIME_OPTIONS}
+                                placeholder="Chọn giờ bắt đầu"
+                                searchPlaceholder="Tìm giờ, ví dụ 09:00"
+                                emptyMessage="Không tìm thấy mốc giờ phù hợp"
+                                onValueChange={(startTime) => setFormData({ ...formData, startTime })}
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="shift-end-time">
                                 Giờ kết thúc <span className="text-red-500">*</span>
                             </Label>
-                            <Input
+                            <SearchableCombobox
                                 id="shift-end-time"
-                                type="time"
                                 value={formData.endTime}
-                                onChange={(event) =>
-                                    setFormData({ ...formData, endTime: event.target.value })
-                                }
+                                options={SHIFT_TIME_OPTIONS}
+                                placeholder="Chọn giờ kết thúc"
+                                searchPlaceholder="Tìm giờ, ví dụ 17:00"
+                                emptyMessage="Không tìm thấy mốc giờ phù hợp"
+                                onValueChange={(endTime) => setFormData({ ...formData, endTime })}
                                 className={errors.endTime ? 'border-red-500' : ''}
                             />
                             {errors.endTime && <p className="text-xs text-red-500">{errors.endTime}</p>}

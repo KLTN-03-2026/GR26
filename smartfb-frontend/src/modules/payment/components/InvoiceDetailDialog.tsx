@@ -18,6 +18,18 @@ import { formatVND } from '@shared/utils/formatCurrency';
 import { formatDateTime } from '@shared/utils/formatDate';
 import { useInvoiceDetail } from '../hooks/useInvoiceDetail';
 
+/**
+ * Map giá trị paymentMethod từ BE sang nhãn tiếng Việt hiển thị cho người dùng.
+ */
+const mapPaymentMethodLabel = (method: string): string => {
+  switch (method?.toUpperCase()) {
+    case 'CASH': return 'Tiền mặt';
+    case 'VIETQR': return 'VietQR';
+    case 'MOMO': return 'MoMo';
+    default: return method ?? 'Không rõ';
+  }
+};
+
 interface InvoiceDetailDialogProps {
   open: boolean;
   invoiceId: string | null;
@@ -79,6 +91,10 @@ export const InvoiceDetailDialog = ({
                   <div className="flex items-center justify-between gap-3 text-text-secondary">
                     <span>Mã hóa đơn</span>
                     <span className="font-semibold text-text-primary">{data.invoiceNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-text-secondary">
+                    <span>Phương thức</span>
+                    <span className="font-semibold text-text-primary">{mapPaymentMethodLabel(data.paymentMethod)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-text-secondary">
                     <span>Thời điểm phát hành</span>

@@ -17,6 +17,7 @@ import {
   Truck,
   Settings,
   Package,
+  BrainCircuit,
 } from 'lucide-react';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -129,6 +130,14 @@ export const menuConfig: MenuSection[] = [
             path: ROUTES.STAFF.RECIPES,
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+          },
+          { title: 'Dự báo AI', icon: BrainCircuit, path: ROUTES.OWNER.AI_FORECAST, roles: [ROLES.OWNER] },
+          {
+            title: 'Dự báo AI',
+            icon: BrainCircuit,
+            path: ROUTES.STAFF.AI_FORECAST,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.AI_FORECAST,
           },
         ],
       },

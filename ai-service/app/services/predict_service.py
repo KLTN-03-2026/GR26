@@ -90,6 +90,8 @@ def _build_fallback_forecast(history_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({
         "ds": pd.to_datetime(future_dates),
         "yhat1": [avg_daily] * 7,
+        "lower_bound": [None] * 7,
+        "upper_bound": [None] * 7,
     })
 
 
@@ -166,19 +168,28 @@ async def _upsert_forecast_results(
         {"series_id": series_id_int, "today": date.today()},
     )
 
+    has_lower = "lower_bound" in forecast_df.columns
+    has_upper = "upper_bound" in forecast_df.columns
+
     for _, row in forecast_df.iterrows():
         # Chuyển Timestamp → date nếu cần
         forecast_date = row["ds"].date() if hasattr(row["ds"], "date") else row["ds"]
         predicted_qty = float(max(float(row["yhat1"]), 0.0))
 
+        # Đọc khoảng tin cậy — None nếu model cũ chưa train với quantiles
+        lo = row.get("lower_bound") if has_lower else None
+        hi = row.get("upper_bound") if has_upper else None
+        lower_bound: float | None = float(max(float(lo), 0.0)) if lo is not None and pd.notna(lo) else None
+        upper_bound: float | None = float(max(float(hi), 0.0)) if hi is not None and pd.notna(hi) else None
+
         await db.execute(
             text("""
                 INSERT INTO forecast_results
                     (series_id, forecast_date, predicted_qty, stockout_date, suggested_qty,
-                     urgency, suggested_order_date, is_fallback)
+                     urgency, suggested_order_date, is_fallback, lower_bound, upper_bound)
                 VALUES
                     (:series_id, :forecast_date, :predicted_qty, :stockout_date, :suggested_qty,
-                     :urgency, :suggested_order_date, :is_fallback)
+                     :urgency, :suggested_order_date, :is_fallback, :lower_bound, :upper_bound)
                 ON CONFLICT (series_id, forecast_date)
                 DO UPDATE SET
                     predicted_qty        = EXCLUDED.predicted_qty,
@@ -186,7 +197,9 @@ async def _upsert_forecast_results(
                     suggested_qty        = EXCLUDED.suggested_qty,
                     urgency              = EXCLUDED.urgency,
                     suggested_order_date = EXCLUDED.suggested_order_date,
-                    is_fallback          = EXCLUDED.is_fallback
+                    is_fallback          = EXCLUDED.is_fallback,
+                    lower_bound          = EXCLUDED.lower_bound,
+                    upper_bound          = EXCLUDED.upper_bound
             """),
             {
                 "series_id": series_id_int,
@@ -197,6 +210,8 @@ async def _upsert_forecast_results(
                 "urgency": urgency,
                 "suggested_order_date": suggested_order_date,
                 "is_fallback": is_fallback,
+                "lower_bound": lower_bound,
+                "upper_bound": upper_bound,
             },
         )
 
@@ -421,7 +436,26 @@ async def predict_branch(
                         nonzero_vals = [v for v in forecast_values if v > 0]
                         fallback_mean = sum(nonzero_vals) / len(nonzero_vals) if nonzero_vals else 0.0
                         forecast_values = [v if v > 0 else fallback_mean for v in forecast_values]
-                        forecast_df = pd.DataFrame({"ds": forecast_dates, "yhat1": forecast_values})
+
+                        # Extract khoảng tin cậy nếu model train với quantiles=[0.1, 0.9]
+                        lower_vals: list[float | None] = []
+                        upper_vals: list[float | None] = []
+                        for h in range(1, n_fc + 1):
+                            lo = last_hist_row.get(f"yhat{h} 10.0%")
+                            hi = last_hist_row.get(f"yhat{h} 90.0%")
+                            if lo is not None and pd.notna(lo) and hi is not None and pd.notna(hi):
+                                lower_vals.append(max(float(lo), 0.0))
+                                upper_vals.append(max(float(hi), 0.0))
+                            else:
+                                lower_vals.append(None)
+                                upper_vals.append(None)
+
+                        forecast_df = pd.DataFrame({
+                            "ds": forecast_dates,
+                            "yhat1": forecast_values,
+                            "lower_bound": lower_vals,
+                            "upper_bound": upper_vals,
+                        })
 
                     else:
                         # ── Weekly predict path (intermittent / sparse) ──
@@ -459,11 +493,16 @@ async def predict_branch(
                             start=pd.Timestamp(date.today()) + pd.Timedelta(days=1),
                             periods=n_forecasts, freq="D",
                         )
+                        weekly_vals = (
+                            forecast_df["yhat1"].values[:n_forecasts].tolist()
+                            if len(forecast_df) >= n_forecasts
+                            else list(forecast_df["yhat1"].values) + [0.0] * (n_forecasts - len(forecast_df))
+                        )
                         forecast_df = pd.DataFrame({
                             "ds": forecast_dates,
-                            "yhat1": forecast_df["yhat1"].values[:n_forecasts]
-                                     if len(forecast_df) >= n_forecasts
-                                     else list(forecast_df["yhat1"].values) + [0.0] * (n_forecasts - len(forecast_df)),
+                            "yhat1": weekly_vals,
+                            "lower_bound": [None] * n_forecasts,
+                            "upper_bound": [None] * n_forecasts,
                         })
 
                 except Exception as exc:

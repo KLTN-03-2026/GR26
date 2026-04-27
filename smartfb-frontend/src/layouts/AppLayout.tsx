@@ -90,7 +90,7 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   // Cập nhật logic để staff hiển thị chi nhánh đầu tiên trong khi chờ auto-select hoàn tất
   const selectedBranchId = isOwner
     ? (currentBranchId ?? 'all')
-    : (currentBranchId ?? firstAccessibleBranchId); // Code mới của Claude
+    : (currentBranchId ?? firstAccessibleBranchId); 
 
 
   useEffect(() => {
