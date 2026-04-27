@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
+import AdminBillingPage from '@pages/admin/AdminBillingPage';
+import AdminDashboardPage from '@pages/admin/AdminDashboardPage';
+import AdminPlansPage from '@pages/admin/AdminPlansPage';
+import AdminTenantsPage from '@pages/admin/AdminTenantsPage';
 import ForgotPasswordPage from '@pages/auth/ForgotPasswordPage';
 import LoginPage from '@pages/auth/LoginPage';
 import RegisterPage from '@pages/auth/RegisterPage';
+import AiForecastPage from '@pages/owner/AiForecastPage';
 import BranchDetailPage from '@pages/owner/BranchDetailPage';
 import BranchesPage from '@pages/owner/BranchesPage';
 import CreateBranchPage from '@pages/owner/CreateBranchPage';
@@ -18,6 +23,7 @@ import StaffPage from '@pages/owner/StaffPage';
 import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
 import TablesPage from '@pages/owner/TablesPage';
 import OrderDetailPage from '@pages/pos/OrderDetailPage';
+import MyShiftsPage from '@pages/pos/MyShiftsPage';
 import OrderPage from '@pages/pos/OrderPage';
 import PaymentPage from '@pages/pos/PaymentPage';
 import OrderManagementPage from '@pages/pos/OrderManagementPage';
@@ -77,23 +83,31 @@ export const publicRoutes: RouteConfigItem[] = [
 ];
 
 export const adminRoutes: RouteConfigItem[] = [
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.ADMIN_DASHBOARD,
     'Tổng quan hệ thống',
-    'Tổng quan hệ thống',
-    'Trang tổng hợp số liệu SaaS cho quản trị viên đang được tách thành page riêng.'
+    <AdminDashboardPage />
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.ADMIN_PLANS,
     'Quản lý gói dịch vụ',
-    'Quản lý gói dịch vụ',
-    'Khu vực cấu hình plan và billing admin sẽ được triển khai tại page riêng trong module tiếp theo.'
+    <AdminPlansPage />
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.ADMIN_TENANTS,
     'Quản lý tenant',
-    'Quản lý tenant',
-    'Danh sách tenant và công cụ quản trị SaaS đang được chuẩn hóa lại cấu trúc page.'
+    <AdminTenantsPage />
+  ),
+  createRoute(
+    ROUTES.ADMIN_BILLING,
+    'Billing',
+    <AdminBillingPage />
+  ),
+  createPlaceholderRoute(
+    ROUTES.ADMIN_SETTINGS,
+    'Cài đặt admin',
+    'Cài đặt admin',
+    'Thiết lập khu vực quản trị SaaS sẽ được triển khai sau khi hoàn thiện các luồng chính.'
   ),
 ];
 
@@ -117,6 +131,7 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.EXPENSES, 'Thu chi', <ExpensesPage />),
   createRoute(ROUTES.OWNER.MENU, 'Quản lý thực đơn', <MenuPage />),
   createRoute(ROUTES.OWNER.INVENTORY, 'Quản lý kho', <InventoryPage />),
+  createRoute(ROUTES.OWNER.AI_FORECAST, 'Dự báo tồn kho AI', <AiForecastPage />),
   createRoute(ROUTES.OWNER.RECIPES, 'Công thức', <RecipesPage />),
   createRoute(ROUTES.OWNER.STAFF, 'Quản lý nhân viên', <StaffPage />),
   createRoute(ROUTES.OWNER.STAFF_NEW, 'Thêm nhân viên mới', <CreateStaffPage />),
@@ -219,11 +234,13 @@ export const staffRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,
   }),
-  createPlaceholderRoute(
+  createRoute(ROUTES.STAFF.AI_FORECAST, 'Dự báo tồn kho AI', <AiForecastPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.AI_FORECAST,
+  }),
+  createRoute(
     ROUTES.STAFF.MY_SHIFTS,
     'Ca làm của tôi',
-    'Ca làm của tôi',
-    'Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule.',
+    <MyShiftsPage />,
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS }
   ),
 ];

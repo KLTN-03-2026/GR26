@@ -22,6 +22,7 @@ export const useUpdateExpense = () => {
     mutationFn: ({ id, payload }: UpdateExpenseParams) => expenseService.update(id, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reports.financialInvoicesAll });
       success('Cập nhật phiếu chi thành công', 'Thông tin chi tiêu đã được lưu.');
     },
     onError: (err) => {

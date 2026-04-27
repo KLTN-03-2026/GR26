@@ -1,26 +1,15 @@
 import { useMemo, useState } from 'react';
-import { format, subDays } from 'date-fns';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
 import type { Branch } from '@modules/branch/types/branch.types';
 import type { DateRangePickerValue } from '@shared/components/common/DateRangePicker';
+import { buildTodayDateRangeValue, getTodayDateValue } from '@shared/utils/datePresets';
 
 export interface ReportBranchOption {
   value: string;
   label: string;
   status: Branch['status'];
 }
-
-const buildToday = () => format(new Date(), 'yyyy-MM-dd');
-
-const buildDefaultDateRange = (): DateRangePickerValue => {
-  const today = new Date();
-
-  return {
-    from: format(subDays(today, 6), 'yyyy-MM-dd'),
-    to: format(today, 'yyyy-MM-dd'),
-  };
-};
 
 /**
  * Hook quản lý filter cho màn báo cáo doanh thu.
@@ -38,8 +27,8 @@ export const useRevenueReportFilters = () => {
   } = useBranches();
 
   const [manualBranchId, setManualBranchId] = useState<string>('');
-  const [dateRange, setDateRange] = useState<DateRangePickerValue>(() => buildDefaultDateRange());
-  const [analysisDate, setAnalysisDate] = useState<string>(() => buildToday());
+  const [dateRange, setDateRange] = useState<DateRangePickerValue>(() => buildTodayDateRangeValue());
+  const [analysisDate, setAnalysisDate] = useState<string>(() => getTodayDateValue());
 
   const branchOptions = useMemo<ReportBranchOption[]>(
     () =>

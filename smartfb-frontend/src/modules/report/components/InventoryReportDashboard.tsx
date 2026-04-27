@@ -1,14 +1,25 @@
-import { AlertCircle, PackageCheck, PackageSearch, RefreshCcw, Trash2, TriangleAlert } from 'lucide-react';
-import { useExpiringItemsReport, useInventoryStockReport, useWasteReport } from '@modules/report/hooks/useInventoryReports';
+import { AlertCircle, ArrowLeftRight, BookOpen, PackageCheck, PackageSearch, RefreshCcw, Trash2, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
+import { useCogsReport, useExpiringItemsReport, useInventoryMovementReport, useInventoryStockReport, useWasteReport } from '@modules/report/hooks/useInventoryReports';
 import { useRevenueReportFilters } from '@modules/report/hooks/useRevenueReportFilters';
 import type { InventoryStockReportItem } from '@modules/report/types/report.types';
 import { Button } from '@shared/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@shared/components/ui/select';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import { formatDate } from '@shared/utils/formatDate';
 import { cn } from '@shared/utils/cn';
 import { ReportFilterPanel } from './ReportFilterPanel';
 import { ReportMetricCard } from './ReportMetricCard';
 import { ReportNavigationTabs } from './ReportNavigationTabs';
+
+// Số item hiển thị rút gọn trong các card dạng list
+const CARD_PREVIEW = 5;
 
 const resolveStockStatus = (status: string) => {
   switch (status) {
@@ -43,6 +54,12 @@ const sortByStockRisk = (items: InventoryStockReportItem[]) => {
 /**
  * Dashboard báo cáo kho dùng cho Owner.
  */
+const DAYS_THRESHOLD_OPTIONS = [
+  { value: '7', label: '7 ngày' },
+  { value: '14', label: '14 ngày' },
+  { value: '30', label: '30 ngày' },
+] as const;
+
 export const InventoryReportDashboard = () => {
   const {
     branches,
@@ -58,6 +75,12 @@ export const InventoryReportDashboard = () => {
     refetchBranches,
   } = useRevenueReportFilters();
 
+  const [daysThreshold, setDaysThreshold] = useState<number>(7);
+
+  // State expand cho các card list
+  const [expiringExpanded, setExpiringExpanded] = useState(false);
+  const [wasteExpanded, setWasteExpanded] = useState(false);
+
   const startDate = dateRange.from ?? analysisDate;
   const endDate = dateRange.to ?? dateRange.from ?? analysisDate;
   const selectedBranchName = selectedBranch?.name ?? 'Chưa chọn chi nhánh';
@@ -67,16 +90,20 @@ export const InventoryReportDashboard = () => {
   );
   const expiringQuery = useExpiringItemsReport(
     selectedBranchId
-      ? { branchId: selectedBranchId, daysThreshold: 7, page: 0, size: 20 }
+      ? { branchId: selectedBranchId, daysThreshold, page: 0, size: 20 }
       : undefined,
   );
   const wasteQuery = useWasteReport(
+    selectedBranchId ? { branchId: selectedBranchId, startDate, endDate } : undefined,
+  );
+  const movementQuery = useInventoryMovementReport(
     selectedBranchId
-      ? {
-          branchId: selectedBranchId,
-          startDate,
-          endDate,
-        }
+      ? { branchId: selectedBranchId, startDate, endDate, groupBy: 'daily', page: 0, size: 20 }
+      : undefined,
+  );
+  const cogsQuery = useCogsReport(
+    selectedBranchId
+      ? { branchId: selectedBranchId, startDate, endDate, page: 0, pageSize: 20 }
       : undefined,
   );
 
@@ -88,7 +115,17 @@ export const InventoryReportDashboard = () => {
   const totalStockValue = stockItems.reduce((sum, item) => sum + item.totalValue, 0);
   const totalWasteCost = wasteItems.reduce((sum, item) => sum + item.totalWasteCost, 0);
   const riskyStockItems = sortByStockRisk(stockItems).slice(0, 8);
-  const isRefreshing = stockQuery.isFetching || expiringQuery.isFetching || wasteQuery.isFetching;
+
+  // Items hiển thị tùy theo trạng thái expand
+  const visibleExpiringItems = expiringExpanded ? expiringItems : expiringItems.slice(0, CARD_PREVIEW);
+  const visibleWasteItems = wasteExpanded ? wasteItems : wasteItems.slice(0, CARD_PREVIEW);
+
+  const isRefreshing =
+    stockQuery.isFetching ||
+    expiringQuery.isFetching ||
+    wasteQuery.isFetching ||
+    movementQuery.isFetching ||
+    cogsQuery.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -96,6 +133,8 @@ export const InventoryReportDashboard = () => {
       stockQuery.refetch(),
       expiringQuery.refetch(),
       wasteQuery.refetch(),
+      movementQuery.refetch(),
+      cogsQuery.refetch(),
     ]);
   };
 
@@ -243,10 +282,40 @@ export const InventoryReportDashboard = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Card sắp hết hạn */}
           <div className="card p-5">
-            <div className="flex items-center gap-3">
-              <PackageSearch className="h-5 w-5 text-warning" />
-              <h3 className="text-lg font-semibold text-text-primary">Sắp hết hạn</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <PackageSearch className="h-5 w-5 text-warning" />
+                <h3 className="text-lg font-semibold text-text-primary">Sắp hết hạn</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {expiringItems.length > CARD_PREVIEW && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-primary hover:underline"
+                    onClick={() => { setExpiringExpanded((prev) => !prev); }}
+                  >
+                    {expiringExpanded ? 'Thu gọn' : `Xem tất cả (${expiringItems.length})`}
+                  </button>
+                )}
+                <Select
+                  value={String(daysThreshold)}
+                  onValueChange={(v) => {
+                    setDaysThreshold(Number(v));
+                    setExpiringExpanded(false);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-28 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS_THRESHOLD_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="mt-4 space-y-3">
               {expiringQuery.isLoading ? (
@@ -254,9 +323,9 @@ export const InventoryReportDashboard = () => {
               ) : expiringQuery.isError ? (
                 <p className="text-sm text-danger-text">Không thể tải hàng sắp hết hạn.</p>
               ) : expiringItems.length === 0 ? (
-                <p className="text-sm text-text-secondary">Không có lô sắp hết hạn trong 7 ngày.</p>
+                <p className="text-sm text-text-secondary">Không có lô sắp hết hạn trong {daysThreshold} ngày.</p>
               ) : (
-                expiringItems.slice(0, 5).map((item) => (
+                visibleExpiringItems.map((item) => (
                   <div key={item.batchId ?? `${item.itemId}-${item.expiryDate}`} className="border-b border-border pb-3 last:border-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -275,10 +344,22 @@ export const InventoryReportDashboard = () => {
             </div>
           </div>
 
+          {/* Card hao hụt cao */}
           <div className="card p-5">
-            <div className="flex items-center gap-3">
-              <Trash2 className="h-5 w-5 text-danger-text" />
-              <h3 className="text-lg font-semibold text-text-primary">Hao hụt cao</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Trash2 className="h-5 w-5 text-danger-text" />
+                <h3 className="text-lg font-semibold text-text-primary">Hao hụt cao</h3>
+              </div>
+              {wasteItems.length > CARD_PREVIEW && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:underline"
+                  onClick={() => { setWasteExpanded((prev) => !prev); }}
+                >
+                  {wasteExpanded ? 'Thu gọn' : `Xem tất cả (${wasteItems.length})`}
+                </button>
+              )}
             </div>
             <div className="mt-4 space-y-3">
               {wasteQuery.isLoading ? (
@@ -288,7 +369,7 @@ export const InventoryReportDashboard = () => {
               ) : wasteItems.length === 0 ? (
                 <p className="text-sm text-text-secondary">Không có ghi nhận hao hụt trong kỳ.</p>
               ) : (
-                wasteItems.slice(0, 5).map((item) => (
+                visibleWasteItems.map((item) => (
                   <div key={item.itemId} className="border-b border-border pb-3 last:border-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -305,6 +386,113 @@ export const InventoryReportDashboard = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Biến động kho: Nhập / Xuất / Tồn theo kỳ */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border p-5">
+          <div className="flex items-center gap-3">
+            <ArrowLeftRight className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-text-primary">Biến động kho trong kỳ</h3>
+          </div>
+          <p className="mt-1 text-sm text-text-secondary">{formatDate(startDate)} - {formatDate(endDate)} · Tồn đầu kỳ → Nhập → Xuất → Tồn cuối kỳ</p>
+        </div>
+        {movementQuery.isLoading ? (
+          <div className="p-5"><div className="h-40 animate-pulse rounded-card bg-cream" /></div>
+        ) : movementQuery.isError ? (
+          <div className="p-5 text-sm text-danger-text">Không thể tải báo cáo biến động kho.</div>
+        ) : !movementQuery.data?.content.length ? (
+          <div className="p-5 text-sm text-text-secondary">Chưa có dữ liệu biến động trong kỳ.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-cream text-left text-text-secondary">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Mặt hàng</th>
+                  <th className="px-5 py-3 font-medium text-right">Tồn đầu kỳ</th>
+                  <th className="px-5 py-3 font-medium text-right">Nhập</th>
+                  <th className="px-5 py-3 font-medium text-right">Xuất</th>
+                  <th className="px-5 py-3 font-medium text-right">Tồn cuối kỳ</th>
+                  <th className="px-5 py-3 font-medium text-right">Chênh lệch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movementQuery.data.content.map((item) => (
+                  <tr key={`${item.itemId}-${item.date ?? item.week ?? item.month}`} className="border-t border-border">
+                    <td className="px-5 py-3 font-semibold text-text-primary">
+                      {item.itemName}
+                      <span className="ml-1 text-xs font-normal text-text-secondary">{item.unit ?? ''}</span>
+                    </td>
+                    <td className="px-5 py-3 text-right text-text-secondary">{formatNumber(item.beginningBalance)}</td>
+                    <td className="px-5 py-3 text-right text-success-text">{formatNumber(item.importQty)}</td>
+                    <td className="px-5 py-3 text-right text-danger-text">{formatNumber(item.exportQty)}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-text-primary">{formatNumber(item.endingBalance)}</td>
+                    <td className="px-5 py-3 text-right">
+                      <span className={cn(
+                        'badge',
+                        item.varianceStatus === 'CRITICAL' ? 'badge-cancelled' :
+                        item.varianceStatus === 'MISMATCH' ? 'badge-warning' : 'badge-success',
+                      )}>
+                        {item.variance > 0 ? '+' : ''}{formatNumber(item.variance)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* COGS — Giá vốn hàng bán */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border p-5">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-text-primary">Giá vốn hàng bán (COGS)</h3>
+          </div>
+          <p className="mt-1 text-sm text-text-secondary">Phương pháp FIFO · {formatDate(startDate)} - {formatDate(endDate)}</p>
+        </div>
+        {cogsQuery.isLoading ? (
+          <div className="p-5"><div className="h-40 animate-pulse rounded-card bg-cream" /></div>
+        ) : cogsQuery.isError ? (
+          <div className="p-5 text-sm text-danger-text">Không thể tải báo cáo COGS.</div>
+        ) : !cogsQuery.data?.content.length ? (
+          <div className="p-5 text-sm text-text-secondary">Chưa có dữ liệu giá vốn trong kỳ.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-cream text-left text-text-secondary">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Nguyên liệu</th>
+                  <th className="px-5 py-3 font-medium">Loại giao dịch</th>
+                  <th className="px-5 py-3 font-medium text-right">Số lượng</th>
+                  <th className="px-5 py-3 font-medium text-right">Đơn giá vốn</th>
+                  <th className="px-5 py-3 font-medium text-right">Tổng giá vốn</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cogsQuery.data.content.map((item, idx) => (
+                  <tr key={`${item.itemId}-${item.batchId ?? idx}`} className="border-t border-border">
+                    <td className="px-5 py-3 font-semibold text-text-primary">
+                      {item.itemName}
+                      <span className="ml-1 text-xs font-normal text-text-secondary">{item.unit ?? ''}</span>
+                    </td>
+                    <td className="px-5 py-3 text-text-secondary text-xs">
+                      {item.transactionType === 'SALE_DEDUCT' ? 'Bán hàng' :
+                       item.transactionType === 'WASTAGE' ? 'Hao hụt' :
+                       item.transactionType === 'ADJUSTMENT' ? 'Điều chỉnh' :
+                       (item.transactionType ?? '—')}
+                    </td>
+                    <td className="px-5 py-3 text-right text-text-secondary">{formatNumber(item.qtyUsed)}</td>
+                    <td className="px-5 py-3 text-right text-text-secondary">{formatVND(item.unitCost)}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-text-primary">{formatVND(item.totalCost)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

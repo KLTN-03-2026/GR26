@@ -3,9 +3,10 @@
  * REGISTERED: Đã đăng ký (chờ check-in)
  * CHECKED_IN: Đã check-in (đang làm)
  * COMPLETED: Đã kết thúc (đã check-out)
+ * ABSENT: Vắng mặt
  * CANCELLED: Đã hủy
  */
-export type ShiftStatus = 'REGISTERED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED';
+export type ShiftStatus = 'REGISTERED' | 'CHECKED_IN' | 'COMPLETED' | 'ABSENT' | 'CANCELLED';
 
 /**
  * LocalTime format từ backend (hour, minute, second, nano)

@@ -15,6 +15,7 @@ import type { DateRangePickerValue } from '@shared/components/common/DateRangePi
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
 import { usePermission } from '@shared/hooks/usePermission';
+import { buildTodayDateRangeValue, isSameDateRangeValue } from '@shared/utils/datePresets';
 
 /**
  * Các kích thước trang hợp lệ cho API order, không vượt giới hạn 100 của backend.
@@ -29,9 +30,10 @@ const EMPTY_ORDER_LIST: OrderListItemResponse[] = [];
 const OrderManagementPage = () => {
   const navigate = useNavigate();
   const { can } = usePermission();
+  const defaultDateRange = buildTodayDateRangeValue();
   const [activeTab, setActiveTab] = useState<OrderStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateRange, setDateRange] = useState<DateRangePickerValue>({});
+  const [dateRange, setDateRange] = useState<DateRangePickerValue>(() => buildTodayDateRangeValue());
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(ORDER_LIST_DEFAULT_PAGE_SIZE);
   const canCreateOrder = can(PERMISSIONS.ORDER_CREATE);
@@ -91,8 +93,7 @@ const OrderManagementPage = () => {
   const hasOrders = (orderPage?.totalElements ?? 0) > 0;
   const hasActiveFilters =
     activeTab !== 'ALL' ||
-    Boolean(dateRange.from) ||
-    Boolean(dateRange.to) ||
+    !isSameDateRangeValue(dateRange, defaultDateRange) ||
     searchQuery.trim().length > 0;
 
   const handleRefresh = () => {
@@ -115,7 +116,7 @@ const OrderManagementPage = () => {
 
   const handleClearFilters = () => {
     setActiveTab('ALL');
-    setDateRange({});
+    setDateRange(buildTodayDateRangeValue());
     setSearchQuery('');
     setPage(0);
   };

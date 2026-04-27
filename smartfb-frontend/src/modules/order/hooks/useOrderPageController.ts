@@ -5,8 +5,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
 import { useAddons } from '@modules/menu/hooks/useAddons';
+import { useActiveMenus } from '@modules/menu/hooks/useActiveMenus';
 import { useCategories } from '@modules/menu/hooks/useCategories';
-import { useMenus } from '@modules/menu/hooks/useMenus';
 import type {
   MenuAddonInfo,
   MenuCategoryInfo,
@@ -105,7 +105,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
 
   const { data: branches = [] } = useBranches();
   const { data: zones = [] } = useZones();
-  const menuQuery = useMenus();
+  const menuQuery = useActiveMenus(currentBranchId);
   const categoriesQuery = useCategories();
   const addonsQuery = useAddons();
 

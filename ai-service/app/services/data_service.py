@@ -567,7 +567,11 @@ async def get_branch_active_days(
     branch_id: str,
 ) -> dict:
     """
-    Thống kê số ngày chi nhánh có đơn hàng từ inventory_transactions.
+    Thống kê số ngày chi nhánh có đơn hàng từ bảng orders.
+
+    Đếm từ orders thay vì inventory_transactions để phản ánh đúng lượng data
+    lịch sử thực tế — inventory_transactions chỉ được tạo từ khi BE bật tính năng
+    deduct kho, trong khi orders lưu toàn bộ lịch sử kinh doanh.
 
     Dùng để:
     - Tự động bật yearly_seasonality khi active_days >= 730
@@ -579,7 +583,7 @@ async def get_branch_active_days(
 
     Returns:
         dict với keys:
-            active_days (int): số ngày có đơn SALE_DEDUCT
+            active_days (int): số ngày có đơn hoàn thành
             first_order_date (date | None): ngày có đơn đầu tiên
             last_order_date (date | None): ngày có đơn gần nhất
     """
@@ -588,11 +592,10 @@ async def get_branch_active_days(
             COUNT(DISTINCT DATE(created_at)) AS active_days,
             MIN(DATE(created_at))            AS first_order_date,
             MAX(DATE(created_at))            AS last_order_date
-        FROM inventory_transactions
+        FROM orders
         WHERE tenant_id = :tenant_id
           AND branch_id = :branch_id
-          AND type      = 'SALE_DEDUCT'
-          AND quantity  < 0
+          AND status    IN ('COMPLETED', 'PAID')
     """)
     result = await db.execute(sql, {"tenant_id": tenant_id, "branch_id": branch_id})
     row = result.fetchone()

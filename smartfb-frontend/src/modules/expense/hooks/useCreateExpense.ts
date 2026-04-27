@@ -17,6 +17,7 @@ export const useCreateExpense = () => {
     mutationFn: (payload: ExpenseRequest) => expenseService.create(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reports.financialInvoicesAll });
       success('Tạo phiếu chi thành công', 'Danh sách chi tiêu đã được cập nhật.');
     },
     onError: (err) => {

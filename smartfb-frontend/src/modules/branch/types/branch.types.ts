@@ -112,3 +112,24 @@ export type UpdateBranchPayload = CreateBranchPayload;
 export type AssignUserToBranchPayload = {
   userId: string;
 };
+
+/**
+ * Cấu hình cổng thanh toán PayOS của một chi nhánh.
+ * BE chỉ trả về masked key — không bao giờ trả raw key.
+ */
+export interface PaymentGatewayConfig {
+  isConfigured: boolean;
+  clientId: string | null;
+  apiKeyMasked: string | null;
+  checksumKeyMasked: string | null;
+}
+
+/**
+ * Payload Owner gửi lên để lưu cấu hình PayOS cho chi nhánh.
+ * Chứa raw key — chỉ dùng khi gửi lên BE, không lưu ở FE.
+ */
+export interface PaymentGatewayConfigPayload {
+  clientId: string;
+  apiKey: string;
+  checksumKey: string;
+}

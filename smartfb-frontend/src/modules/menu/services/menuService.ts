@@ -152,6 +152,32 @@ const mapBranchItem = (item: BackendBranchItemResponse): BranchMenuItemConfig =>
 };
 
 /**
+ * Áp cấu hình giá và trạng thái phục vụ theo chi nhánh lên món active dùng cho POS.
+ */
+const mergeMenuItemWithBranchConfig = (
+  item: MenuItem,
+  branchConfig: BranchMenuItemConfig | undefined
+): MenuItem => {
+  if (!branchConfig) {
+    return item;
+  }
+
+  const isGloballyActive = item.isActive ?? item.isAvailable ?? true;
+
+  return {
+    ...item,
+    branchId: branchConfig.branchId,
+    price: branchConfig.effectivePrice,
+    basePrice: branchConfig.basePrice,
+    branchPrice: branchConfig.branchPrice,
+    effectivePrice: branchConfig.effectivePrice,
+    isAvailable: branchConfig.isAvailable,
+    status: isGloballyActive && branchConfig.isAvailable ? 'selling' : 'hidden',
+    usesBranchPrice: branchConfig.branchPrice !== null,
+  };
+};
+
+/**
  * Chuyển response danh mục từ backend sang model filter/form của frontend.
  */
 const mapCategory = (category: BackendCategoryResponse): MenuCategoryInfo => {
@@ -324,6 +350,54 @@ export const menuService = {
     });
 
     const mappedItems = items.map(mapMenuItem);
+
+    return {
+      data: mappedItems,
+      meta: {
+        current_page: 1,
+        per_page: mappedItems.length,
+        total: mappedItems.length,
+        last_page: 1,
+      },
+    };
+  },
+
+  /**
+   * Lấy danh sách món đang kích hoạt cho POS.
+   */
+  getActiveList: async (): Promise<PaginatedResult<MenuItem>> => {
+    const response = await api.get<ApiResponse<BackendMenuItemResponse[]>>('/menu/items/active');
+    const mappedItems = response.data.data.map(mapMenuItem);
+
+    return {
+      data: mappedItems,
+      meta: {
+        current_page: 1,
+        per_page: mappedItems.length,
+        total: mappedItems.length,
+        last_page: 1,
+      },
+    };
+  },
+
+  /**
+   * Lấy danh sách món đang kích hoạt kèm giá và trạng thái phục vụ theo chi nhánh.
+   */
+  getActiveListByBranch: async (branchId: string): Promise<PaginatedResult<MenuItem>> => {
+    const [activeItemsResponse, branchItemsResponse] = await Promise.all([
+      api.get<ApiResponse<BackendMenuItemResponse[]>>('/menu/items/active'),
+      api.get<ApiResponse<BackendBranchItemResponse[]>>(`/menu/branches/${branchId}/items`),
+    ]);
+
+    const branchConfigMap = new Map(
+      branchItemsResponse.data.data.map((item) => {
+        const config = mapBranchItem(item);
+        return [config.itemId, config];
+      })
+    );
+    const mappedItems = activeItemsResponse.data.data.map((item) =>
+      mergeMenuItemWithBranchConfig(mapMenuItem(item), branchConfigMap.get(item.id))
+    );
 
     return {
       data: mappedItems,
@@ -525,6 +599,20 @@ export const menuService = {
     return {
       ...response.data,
       data: mapBranchItem(response.data.data),
+    };
+  },
+
+  /**
+   * Lấy toàn bộ cấu hình món ăn tại một chi nhánh bằng API batch.
+   */
+  getBranchItems: async (branchId: string): Promise<ApiResponse<BranchMenuItemConfig[]>> => {
+    const response = await api.get<ApiResponse<BackendBranchItemResponse[]>>(
+      `/menu/branches/${branchId}/items`
+    );
+
+    return {
+      ...response.data,
+      data: response.data.data.map(mapBranchItem),
     };
   },
 

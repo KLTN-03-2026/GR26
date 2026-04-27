@@ -8,6 +8,8 @@ export const ROUTES = {
   ADMIN_DASHBOARD: '/admin',
   ADMIN_PLANS: '/admin/plans',
   ADMIN_TENANTS: '/admin/tenants',
+  ADMIN_BILLING: '/admin/billing',
+  ADMIN_SETTINGS: '/admin/settings',
 
   // Owner routes - grouped by category
   OWNER: {
@@ -41,6 +43,7 @@ export const ROUTES = {
     REPORT_HR: '/owner/reports/hr',
     SETTINGS: '/owner/settings',
     PACKAGES: '/owner/packages',
+    AI_FORECAST: '/owner/inventory/ai-forecast',
   },
 
   // Staff routes - POS namespace cho nhân viên
@@ -54,6 +57,7 @@ export const ROUTES = {
     MENU: '/pos/menu',
     RECIPES: '/pos/recipes',
     INVENTORY: '/pos/inventory',
+    AI_FORECAST: '/pos/inventory/ai-forecast',
     MY_SHIFTS: '/pos/my-shifts',
   },
 

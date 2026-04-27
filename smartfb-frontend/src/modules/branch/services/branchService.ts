@@ -4,6 +4,8 @@ import type {
   CreateBranchPayload,
   UpdateBranchPayload,
   AssignUserToBranchPayload,
+  PaymentGatewayConfig,
+  PaymentGatewayConfigPayload,
 } from '../types/branch.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
@@ -47,5 +49,23 @@ export const branchService = {
    */
   assignUserToBranch: async (id: string, payload: AssignUserToBranchPayload): Promise<ApiResponse<void>> => {
     return api.post<ApiResponse<void>>(`/branches/${id}/users`, payload).then(r => r.data);
+  },
+
+  /**
+   * Lấy cấu hình cổng thanh toán PayOS của chi nhánh.
+   * BE chỉ trả về masked key — không bao giờ trả raw key.
+   * GET /api/v1/branches/:id/payment-config
+   */
+  getPaymentConfig: async (branchId: string): Promise<ApiResponse<PaymentGatewayConfig>> => {
+    return api.get<ApiResponse<PaymentGatewayConfig>>(`/branches/${branchId}/payment-config`).then(r => r.data);
+  },
+
+  /**
+   * Lưu cấu hình PayOS cho chi nhánh.
+   * Chỉ Owner có quyền BRANCH_EDIT mới được gọi API này.
+   * PUT /api/v1/branches/:id/payment-config
+   */
+  savePaymentConfig: async (branchId: string, payload: PaymentGatewayConfigPayload): Promise<ApiResponse<PaymentGatewayConfig>> => {
+    return api.put<ApiResponse<PaymentGatewayConfig>>(`/branches/${branchId}/payment-config`, payload).then(r => r.data);
   },
 };

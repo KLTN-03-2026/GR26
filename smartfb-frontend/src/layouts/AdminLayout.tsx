@@ -1,5 +1,8 @@
 import { PageMeta } from '@shared/components/common/PageMeta';
-import { type ReactNode } from 'react';
+import { AdminHeader } from '@modules/admin/layout/AdminHeader';
+import { AdminMobileSidebar } from '@modules/admin/layout/AdminMobileSidebar';
+import { AdminSidebar } from '@modules/admin/layout/AdminSidebar';
+import { type ReactNode, useState } from 'react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -7,26 +10,35 @@ interface AdminLayoutProps {
 }
 
 /**
- * Layout tối giản cho khu vực quản trị SaaS.
- * Tạm thời giữ nhẹ để tách vùng Admin khỏi Owner/Staff.
+ * Layout riêng cho khu vực quản trị SaaS.
+ * Admin dùng shell riêng để không lẫn với nghiệp vụ vận hành Owner/Staff.
  */
 export const AdminLayout = ({ children, pageTitle }: AdminLayoutProps) => {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
     <>
       <PageMeta title={`${pageTitle} Admin`} />
-      <div className="min-h-screen bg-cream">
-        <header className="border-b border-border bg-card px-6 py-4">
-          <div className="mx-auto flex max-w-7xl items-center justify-between">
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.18em] text-text-secondary">
-                SmartF&amp;B Admin
-              </p>
-              <h1 className="mt-1 text-2xl font-bold text-text-primary">{pageTitle}</h1>
-            </div>
-          </div>
-        </header>
+      <div className="min-h-screen bg-admin-gray-50">
+        <div className="fixed left-0 top-0 z-40 hidden h-screen lg:block">
+          <AdminSidebar />
+        </div>
 
-        <main className="mx-auto max-w-7xl px-6 py-6">{children}</main>
+        <div className="flex min-h-screen min-w-0 flex-col lg:pl-admin-sidebar">
+          <AdminHeader
+            pageTitle={pageTitle}
+            onOpenMobileMenu={() => setIsMobileSidebarOpen(true)}
+          />
+
+          <main className="flex-1 px-4 py-5 md:px-6 md:py-6 xl:px-8">
+            <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+          </main>
+        </div>
+
+        <AdminMobileSidebar
+          open={isMobileSidebarOpen}
+          onClose={() => setIsMobileSidebarOpen(false)}
+        />
       </div>
     </>
   );

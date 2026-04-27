@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { reportService } from '../services/reportService';
 import type {
+  FinancialInvoiceItem,
+  FinancialInvoiceItemResponse,
+  FinancialInvoicesParams,
   RevenueReport,
   RevenueReportParams,
   RevenueReportResponse,
@@ -27,6 +30,32 @@ const mapRevenueReport = (report: RevenueReportResponse): RevenueReport => {
       breakdown: normalizeRevenuePaymentBreakdown(line.breakdown),
     })),
   };
+};
+
+const mapFinancialInvoiceItem = (item: FinancialInvoiceItemResponse): FinancialInvoiceItem => ({
+  ...item,
+  amount: normalizeReportNumber(item.amount),
+});
+
+/**
+ * Hook lấy lịch sử hóa đơn Thu/Chi trong khoảng ngày.
+ *
+ * @param params - Chi nhánh và khoảng ngày cần xem
+ */
+export const useFinancialInvoices = (params?: FinancialInvoicesParams) => {
+  return useQuery({
+    queryKey: queryKeys.reports.financialInvoices(params ? { ...params } : undefined),
+    queryFn: async () => {
+      if (!params) throw new Error('Thiếu tham số lịch sử hóa đơn');
+      const response = await reportService.getFinancialInvoices(params);
+      return {
+        ...response.data,
+        content: response.data.content.map(mapFinancialInvoiceItem),
+      };
+    },
+    enabled: Boolean(params?.branchId && params.startDate && params.endDate),
+    staleTime: 60 * 1000,
+  });
 };
 
 /**

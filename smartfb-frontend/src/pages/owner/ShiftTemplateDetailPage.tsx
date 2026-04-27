@@ -87,6 +87,7 @@ export default function ShiftTemplateDetailPage() {
 
             {isEditDialogOpen && (
                 <ShiftTemplateFormModal
+                    key={template.id}
                     open={isEditDialogOpen}
                     onOpenChange={setIsEditDialogOpen}
                     editingTemplate={template}

@@ -1,9 +1,10 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Clock, CircleCheckBig, CircleOff } from 'lucide-react';
 import { ShiftTemplateFilterBar } from '@modules/shift/components/ShiftTemplateFilterBar/ShiftTemplateFilterBar';
 import { ShiftTemplateTable } from '@modules/shift/components/ShiftTemplateTable/ShiftTemplateTable';
 import { ShiftTemplateFormModal } from '@modules/shift/components/ShiftTemplateFormModal';
+import { OwnerShiftSchedulePanel } from '@modules/shift/components/OwnerShiftSchedulePanel';
 import { useShiftTemplateFilters } from '@modules/shift/hooks/useShiftFilters';
 import { useShiftTemplates } from '@modules/shift/hooks/useShiftTemplates';
 import { Button } from '@shared/components/ui/button';
@@ -42,6 +43,8 @@ export default function ShiftManagementPage() {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<ShiftTemplate | null>(null);
+    const isCreateRoute = location.pathname === ROUTES.OWNER.SHIFT_TEMPLATE_NEW;
+    const isTemplateModalOpen = isCreateRoute || modalOpen;
 
     const {
         filters,
@@ -59,15 +62,8 @@ export default function ShiftManagementPage() {
     const activeTemplates = templates.filter(t => t.active === true).length;
     const inactiveTemplates = templates.filter(t => t.active === false).length;
 
-    // Kiểm tra URL để mở modal khi vào route /new
-    useEffect(() => {
-        if (location.pathname === ROUTES.OWNER.SHIFT_TEMPLATE_NEW) {
-            setModalOpen(true);
-            setEditingTemplate(null);
-        }
-    }, [location.pathname]);
-
     const handleAddTemplate = () => {
+        setEditingTemplate(null);
         navigate(ROUTES.OWNER.SHIFT_TEMPLATE_NEW);
     };
 
@@ -128,8 +124,17 @@ export default function ShiftManagementPage() {
                 />
             </div>
 
+            <OwnerShiftSchedulePanel templates={templates} isTemplatesLoading={isLoading} />
+
             {/* Filter Bar & Table */}
             <div className="space-y-4 rounded-card border border-border bg-card p-4 shadow-card">
+                <div>
+                    <h2 className="text-lg font-semibold text-text-primary">Ca mẫu</h2>
+                    <p className="mt-1 text-sm text-text-secondary">
+                        Thiết lập khung giờ làm việc dùng để xếp lịch cho nhân viên.
+                    </p>
+                </div>
+
                 <ShiftTemplateFilterBar
                     filters={filters}
                     onSearchChange={(value) => updateFilter('search', value)}
@@ -153,9 +158,10 @@ export default function ShiftManagementPage() {
 
             {/* Modal Create/Edit */}
             <ShiftTemplateFormModal
-                open={modalOpen}
+                key={editingTemplate?.id ?? (isCreateRoute ? 'create-template' : 'closed-template')}
+                open={isTemplateModalOpen}
                 onOpenChange={handleModalClose}
-                editingTemplate={editingTemplate}
+                editingTemplate={isCreateRoute ? null : editingTemplate}
             />
         </div>
     );

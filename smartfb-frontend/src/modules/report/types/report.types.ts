@@ -366,6 +366,185 @@ export interface ViolationReportItem extends ViolationReportItemResponse {
   minutesViolation: number;
 }
 
+// ─── Inventory Movement ───────────────────────────────────────────────────────
+
+export interface InventoryMovementReportParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  groupBy?: 'daily' | 'weekly' | 'monthly';
+  page?: number;
+  size?: number;
+}
+
+export interface InventoryMovementReportItemResponse {
+  itemId: string;
+  itemName: string;
+  unit: string | null;
+  beginningBalance: number | null;
+  importQty: number | null;
+  exportQty: number | null;
+  endingBalance: number | null;
+  beginningValue: ReportNumericValue;
+  importValue: ReportNumericValue;
+  exportValue: ReportNumericValue;
+  endingValue: ReportNumericValue;
+  variance: number | null;
+  varianceStatus: string | null;
+  date: string | null;
+  week: string | null;
+  month: string | null;
+  branchId: string | null;
+  branchName: string | null;
+}
+
+export interface InventoryMovementReportItem extends InventoryMovementReportItemResponse {
+  beginningBalance: number;
+  importQty: number;
+  exportQty: number;
+  endingBalance: number;
+  beginningValue: number;
+  importValue: number;
+  exportValue: number;
+  endingValue: number;
+  variance: number;
+}
+
+// ─── COGS ─────────────────────────────────────────────────────────────────────
+
+export interface CogsReportParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CogsReportItemResponse {
+  itemId: string;
+  itemName: string;
+  unit: string | null;
+  date: string | null;
+  qtyUsed: number | null;
+  unitCost: ReportNumericValue;
+  totalCost: ReportNumericValue;
+  transactionType: string | null;
+  relatedOrderId: string | null;
+  notes: string | null;
+  batchId: string | null;
+  batchImportedAt: string | null;
+  branchId: string | null;
+  branchName: string | null;
+}
+
+export interface CogsReportItem extends CogsReportItemResponse {
+  qtyUsed: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+// ─── Payroll ──────────────────────────────────────────────────────────────────
+
+export interface PayrollReportParams {
+  branchId: string;
+  month: string;
+  staffId?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface PayrollReportItemResponse {
+  staffId: string;
+  staffName: string;
+  position: string | null;
+  branchId: string | null;
+  branchName: string | null;
+  month: string;
+  baseSalary: ReportNumericValue;
+  workingDays: number | null;
+  overtimeHours: ReportNumericValue;
+  overtimePay: ReportNumericValue;
+  totalBonuses: ReportNumericValue;
+  totalDeductions: ReportNumericValue;
+  grossSalary: ReportNumericValue;
+  status: string | null;
+  approvedBy: string | null;
+  paidAt: string | null;
+  paymentMethod: string | null;
+}
+
+export interface PayrollReportItem extends PayrollReportItemResponse {
+  workingDays: number;
+  baseSalary: number;
+  overtimeHours: number;
+  overtimePay: number;
+  totalBonuses: number;
+  totalDeductions: number;
+  grossSalary: number;
+}
+
+// ─── Checkin History ──────────────────────────────────────────────────────────
+
+export interface CheckinHistoryParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  staffId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface CheckinHistoryItemResponse {
+  staffId: string;
+  staffName: string;
+  position: string | null;
+  branchId: string | null;
+  branchName: string | null;
+  date: string | null;
+  shiftName: string | null;
+  shiftStartTime: string | null;
+  shiftEndTime: string | null;
+  expectedCheckinTime: string | null;
+  actualCheckinTime: string | null;
+  expectedCheckoutTime: string | null;
+  actualCheckoutTime: string | null;
+  actualWorkingMinutes: number | null;
+  overtimeMinutes: number | null;
+  checkinStatus: string | null;
+  shiftStatus: string | null;
+  notes: string | null;
+}
+
+export type CheckinHistoryItem = CheckinHistoryItemResponse;
+
+// ─── Financial Invoices ───────────────────────────────────────────────────────
+
+// Loại giao dịch dùng cho sổ thu chi tổng hợp: ALL lấy cả thu và chi.
+export type FinancialInvoiceType = 'ALL' | 'INCOME' | 'EXPENSE';
+
+export interface FinancialInvoicesParams {
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  type?: FinancialInvoiceType;
+  page?: number;
+  size?: number;
+}
+
+export interface FinancialInvoiceItemResponse {
+  id: string;
+  type: 'INCOME' | 'EXPENSE' | string;
+  referenceCode: string | null;
+  amount: ReportNumericValue;
+  transactionDate: string | null;
+  paymentMethod: string | null;
+  description: string | null;
+}
+
+export interface FinancialInvoiceItem extends FinancialInvoiceItemResponse {
+  amount: number;
+}
+
 /**
  * Chuẩn hóa kiểu số từ backend vì BigDecimal có thể serialize thành `number` hoặc `string`.
  *

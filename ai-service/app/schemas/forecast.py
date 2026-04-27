@@ -14,7 +14,9 @@ class DayForecast(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     forecast_date: date
-    predicted_qty: float  # Tiêu thụ dự kiến theo đơn vị nguyên liệu
+    predicted_qty: float        # Tiêu thụ dự kiến theo đơn vị nguyên liệu
+    lower_bound: float | None = None  # Cận dưới khoảng tin cậy 80% (quantile 10%)
+    upper_bound: float | None = None  # Cận trên khoảng tin cậy 80% (quantile 90%)
 
 
 class DayWeather(BaseModel):

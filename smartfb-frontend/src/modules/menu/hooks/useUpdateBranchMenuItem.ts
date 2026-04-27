@@ -30,6 +30,9 @@ export const useUpdateBranchMenuItem = () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.menu.branchItemDetail(variables.branchId, variables.itemId),
       });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.menu.activeList(variables.branchId),
+      });
 
       success(
         'Đã cập nhật cấu hình chi nhánh',

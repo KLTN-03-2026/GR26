@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { EditBranchDialog } from '@modules/branch/components/EditBranchDialog';
 import { BranchInfoCard } from '@modules/branch/components/branch-detail';
+import { PaymentConfigCard } from '@modules/branch/components/branch-detail/PaymentConfigCard';
 import { useBranchDetail } from '@modules/branch/hooks/useBranchDetail';
 import { Button } from '@shared/components/ui/button';
 import { ROUTES } from '@shared/constants/routes';
@@ -59,6 +60,8 @@ export default function BranchDetailPage() {
       </div>
 
       <BranchInfoCard branch={branch} onEdit={() => setIsEditDialogOpen(true)} />
+
+      <PaymentConfigCard branchId={id} />
 
       {isEditDialogOpen && (
         <EditBranchDialog

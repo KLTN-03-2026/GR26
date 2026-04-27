@@ -1,17 +1,26 @@
 import { useState, type ReactNode } from 'react';
-import { TrendingUp, Receipt, Wallet, PiggyBank, RefreshCcw, AlertCircle } from 'lucide-react';
+import { TrendingUp, Receipt, Wallet, PiggyBank, RefreshCcw, AlertCircle, FileText } from 'lucide-react';
 import { useHourlyRevenueHeatmap } from '@modules/report/hooks/useHourlyRevenueHeatmap';
 import { usePaymentMethodBreakdown } from '@modules/report/hooks/usePaymentMethodBreakdown';
-import { useRevenueReport } from '@modules/report/hooks/useRevenueReport';
+import { useFinancialInvoices, useRevenueReport } from '@modules/report/hooks/useRevenueReport';
 import { useRevenueReportFilters } from '@modules/report/hooks/useRevenueReportFilters';
 import { useTopItemsReport } from '@modules/report/hooks/useTopItemsReport';
+import type { RevenueReportGroupBy } from '@modules/report/types/report.types';
 import { Button } from '@shared/components/ui/button';
+import { cn } from '@shared/utils/cn';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import { HourlyRevenueChart } from './HourlyRevenueChart';
 import { PaymentBreakdownChart } from './PaymentBreakdownChart';
 import { ReportFilterPanel } from './ReportFilterPanel';
 import { ReportNavigationTabs } from './ReportNavigationTabs';
 import { TopItemsChart } from './TopItemsChart';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@shared/components/ui/select';
 
 interface KpiCardProps {
   label: string;
@@ -58,6 +67,7 @@ export const RevenueReportDashboard = () => {
   const [hourlyDate, setHourlyDate] = useState(() => analysisDate);
   const [paymentBreakdownDate, setPaymentBreakdownDate] = useState(() => analysisDate);
   const [topItemsDate, setTopItemsDate] = useState(() => analysisDate);
+  const [groupBy, setGroupBy] = useState<RevenueReportGroupBy>('daily');
 
   const startDate = dateRange.from ?? analysisDate;
   const endDate = dateRange.to ?? dateRange.from ?? analysisDate;
@@ -65,12 +75,12 @@ export const RevenueReportDashboard = () => {
 
   const revenueReportQuery = useRevenueReport(
     selectedBranchId
-      ? {
-          branchId: selectedBranchId,
-          startDate,
-          endDate,
-          groupBy: 'daily',
-        }
+      ? { branchId: selectedBranchId, startDate, endDate, groupBy }
+      : undefined,
+  );
+  const financialInvoicesQuery = useFinancialInvoices(
+    selectedBranchId
+      ? { branchId: selectedBranchId, startDate, endDate, page: 0, size: 20 }
       : undefined,
   );
 
@@ -106,7 +116,8 @@ export const RevenueReportDashboard = () => {
     revenueReportQuery.isFetching ||
     hourlyHeatmapQuery.isFetching ||
     topItemsQuery.isFetching ||
-    paymentBreakdownQuery.isFetching;
+    paymentBreakdownQuery.isFetching ||
+    financialInvoicesQuery.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -115,6 +126,7 @@ export const RevenueReportDashboard = () => {
       hourlyHeatmapQuery.refetch(),
       topItemsQuery.refetch(),
       paymentBreakdownQuery.refetch(),
+      financialInvoicesQuery.refetch(),
     ]);
   };
 
@@ -176,6 +188,20 @@ export const RevenueReportDashboard = () => {
           void handleRefresh();
         }}
       />
+
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-text-secondary">Nhóm theo:</span>
+        <Select value={groupBy} onValueChange={(v) => { setGroupBy(v as RevenueReportGroupBy); }}>
+          <SelectTrigger className="h-9 w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="daily">Theo ngày</SelectItem>
+            <SelectItem value="weekly">Theo tuần</SelectItem>
+            <SelectItem value="monthly">Theo tháng</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {revenueReportQuery.isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -261,6 +287,70 @@ export const RevenueReportDashboard = () => {
           }}
         />
       </div>
+
+      {/* Lịch sử hóa đơn Thu/Chi */}
+      <section className="card overflow-hidden">
+        <div className="border-b border-border p-5">
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-text-primary">Lịch sử hóa đơn Thu / Chi</h3>
+          </div>
+          <p className="mt-1 text-sm text-text-secondary">Tổng hợp doanh thu và chi phí trong khoảng ngày đang chọn</p>
+        </div>
+        {financialInvoicesQuery.isLoading ? (
+          <div className="p-5"><div className="h-40 animate-pulse rounded-card bg-cream" /></div>
+        ) : financialInvoicesQuery.isError ? (
+          <div className="p-5">
+            <div className="flex items-center gap-3 text-danger-text">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">Không thể tải lịch sử hóa đơn.</p>
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => { void financialInvoicesQuery.refetch(); }}>
+              <RefreshCcw className="h-4 w-4" /> Thử lại
+            </Button>
+          </div>
+        ) : !financialInvoicesQuery.data?.content.length ? (
+          <div className="p-5 text-sm text-text-secondary">Chưa có giao dịch nào trong khoảng ngày này.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-sm">
+              <thead className="bg-cream text-left text-text-secondary">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Loại</th>
+                  <th className="px-5 py-3 font-medium">Mã / Mô tả</th>
+                  <th className="px-5 py-3 font-medium">Phương thức</th>
+                  <th className="px-5 py-3 font-medium">Thời gian</th>
+                  <th className="px-5 py-3 font-medium text-right">Số tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {financialInvoicesQuery.data.content.map((item) => (
+                  <tr key={item.id} className="border-t border-border">
+                    <td className="px-5 py-3">
+                      <span className={cn('badge', item.type === 'INCOME' ? 'badge-success' : 'badge-cancelled')}>
+                        {item.type === 'INCOME' ? 'Thu' : 'Chi'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <p className="font-semibold text-text-primary">{item.referenceCode ?? '—'}</p>
+                      {item.description && (
+                        <p className="mt-0.5 text-xs text-text-secondary">{item.description}</p>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-text-secondary">{item.paymentMethod ?? '—'}</td>
+                    <td className="px-5 py-3 text-text-secondary text-xs">
+                      {item.transactionDate ? new Date(item.transactionDate).toLocaleString('vi-VN') : '—'}
+                    </td>
+                    <td className={cn('px-5 py-3 text-right font-semibold', item.type === 'INCOME' ? 'text-success-text' : 'text-danger-text')}>
+                      {item.type === 'INCOME' ? '+' : '-'}{formatVND(item.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

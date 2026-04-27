@@ -159,6 +159,29 @@
   --color-sidebar: #ffffff;
   --color-textTitle: #886f63;
 
+  /* Admin SaaS palette - tham chiếu TailAdmin, tách biệt với theme Owner/Staff */
+  --color-admin-brand-25: #f2f7ff;
+  --color-admin-brand-50: #ecf3ff;
+  --color-admin-brand-100: #dde9ff;
+  --color-admin-brand-500: #465fff;
+  --color-admin-brand-600: #3641f5;
+  --color-admin-brand-900: #262e89;
+  --color-admin-gray-25: #fcfcfd;
+  --color-admin-gray-50: #f9fafb;
+  --color-admin-gray-100: #f2f4f7;
+  --color-admin-gray-200: #e4e7ec;
+  --color-admin-gray-300: #d0d5dd;
+  --color-admin-gray-500: #667085;
+  --color-admin-gray-700: #344054;
+  --color-admin-gray-900: #101828;
+  --color-admin-success: #12b76a;
+  --color-admin-success-light: #ecfdf3;
+  --color-admin-warning: #f79009;
+  --color-admin-warning-light: #fffaeb;
+  --color-admin-error: #f04438;
+  --color-admin-error-light: #fef3f2;
+  --color-admin-surface: #ffffff;
+
   /* Border radius */
   --radius-card: 16px;
   --radius-pill: 9999px;
@@ -169,6 +192,7 @@
 
   /* Spacing */
   --spacing-sidebar: 220px;
+  --spacing-admin-sidebar: 280px;
 
   /* Table */
   --height-table-row: 56px;

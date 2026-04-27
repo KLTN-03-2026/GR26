@@ -3,17 +3,27 @@ import type { ApiResponse } from '@shared/types/api.types';
 import type {
   AttendanceReportItemResponse,
   AttendanceReportParams,
+  CheckinHistoryItemResponse,
+  CheckinHistoryParams,
+  CogsReportItemResponse,
+  CogsReportParams,
   ExpiringItemReportResponse,
   ExpiringItemsReportParams,
+  FinancialInvoiceItemResponse,
+  FinancialInvoicesParams,
   HourlyRevenueHeatmapParams,
   HourlyRevenueHeatmapResponse,
   HrCostReportParams,
   HrCostReportResponse,
+  InventoryMovementReportItemResponse,
+  InventoryMovementReportParams,
   InventoryStockReportItemResponse,
   InventoryStockReportParams,
   InventoryWasteReportParams,
   PaymentMethodBreakdownParams,
   PaymentMethodBreakdownResponse,
+  PayrollReportItemResponse,
+  PayrollReportParams,
   ReportPageResponse,
   RevenueReportParams,
   RevenueReportResponse,
@@ -136,6 +146,61 @@ export const reportService = {
   ): Promise<ApiResponse<ReportPageResponse<ViolationReportItemResponse>>> => {
     return api
       .get<ApiResponse<ReportPageResponse<ViolationReportItemResponse>>>('/reports/hr/violations', { params })
+      .then((response) => response.data);
+  },
+
+  /**
+   * Lấy báo cáo biến động kho (Nhập/Xuất/Tồn đầu kỳ → cuối kỳ).
+   */
+  getInventoryMovementReport: async (
+    params: InventoryMovementReportParams,
+  ): Promise<ApiResponse<ReportPageResponse<InventoryMovementReportItemResponse>>> => {
+    return api
+      .get<ApiResponse<ReportPageResponse<InventoryMovementReportItemResponse>>>('/reports/inventory/movement', { params })
+      .then((response) => response.data);
+  },
+
+  /**
+   * Lấy báo cáo giá vốn hàng bán (COGS) theo phương pháp FIFO.
+   */
+  getCogsReport: async (
+    params: CogsReportParams,
+  ): Promise<ApiResponse<ReportPageResponse<CogsReportItemResponse>>> => {
+    return api
+      .get<ApiResponse<ReportPageResponse<CogsReportItemResponse>>>('/reports/inventory/cogs', { params })
+      .then((response) => response.data);
+  },
+
+  /**
+   * Lấy bảng lương tháng theo chi nhánh.
+   */
+  getPayrollReport: async (
+    params: PayrollReportParams,
+  ): Promise<ApiResponse<ReportPageResponse<PayrollReportItemResponse>>> => {
+    return api
+      .get<ApiResponse<ReportPageResponse<PayrollReportItemResponse>>>('/reports/hr/payroll', { params })
+      .then((response) => response.data);
+  },
+
+  /**
+   * Lấy lịch sử check-in chi tiết từng ca làm việc.
+   */
+  getCheckinHistoryReport: async (
+    params: CheckinHistoryParams,
+  ): Promise<ApiResponse<ReportPageResponse<CheckinHistoryItemResponse>>> => {
+    return api
+      .get<ApiResponse<ReportPageResponse<CheckinHistoryItemResponse>>>('/reports/hr/checkin-history', { params })
+      .then((response) => response.data);
+  },
+
+  /**
+   * Lấy lịch sử hóa đơn Thu/Chi (doanh thu + chi phí) trong khoảng ngày.
+   */
+  getFinancialInvoices: async (
+    params: FinancialInvoicesParams,
+  ): Promise<ApiResponse<ReportPageResponse<FinancialInvoiceItemResponse>>> => {
+    return api
+      .get<ApiResponse<ReportPageResponse<FinancialInvoiceItemResponse>>>('/reports/financial/invoices', { params })
       .then((response) => response.data);
   },
 };
