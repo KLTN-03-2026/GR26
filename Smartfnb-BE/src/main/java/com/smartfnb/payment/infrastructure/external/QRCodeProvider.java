@@ -24,12 +24,12 @@ public interface QRCodeProvider {
      * Lấy trạng thái thanh toán QR từ gateway.
      * Dùng để polling hoặc xác minh khi webhook đến.
      */
-    QRStatusResponse checkPaymentStatus(UUID paymentId, String transactionId) throws Exception;
+    QRStatusResponse checkPaymentStatus(UUID paymentId) throws Exception;
 
     /**
      * Hủy QR Code (nếu backend support).
      */
-    void cancelQRCode(UUID paymentId) throws Exception;
+    // void cancelQRCode(UUID paymentId) throws Exception;
 
     /**
      * Response khi QR được tạo thành công.
@@ -47,7 +47,7 @@ public interface QRCodeProvider {
     record QRStatusResponse(
         String status,         // success, pending, expired, failed
         String transactionId,
-        BigDecimal amount,
-        Long paidAtTimestamp   // Unix timestamp khi thanh toán thành công
+        BigDecimal amount
+        // Long paidAtTimestamp   // Tạm comment vì ConfirmQRPaymentCommand chưa dùng timestamp gateway
     ) {}
 }

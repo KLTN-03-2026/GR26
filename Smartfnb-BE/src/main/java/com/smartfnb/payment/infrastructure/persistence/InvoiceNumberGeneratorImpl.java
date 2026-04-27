@@ -1,11 +1,14 @@
 package com.smartfnb.payment.infrastructure.persistence;
 
 import com.smartfnb.payment.domain.repository.InvoiceNumberGenerator;
+import com.smartfnb.payment.domain.repository.InvoiceRepository;
+import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -25,10 +28,11 @@ import java.util.UUID;
 public class InvoiceNumberGeneratorImpl implements InvoiceNumberGenerator {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final InvoiceRepository invoiceRepository;
 
     private static final String INVOICE_COUNTER_KEY_PREFIX = "invoice:counter:";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final DateTimeFormatter BRANCH_CODE_FORMATTER = DateTimeFormatter.ofPattern("yy");
+    private static final int MAX_GENERATION_ATTEMPTS = 100;
 
     @Override
     public String generateInvoiceNumber(UUID branchId) {
@@ -38,16 +42,28 @@ public class InvoiceNumberGeneratorImpl implements InvoiceNumberGenerator {
         // Redis key theo ngày để counter reset mỗi ngày
         String counterKey = INVOICE_COUNTER_KEY_PREFIX + dateStr + ":" + branchCode;
         
-        // Increment counter
-        Long counter = redisTemplate.opsForValue().increment(counterKey);
-        
-        // Set expiry 30 ngày để tránh accumulate counter
-        redisTemplate.expire(counterKey, java.time.Duration.ofDays(30));
-        
-        String invoiceNumber = String.format("INV-%s-%s-%06d", 
-            branchCode, dateStr, counter);
-        
-        log.debug("Sinh ra invoice_number: {}", invoiceNumber);
-        return invoiceNumber;
+        for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+            Long counter = redisTemplate.opsForValue().increment(counterKey);
+
+            // Set expiry 30 ngày để tránh accumulate counter
+            redisTemplate.expire(counterKey, Duration.ofDays(30));
+
+            String invoiceNumber = String.format("INV-%s-%s-%06d",
+                branchCode, dateStr, counter);
+
+            if (!invoiceRepository.existsByInvoiceNumber(invoiceNumber)) {
+                log.debug("Sinh ra invoice_number: {}", invoiceNumber);
+                return invoiceNumber;
+            }
+
+            log.warn("Invoice number {} đã tồn tại trong DB, tăng counter và thử lại ({}/{})",
+                invoiceNumber, attempt, MAX_GENERATION_ATTEMPTS);
+        }
+
+        throw new SmartFnbException(
+            "INVOICE_NUMBER_GENERATION_FAILED",
+            "Không thể sinh mã hóa đơn duy nhất, vui lòng thử lại",
+            500
+        );
     }
 }

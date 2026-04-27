@@ -66,21 +66,26 @@ public class ManualConfirmQRPaymentCommandHandler {
             throw new RuntimeException("Đơn hàng không tìm thấy: " + payment.getOrderId());
         }
 
-        String invoiceNumber = invoiceNumberGenerator.generateInvoiceNumber(order.branchId());
-        List<InvoiceItem> invoiceItems = order.items().stream()
-            .map(item -> InvoiceItem.create(
-                item.itemName(), item.quantity(), item.unitPrice(), item.totalPrice()))
-            .toList();
+        // author: Hoàng | date: 27-04-2026 | note: Guard idempotency — kiểm tra invoice đã tồn tại
+        //   cho order này chưa trước khi tạo mới. Tránh duplicate key khi Redis counter bị reset
+        //   (restart) hoặc khi manual confirm được gọi nhiều lần cho cùng một order.
+        Invoice savedInvoice = invoiceRepository.findByOrderId(payment.getOrderId())
+            .orElseGet(() -> {
+                String invoiceNumber = invoiceNumberGenerator.generateInvoiceNumber(order.branchId());
+                List<InvoiceItem> invoiceItems = order.items().stream()
+                    .map(item -> InvoiceItem.create(
+                        item.itemName(), item.quantity(), item.unitPrice(), item.totalPrice()))
+                    .toList();
+                Invoice newInvoice = Invoice.create(
+                    payment.getTenantId(), order.branchId(), order.id(), payment.getId(),
+                    invoiceNumber,
+                    order.subtotal(), order.discountAmount(), order.taxAmount(), order.totalAmount(),
+                    invoiceItems
+                );
+                return invoiceRepository.save(newInvoice);
+            });
 
-        Invoice invoice = Invoice.create(
-            payment.getTenantId(), order.branchId(), order.id(), payment.getId(),
-            invoiceNumber,
-            order.subtotal(), order.discountAmount(), order.taxAmount(), order.totalAmount(),
-            invoiceItems
-        );
-
-        Invoice savedInvoice = invoiceRepository.save(invoice);
-        log.info("Đã tạo Invoice {} cho QR Payment confirmed manual {}", 
+        log.info("Đã tạo Invoice {} cho QR Payment confirmed manual {}",
             savedInvoice.getInvoiceNumber(), payment.getId());
 
         orderAdapter.completeOrder(order.id(), payment.getTenantId(), order.branchId(), payment.getCashierUserId());

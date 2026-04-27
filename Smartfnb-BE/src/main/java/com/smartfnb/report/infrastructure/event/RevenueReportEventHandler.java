@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.event.TransactionPhase;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -86,8 +88,14 @@ public class RevenueReportEventHandler {
     /**
      * Xử lý sự kiện PaymentCompletedEvent.
      * Cập nhật payment_breakdown theo đúng phương thức thanh toán (CASH/MOMO/VIETQR/BANKING).
+     *
+     * author: Hoàng | date: 27-04-2026 | note: Chuyển từ @EventListener sang @TransactionalEventListener
+     *   AFTER_COMMIT để tránh Hibernate auto-flush khi đang trong cùng transaction với handler.
+     *   Vấn đề gốc: @EventListener chạy trong cùng transaction → findByBranchIdAndDate() trigger
+     *   auto-flush pending invoice INSERT → DUPLICATE KEY → rollback toàn bộ.
+     *   AFTER_COMMIT đảm bảo event chỉ được xử lý SAU KHI transaction gốc commit thành công.
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onPaymentCompleted(PaymentCompletedEvent event) {
         log.info("Nhận sự kiện PaymentCompletedEvent: paymentId={}, method={}, amount={}",
             event.paymentId(), event.paymentMethod(), event.amount());

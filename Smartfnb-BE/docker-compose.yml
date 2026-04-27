@@ -76,6 +76,9 @@ services:
       # File Storage
       UPLOAD_DIR: /app/uploads   # Path trong container — mount tới named volume
       BASE_URL: http://localhost:8080
+      # PayOS Encryption
+      # author: Hoàng | date: 27-04-2026 | note: key dev Base64 decode ra đúng 32 bytes cho AES-256; production truyền PAYOS_ENCRYPTION_KEY riêng.
+      PAYOS_ENCRYPTION_KEY: ${PAYOS_ENCRYPTION_KEY:-c21hcnRmbmItZGV2LXBheW9zLWtleS0yMDI2ISEhISE=}
     volumes:
       - uploads_data:/app/uploads
     ports:
@@ -105,5 +108,3 @@ networks:
   smartfnb-net:
     name: smartfnb-network
     driver: bridge
-
-
