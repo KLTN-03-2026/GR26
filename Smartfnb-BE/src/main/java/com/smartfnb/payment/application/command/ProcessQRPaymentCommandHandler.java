@@ -78,20 +78,26 @@ public class ProcessQRPaymentCommandHandler {
             tenantId, command.orderId(), command.amount(), qrMethod, command.cashierUserId());
 
         Payment savedPayment = paymentRepository.save(payment);
-        log.info("Đã tạo Payment {} với QR timeout 3 phút", savedPayment.getId());
+        log.info("Đã tạo QR Payment pending: paymentId={}, orderId={}, tenantId={}, branchId={}, method={}, amount={}, qrExpiresAt={}",
+            savedPayment.getId(), savedPayment.getOrderId(), tenantId, branchId, savedPayment.getMethod(),
+            savedPayment.getAmount(), savedPayment.getQrExpiresAt());
 
         // 5. Gọi QR provider để tạo QR code
         try {
             QRCodeProvider provider = getQRProvider(qrMethod.name());
+            log.info("Bắt đầu gọi QR provider: provider={}, paymentId={}, orderNumber={}, amount={}",
+                qrMethod.name(), savedPayment.getId(), order.orderNumber(), command.amount());
             QRCodeProvider.QRCodeResponse qrResponse = provider.generateQRCode(
                 savedPayment.getId(), command.amount(), order.orderNumber());
 
-            // 6. Cập nhật transaction ID từ gateway
-            // Lưu transaction ID trước khi trả response
-            // (thực tế nên update payment ở đây)
+            // Lưu paymentLinkId để webhook PayOS tìm lại đúng payment nội bộ.
+            savedPayment.attachGatewayTransaction(qrResponse.transactionId());
+            paymentRepository.save(savedPayment);
 
-            log.info("QR Code {} được tạo thành công, expires in {} giây", 
-                qrResponse.transactionId(), qrResponse.expiresInSeconds());
+            log.info("QR provider tạo thành công: paymentId={}, transactionId/paymentLinkId={}, expiresInSeconds={}, qrCodeUrlPresent={}, qrCodeDataPresent={}",
+                savedPayment.getId(), qrResponse.transactionId(), qrResponse.expiresInSeconds(),
+                qrResponse.qrCodeUrl() != null && !qrResponse.qrCodeUrl().isBlank(),
+                qrResponse.qrCodeData() != null && !qrResponse.qrCodeData().isBlank());
 
             return new ProcessQRPaymentResult(
                 savedPayment.getId(),
@@ -101,20 +107,29 @@ public class ProcessQRPaymentCommandHandler {
                 order.orderNumber()
             );
 
+        } catch (SmartFnbException e) {
+            // author: Hoàng | date: 27-04-2026 | note: Rethrow SmartFnbException thay vì bọc thành
+            //   RuntimeException — giữ nguyên HTTP status và error code để GlobalExceptionHandler
+            //   trả đúng response cho FE (ví dụ: 400 PAYOS_CONFIG_MISSING, 502 PAYOS_ERROR).
+            log.error("Lỗi nghiệp vụ khi tạo QR code: code={}, message={}", e.getErrorCode(), e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("Lỗi tạo QR code từ provider", e);
-            throw new RuntimeException("Không thể tạo QR code: " + e.getMessage());
+            log.error("Lỗi không mong đợi khi tạo QR code từ provider", e);
+            throw new SmartFnbException("PAYOS_ERROR", "Không thể tạo QR code: " + e.getMessage(), 502);
         }
     }
 
     /**
      * Parse và validate QR method.
+     * author: Hoàng | date: 27-04-2026 | note: Thêm PAYOS vào danh sách hợp lệ.
      */
     private PaymentMethod validateAndParseQRMethod(String methodStr) {
         try {
             PaymentMethod method = PaymentMethod.valueOf(methodStr.toUpperCase());
-            if (method != PaymentMethod.VIETQR && method != PaymentMethod.MOMO) {
-                throw new IllegalArgumentException("QR method phải là VIETQR hoặc MOMO");
+            if (method != PaymentMethod.VIETQR
+                    && method != PaymentMethod.MOMO
+                    && method != PaymentMethod.PAYOS) {
+                throw new IllegalArgumentException("QR method phải là VIETQR, MOMO hoặc PAYOS");
             }
             return method;
         } catch (IllegalArgumentException e) {

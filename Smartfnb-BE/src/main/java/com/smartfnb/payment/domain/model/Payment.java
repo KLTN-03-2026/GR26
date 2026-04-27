@@ -27,10 +27,10 @@ public class Payment {
     private BigDecimal amount;
     private PaymentMethod method;
     private PaymentStatus status;
-    private String transactionId;          // ID từ payment gateway
+    private String transactionId; // ID từ payment gateway
     private UUID cashierUserId;
-    private Instant qrExpiresAt;           // Thời gian hết hạn QR (3 phút)
-    private Instant paidAt;                // Thời gian thanh toán thành công
+    private Instant qrExpiresAt; // Thời gian hết hạn QR (3 phút)
+    private Instant paidAt; // Thời gian thanh toán thành công
     private Instant createdAt;
     private Long version;
 
@@ -58,8 +58,15 @@ public class Payment {
     public static Payment createQRPayment(
             UUID tenantId, UUID orderId, BigDecimal amount,
             PaymentMethod qrMethod, UUID cashierUserId) {
-        if (qrMethod != PaymentMethod.VIETQR && qrMethod != PaymentMethod.MOMO) {
-            throw new IllegalArgumentException("QR method phải là VIETQR hoặc MOMO");
+        /*
+         * author: Hoàng
+         * date: 27-04-2026
+         * note: Thêm validate QR method ngay trong
+         * factory method để đảm bảo chỉ tạo Payment với method hợp lệ. Nếu method không
+         * hợp lệ, sẽ ném IllegalArgumentException.
+         */
+        if (qrMethod != PaymentMethod.VIETQR && qrMethod != PaymentMethod.MOMO && qrMethod != PaymentMethod.PAYOS) {
+            throw new IllegalArgumentException("QR method phải là VIETQR, MOMO hoặc PAYOS");
         }
 
         Payment payment = new Payment();
@@ -80,13 +87,23 @@ public class Payment {
      * Chỉ được phép từ PENDING → COMPLETED.
      */
     public void markCompleted(String transactionId) {
+        markCompleted(transactionId, false);
+    }
+
+    /**
+     * Xác nhận Payment thành công.
+     * Khi gateway đã trả trạng thái PAID thì cho phép hoàn tất dù QR local vừa hết hạn.
+     *
+     * author: Hoàng | date: 27-04-2026 | note: Cho phép webhook/polling đã xác minh bởi gateway bỏ qua expiry local.
+     */
+    public void markCompleted(String transactionId, boolean allowExpiredQr) {
         if (this.status != PaymentStatus.PENDING) {
             throw new IllegalStateException(
-                String.format("Không thể hoàn tất Payment ở trạng thái %s", this.status));
+                    String.format("Không thể hoàn tất Payment ở trạng thái %s", this.status));
         }
 
-        // Kiểm tra QR chưa hết hạn
-        if (this.qrExpiresAt != null && Instant.now().isAfter(this.qrExpiresAt)) {
+        // Chỉ chặn hết hạn với xác nhận thủ công hoặc luồng chưa được gateway xác minh.
+        if (!allowExpiredQr && this.qrExpiresAt != null && Instant.now().isAfter(this.qrExpiresAt)) {
             throw new IllegalStateException("QR code đã hết hạn (quá 3 phút)");
         }
 
@@ -96,12 +113,28 @@ public class Payment {
     }
 
     /**
+     * Gắn mã giao dịch từ gateway cho QR payment đang chờ xử lý.
+     * PayOS webhook dùng paymentLinkId này để tìm lại payment nội bộ.
+     */
+    public void attachGatewayTransaction(String transactionId) {
+        if (this.status != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                    String.format("Chỉ được gắn transaction cho Payment PENDING, hiện tại là %s", this.status));
+        }
+        if (transactionId == null || transactionId.isBlank()) {
+            throw new IllegalArgumentException("transactionId không được để trống");
+        }
+
+        this.transactionId = transactionId;
+    }
+
+    /**
      * Xác nhận Payment thất bại.
      */
     public void markFailed(String reason) {
         if (this.status == PaymentStatus.COMPLETED || this.status == PaymentStatus.REFUNDED) {
             throw new IllegalStateException(
-                String.format("Không thể đánh dấu FAILED từ %s", this.status));
+                    String.format("Không thể đánh dấu FAILED từ %s", this.status));
         }
         this.status = PaymentStatus.FAILED;
     }
@@ -112,7 +145,7 @@ public class Payment {
     public void markRefunded() {
         if (this.status != PaymentStatus.COMPLETED) {
             throw new IllegalStateException(
-                "Chỉ có thể hoàn tiền từ Payment ở trạng thái COMPLETED");
+                    "Chỉ có thể hoàn tiền từ Payment ở trạng thái COMPLETED");
         }
         this.status = PaymentStatus.REFUNDED;
     }

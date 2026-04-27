@@ -22,12 +22,12 @@ public class MoMoMockProvider implements QRCodeProvider {
     }
 
     @Override
-    public QRStatusResponse checkPaymentStatus(UUID paymentId, String transactionId) {
-        return new QRStatusResponse("pending", transactionId, BigDecimal.ZERO, null);
+    public QRStatusResponse checkPaymentStatus(UUID paymentId) {
+        return new QRStatusResponse("pending", null, BigDecimal.ZERO);
     }
 
-    @Override
-    public void cancelQRCode(UUID paymentId) {
-        // Do nothing
-    }
+    // @Override
+    // public void cancelQRCode(UUID paymentId) {
+    //     // Do nothing
+    // }
 }

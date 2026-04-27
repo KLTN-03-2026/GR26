@@ -26,7 +26,14 @@ public enum PaymentMethod {
     /**
      * Thanh toán bằng ZaloPay.
      */
-    ZALOPAY("ZaloPay");
+    ZALOPAY("ZaloPay"),
+
+    /**
+     * Thanh toán qua cổng PayOS — khách quét QR bằng app ngân hàng bất kỳ (chuẩn VietQR).
+     * Cấu hình (clientId, apiKey, checksumKey) lưu trong branch_payment_configs.
+     * author: Hoàng | date: 27-04-2026
+     */
+    PAYOS("PayOS");
 
     private final String displayName;
 

@@ -119,3 +119,20 @@ ai:
     timeout:                                                                                                                                             
       connect: ${AI_CONNECT_TIMEOUT_MS:5000}                                                                                                             
       read: ${AI_READ_TIMEOUT_MS:10000}                                                                                                                  
+
+## ------ PayOS Payment Gateway ------
+## author: Hoàng | date: 27-04-2026
+## note: Config tích hợp cổng thanh toán PayOS qua SDK chính thức (vn.payos:payos-java).
+##       PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY: lấy từ dashboard.payos.vn
+##       PAYOS_ENCRYPTION_KEY: Base64 của 32 bytes ngẫu nhiên (openssl rand -base64 32)
+##         → dùng để mã hoá apiKey + checksumKey trong bảng branch_payment_configs
+##       PAYOS_RETURN_URL / PAYOS_CANCEL_URL: trang FE nhận kết quả sau khi thanh toán
+payos:
+  client-id: ${PAYOS_CLIENT_ID:your-client-id}
+  api-key: ${PAYOS_API_KEY:your-api-key}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:your-checksum-key}
+  encryption:
+    ## author: Hoàng | date: 27-04-2026 | note: fallback dev decode đúng 32 bytes cho AES-256, production phải dùng secret riêng.
+    secret-key: ${PAYOS_ENCRYPTION_KEY:c21hcnRmbmItZGV2LXBheW9zLWtleS0yMDI2ISEhISE=}
+  return-url: ${PAYOS_RETURN_URL:http://localhost:5173/pos/payment?result=success}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/pos/payment?result=cancel}

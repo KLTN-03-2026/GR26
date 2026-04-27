@@ -168,6 +168,16 @@
         </dependency>
 
         <!-- =========================================================
+             PAYOS JAVA SDK — Cổng thanh toán PayOS chính thức
+             author: Hoàng | date: 27-04-2026
+             ========================================================= -->
+        <dependency>
+            <groupId>vn.payos</groupId>
+            <artifactId>payos-java</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <!-- =========================================================
              TEST
              ========================================================= -->
         <dependency>

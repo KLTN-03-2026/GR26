@@ -3,6 +3,8 @@ package com.smartfnb.branch.web.controller;
 import com.smartfnb.branch.application.BranchService;
 import com.smartfnb.branch.application.dto.BranchRequest;
 import com.smartfnb.branch.application.dto.BranchResponse;
+import com.smartfnb.branch.application.dto.PaymentConfigRequest;
+import com.smartfnb.branch.application.dto.PaymentConfigResponse;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.web.ApiResponse;
 import jakarta.validation.Valid;
@@ -91,9 +93,43 @@ public class BranchController {
             @PathVariable UUID branchId,
             @Valid @RequestBody com.smartfnb.branch.application.dto.AssignUserRequest request) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        
+
         branchService.assignUserToBranch(tenantId, branchId, request.userId());
-        
+
         return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    // =========================================================================
+    // author: Hoàng
+    // date: 27-04-2026
+    // note: Hai endpoint quản lý cấu hình PayOS per-branch.
+    //       Chỉ Owner (BRANCH_EDIT) mới được truy cập.
+    // =========================================================================
+
+    /**
+     * Lấy cấu hình PayOS của chi nhánh (masked key).
+     * GET /api/v1/branches/{branchId}/payment-config
+     */
+    @GetMapping("/{branchId}/payment-config")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<PaymentConfigResponse>> getPaymentConfig(
+            @PathVariable UUID branchId) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        PaymentConfigResponse response = branchService.getPaymentConfig(tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Lưu (hoặc cập nhật) cấu hình PayOS cho chi nhánh.
+     * PUT /api/v1/branches/{branchId}/payment-config
+     */
+    @PutMapping("/{branchId}/payment-config")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<PaymentConfigResponse>> savePaymentConfig(
+            @PathVariable UUID branchId,
+            @Valid @RequestBody PaymentConfigRequest request) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        PaymentConfigResponse response = branchService.savePaymentConfig(tenantId, branchId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }
