@@ -32,36 +32,46 @@ public class GetFinancialInvoicesQueryHandler {
         Instant startInstant = query.startDate().atStartOfDay(ZoneId.of("UTC")).toInstant();
         Instant endInstant = query.endDate().plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant();
 
-        String baseQuery = """
-            SELECT 
-                id, 
-                'INCOME' as type, 
-                invoice_number as reference_code, 
-                total_amount as amount, 
-                created_at as transaction_date, 
-                payment_method as payment_method, 
-                CAST('' AS varchar) as description 
-            FROM invoices 
-            WHERE tenant_id = :tenantId 
-              AND (CAST(:branchId AS uuid) IS NULL OR branch_id = CAST(:branchId AS uuid))
-              AND created_at >= :startDate AND created_at < :endDate
-            
-            UNION ALL
-            
-            SELECT 
-                id, 
-                'EXPENSE' as type, 
-                category_name as reference_code, 
-                amount as amount, 
-                expense_date as transaction_date, 
-                payment_method as payment_method, 
-                description as description 
-            FROM expenses 
-            WHERE deleted = false 
-              AND tenant_id = :tenantId 
+        // Author: Hoàng | Date: 2026-04-26 | Bug: BUG-financial-invoices-type-filter - Tách query Thu/Chi để lọc trước khi count và paginate
+        String incomeQuery = """
+            SELECT
+                i.id,
+                'INCOME' as type,
+                i.invoice_number as reference_code,
+                i.total as amount,
+                i.issued_at as transaction_date,
+                p.method as payment_method,
+                CAST('' AS varchar) as description
+            FROM invoices i
+            LEFT JOIN payments p ON p.id = i.payment_id
+            WHERE i.tenant_id = :tenantId
+              AND (CAST(:branchId AS uuid) IS NULL OR i.branch_id = CAST(:branchId AS uuid))
+              AND i.issued_at >= :startDate AND i.issued_at < :endDate
+        """;
+
+        String expenseQuery = """
+            SELECT
+                id,
+                'EXPENSE' as type,
+                category_name as reference_code,
+                amount as amount,
+                expense_date as transaction_date,
+                payment_method as payment_method,
+                description as description
+            FROM expenses
+            WHERE deleted = false
+              AND tenant_id = :tenantId
               AND (CAST(:branchId AS uuid) IS NULL OR branch_id = CAST(:branchId AS uuid))
               AND expense_date >= :startDate AND expense_date < :endDate
         """;
+
+        String requestedType = query.type() == null ? "ALL" : query.type();
+        String baseQuery = switch (requestedType) {
+            case "INCOME" -> incomeQuery;
+            case "EXPENSE" -> expenseQuery;
+            default -> incomeQuery + " UNION ALL " + expenseQuery;
+        };
+
 
         String countSql = "SELECT COUNT(*) FROM (" + baseQuery + ") as unified_table";
         Query countNativeQuery = entityManager.createNativeQuery(countSql)

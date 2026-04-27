@@ -57,10 +57,10 @@ services:
         condition: service_healthy   # Chờ Redis sẵn sàng trước
     environment:
       # Database
-      DB_HOST: host.docker.internal              # Tên service trong Docker network
+      DB_HOST: postgres              # Tên service trong Docker network
       DB_PORT: 5432
       DB_NAME: smartfnb
-      DB_USER: postgres
+      DB_USER: smartfnb
       DB_PASS: smartfnb123
       # Redis Configuration
       REDIS_HOST: redis
@@ -105,3 +105,5 @@ networks:
   smartfnb-net:
     name: smartfnb-network
     driver: bridge
+
+

@@ -47,6 +47,7 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
 
     @Override
     public List<InventoryStockDto> findStockByBranch(UUID branchId, UUID tenantId) {
+        
         String sql = """
                 SELECT
                     i.id as itemId,
@@ -313,13 +314,21 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
                     it.reference_id as orderId,
                     it.item_id as itemId,
                     i.name as itemName,
-                    it.unit as unit,
+                    i.unit as unit,
                     ABS(it.quantity) as quantity,
                     it.cost_per_unit as unitCost,
-                    (ABS(it.quantity) * it.cost_per_unit) as totalCost,
-                    it.created_at as soldAt
+                    (ABS(it.quantity) * COALESCE(it.cost_per_unit, 0)) as totalCost,
+                    it.created_at as soldAt,
+                    it.type as transactionType,
+                    it.note as notes,
+                    it.batch_id as batchId,
+                    sb.imported_at as batchImportedAt,
+                    it.branch_id as branchId,
+                    b.name as branchName
                 FROM inventory_transactions it
                 JOIN items i ON it.item_id = i.id
+                LEFT JOIN stock_batches sb ON it.batch_id = sb.id AND sb.tenant_id = it.tenant_id
+                LEFT JOIN branches b ON it.branch_id = b.id
                 WHERE it.branch_id = :branchId
                   AND it.tenant_id = :tenantId
                   AND it.type = 'SALE_DEDUCT'
@@ -349,6 +358,12 @@ public class InventoryReportRepositoryImpl implements InventoryReportRepository 
                         .unitCost(toBigDecimal(rs.getObject("unitCost")))
                         .totalCost(toBigDecimal(rs.getObject("totalCost")))
                         .date(toLocalDate(rs.getObject("soldAt")))
+                        .transactionType(rs.getString("transactionType"))
+                        .notes(rs.getString("notes"))
+                        .batchId(rs.getString("batchId") != null ? UUID.fromString(rs.getString("batchId")) : null)
+                        .batchImportedAt(toLocalDate(rs.getObject("batchImportedAt")))
+                        .branchId(UUID.fromString(rs.getString("branchId")))
+                        .branchName(rs.getString("branchName"))
                         .build()
         );
 

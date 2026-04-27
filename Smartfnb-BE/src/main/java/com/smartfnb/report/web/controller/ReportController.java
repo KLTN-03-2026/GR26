@@ -42,6 +42,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -218,11 +219,18 @@ public class ReportController {
             @RequestParam(required = false) UUID branchId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "ALL") String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
         UUID effectiveBranchId = (branchId != null) ? branchId : TenantContext.getCurrentBranchId();
-        log.info("GET /reports/financial/invoices: branchId={}, startDate={}, endDate={}", effectiveBranchId, startDate, endDate);
+        // Author: Hoàng | Date: 2026-04-26 | Bug: BUG-financial-invoices-type-filter - Chuẩn hóa filter loại giao dịch thu/chi
+        String normalizedType = type == null ? "ALL" : type.trim().toUpperCase(Locale.ROOT);
+        if (!normalizedType.equals("ALL") && !normalizedType.equals("INCOME") && !normalizedType.equals("EXPENSE")) {
+            throw new IllegalArgumentException("type must be ALL, INCOME or EXPENSE");
+        }
+
+        log.info("GET /reports/financial/invoices: branchId={}, startDate={}, endDate={}, type={}", effectiveBranchId, startDate, endDate, normalizedType);
         
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("startDate must be before or equal to endDate");
@@ -233,6 +241,7 @@ public class ReportController {
             .branchId(effectiveBranchId)
             .startDate(startDate)
             .endDate(endDate)
+            .type(normalizedType)
             .page(page)
             .pageSize(size)
             .build();
