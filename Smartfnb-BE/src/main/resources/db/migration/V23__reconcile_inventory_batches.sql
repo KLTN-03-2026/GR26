@@ -11,7 +11,12 @@ SET type = 'ADJUSTMENT',
 WHERE type = 'SALE_DEDUCT' 
   AND batch_id IS NULL;
 
--- 2. Thực hiện đối chiếu (Reconciliation) giữa inventory_balances và stock_batches
+-- 2. Bổ sung cột audit cho stock_batches trước khi reconcile.
+-- V7 chỉ tạo created_at, nhưng block bên dưới cần cập nhật updated_at cho các batch thay đổi.
+ALTER TABLE stock_batches
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- 3. Thực hiện đối chiếu (Reconciliation) giữa inventory_balances và stock_batches
 -- Do những dòng SALE_DEDUCT cũ bị lỗi không trừ batch, tổng số lượng trong batch đang vượt quá tồn kho thực tế,
 -- dẫn đến các batch cũ (như năm 2025) bị "kẹt" lại với số lượng > 0 trên hệ thống.
 -- Block PL/pgSQL này phân bổ lại tồn kho thật (inventory_balances) cho các stock_batches theo LIFO phân bổ:
@@ -60,7 +65,7 @@ BEGIN
 END;
 $$;
 
--- 3. Thêm check constraint để từ chối bất kỳ insert/update trôi nổi nào vi phạm
+-- 4. Thêm check constraint để từ chối bất kỳ insert/update trôi nổi nào vi phạm
 ALTER TABLE inventory_transactions
 ADD CONSTRAINT ck_sale_deduct_batch
 CHECK (type != 'SALE_DEDUCT' OR batch_id IS NOT NULL);
