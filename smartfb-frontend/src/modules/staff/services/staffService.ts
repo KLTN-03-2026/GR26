@@ -1,95 +1,105 @@
 import { axiosInstance as api } from '@lib/axios';
-import type { EditStaffFormData, CreateStaffFormData, StaffListItem } from '../types/staff.types';
+import type {
+  StaffSummary,
+  StaffDetail,
+  CreateStaffRequest,
+  UpdateStaffRequest,
+  DeactivateStaffRequest,
+} from '../types/staff.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
-/**
- * Staff service - gọi API cho các thao tác nhân viên
- * Base URL: /api/v1/staff
- */
+// API response wrapper for paginated data
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  size: number;
+  number: number;
+  empty: boolean;
+}
+
 export const staffService = {
   /**
-   * Lấy danh sách nhân viên
-   * GET /api/v1/staff
+   * GET /api/v1/staff - Danh sách nhân viên
    */
-  getList: async (): Promise<ApiResponse<StaffListItem[]>> => {
-    return api.get<ApiResponse<StaffListItem[]>>('/staff').then(r => r.data);
-  },
-
-  /**
-   * Lấy chi tiết một nhân viên
-   * GET /api/v1/staff/:id
-   */
-  getById: async (id: string): Promise<ApiResponse<any>> => {
-    return api.get<ApiResponse<any>>(`/staff/${id}`).then(r => r.data);
-  },
-
-  /**
-   * Tạo nhân viên mới
-   * POST /api/v1/staff
-   */
-  create: async (payload: CreateStaffFormData): Promise<ApiResponse<any>> => {
-    const apiPayload = {
-      full_name: payload.fullName,
-      email: payload.email,
-      phone: payload.phone,
-      identity_id: payload.identityId,
-      date_of_birth: payload.dateOfBirth,
-      address: payload.address,
-      city: payload.city,
-      branch_id: payload.branchId,
-      position_id: payload.positionId,
-      shift_type: payload.shiftType,
-      salary: payload.salary,
-      hire_date: payload.hireDate,
-      pos_pin: payload.posPin,
-      status: payload.status,
+  getList: async (params?: {
+    keyword?: string;
+    status?: string;
+    positionId?: string;
+    page?: number;
+    size?: number;
+  }): Promise<{ content: StaffSummary[]; totalElements: number; totalPages: number }> => {
+    const response = await api.get<ApiResponse<PageResponse<StaffSummary>>>('/staff', { 
+      params: {
+        ...params,
+        page: params?.page ?? 0,
+        size: params?.size ?? 20,
+      }
+    });
+    const data = response.data.data;
+    return {
+      content: data.content,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
     };
-    return api.post<ApiResponse<any>>('/staff', apiPayload).then(r => r.data);
   },
 
   /**
-   * Cập nhật thông tin nhân viên
-   * PUT /api/v1/staff/:id
+   * GET /api/v1/staff/{id} - Chi tiết nhân viên
    */
-  update: async (id: string, payload: EditStaffFormData): Promise<ApiResponse<any>> => {
-    const apiPayload = {
-      full_name: payload.fullName,
-      email: payload.email,
-      phone: payload.phone,
-      identity_id: payload.identityId,
-      date_of_birth: payload.dateOfBirth,
-      address: payload.address,
-      city: payload.city,
-      position_id: payload.positionId,
-      salary: payload.salary,
-      shift_type: payload.shiftType,
-      status: payload.status,
-    };
-    return api.put<ApiResponse<any>>(`/staff/${id}`, apiPayload).then(r => r.data);
+  getById: async (id: string): Promise<StaffDetail> => {
+    const response = await api.get<ApiResponse<StaffDetail>>(`/staff/${id}`);
+    return response.data.data;
   },
 
   /**
-   * Xóa / Deactivate nhân viên
-   * DELETE /api/v1/staff/:id
+   * POST /api/v1/staff - Tạo nhân viên mới
    */
-  delete: async (id: string): Promise<ApiResponse<void>> => {
-    return api.delete<ApiResponse<void>>(`/staff/${id}`).then(r => r.data);
+  create: async (payload: CreateStaffRequest): Promise<string> => {
+    const response = await api.post<ApiResponse<string>>('/staff', payload);
+
+    return response.data.data;
+  },
+
+  /**
+   * PUT /api/v1/staff/{id} - Cập nhật nhân viên
+   */
+  update: async (id: string, payload: UpdateStaffRequest): Promise<void> => {
+    await api.put<ApiResponse<void>>(`/staff/${id}`, payload);
+  },
+
+  /**
+   * DELETE /api/v1/staff/{id} - Vô hiệu hoá nhân viên (soft delete)
+   * Cần body: { reason: string }
+   */
+  deactivate: async (id: string, reason: string): Promise<void> => {
+    const payload: DeactivateStaffRequest = { reason };
+    await api.delete<ApiResponse<void>>(`/staff/${id}`, {
+      data: payload,
+    });
+  },
+
+  /**
+   * PUT /api/v1/staff/{id}/roles - Gán roles cho nhân viên
+   */
+  assignRoles: async (id: string, roleIds: string[]): Promise<void> => {
+    await api.put<ApiResponse<void>>(`/staff/${id}/roles`, { roleIds });
   },
 
   /**
    * Cập nhật trạng thái nhân viên (khóa/mở khóa)
-   * PUT /api/v1/staff/:id/toggle
+   * Sử dụng API update staff với status field
    */
-  updateStatus: async (id: string, status: 'active' | 'inactive'): Promise<ApiResponse<any>> => {
-    // Lưu ý: Tên endpoint có thể khác nhau tùy backend, ở đây dùng /toggle theo doc
-    return api.put<ApiResponse<any>>(`/staff/${id}/toggle`, { status }).then(r => r.data);
-  },
-
-  /**
-   * Lấy danh sách nhân viên theo chi nhánh
-   * GET /api/v1/staff?branchId=...
-   */
-  getByBranch: async (branchId: string): Promise<ApiResponse<StaffListItem[]>> => {
-    return api.get<ApiResponse<StaffListItem[]>>(`/staff`, { params: { branchId } }).then(r => r.data);
+  updateStatus: async (id: string, status: 'ACTIVE' | 'INACTIVE'): Promise<StaffDetail> => {
+    await api.put<ApiResponse<void>>(`/staff/${id}`, { status });
+    const updatedStaff = await staffService.getById(id);
+    return updatedStaff;
   },
 };

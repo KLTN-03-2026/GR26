@@ -1,87 +1,337 @@
 import { axiosInstance as api } from '@lib/axios';
 import type { ApiResponse, PaginatedResult } from '@shared/types/api.types';
 import type {
+  BranchMenuItemConfig,
+  CreateMenuAddonPayload,
+  CreateMenuCategoryPayload,
+  MenuAddonInfo,
+  MenuCategory,
   MenuItem,
   MenuListParams,
   CreateMenuPayload,
+  UpdateMenuCategoryPayload,
+  UpdateMenuAddonPayload,
   UpdateMenuPayload,
   MenuCategoryInfo,
+  UpdateBranchMenuItemPayload,
 } from '@modules/menu/types/menu.types';
-import { mockMenus } from '../data/mockMenus';
-import { MENU_CATEGORIES } from '../constants/menu.constants';
-import { calculateGpPercent } from '../schemas/menu.schema';
+import { NO_MENU_CATEGORY_LABEL, NO_MENU_CATEGORY_VALUE } from '@modules/menu/constants/menu.constants';
 
-// State lưu trữ data để simulate CRUD
-let menuData: MenuItem[] = [...mockMenus];
+interface BackendPageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+interface BackendMenuItemResponse {
+  id: string;
+  categoryId: string | null;
+  name: string;
+  basePrice: number;
+  unit: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  isSyncDelivery: boolean;
+  createdAt: string;
+}
+
+interface BackendCategoryResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface BackendAddonResponse {
+  id: string;
+  name: string;
+  extraPrice: number;
+  isActive: boolean;
+}
+
+interface BackendBranchItemResponse {
+  branchId: string;
+  itemId: string;
+  itemName: string;
+  basePrice: number;
+  branchPrice: number | null;
+  effectivePrice: number;
+  isAvailable: boolean;
+}
+
+interface BackendCreateMenuItemPayload {
+  categoryId: string | null;
+  name: string;
+  type?: string;
+  basePrice: number;
+  unit: string | null;
+  isSyncDelivery: boolean;
+}
+
+interface BackendCreateCategoryPayload {
+  name: string;
+  description: string | null;
+  displayOrder: number;
+}
+
+interface BackendUpdateCategoryPayload extends BackendCreateCategoryPayload {
+  isActive: boolean;
+}
+
+interface BackendCreateAddonPayload {
+  name: string;
+  extraPrice: number;
+}
+
+interface BackendUpdateAddonPayload extends BackendCreateAddonPayload {
+  isActive: boolean;
+}
+
+interface BackendSetBranchItemPricePayload {
+  branchPrice: number | null;
+  isAvailable: boolean;
+}
+
+const PAGE_SIZE = 100;
+
+/**
+ * Chuẩn hóa ID danh mục để FE dùng nhất quán trong filter và form.
+ */
+const normalizeCategoryId = (categoryId?: string | null): MenuCategory => {
+  return categoryId ?? NO_MENU_CATEGORY_VALUE;
+};
+
+/**
+ * Chuyển response món ăn từ backend sang model UI của frontend.
+ */
+const mapMenuItem = (item: BackendMenuItemResponse): MenuItem => {
+  const createdAt = Date.parse(item.createdAt);
+
+  return {
+    id: item.id,
+    name: item.name,
+    category: normalizeCategoryId(item.categoryId),
+    categoryName: item.categoryId ? undefined : NO_MENU_CATEGORY_LABEL,
+    price: Number(item.basePrice),
+    basePrice: Number(item.basePrice),
+    branchPrice: null,
+    effectivePrice: Number(item.basePrice),
+    cost: undefined,
+    gpPercent: 0,
+    image: item.imageUrl ?? '',
+    status: item.isActive ? 'selling' : 'hidden',
+    tags: [],
+    soldCount: 0,
+    createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
+    description: undefined,
+    ingredients: [],
+    isAvailable: item.isActive,
+    unit: item.unit ?? '',
+    isSyncDelivery: item.isSyncDelivery,
+    isActive: item.isActive,
+  };
+};
+
+/**
+ * Chuyển response cấu hình món theo chi nhánh sang model frontend.
+ */
+const mapBranchItem = (item: BackendBranchItemResponse): BranchMenuItemConfig => {
+  return {
+    branchId: item.branchId,
+    itemId: item.itemId,
+    itemName: item.itemName,
+    basePrice: Number(item.basePrice),
+    branchPrice: item.branchPrice === null ? null : Number(item.branchPrice),
+    effectivePrice: Number(item.effectivePrice),
+    isAvailable: Boolean(item.isAvailable),
+  };
+};
+
+/**
+ * Chuyển response danh mục từ backend sang model filter/form của frontend.
+ */
+const mapCategory = (category: BackendCategoryResponse): MenuCategoryInfo => {
+  return {
+    id: category.id,
+    name: category.name,
+    description: category.description ?? undefined,
+    count: 0,
+    isActive: category.isActive,
+    displayOrder: category.displayOrder,
+  };
+};
+
+/**
+ * Chuyển response addon từ backend sang model hiển thị của frontend.
+ */
+const mapAddon = (addon: BackendAddonResponse): MenuAddonInfo => {
+  return {
+    id: addon.id,
+    name: addon.name,
+    extraPrice: Number(addon.extraPrice),
+    isActive: addon.isActive,
+  };
+};
+
+/**
+ * Gom toàn bộ dữ liệu phân trang từ backend để FE có thể filter client-side đầy đủ.
+ */
+const fetchAllPages = async <T>(
+  url: string,
+  params?: Record<string, string | number | undefined>
+): Promise<T[]> => {
+  const firstResponse = await api.get<ApiResponse<BackendPageResponse<T>>>(url, {
+    params: {
+      ...params,
+      page: 0,
+      size: PAGE_SIZE,
+    },
+  });
+
+  const firstPage = firstResponse.data.data;
+  const pages = Array.from({ length: Math.max(firstPage.totalPages - 1, 0) }, (_, index) => index + 1);
+
+  if (pages.length === 0) {
+    return firstPage.content;
+  }
+
+  const remainingPages = await Promise.all(
+    pages.map(async (page) => {
+      const response = await api.get<ApiResponse<BackendPageResponse<T>>>(url, {
+        params: {
+          ...params,
+          page,
+          size: PAGE_SIZE,
+        },
+      });
+
+      return response.data.data.content;
+    })
+  );
+
+  return [firstPage.content, ...remainingPages].flat();
+};
+
+/**
+ * Chuyển payload tạo/cập nhật từ form frontend sang contract backend.
+ */
+const toMenuPayload = (payload: CreateMenuPayload | UpdateMenuPayload): BackendCreateMenuItemPayload => {
+  return {
+    categoryId: payload.category && payload.category !== NO_MENU_CATEGORY_VALUE ? payload.category : null,
+    name: payload.name ?? '',
+    // Gửi type lên BE khi tạo mới INGREDIENT hoặc SUB_ASSEMBLY — SELLABLE là mặc định nên bỏ qua
+    ...(payload.type && payload.type !== 'SELLABLE' ? { type: payload.type } : {}),
+    basePrice: payload.price ?? 0,
+    unit: payload.unit?.trim() ? payload.unit.trim() : null,
+    isSyncDelivery: Boolean(payload.isSyncDelivery),
+  };
+};
+
+/**
+ * Đóng gói request tạo/cập nhật món ăn theo contract multipart/form-data của backend.
+ */
+const toMenuFormData = (payload: CreateMenuPayload | UpdateMenuPayload): FormData => {
+  const formData = new FormData();
+  const dataPayload =
+    'isActive' in payload
+      ? {
+          ...toMenuPayload(payload),
+          isActive: payload.isActive ?? payload.isAvailable ?? true,
+        }
+      : toMenuPayload(payload);
+
+  formData.append(
+    'data',
+    new Blob([JSON.stringify(dataPayload)], {
+      type: 'application/json',
+    })
+  );
+
+  if (payload.imageFile) {
+    formData.append('image', payload.imageFile, payload.imageFile.name);
+  }
+
+  return formData;
+};
+
+/**
+ * Chuyển payload tạo danh mục từ frontend sang contract backend.
+ */
+const toCategoryPayload = (payload: CreateMenuCategoryPayload): BackendCreateCategoryPayload => {
+  return {
+    name: payload.name.trim(),
+    description: payload.description?.trim() ? payload.description.trim() : null,
+    displayOrder: payload.displayOrder ?? 0,
+  };
+};
+
+/**
+ * Chuyển payload cập nhật danh mục sang contract backend.
+ */
+const toUpdateCategoryPayload = (payload: UpdateMenuCategoryPayload): BackendUpdateCategoryPayload => {
+  return {
+    ...toCategoryPayload(payload),
+    isActive: payload.isActive,
+  };
+};
+
+/**
+ * Chuyển payload tạo addon sang contract backend.
+ */
+const toAddonPayload = (payload: CreateMenuAddonPayload): BackendCreateAddonPayload => {
+  return {
+    name: payload.name.trim(),
+    extraPrice: payload.extraPrice,
+  };
+};
+
+/**
+ * Chuyển payload cập nhật addon sang contract backend.
+ */
+const toUpdateAddonPayload = (payload: UpdateMenuAddonPayload): BackendUpdateAddonPayload => {
+  return {
+    ...toAddonPayload(payload),
+    isActive: payload.isActive,
+  };
+};
+
+/**
+ * Chuyển payload cập nhật món theo chi nhánh sang contract backend.
+ */
+const toBranchItemPayload = (
+  payload: UpdateBranchMenuItemPayload
+): BackendSetBranchItemPricePayload => {
+  return {
+    branchPrice: payload.branchPrice,
+    isAvailable: payload.isAvailable,
+  };
+};
 
 /**
  * Service cho các thao tác API với menu
- * Hiện tại dùng mock data, sẽ thay thế bằng API thật sau
  */
 export const menuService = {
   /**
    * Lấy danh sách món ăn với filter và pagination
    */
   getList: async (params?: MenuListParams): Promise<PaginatedResult<MenuItem>> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const items = await fetchAllPages<BackendMenuItemResponse>('/menu/items', {
+      keyword: typeof params?.search === 'string' && params.search.trim() ? params.search.trim() : undefined,
+    });
 
-    let result = [...menuData];
-
-    // Apply filters
-    if (params?.search) {
-      result = result.filter((item) =>
-        item.name.toLowerCase().includes(params.search!.toLowerCase())
-      );
-    }
-
-    if (params?.category) {
-      result = result.filter((item) => item.category === params.category);
-    }
-
-    if (params?.status) {
-      result = result.filter((item) => item.status === params.status);
-    }
-
-    if (params?.minPrice !== undefined) {
-      result = result.filter((item) => item.price >= params.minPrice!);
-    }
-
-    if (params?.maxPrice !== undefined) {
-      result = result.filter((item) => item.price <= params.maxPrice!);
-    }
-
-    // Apply sorting
-    switch (params?.sortBy) {
-      case 'newest':
-        result.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      case 'price-asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'bestseller':
-        result.sort((a, b) => b.soldCount - a.soldCount);
-        break;
-    }
-
-    // Apply pagination
-    const page = params?.page || 1;
-    const pageSize = params?.pageSize || 10;
-    const total = result.length;
-    const lastPage = Math.ceil(total / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    const paginatedData = result.slice(startIdx, startIdx + pageSize);
+    const mappedItems = items.map(mapMenuItem);
 
     return {
-      data: paginatedData,
+      data: mappedItems,
       meta: {
-        current_page: page,
-        per_page: pageSize,
-        total,
-        last_page: lastPage,
+        current_page: 1,
+        per_page: mappedItems.length,
+        total: mappedItems.length,
+        last_page: 1,
       },
     };
   },
@@ -90,14 +340,11 @@ export const menuService = {
    * Lấy chi tiết món ăn theo ID
    */
   getById: async (id: string): Promise<ApiResponse<MenuItem>> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const item = menuData.find((m) => m.id === id);
-    if (!item) {
-      throw new Error('Không tìm thấy món ăn');
-    }
+    const response = await api.get<ApiResponse<BackendMenuItemResponse>>(`/menu/items/${id}`);
+
     return {
-      success: true,
-      data: item,
+      ...response.data,
+      data: mapMenuItem(response.data.data),
     };
   },
 
@@ -105,26 +352,11 @@ export const menuService = {
    * Tạo mới món ăn
    */
   create: async (payload: CreateMenuPayload): Promise<ApiResponse<MenuItem>> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const gpPercent = calculateGpPercent(payload.price, payload.cost);
-    const newItem: MenuItem = {
-      id: `menu-${Date.now()}`,
-      ...payload,
-      gpPercent,
-      status: 'selling',
-      soldCount: 0,
-      createdAt: Date.now(),
-      isAvailable: true,
-      tags: payload.tags || [],
-    };
-
-    menuData.unshift(newItem);
+    const response = await api.post<ApiResponse<BackendMenuItemResponse>>('/menu/items', toMenuFormData(payload));
 
     return {
-      success: true,
-      data: newItem,
-      message: 'Tạo món ăn thành công',
+      ...response.data,
+      data: mapMenuItem(response.data.data),
     };
   },
 
@@ -132,32 +364,14 @@ export const menuService = {
    * Cập nhật món ăn
    */
   update: async (id: string, payload: UpdateMenuPayload): Promise<ApiResponse<MenuItem>> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const index = menuData.findIndex((m) => m.id === id);
-    if (index === -1) {
-      throw new Error('Không tìm thấy món ăn');
-    }
-
-    const updatedItem: MenuItem = {
-      ...menuData[index],
-      ...payload,
-    };
-
-    // Recalculate GP% if price or cost changed
-    if (payload.price !== undefined || payload.cost !== undefined) {
-      updatedItem.gpPercent = calculateGpPercent(
-        payload.price ?? updatedItem.price,
-        payload.cost ?? updatedItem.cost
-      );
-    }
-
-    menuData[index] = updatedItem;
+    const response = await api.put<ApiResponse<BackendMenuItemResponse>>(
+      `/menu/items/${id}`,
+      toMenuFormData(payload)
+    );
 
     return {
-      success: true,
-      data: updatedItem,
-      message: 'Cập nhật món ăn thành công',
+      ...response.data,
+      data: mapMenuItem(response.data.data),
     };
   },
 
@@ -165,41 +379,23 @@ export const menuService = {
    * Xóa món ăn
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const index = menuData.findIndex((m) => m.id === id);
-    if (index === -1) {
-      throw new Error('Không tìm thấy món ăn');
-    }
-
-    menuData = menuData.filter((m) => m.id !== id);
-
-    return {
-      success: true,
-      message: 'Xóa món ăn thành công',
-    };
+    const response = await api.delete<ApiResponse<void>>(`/menu/items/${id}`);
+    return response.data;
   },
 
   /**
    * Toggle trạng thái bán hàng (isAvailable)
    */
-  toggle: async (id: string, isAvailable: boolean): Promise<ApiResponse<MenuItem>> => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    const index = menuData.findIndex((m) => m.id === id);
-    if (index === -1) {
-      throw new Error('Không tìm thấy món ăn');
-    }
-
-    menuData[index] = {
-      ...menuData[index],
+  toggle: async (menu: MenuItem, isAvailable: boolean): Promise<ApiResponse<MenuItem>> => {
+    return menuService.update(menu.id, {
+      name: menu.name,
+      category: menu.category,
+      price: menu.price,
+      unit: menu.unit,
+      isSyncDelivery: menu.isSyncDelivery,
+      isActive: isAvailable,
       isAvailable,
-    };
-
-    return {
-      success: true,
-      data: menuData[index],
-    };
+    });
   },
 
   /**
@@ -207,57 +403,159 @@ export const menuService = {
    */
   updateStatus: async (
     id: string,
-    status: 'selling' | 'hidden' | 'pending'
+    status: 'selling' | 'hidden'
   ): Promise<ApiResponse<MenuItem>> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const currentMenu = await menuService.getById(id);
 
-    const index = menuData.findIndex((m) => m.id === id);
-    if (index === -1) {
-      throw new Error('Không tìm thấy món ăn');
-    }
-
-    menuData[index] = {
-      ...menuData[index],
-      status,
-    };
-
-    return {
-      success: true,
-      data: menuData[index],
-    };
+    return menuService.toggle(currentMenu.data, status === 'selling');
   },
 
   /**
    * Lấy danh sách danh mục
    */
   getCategories: async (): Promise<ApiResponse<MenuCategoryInfo[]>> => {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // Đếm số lượng món theo danh mục
-    const categoriesWithCount = MENU_CATEGORIES.map((cat) => ({
-      ...cat,
-      count: menuData.filter((m) => m.category === cat.id).length,
-    }));
+    const categories = await fetchAllPages<BackendCategoryResponse>('/menu/categories');
 
     return {
       success: true,
-      data: categoriesWithCount,
+      data: categories.map(mapCategory),
     };
+  },
+
+  /**
+   * Tạo mới danh mục món ăn
+   */
+  createCategory: async (payload: CreateMenuCategoryPayload): Promise<ApiResponse<MenuCategoryInfo>> => {
+    const response = await api.post<ApiResponse<BackendCategoryResponse>>(
+      '/menu/categories',
+      toCategoryPayload(payload)
+    );
+
+    return {
+      ...response.data,
+      data: mapCategory(response.data.data),
+    };
+  },
+
+  /**
+   * Cập nhật thông tin danh mục món ăn
+   */
+  updateCategory: async (
+    id: string,
+    payload: UpdateMenuCategoryPayload
+  ): Promise<ApiResponse<MenuCategoryInfo>> => {
+    const response = await api.put<ApiResponse<BackendCategoryResponse>>(
+      `/menu/categories/${id}`,
+      toUpdateCategoryPayload(payload)
+    );
+
+    return {
+      ...response.data,
+      data: mapCategory(response.data.data),
+    };
+  },
+
+  /**
+   * Xóa mềm danh mục món ăn
+   */
+  deleteCategory: async (id: string): Promise<void> => {
+    await api.delete(`/menu/categories/${id}`);
+  },
+
+  /**
+   * Lấy danh sách addon/topping trong menu.
+   */
+  getAddons: async (): Promise<ApiResponse<MenuAddonInfo[]>> => {
+    const addons = await fetchAllPages<BackendAddonResponse>('/menu/addons');
+
+    return {
+      success: true,
+      data: addons.map(mapAddon),
+    };
+  },
+
+  /**
+   * Tạo mới addon/topping.
+   */
+  createAddon: async (payload: CreateMenuAddonPayload): Promise<ApiResponse<MenuAddonInfo>> => {
+    const response = await api.post<ApiResponse<BackendAddonResponse>>('/menu/addons', toAddonPayload(payload));
+
+    return {
+      ...response.data,
+      data: mapAddon(response.data.data),
+    };
+  },
+
+  /**
+   * Cập nhật thông tin addon/topping.
+   */
+  updateAddon: async (
+    id: string,
+    payload: UpdateMenuAddonPayload
+  ): Promise<ApiResponse<MenuAddonInfo>> => {
+    const response = await api.put<ApiResponse<BackendAddonResponse>>(
+      `/menu/addons/${id}`,
+      toUpdateAddonPayload(payload)
+    );
+
+    return {
+      ...response.data,
+      data: mapAddon(response.data.data),
+    };
+  },
+
+  /**
+   * Xóa mềm addon/topping.
+   */
+  deleteAddon: async (id: string): Promise<void> => {
+    await api.delete(`/menu/addons/${id}`);
+  },
+
+  /**
+   * Lấy cấu hình món ăn tại một chi nhánh cụ thể.
+   */
+  getBranchItem: async (
+    branchId: string,
+    itemId: string
+  ): Promise<ApiResponse<BranchMenuItemConfig>> => {
+    const response = await api.get<ApiResponse<BackendBranchItemResponse>>(
+      `/menu/branches/${branchId}/items/${itemId}`
+    );
+
+    return {
+      ...response.data,
+      data: mapBranchItem(response.data.data),
+    };
+  },
+
+  /**
+   * Cập nhật giá và trạng thái phục vụ món ăn theo chi nhánh.
+   */
+  updateBranchItem: async (
+    branchId: string,
+    itemId: string,
+    payload: UpdateBranchMenuItemPayload
+  ): Promise<ApiResponse<void>> => {
+    const response = await api.put<ApiResponse<void>>(
+      `/menu/branches/${branchId}/items/${itemId}/price`,
+      toBranchItemPayload(payload)
+    );
+
+    return response.data;
   },
 
   /**
    * Upload ảnh món ăn (mock)
    */
   uploadImage: async (formData: FormData): Promise<ApiResponse<{ url: string }>> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    void formData;
 
-    // Mock upload - trả về URL placeholder
     return {
       success: true,
       data: {
-        url: 'https://images.unsplash.com/photo-1593443320739-77f74952dabd?w=400',
+        url: '',
       },
-      message: 'Upload ảnh thành công',
+      message: 'Backend chưa hỗ trợ upload ảnh trực tiếp cho menu',
     };
   },
 };

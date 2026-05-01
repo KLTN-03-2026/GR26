@@ -4,18 +4,12 @@ import {
   Table,
   ClipboardList,
   Newspaper,
-<<<<<<< HEAD
-=======
   CreditCard,
->>>>>>> origin/main
   ChefHat,
   Archive,
   BookOpenCheck,
   Users2,
-<<<<<<< HEAD
-=======
   BriefcaseBusiness,
->>>>>>> origin/main
   Clock,
   Store,
   Ticket,
@@ -23,26 +17,17 @@ import {
   Settings,
   Package,
 } from 'lucide-react';
-<<<<<<< HEAD
-import { ROUTES } from '@shared/constants/routes';
-import { ROLES } from '@shared/constants/roles';
-=======
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
 import { ROLES, type Role } from '@shared/constants/roles';
->>>>>>> origin/main
 
 export interface MenuItem {
   title: string;
   icon?: FC<{ className?: string }>;
   path?: string;
   children?: MenuItem[];
-<<<<<<< HEAD
-  roles?: string[];
-=======
   roles?: Role[];
   requiredPermissions?: readonly string[];
->>>>>>> origin/main
 }
 
 export interface MenuSection {
@@ -56,11 +41,6 @@ export const menuConfig: MenuSection[] = [
     items: [
       {
         title: 'Tổng Quan',
-<<<<<<< HEAD
-        roles: [ROLES.OWNER],
-        children: [
-          { title: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD, roles: [ROLES.OWNER] }
-=======
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD, roles: [ROLES.OWNER] },
@@ -71,7 +51,6 @@ export const menuConfig: MenuSection[] = [
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD,
           },
->>>>>>> origin/main
         ],
       },
     ],
@@ -83,10 +62,6 @@ export const menuConfig: MenuSection[] = [
         title: 'Vận Hành',
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
-<<<<<<< HEAD
-          { title: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Đơn hàng', icon: ClipboardList, path: ROUTES.OWNER.ORDERS, roles: [ROLES.OWNER, ROLES.STAFF] },
-=======
           { title: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER] },
           {
             title: 'Bàn',
@@ -110,29 +85,12 @@ export const menuConfig: MenuSection[] = [
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_PAYMENT,
           },
->>>>>>> origin/main
           { title: 'Báo cáo doanh thu', icon: Newspaper, path: ROUTES.OWNER.REVENUE, roles: [ROLES.OWNER] },
         ],
       },
     ],
   },
   {
-<<<<<<< HEAD
-    title: 'Bán hàng (POS)',
-    items: [
-      {
-        title: 'Bán hàng',
-        roles: [ROLES.OWNER, ROLES.STAFF],
-        children: [
-          { title: 'Đặt món', icon: ChefHat, path: ROUTES.POS_ORDER, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Quản lý POS', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT, roles: [ROLES.OWNER, ROLES.STAFF] },
-        ],
-      },
-    ],
-  },
-  {
-=======
->>>>>>> origin/main
     title: 'Thực đơn & Kho',
     items: [
       {
@@ -140,11 +98,6 @@ export const menuConfig: MenuSection[] = [
         icon: ChefHat,
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
-<<<<<<< HEAD
-          { title: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Kho', icon: Archive, path: ROUTES.OWNER.INVENTORY, roles: [ROLES.OWNER, ROLES.STAFF] },
-          { title: 'Công thức', icon: BookOpenCheck, path: ROUTES.OWNER.RECIPES, roles: [ROLES.OWNER] },
-=======
           { title: 'Thực đơn', icon: ChefHat, path: ROUTES.OWNER.MENU, roles: [ROLES.OWNER] },
           {
             title: 'Thực đơn',
@@ -169,7 +122,6 @@ export const menuConfig: MenuSection[] = [
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
           },
->>>>>>> origin/main
         ],
       },
     ],
@@ -182,9 +134,6 @@ export const menuConfig: MenuSection[] = [
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Nhân viên', icon: Users2, path: ROUTES.OWNER.STAFF, roles: [ROLES.OWNER] },
-<<<<<<< HEAD
-          { title: 'Lịch làm', icon: Clock, path: ROUTES.OWNER.SCHEDULES, roles: [ROLES.OWNER, ROLES.STAFF] },
-=======
           {
             title: 'Chức vụ',
             icon: BriefcaseBusiness,
@@ -213,7 +162,6 @@ export const menuConfig: MenuSection[] = [
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS,
           },
->>>>>>> origin/main
         ],
       },
     ],
@@ -223,19 +171,11 @@ export const menuConfig: MenuSection[] = [
     items: [
       {
         title: 'Kinh doanh',
-<<<<<<< HEAD
-        roles: [ROLES.OWNER, ROLES.STAFF],
-=======
         roles: [ROLES.OWNER],
->>>>>>> origin/main
         children: [
           { title: 'Chi nhánh', icon: Store, path: ROUTES.OWNER.BRANCHES, roles: [ROLES.OWNER] },
           { title: 'Khuyến mãi', icon: Ticket, path: ROUTES.OWNER.PROMOTIONS, roles: [ROLES.OWNER] },
           { title: 'Nhà cung cấp', icon: Truck, path: ROUTES.OWNER.SUPPLIERS, roles: [ROLES.OWNER] },
-<<<<<<< HEAD
-          { title: 'Nhà cung cấp (Staff)', icon: Truck, path: ROUTES.STAFF.SUPPLIERS, roles: [ROLES.STAFF] },
-=======
->>>>>>> origin/main
           { title: 'Báo cáo', icon: Newspaper, path: ROUTES.OWNER.REPORTS, roles: [ROLES.OWNER] },
         ],
       },

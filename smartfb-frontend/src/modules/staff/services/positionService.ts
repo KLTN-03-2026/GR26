@@ -1,37 +1,42 @@
 import { axiosInstance as api } from '@lib/axios';
+import type {
+  CreatePositionRequest,
+  StaffPosition,
+  UpdatePositionRequest,
+} from '@modules/staff/types/position.types';
 import type { ApiResponse } from '@shared/types/api.types';
-import type { Position, CreatePositionPayload, UpdatePositionPayload } from '../types/position.types';
 
-/**
- * Position service - Quản lý chức vụ (Barista, Cashier, Waiter...)
- * Base URL: /api/v1/positions
- */
 export const positionService = {
   /**
-   * Lấy danh sách chức vụ
+   * GET /api/v1/positions - Lấy danh sách chức vụ đang active.
    */
-  getList: async (): Promise<ApiResponse<Position[]>> => {
-    return api.get<ApiResponse<Position[]>>('/positions').then(r => r.data);
+  getList: async (): Promise<StaffPosition[]> => {
+    const response = await api.get<ApiResponse<StaffPosition[]>>('/positions');
+    return response.data.data;
   },
 
   /**
-   * Tạo chức vụ mới
+   * POST /api/v1/positions - Tạo chức vụ mới.
    */
-  create: async (payload: CreatePositionPayload): Promise<ApiResponse<Position>> => {
-    return api.post<ApiResponse<Position>>('/positions', payload).then(r => r.data);
+  create: async (payload: CreatePositionRequest): Promise<string> => {
+    const response = await api.post<ApiResponse<string>>('/positions', payload);
+    return response.data.data;
   },
 
   /**
-   * Cập nhật chức vụ
+   * PUT /api/v1/positions/{id} - Cập nhật thông tin chức vụ.
    */
-  update: async (id: string, payload: UpdatePositionPayload): Promise<ApiResponse<Position>> => {
-    return api.put<ApiResponse<Position>>(`/positions/${id}`, payload).then(r => r.data);
+  update: async (id: string, payload: UpdatePositionRequest): Promise<void> => {
+    await api.put<ApiResponse<null>>(`/positions/${id}`, payload);
   },
 
   /**
-   * Xóa chức vụ
+   * PUT /api/v1/positions/{id}/toggle?active=...
+   * Backend dùng query param `active`, không nhận body.
    */
-  delete: async (id: string): Promise<ApiResponse<void>> => {
-    return api.delete<ApiResponse<void>>(`/positions/${id}`).then(r => r.data);
+  toggleActive: async (id: string, active: boolean): Promise<void> => {
+    await api.put<ApiResponse<null>>(`/positions/${id}/toggle`, null, {
+      params: { active },
+    });
   },
 };

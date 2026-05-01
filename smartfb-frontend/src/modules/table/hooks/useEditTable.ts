@@ -2,21 +2,22 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { useToast } from '@shared/hooks/useToast';
 import { tableService } from '../services/tableService';
-import type { UpdateTablePayload, TableDetail } from '../types/table.types';
+import type { UpdateTablePayload, TableItem } from '../types/table.types';
 
+/**
+ * Hook cập nhật thông tin bàn.
+ * Sau khi lưu sẽ refresh cả danh sách bàn lẫn cache chi tiết của bàn vừa chỉnh sửa.
+ */
 export const useEditTable = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: UpdateTablePayload }) => {
-      const response = await tableService.update(id, payload);
-      if (!response.success) {
-        throw new Error('Không thể cập nhật bàn');
-      }
-      return response.data;
+      const updatedTable = await tableService.update(id, payload);
+      return updatedTable;
     },
-    onSuccess: (table: TableDetail) => {
+    onSuccess: (table: TableItem) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(table.id) });

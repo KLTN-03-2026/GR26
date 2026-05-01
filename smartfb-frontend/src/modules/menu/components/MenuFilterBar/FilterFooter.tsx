@@ -17,7 +17,7 @@ export const FilterFooter = ({
   return (
     <div className={cn('pt-4 mt-4 border-t border-gray-100', className)}>
       {/* Active filters count */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <span className="text-sm text-gray-500">
           {activeFilterCount} bộ lọc đang áp dụng
         </span>
@@ -29,7 +29,7 @@ export const FilterFooter = ({
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           variant="outline"
           onClick={onReset}

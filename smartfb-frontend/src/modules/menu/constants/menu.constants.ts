@@ -1,4 +1,4 @@
-import type { MenuCategory, MenuStatus, MenuSortOption, MenuCategoryInfo } from '@modules/menu/types/menu.types';
+import type { MenuCategoryInfo, MenuSortOption, MenuStatus } from '@modules/menu/types/menu.types';
 
 /**
  * Trạng thái menu và label hiển thị
@@ -6,19 +6,15 @@ import type { MenuCategory, MenuStatus, MenuSortOption, MenuCategoryInfo } from 
 export const MENU_STATUS: Record<MenuStatus, { label: string; color: string }> = {
   selling: { label: 'Đang bán', color: 'green' },
   hidden: { label: 'Tạm ẩn', color: 'red' },
-  pending: { label: 'Đang xử lý', color: 'orange' },
 };
 
 /**
- * Danh mục và label hiển thị
+ * Danh mục fallback để tránh UI bị rỗng khi API danh mục chưa sẵn sàng.
  */
 export const MENU_CATEGORIES: MenuCategoryInfo[] = [
-  { id: 'ca-phe', name: 'Cà phê' },
-  { id: 'tra-trai-cay', name: 'Trà trái cây' },
-  { id: 'banh-ngot', name: 'Bánh ngọt' },
-  { id: 'da-ep', name: 'Đá ép' },
-  { id: 'sua-hat', name: 'Sữa hạt' },
-  { id: 'khac', name: 'Khác' },
+  { id: 'fallback-ca-phe', name: 'Cà phê' },
+  { id: 'fallback-tra', name: 'Trà trái cây' },
+  { id: 'fallback-banh', name: 'Bánh ngọt' },
 ];
 
 /**
@@ -28,7 +24,6 @@ export const MENU_SORT_OPTIONS: Record<MenuSortOption, { label: string }> = {
   newest: { label: 'Mới nhất' },
   'price-asc': { label: 'Giá tăng dần' },
   'price-desc': { label: 'Giá giảm dần' },
-  bestseller: { label: 'Bán chạy nhất' },
 };
 
 /**
@@ -49,9 +44,14 @@ export const DEFAULT_PRICE_RANGE: [number, number] = [0, 200000];
 /**
  * Page size mặc định
  */
-export const DEFAULT_PAGE_SIZE = 10;
+export const DEFAULT_PAGE_SIZE = 12;
 
 /**
- * GP Margin threshold
+ * Giá trị đại diện cho món chưa được gán danh mục.
  */
-export const GP_MARGIN_THRESHOLD = 50;
+export const NO_MENU_CATEGORY_VALUE = '__no_category__';
+
+/**
+ * Label hiển thị cho danh mục rỗng.
+ */
+export const NO_MENU_CATEGORY_LABEL = 'Chưa phân loại';

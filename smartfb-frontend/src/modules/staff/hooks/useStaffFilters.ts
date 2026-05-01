@@ -1,81 +1,63 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { StaffDetail } from '../data/staffList';
-import type { StaffFilters, PaginationState } from '../types/staff.types';
+import { useState, useMemo, useCallback } from 'react';
+import type { StaffSummary, StaffFilters, PaginationState } from '../types/staff.types';
 
 const PAGE_SIZE = 10;
 
 /**
  * Hook quản lý filter, search, và pagination cho danh sách nhân viên
- * Đã cập nhật theo Module 4 Spec (fullName, positionId)
+ * Đáp ứng PB09: Tìm kiếm và lọc nhân viên
+ * Đã sửa để dùng API response structure
  */
-export const useStaffFilters = (staff: StaffDetail[]) => {
+export const useStaffFilters = (staffList: StaffSummary[]) => {
   const [filters, setFilters] = useState<StaffFilters>({
-    search: '',
-    status: 'all',
-    positionId: 'all',
-    branchId: 'all',
+    keyword: '',
+    status: undefined,
+    positionId: undefined,
   });
 
-  const [pagination, setPagination] = useState<PaginationState>({
+  const [pagination, setPagination] = useState<Omit<PaginationState, 'total'>>({
     page: 1,
     pageSize: PAGE_SIZE,
-    total: 0,
   });
 
-  // Lấy danh sách unique positions từ staff
+  // Lấy danh sách unique position names từ staff
   const positions = useMemo(() => {
-    const unique = new Map<string, string>();
-    staff.forEach(s => {
-      if (s.positionId && s.positionName) {
-        unique.set(s.positionId, s.positionName);
-      }
-    });
-    return Array.from(unique.entries()).map(([id, name]) => ({ id, name }));
-  }, [staff]);
+    const unique = new Set(staffList.map(s => s.positionName).filter(Boolean));
+    return Array.from(unique).sort();
+  }, [staffList]);
 
-  // Filter và search staff
+  // Filter và search staff (client-side filtering)
   const filteredStaff = useMemo(() => {
-    return staff.filter(member => {
-      // Search by name or phone
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const fullName = member.fullName.toLowerCase();
-        const matchName = fullName.includes(searchLower);
-        const matchPhone = member.phone?.toLowerCase().includes(searchLower);
-        if (!matchName && !matchPhone) return false;
-      }
+    let result = [...staffList];
 
-      // Filter by status
-      if (filters.status !== 'all' && member.status !== filters.status) {
-        return false;
-      }
+    // Search by keyword (fullName or phone)
+    if (filters.keyword) {
+      const keywordLower = filters.keyword.toLowerCase();
+      result = result.filter(member => 
+        member.fullName?.toLowerCase().includes(keywordLower) ||
+        member.phone?.toLowerCase().includes(keywordLower)
+      );
+    }
 
-      // Filter by position
-      if (filters.positionId !== 'all' && member.positionId !== filters.positionId) {
-        return false;
-      }
+    // Filter by status
+    if (filters.status) {
+      result = result.filter(member => member.status === filters.status);
+    }
 
-      // Filter by branch
-      if (filters.branchId !== 'all' && member.branchId !== filters.branchId) {
-        return false;
-      }
+    // Filter by position
+    if (filters.positionId) {
+      result = result.filter(member => member.positionId === filters.positionId);
+    }
 
-      return true;
-    });
-  }, [staff, filters]);
+    return result;
+  }, [staffList, filters]);
 
   // Paginate filtered staff
   const { paginatedStaff, totalItems } = useMemo(() => {
     const total = filteredStaff.length;
     const startIdx = (pagination.page - 1) * pagination.pageSize;
     const endIdx = startIdx + pagination.pageSize;
-
-    const items = filteredStaff.slice(startIdx, endIdx).map(member => ({
-      ...member,
-      salaryDisplay: member.salary
-        ? member.salary.toLocaleString('vi-VN')
-        : '0',
-    }));
+    const items = filteredStaff.slice(startIdx, endIdx);
 
     return {
       paginatedStaff: items,
@@ -83,36 +65,30 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     };
   }, [filteredStaff, pagination.page, pagination.pageSize]);
 
-  // Update pagination total when filtered results change
-  useEffect(() => {
-    if (pagination.total !== totalItems) {
-      setPagination(prev => ({ ...prev, total: totalItems }));
-    }
-  }, [totalItems, pagination.total]);
-
-  const updateFilter = useCallback((key: keyof StaffFilters, value: string) => {
+  const updateFilter = useCallback((key: keyof StaffFilters, value: string | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    // Reset to page 1 when filter changes
     setPagination(prev => ({ ...prev, page: 1 }));
   }, []);
 
   const clearFilters = useCallback(() => {
-    setFilters({ search: '', status: 'all', positionId: 'all', branchId: 'all' });
-    setPagination({ page: 1, pageSize: PAGE_SIZE, total: 0 });
+    setFilters({ keyword: '', status: undefined, positionId: undefined });
+    setPagination({ page: 1, pageSize: PAGE_SIZE });
   }, []);
 
   const updatePage = useCallback((page: number) => {
     setPagination(prev => ({ ...prev, page }));
   }, []);
 
-  // Check if có active filters
   const hasActiveFilters = useMemo(() => {
-    return filters.search !== '' || filters.status !== 'all' || filters.positionId !== 'all' || filters.branchId !== 'all';
+    return !!filters.keyword || !!filters.status || !!filters.positionId;
   }, [filters]);
 
   return {
     filters,
-    pagination,
+    pagination: {
+      ...pagination,
+      total: totalItems,
+    },
     positions,
     staff: paginatedStaff,
     totalItems,
@@ -120,6 +96,6 @@ export const useStaffFilters = (staff: StaffDetail[]) => {
     updateFilter,
     clearFilters,
     updatePage,
-    totalPages: Math.ceil(pagination.total / pagination.pageSize),
+    totalPages: Math.ceil(totalItems / pagination.pageSize),
   };
 };

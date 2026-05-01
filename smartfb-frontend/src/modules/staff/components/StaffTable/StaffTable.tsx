@@ -5,29 +5,27 @@ import {
   TableHeader,
   TableRow,
 } from '@shared/components/ui/table';
-import type { StaffListItem } from '../../types/staff.types';
+import type { StaffSummary } from '../../types/staff.types';
 import { StaffRow } from './StaffRow';
 import { StaffTablePagination } from './StaffTablePagination';
 
 interface StaffTableProps {
-  staff: StaffListItem[];
+  staff: StaffSummary[];
   currentPage: number;
   totalPages: number;
   totalItems?: number;
   onPageChange: (page: number) => void;
+  onRefresh?: () => void;
   isLoading?: boolean;
 }
 
-/**
- * Table hiển thị danh sách nhân viên dùng shadcn/ui
- * Đáp ứng PB08: Hiển thị tên, email, số điện thoại, vai trò, chi nhánh, trạng thái
- */
 export const StaffTable = ({
   staff,
   currentPage,
   totalPages,
   totalItems = 0,
   onPageChange,
+  onRefresh,
   isLoading = false,
 }: StaffTableProps) => {
   if (isLoading) {
@@ -53,17 +51,21 @@ export const StaffTable = ({
           <TableHeader className="border-0">
             <TableRow className="hover:bg-cream border-b-0">
               <TableHead>HỌ TÊN</TableHead>
-              <TableHead>EMAIL</TableHead>
+              {/* <TableHead>MÃ NV</TableHead> */}
               <TableHead>SỐ ĐIỆN THOẠI</TableHead>
+              <TableHead>EMAIL</TableHead>
               <TableHead>VỊ TRÍ</TableHead>
-              <TableHead>CHI NHÁNH</TableHead>
               <TableHead>TRẠNG THÁI</TableHead>
               <TableHead className="text-right">HÀNH ĐỘNG</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {staff.map((member) => (
-              <StaffRow key={member.id} staff={member} />
+              <StaffRow 
+                key={member.id} 
+                staff={member} 
+                onRefresh={onRefresh}
+              />
             ))}
           </TableBody>
         </Table>
