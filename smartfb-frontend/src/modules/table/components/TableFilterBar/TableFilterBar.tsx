@@ -1,4 +1,5 @@
 import { FilterX, Layers3, MapPinned, Plus, Search, SquarePen } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Button } from '@shared/components/ui/button';
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ interface TableFilterBarProps {
   onCreateSingleTable: () => void;
   onCreateBulkTables: () => void;
   onManageZones: () => void;
+  posSessionAction?: ReactNode;
   disabled?: boolean;
 }
 
@@ -36,6 +38,7 @@ export const TableFilterBar = ({
   onCreateSingleTable,
   onCreateBulkTables,
   onManageZones,
+  posSessionAction,
   disabled = false,
 }: TableFilterBarProps) => {
   const stateOptions = [
@@ -59,7 +62,7 @@ export const TableFilterBar = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:w-auto">
+        <div className="flex flex-wrap gap-2 xl:w-auto">
           <FilterDropdown
             value={filters.area}
             onChange={onAreaChange}
@@ -75,9 +78,11 @@ export const TableFilterBar = ({
             placeholder="Trạng thái"
             className="w-full sm:w-[190px]"
           />
-        </div>
+        {/* </div>
 
-        <div className="flex flex-wrap items-center gap-2 xl:ml-auto">
+        <div className="flex flex-wrap items-center gap-2 xl:ml-auto"> */}
+          {posSessionAction}
+
           {hasActiveFilters && (
             <Button
               variant="ghost"
