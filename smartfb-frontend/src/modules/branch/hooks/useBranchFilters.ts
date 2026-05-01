@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { BranchFilters, BranchListItem, PaginationState } from '../types/branch.types';
+import type { BranchDetail } from '../data/branchDetails';
+import type { BranchFilters, PaginationState } from '../types/branch.types';
 
 const PAGE_SIZE = 10;
 
 /**
  * Hook quản lý filter, search, và pagination cho danh sách chi nhánh
  */
-export const useBranchFilters = (branches: BranchListItem[]) => {
+export const useBranchFilters = (branches: BranchDetail[]) => {
   const [filters, setFilters] = useState<BranchFilters>({
     search: '',
     status: 'all',
@@ -32,13 +33,8 @@ export const useBranchFilters = (branches: BranchListItem[]) => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchName = branch.name.toLowerCase().includes(searchLower);
-        const matchCode = branch.code.toLowerCase().includes(searchLower);
         const matchAddress = branch.address?.toLowerCase().includes(searchLower);
-        const matchPhone = branch.phone?.toLowerCase().includes(searchLower);
-
-        if (!matchName && !matchCode && !matchAddress && !matchPhone) {
-          return false;
-        }
+        if (!matchName && !matchAddress) return false;
       }
 
       // Filter by status
@@ -61,8 +57,15 @@ export const useBranchFilters = (branches: BranchListItem[]) => {
     const startIdx = (pagination.page - 1) * pagination.pageSize;
     const endIdx = startIdx + pagination.pageSize;
 
+    const items = filteredBranches.slice(startIdx, endIdx).map(branch => ({
+      ...branch,
+      revenueDisplay: branch.revenue
+        ? branch.revenue.toLocaleString('vi-VN')
+        : '0',
+    }));
+
     return {
-      paginatedBranches: filteredBranches.slice(startIdx, endIdx),
+      paginatedBranches: items,
       totalItems: total,
     };
   }, [filteredBranches, pagination.page, pagination.pageSize]);

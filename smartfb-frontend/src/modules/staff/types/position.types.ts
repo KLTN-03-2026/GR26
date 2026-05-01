@@ -1,44 +1,12 @@
-/**
- * Entity chức vụ trả về từ API `/positions`.
- */
-export interface StaffPosition {
+import type { ApiResponse } from '@shared/types/api.types';
+
+export interface Position {
   id: string;
-  tenantId: string;
+  tenant_id: string;
   name: string;
-  description: string | null;
-  active: boolean;
-  createdAt: string;
+  description: string;
+  base_salary: number;
 }
 
-/**
- * Payload tạo chức vụ mới.
- */
-export interface CreatePositionRequest {
-  name: string;
-  description?: string;
-}
-
-/**
- * Payload cập nhật chức vụ hiện có.
- */
-export interface UpdatePositionRequest {
-  name: string;
-  description?: string;
-}
-
-/**
- * View model dùng để render danh sách chức vụ trên FE.
- * `assignedStaffCount` được FE suy ra từ danh sách nhân viên hiện tại.
- */
-export interface StaffPositionListItem extends StaffPosition {
-  assignedStaffCount: number;
-}
-
-/**
- * Summary card cho trang quản lý chức vụ.
- */
-export interface StaffPositionSummary {
-  totalPositions: number;
-  usedPositions: number;
-  vacantPositions: number;
-}
+export type CreatePositionPayload = Omit<Position, 'id' | 'tenant_id'>;
+export type UpdatePositionPayload = Partial<CreatePositionPayload>;

@@ -19,7 +19,7 @@ const EMPTY_PERMISSIONS: string[] = [];
 
 const renderProtectedRoutes = (
   routes: RouteConfigItem[],
-  allowedRoles: typeof ROLES[keyof typeof ROLES][],
+  allowedRoles: (typeof ROLES)[keyof typeof ROLES][],
   layout: 'admin' | 'app'
 ) => {
   return routes.map(({ path, element, pageTitle, requiredPermissions }) => {

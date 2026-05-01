@@ -1,4 +1,4 @@
-import { Lock, Unlock } from 'lucide-react';
+import { Lock, Unlock } from 'lucide-react'; // Bỏ AlertTriangle không dùng
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,14 @@ interface ToggleStaffStatusDialogProps {
   onOpenChange: (open: boolean) => void;
   staffId: string;
   staffName: string;
-  currentStatus: string;
+  currentStatus: 'active' | 'inactive';
   onSuccess?: () => void;
 }
 
+/**
+ * Dialog xác nhận khóa/mở khóa nhân viên
+ * Đáp ứng PB08 AC5: Khóa/mở khóa nhân viên
+ */
 export const ToggleStaffStatusDialog = ({
   open,
   onOpenChange,
@@ -28,9 +32,9 @@ export const ToggleStaffStatusDialog = ({
   onSuccess,
 }: ToggleStaffStatusDialogProps) => {
   const { mutate: toggleStatus, isPending } = useToggleStaffStatus();
-
-  const isActivating = currentStatus === 'INACTIVE';
-  const newStatus = isActivating ? 'ACTIVE' : 'INACTIVE';
+  
+  const isActivating = currentStatus === 'inactive';
+  const newStatus = isActivating ? 'active' : 'inactive';
   const actionText = isActivating ? 'mở khóa' : 'khóa';
   const actionTextDisplay = isActivating ? 'Mở khóa' : 'Khóa';
 
@@ -41,9 +45,6 @@ export const ToggleStaffStatusDialog = ({
         onSuccess: () => {
           onOpenChange(false);
           onSuccess?.();
-        },
-        onError: () => {
-          // Error handled by hook
         },
       }
     );

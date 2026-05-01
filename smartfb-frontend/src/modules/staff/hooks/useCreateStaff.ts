@@ -1,22 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@shared/hooks/useToast';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
-import type { CreateStaffRequest } from '../types/staff.types';
+import type { CreateStaffFormData } from '../types/staff.types';
 
-/**
- * Hook tạo nhân viên mới.
- * Sau khi tạo thành công sẽ invalidate toàn bộ danh sách nhân viên để UI refetch dữ liệu mới nhất.
- */
 export const useCreateStaff = () => {
   const queryClient = useQueryClient();
+  const { error } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreateStaffRequest) => {
+    mutationFn: async (data: CreateStaffFormData) => {
       const response = await staffService.create(data);
       return response;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+    },
+    onError: (err) => {
+      const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
+      error('Không thể tạo nhân viên', errorMessage);
     },
   });
 };

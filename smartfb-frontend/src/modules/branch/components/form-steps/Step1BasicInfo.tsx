@@ -1,4 +1,4 @@
-import { Building2, Phone } from 'lucide-react';
+import { Building2, CircleAlert, Phone } from 'lucide-react';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { Textarea } from '@shared/components/ui/textarea';
@@ -31,6 +31,20 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <div className="flex items-start gap-3">
+          <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-amber-900">Flow tạo chi nhánh hiện tại của backend</p>
+            <p className="text-sm text-amber-800">
+              Endpoint tạo chi nhánh hiện chỉ nhận 4 trường: tên chi nhánh, mã chi nhánh, địa chỉ và số điện
+              thoại. Các cấu hình như giờ hoạt động, tích hợp, bàn và menu sẽ được thiết lập ở bước sau khi
+              backend có endpoint tương ứng.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
@@ -38,7 +52,7 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Thông tin chi nhánh</h2>
-            <p className="text-sm text-gray-500">Điền thông tin cơ bản để tạo chi nhánh mới.</p>
+            <p className="text-sm text-gray-500">Nhập đúng dữ liệu backend đang yêu cầu để tạo chi nhánh.</p>
           </div>
         </div>
 
@@ -74,7 +88,7 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
                 errors?.code && 'border-red-500 focus-visible:ring-red-500'
               )}
             />
-            <p className="text-xs text-gray-500">Nhập mã chi nhánh ngắn gọn, tối đa 50 ký tự.</p>
+            <p className="text-xs text-gray-500">Backend chỉ yêu cầu mã không rỗng và tối đa 50 ký tự.</p>
             {errors?.code && <p className="text-sm text-red-600">{errors.code}</p>}
           </div>
         </div>
@@ -93,7 +107,7 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
               errors?.address && 'border-red-500 focus-visible:ring-red-500'
             )}
           />
-          <p className="text-xs text-gray-500">Có thể để trống nếu chưa có, nhưng nên nhập để dễ quản lý.</p>
+          <p className="text-xs text-gray-500">Backend cho phép để trống, nhưng nên nhập địa chỉ để dễ quản lý.</p>
           {errors?.address && <p className="text-sm text-red-600">{errors.address}</p>}
         </div>
 
@@ -114,7 +128,7 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
               )}
             />
           </div>
-          <p className="text-xs text-gray-500">Số điện thoại tối đa 20 ký tự.</p>
+          <p className="text-xs text-gray-500">Backend hiện chỉ giới hạn tối đa 20 ký tự cho số điện thoại.</p>
           {errors?.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
         </div>
       </div>

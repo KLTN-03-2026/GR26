@@ -142,8 +142,8 @@ export default function CreateBranchPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-text-primary">Thêm chi nhánh mới</h1>
-            <p className="text-sm text-text-secondary">Tạo chi nhánh mới với các thông tin cơ bản.</p>
+            <h1 className="text-xl font-bold text-gray-900">Thêm chi nhánh mới</h1>
+            <p className="text-sm text-gray-500">Tạo chi nhánh theo đúng payload và luồng xử lý hiện tại của backend</p>
           </div>
         </div>
 
@@ -151,21 +151,21 @@ export default function CreateBranchPage() {
           type="button"
           variant="outline"
           onClick={handleCancel}
-          className="border-border text-text-primary hover:bg-hover-light"
+          className="border-gray-300 text-gray-700"
           disabled={isPending}
         >
           Hủy
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-card border border-border bg-card p-6 shadow-card">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
         <Step1BasicInfo data={formData} onChange={handleFormChange} errors={errors} />
 
-        <div className="flex items-center justify-end border-t border-border pt-6">
+        <div className="flex items-center justify-end border-t border-gray-200 pt-6">
           <Button
             type="submit"
             disabled={isPending}
-            className="bg-primary px-6 font-medium text-white hover:bg-primary-hover"
+            className="bg-orange-500 px-6 font-medium text-white hover:bg-orange-600"
           >
             {isPending ? (
               <span className="flex items-center gap-2">

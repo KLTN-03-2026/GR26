@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import ForgotPasswordPage from '@pages/auth/ForgotPasswordPage';
 import LoginPage from '@pages/auth/LoginPage';
 import RegisterPage from '@pages/auth/RegisterPage';
@@ -20,11 +21,14 @@ import OrderManagementPage from '@pages/pos/OrderManagementPage';
 import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
 import VouchersPage from '@pages/owner/VouchersPage';
+import SuppliersPage from '@pages/owner/SuppliersPage';
+import SupplierDetailPage from '@pages/owner/SupplierDetailPage';
+import StaffSupplierListPage from '@pages/staff/SupplierListPage';
+import ShiftRegistrationPage from '@pages/staff/ShiftRegistrationPage';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
 import type { AccessRequirement } from '@shared/utils/accessControl';
-import { Navigate } from 'react-router-dom';
 
 export interface RouteConfigItem extends AccessRequirement {
   path: string;
@@ -137,12 +141,8 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.BRANCHES_NEW, 'Tạo chi nhánh mới', <CreateBranchPage />),
   createRoute(ROUTES.OWNER.BRANCHES_DETAIL, 'Chi tiết chi nhánh', <BranchDetailPage />),
   createRoute(ROUTES.OWNER.PROMOTIONS, 'Quản lý voucher', <VouchersPage />),
-  createPlaceholderRoute(
-    ROUTES.OWNER.SUPPLIERS,
-    'Nhà cung cấp',
-    'Nhà cung cấp',
-    'Page nhà cung cấp sẽ được thêm riêng ở bước triển khai module supplier.'
-  ),
+  createRoute(ROUTES.OWNER.SUPPLIERS, 'Quản lý nhà cung cấp', <SuppliersPage />),
+  createRoute(`${ROUTES.OWNER.SUPPLIERS}/:id`, 'Chi tiết nhà cung cấp', <SupplierDetailPage />),
   createPlaceholderRoute(
     ROUTES.OWNER.REPORTS,
     'Báo cáo',
@@ -205,6 +205,12 @@ export const staffRoutes: RouteConfigItem[] = [
     'Trang ca làm của nhân viên sẽ được thêm riêng ở bước triển khai module schedule.',
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS }
   ),
+  createRoute(ROUTES.STAFF.SHIFT_REGISTRATION, 'Đăng ký ca làm', <ShiftRegistrationPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.MY_SHIFTS // Assuming same permission for now
+  }),
+  createRoute(ROUTES.STAFF.SUPPLIERS, 'Tra cứu nhà cung cấp', <StaffSupplierListPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY // Shared with inventory role
+  }),
 ];
 
 export const posRoutes: RouteConfigItem[] = [

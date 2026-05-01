@@ -1,64 +1,55 @@
-import { type ReactNode, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Building2, CircleCheckBig, CircleOff } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { Building2, CircleCheckBig, CircleDollarSign } from "lucide-react";
+import { useBranches } from "@modules/branch/hooks/useBranches";
+import { useBranchFilters } from "@modules/branch/hooks/useBranchFilters";
 import { BranchFilterBar } from '@modules/branch/components/BranchFilterBar';
 import { BranchTable } from '@modules/branch/components/BranchTable';
-import { useBranchFilters } from '@modules/branch/hooks/useBranchFilters';
-import { useBranches } from '@modules/branch/hooks/useBranches';
-import type { BranchListItem } from '@modules/branch/types/branch.types';
+import { ROUTES } from "@shared/constants/routes";
 import { Button } from '@shared/components/ui/button';
-import { ROUTES } from '@shared/constants/routes';
 
 interface StatCardProps {
-  icon: ReactNode;
+  icon: React.ReactNode;
   iconBg: string;
   label: string;
   value: string;
   valueColor?: string;
 }
 
-const StatCard = ({ icon, iconBg, label, value, valueColor = 'text-text-primary' }: StatCardProps) => (
+const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: StatCardProps) => (
   <div className="card">
-    <div className="mb-1 flex items-center gap-2 text-sm text-text-secondary">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-card ${iconBg}`}>
+    <div className="text-sm text-gray-500 mb-1 flex items-center gap-2">
+      <div className={`w-10 h-10 flex justify-center items-center rounded-2xl ${iconBg}`}>
         {icon}
       </div>
-      <span className="font-medium text-text-primary">{label}</span>
+      <span className="text-amber-950 font-medium">{label}</span>
     </div>
     <div className={`text-3xl font-bold ${valueColor}`}>{value}</div>
   </div>
 );
 
-const resolveBranchLocation = (address: string | null) => {
-  if (!address) {
-    return 'Chưa phân loại';
-  }
-
-  const chunks = address
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-
-  return chunks.at(-1) ?? 'Chưa phân loại';
-};
-
 /**
- * Page quản lý chi nhánh.
- * Dữ liệu hiển thị bám theo response thực tế của `GET /api/v1/branches`.
+ * Page quản lý chi nhánh
  */
 export default function BranchesPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useBranches();
 
-  // Suy ra `location` từ địa chỉ để dùng cho filter khu vực ở FE.
-  const branchesData = useMemo<BranchListItem[]>(
-    () =>
-      (data ?? []).map(branch => ({
-        ...branch,
-        location: resolveBranchLocation(branch.address),
-      })),
-    [data],
-  );
+  // Convert từ Branch API response sang dữ liệu bảng hiện tại của UI.
+  // Một số field như `staff` hoặc giờ mở/đóng chưa có từ backend nên dùng giá trị mặc định tạm thời.
+  const branchesData = data?.map(branch => ({
+    id: branch.id,
+    name: branch.name,
+    code: branch.code,
+    address: branch.address,
+    phone: branch.phone,
+    status: branch.status === 'ACTIVE' ? 'active' : 'inactive' as 'active' | 'inactive',
+    location: branch.address?.split(',').pop()?.trim() || '',
+    revenue: 0, // TODO: Lấy từ API report
+    staff: 0, // TODO(@hoang): Đồng bộ số lượng nhân sự khi backend trả field tương ứng - #issue-branch-staff-count
+    openTime: '--:--',
+    closeTime: '--:--',
+    createdAt: branch.createdAt,
+  })) ?? [];
 
   const {
     filters,
@@ -74,12 +65,16 @@ export default function BranchesPage() {
   } = useBranchFilters(branchesData);
 
   const totalBranches = branchesData.length;
-  const activeBranches = branchesData.filter(branch => branch.status === 'ACTIVE').length;
-  const inactiveBranches = branchesData.filter(branch => branch.status === 'INACTIVE').length;
+  const activeBranches = branchesData.filter((b) => b.status === "active").length;
+  const todayRevenue = 25500000; // TODO: Lấy từ API report
+
+  const handleAddBranch = () => {
+    navigate(ROUTES.OWNER.BRANCHES_NEW);
+  };
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex justify-center items-center h-64">
         <div className="spinner spinner-md" />
       </div>
     );
@@ -87,8 +82,8 @@ export default function BranchesPage() {
 
   if (isError) {
     return (
-      <div className="py-12 text-center">
-        <p className="mb-4 font-medium text-red-600">Không thể tải danh sách chi nhánh</p>
+      <div className="text-center py-12">
+        <p className="text-red-600 font-medium mb-4">Không thể tải danh sách chi nhánh</p>
         <Button onClick={() => window.location.reload()}>Thử lại</Button>
       </div>
     );
@@ -96,41 +91,43 @@ export default function BranchesPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {/* Header Stats */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard
-          icon={<Building2 className="h-5 w-5 text-primary" />}
-          iconBg="bg-primary-light"
+          icon={<Building2 className="h-5 w-5" style={{ color: "#2563EB" }} />}
+          iconBg="bg-blue-100"
           label="Tổng chi nhánh"
-          value={String(totalBranches).padStart(2, '0')}
+          value={String(totalBranches).padStart(2, "0")}
         />
         <StatCard
-          icon={<CircleCheckBig className="h-5 w-5 text-success-text" />}
-          iconBg="bg-success-light"
+          icon={<CircleCheckBig className="h-5 w-5" style={{ color: "#16A34A" }} />}
+          iconBg="bg-green-100"
           label="Đang hoạt động"
-          value={String(activeBranches).padStart(2, '0')}
-          valueColor="text-success-text"
+          value={String(activeBranches).padStart(2, "0")}
+          valueColor="text-green-600"
         />
         <StatCard
-          icon={<CircleOff className="h-5 w-5 text-warning-text" />}
-          iconBg="bg-warning-light"
-          label="Ngừng hoạt động"
-          value={String(inactiveBranches).padStart(2, '0')}
-          valueColor="text-warning-text"
+          icon={<CircleDollarSign className="h-5 w-5" style={{ color: "#E86A2C" }} />}
+          iconBg="bg-orange-100"
+          label="Doanh thu hôm nay"
+          value={`${todayRevenue.toLocaleString('vi-VN')}đ`}
         />
       </div>
 
-      <div className="space-y-4 rounded-card border border-border bg-card p-4 shadow-card">
+      <div className="bg-white p-4 space-y-4 rounded-2xl">
+        {/* Filter Bar */}
         <BranchFilterBar
           filters={filters}
           locations={locations}
-          onSearchChange={(value) => updateFilter('search', value)}
-          onStatusChange={(value) => updateFilter('status', value)}
-          onLocationChange={(value) => updateFilter('location', value)}
+          onSearchChange={(value) => updateFilter("search", value)}
+          onStatusChange={(value) => updateFilter("status", value)}
+          onLocationChange={(value) => updateFilter("location", value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          onAddBranch={() => navigate(ROUTES.OWNER.BRANCHES_NEW)}
+          onAddBranch={handleAddBranch}
         />
 
+        {/* Table */}
         <BranchTable
           branches={branches}
           currentPage={pagination.page}

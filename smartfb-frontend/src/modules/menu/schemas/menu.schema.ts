@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { menuImageUploadConstraints } from '@modules/menu/utils/menuImageUpload';
+import { MENU_CATEGORIES } from '@modules/menu/constants/menu.constants';
 
 /**
  * Schema cho việc tạo mới món ăn
@@ -8,45 +8,50 @@ export const createMenuSchema = z.object({
   name: z
     .string()
     .min(1, 'Tên món ăn không được để trống')
-    .max(255, 'Tên món ăn không được vượt quá 255 ký tự'),
+    .max(100, 'Tên món ăn không được vượt quá 100 ký tự'),
 
-  category: z.string().min(1, 'Vui lòng chọn danh mục'),
+  category: z.enum(
+    ['ca-phe', 'tra-trai-cay', 'banh-ngot', 'da-ep', 'sua-hat', 'khac'] as const,
+    { required_error: 'Vui lòng chọn danh mục' }
+  ),
 
   price: z
     .number()
-    .min(0, 'Giá bán không được âm')
-    .max(100000000, 'Giá bán không được vượt quá 100.000.000đ'),
+    .min(1000, 'Giá bán tối thiểu là 1.000đ')
+    .max(10000000, 'Giá bán tối đa là 10.000.000đ'),
 
-  unit: z
+  cost: z
+    .number()
+    .min(0, 'Giá vốn không được âm')
+    .optional()
+    .or(z.literal(0).optional()),
+
+  description: z
     .string()
-    .max(30, 'Đơn vị tính không được vượt quá 30 ký tự')
+    .max(500, 'Mô tả không được vượt quá 500 ký tự')
+    .optional(),
+
+  ingredients: z
+    .array(z.string())
+    .optional(),
+
+  image: z
+    .string()
+    .url('URL ảnh không hợp lệ')
     .optional()
     .or(z.literal('').optional()),
 
-  imageFile: z
-    .custom<File | null | undefined>((value) => value == null || value instanceof File, {
-      message: 'File ảnh không hợp lệ',
-    })
-    .refine(
-      (value) => !value || value.size <= menuImageUploadConstraints.maxRawSizeBytes,
-      'Ảnh gốc không được vượt quá 15MB'
-    )
-    .refine(
-      (value) => !value || menuImageUploadConstraints.accept.split(',').includes(value.type),
-      'Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP'
-    )
+  tags: z
+    .array(z.enum(['moi', 'hot', 'bestseller', 'recommend'] as const))
     .optional(),
-
-  isSyncDelivery: z.boolean().optional(),
 });
 
 /**
  * Schema cho việc cập nhật món ăn
  */
 export const updateMenuSchema = createMenuSchema.partial().extend({
-  status: z.enum(['selling', 'hidden'] as const).optional(),
+  status: z.enum(['selling', 'hidden', 'pending'] as const).optional(),
   isAvailable: z.boolean().optional(),
-  isActive: z.boolean().optional(),
 });
 
 /**

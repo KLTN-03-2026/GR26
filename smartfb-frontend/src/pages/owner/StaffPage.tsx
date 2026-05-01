@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Users, CircleCheckBig, SlidersHorizontal } from 'lucide-react';
 import { ROUTES } from '@shared/constants/routes';
-import { usePositions } from '@modules/staff/hooks/usePositions';
+import { queryKeys } from '@shared/constants/queryKeys';
+import { staffService } from '@modules/staff/services/staffService';
+import { mockBranchDetails } from '@modules/branch/data/branchDetails';
 import { useStaffFilters } from '@modules/staff/hooks/useStaffFilters';
-import { useStaffList } from '@modules/staff/hooks/useStaffList';
-import { useVisibleStaff } from '@modules/staff/hooks/useVisibleStaff';
 import { StaffFilterBar } from '@modules/staff/components/StaffFilterBar';
 import { StaffTable } from '@modules/staff/components/StaffTable';
-import type { StaffStatus, StaffSummary } from '@modules/staff/types/staff.types';
 
 const StatCard = ({ icon, iconBg, label, value }: { icon: React.ReactNode; iconBg: string; label: string; value: string }) => (
   <div className="rounded-2xl border border-gray-200 p-4 bg-white shadow-sm">
@@ -22,25 +22,19 @@ const StatCard = ({ icon, iconBg, label, value }: { icon: React.ReactNode; iconB
 
 export default function StaffPage() {
   const navigate = useNavigate();
-  const { data: positionsData = [] } = usePositions();
-  const { data: staffData, isLoading, refetch } = useStaffList({ page: 0, size: 100 });
-  
-  const staffList = useMemo(() => staffData?.content ?? [], [staffData]);
-  const visibleStaffList = useVisibleStaff(staffList);
 
-  // Lấy danh sách unique position names từ staff list
-  const positions = useMemo(
-    () =>
-      positionsData.map((position) => ({
-        id: position.id,
-        name: position.name,
-      })),
-    [positionsData]
-  );
+  // Fetch staff list from service
+  const { data: response, isLoading } = useQuery({
+    queryKey: queryKeys.staff.all,
+    queryFn: () => staffService.getList(),
+  });
+
+  const staffList = response?.data ?? [];
 
   const {
     filters,
     pagination,
+    positions,
     staff,
     totalItems,
     hasActiveFilters,
@@ -48,24 +42,22 @@ export default function StaffPage() {
     clearFilters,
     updatePage,
     totalPages,
-  } = useStaffFilters(visibleStaffList);
+  } = useStaffFilters(staffList);
 
-  const totalStaff = visibleStaffList.length;
-  const activeStaff = useMemo(
-    () => visibleStaffList.filter((s: StaffSummary) => s.status === 'ACTIVE').length,
-    [visibleStaffList]
-  );
+  const totalStaff = staffList.length;
+  const activeStaff = useMemo(() => staffList.filter((s) => s.status === 'active').length, [staffList]);
   const inactiveStaff = totalStaff - activeStaff;
+
+  const branches = useMemo(() => 
+    mockBranchDetails.map(b => ({ id: b.id, name: b.name })),
+    []
+  );
 
   const handleAddStaff = () => {
     navigate(ROUTES.OWNER.STAFF_NEW);
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
-
-  if (isLoading && visibleStaffList.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="spinner spinner-lg" />
@@ -75,8 +67,6 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      
-
       <div className="grid grid-cols-3 gap-4">
         <StatCard
           icon={<Users className="w-4 h-4 text-blue-600" />}
@@ -102,11 +92,11 @@ export default function StaffPage() {
         <StaffFilterBar
           filters={filters}
           positions={positions}
-          onSearchChange={(value) => updateFilter('keyword', value)}
-          onStatusChange={(value) =>
-            updateFilter('status', value === 'all' ? undefined : (value as StaffStatus))
-          }
-          onPositionChange={(value) => updateFilter('positionId', value === 'all' ? undefined : value)}
+          branches={branches}
+          onSearchChange={(value) => updateFilter('search', value)}
+          onStatusChange={(value) => updateFilter('status', value)}
+          onPositionChange={(value) => updateFilter('positionId', value)}
+          onBranchChange={(value) => updateFilter('branchId', value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
           onAddStaff={handleAddStaff}
@@ -118,8 +108,7 @@ export default function StaffPage() {
           totalPages={totalPages}
           totalItems={totalItems}
           onPageChange={updatePage}
-          onRefresh={handleRefresh}
-          isLoading={isLoading && visibleStaffList.length === 0}
+          isLoading={isLoading}
         />
       </div>
     </div>

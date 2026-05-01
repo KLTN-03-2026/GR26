@@ -1,102 +1,38 @@
 /**
  * Types cho module Staff Management
+ * Dựa trên đặc tả Module 4: Quản lý Nhân sự (Staff & Role)
  */
 
-export type StaffStatus = 'ACTIVE' | 'INACTIVE';
-export type StaffGender = 'MALE' | 'FEMALE' | 'OTHER';
+export type StaffStatus = 'active' | 'inactive';
+export type StaffShiftType = 'full-time' | 'part-time';
 
-// Filter cho danh sách nhân viên
+/**
+ * Filter cho danh sách nhân viên
+ */
 export type StaffFilters = {
-  keyword?: string;
-  status?: StaffStatus;
-  positionId?: string;
-  page?: number;
-  size?: number;
+  search: string;
+  status: StaffStatus | 'all';
+  positionId: string | 'all';
+  branchId: string | 'all';
 };
 
-// Response từ API - Danh sách nhân viên (theo StaffSummaryResult API)
-export interface StaffSummary {
+export type StaffListItem = {
   id: string;
   fullName: string;
-  phone: string;
   email: string;
-  employeeCode: string;
+  phone: string;
   status: StaffStatus;
   positionId: string;
   positionName: string;
+  branchId: string;
+  branchName: string;
   hireDate: string;
-  createdAt: string;
-  roles: string[];
-}
-
-// Response từ API - Chi tiết nhân viên (theo StaffDetailResult API)
-export interface StaffDetail {
-  id: string;
-  fullName: string;
-  phone: string;
-  email: string;
-  employeeCode: string;
-  status: StaffStatus;
-  gender: StaffGender;
-  address: string;
-  avatarUrl: string;
-  dateOfBirth: string;
-  hireDate: string;
-  positionId: string;
-  positionName: string;
-  createdAt: string;
-  roles: RoleInfo[];
-}
-
-export interface RoleInfo {
-  id: string;
-  name: string;
-}
-
-//CreateStaffRequest theo API spec
-export interface CreateStaffRequest {
-  fullName: string;      // required
-  phone: string;         // required (pattern: ^[0-9]{9,11}$)
-  email?: string;
-  positionId?: string;   // UUID
-  employeeCode?: string; // max 50 chars
-  hireDate?: string;     // format: date (YYYY-MM-DD)
-  dateOfBirth?: string;  // format: date (YYYY-MM-DD)
-  gender?: StaffGender;  // MALE, FEMALE, OTHER
-  address?: string;
-  password?: string;
+  shiftType: StaffShiftType;
+  attendanceRate: number;
+  salary: number;
+  salaryDisplay: string;
   posPin?: string;
-}
-
-// UpdateStaffRequest theo API spec
-export interface UpdateStaffRequest {
-  fullName?: string;
-  phone?: string;
-  email?: string;
-  positionId?: string;
-  employeeCode?: string;
-  hireDate?: string;
-  dateOfBirth?: string;
-  gender?: StaffGender;
-  address?: string;
-}
-
-//DeactivateStaffRequest theo API spec
-export interface DeactivateStaffRequest {
-  reason: string;  // max 500 chars
-}
-
-// UI Types
-export interface StaffListItem {
-  id: string;
-  fullName: string;
-  phone: string;
-  email: string;
-  status: StaffStatus;
-  positionName: string;
-  employeeCode: string;
-  hireDate: string;
-}
+};
 
 export type PaginationState = {
   page: number;
@@ -104,26 +40,34 @@ export type PaginationState = {
   total: number;
 };
 
+// Form data types
 export type CreateStaffFormData = {
   fullName: string;
-  phone: string;
   email: string;
-  employeeCode: string;
+  phone: string;
+  identityId: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  branchId: string;
+  positionId: string;
+  shiftType: StaffShiftType;
+  salary: number;
   hireDate: string;
-  positionId?: string;
-  dateOfBirth?: string;
-  gender?: StaffGender;
-  address?: string;
+  posPin: string;
+  status: StaffStatus;
 };
 
 export type EditStaffFormData = {
   fullName: string;
-  phone: string;
   email: string;
-  employeeCode: string;
-  hireDate: string;
-  positionId?: string;
-  dateOfBirth?: string;
-  gender?: StaffGender;
-  address?: string;
+  phone: string;
+  identityId: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  positionId: string;
+  salary: number;
+  shiftType: StaffShiftType;
+  status: StaffStatus;
 };

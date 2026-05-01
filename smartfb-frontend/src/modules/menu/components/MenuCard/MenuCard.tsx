@@ -1,164 +1,103 @@
-import { type FC, useState } from "react";
-import { ImageOff, MoreHorizontal } from "lucide-react";
-import { formatVND } from "@shared/utils/formatCurrency";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@shared/components/ui/dropdown-menu";
-import { Button } from "@shared/components/ui/button";
-import { ProductStatusBadge } from "./ProductStatusBadge";
-import { GpToggle } from "./GpToggle";
-import type { MenuItem } from "@modules/menu/types/menu.types";
+import { type FC } from 'react';
+import { MoreHorizontal } from 'lucide-react';
+import { cn } from '@shared/utils/cn';
+import { formatVND } from '@shared/utils/formatCurrency';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/components/ui/dropdown-menu';
+import { Button } from '@shared/components/ui/button';
+import { ProductStatusBadge } from './ProductStatusBadge';
+import { GpToggle } from './GpToggle';
+import type { MenuItem, MenuTag } from '@modules/menu/types/menu.types';
+import { MENU_TAGS, MENU_CATEGORIES } from '@modules/menu/constants/menu.constants';
 
 interface MenuCardProps {
-  canManageMenu?: boolean;
   menu: MenuItem;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onToggle: (menu: MenuItem, isAvailable: boolean) => void;
-  onConfigureBranch?: (menu: MenuItem) => void;
-  isBranchMode?: boolean;
-  isBranchLoading?: boolean;
+  onToggle: (id: string, isAvailable: boolean) => void;
 }
 
-export const MenuCard: FC<MenuCardProps> = ({
-  canManageMenu = true,
-  menu,
-  onEdit,
-  onDelete,
-  onToggle,
-  onConfigureBranch,
-  isBranchMode = false,
-  isBranchLoading = false,
-}) => {
-  const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null);
-  const hasBranchOverride = menu.usesBranchPrice === true;
-  const effectivePrice = menu.effectivePrice ?? menu.price;
-  const basePrice = menu.basePrice ?? menu.price;
-  const shouldShowImage = Boolean(menu.image) && menu.image !== failedImageSrc;
+const tagStyles: Record<string, string> = {
+  moi: 'bg-blue-100 text-blue-700',
+  hot: 'bg-red-100 text-red-700',
+  bestseller: 'bg-orange-100 text-orange-700',
+  recommend: 'bg-green-100 text-green-700',
+};
+
+export const MenuCard: FC<MenuCardProps> = ({ menu, onEdit, onDelete, onToggle }) => {
+  const category = MENU_CATEGORIES.find((c) => c.id === menu.category);
 
   return (
-    <div className="flex h-full min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-lg">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
       {/* Image Section */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-        {shouldShowImage ? (
-          <img
-            src={menu.image}
-            alt={menu.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-            onError={() => setFailedImageSrc(menu.image)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 p-4">
-            <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/80 text-amber-700 shadow-sm">
-                <ImageOff className="h-5 w-5" />
-              </div>
-              <p className="text-sm font-semibold text-amber-700">SmartF&B</p>
-              <p className="mt-1 text-xs text-amber-600">
-                {menu.image ? 'Không tải được ảnh món' : 'Chưa có ảnh món'}
-              </p>
-            </div>
-          </div>
-        )}
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
+        <img
+          src={menu.image}
+          alt={menu.name}
+          className="w-full h-full object-cover"
+        />
 
         {/* Status Badge - Top Left */}
         <div className="absolute top-2 left-2">
           <ProductStatusBadge status={menu.status} />
         </div>
 
-        {/* Trạng thái đồng bộ app giao hàng */}
-        {menu.isSyncDelivery && (
-          <div className="absolute bottom-2 left-2">
-            <span className="rounded-full bg-white/90 px-2 py-1 text-[11px] font-medium text-amber-700">
-              Đồng bộ giao hàng
-            </span>
+        {/* Tags - Top Right */}
+        {menu.tags && menu.tags.length > 0 && (
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {menu.tags.map((tag) => (
+              <span
+                key={tag}
+                className={cn(
+                  'px-2 py-0.5 rounded-full text-xs font-medium',
+                  tagStyles[tag] || 'bg-gray-100 text-gray-700'
+                )}
+              >
+                {MENU_TAGS[tag]?.label || tag}
+              </span>
+            ))}
           </div>
         )}
 
-        {/* Action Menu - Top Right */}
-        {canManageMenu ? (
-          <div className="absolute top-2 right-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isBranchMode && onConfigureBranch ? (
-                  <DropdownMenuItem
-                    onClick={() => onConfigureBranch(menu)}
-                    disabled={isBranchLoading}
-                  >
-                    Thiết lập chi nhánh
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem onClick={() => onEdit(menu.id)}>
-                  Chỉnh sửa
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDelete(menu.id)}
-                  className="text-red-600"
-                >
-                  Xóa
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ) : null}
+        {/* Action Menu - Top Right (below tags) */}
+        <div className="absolute top-2 right-2 mt-8">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(menu.id)}>
+                Chỉnh sửa
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(menu.id)} className="text-red-600">
+                Xóa
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className="p-4">
         {/* Category */}
-        <span className="text-xs text-gray-500">
-          {menu.categoryName || "Chưa phân loại"}
-        </span>
+        <span className="text-xs text-gray-500">{category?.name || menu.category}</span>
 
-        {isBranchMode && menu.branchName ? (
-          <span className="mt-2 inline-flex w-fit rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700">
-            {hasBranchOverride ? `Giá riêng tại ${menu.branchName}` : `Dùng giá gốc tại ${menu.branchName}`}
-          </span>
-        ) : null}
+        {/* Product Name */}
+        <h3 className="mt-1 text-lg font-semibold text-gray-900 line-clamp-2">
+          {menu.name}
+        </h3>
 
-        <div className="flex items-start gap-2">
-          {/* Product Name */}
-          <h3 className="mt-1 min-h-10 font-sans text-sm font-semibold text-gray-900 line-clamp-2 md:min-h-12 md:text-lg">
-            {menu.name}
-          </h3>
-
-          {/* {menu.unit ? (
-            <p className="mt-1 text-sm text-gray-500">({menu.unit})</p>
-          ) : null} */}
-        </div>
-
-        {/* Giá bán và công tắc bật/tắt bán */}
-        <div className="mt-auto flex items-end justify-between pt-3">
+        {/* Price and GP Toggle */}
+        <div className="mt-3 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-xs text-gray-500">
-              {isBranchMode ? 'GIÁ ÁP DỤNG' : 'GIÁ BÁN'}
-            </span>
-            <span className="text-lg font-bold text-amber-600">
-              {formatVND(effectivePrice)}
-            </span>
-            {isBranchMode ? (
-              <span className="mt-1 text-xs text-gray-500">
-                Giá gốc: {formatVND(basePrice)}
-              </span>
-            ) : null}
+            <span className="text-xs text-gray-500">GIÁ BÁN</span>
+            <span className="text-lg font-bold text-amber-600">{formatVND(menu.price)}</span>
           </div>
           <GpToggle
+            gpPercent={menu.gpPercent}
             isAvailable={menu.isAvailable ?? true}
-            onToggle={(isAvailable) => onToggle(menu, isAvailable)}
-            disabled={isBranchLoading || !canManageMenu}
+            onToggle={(isAvailable) => onToggle(menu.id, isAvailable)}
           />
         </div>
       </div>

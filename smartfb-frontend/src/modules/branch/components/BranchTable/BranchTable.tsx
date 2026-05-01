@@ -5,7 +5,7 @@ import {
   TableHeader,
   TableRow,
 } from '@shared/components/ui/table';
-import type { BranchListItem } from '@modules/branch/types/branch.types';
+import type { BranchListItem } from '../../types/branch.types';
 import { BranchRow } from './BranchRow';
 import { BranchTablePagination } from './BranchTablePagination';
 
@@ -52,11 +52,10 @@ export const BranchTable = ({
           <TableHeader className="border-0">
             <TableRow className="hover:bg-cream border-b-0">
               <TableHead>CHI NHÁNH</TableHead>
-              <TableHead>MÃ CHI NHÁNH</TableHead>
               <TableHead>ĐỊA CHỈ</TableHead>
-              <TableHead>ĐIỆN THOẠI</TableHead>
               <TableHead>TRẠNG THÁI</TableHead>
-              <TableHead>NGÀY TẠO</TableHead>
+              <TableHead>DOANH THU NGÀY</TableHead>
+              <TableHead>NHÂN SỰ</TableHead>
               <TableHead className="text-right">HÀNH ĐỘNG</TableHead>
             </TableRow>
           </TableHeader>

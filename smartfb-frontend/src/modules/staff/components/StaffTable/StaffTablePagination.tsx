@@ -8,6 +8,10 @@ interface StaffTablePaginationProps {
   onPageChange: (page: number) => void;
 }
 
+/**
+ * Tạo array các page numbers với ellipsis
+ * Pattern: 1 ... 4 5 [6] 7 8 ... 10
+ */
 const getPageNumbers = (currentPage: number, totalPages: number): (number | string)[] => {
   const pages: (number | string)[] = [];
   const maxVisible = 7;
@@ -40,6 +44,9 @@ const getPageNumbers = (currentPage: number, totalPages: number): (number | stri
   return pages;
 };
 
+/**
+ * Pagination component cho StaffTable với smart ellipsis
+ */
 export const StaffTablePagination: FC<StaffTablePaginationProps> = ({
   currentPage,
   totalPages,

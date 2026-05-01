@@ -1,34 +1,39 @@
 import { useState } from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { EditBranchDialog } from '@modules/branch/components/EditBranchDialog';
-import { BranchInfoCard } from '@modules/branch/components/branch-detail';
-import { useBranchDetail } from '@modules/branch/hooks/useBranchDetail';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import { ROUTES } from '@shared/constants/routes';
+import { useBranchDetail } from '@modules/branch/hooks/useBranchDetail';
+import {
+  BranchInfoCard,
+  ActivityLogSection,
+  ShiftScheduleSection,
+} from '@modules/branch/components/branch-detail';
+import { EditBranchDialog } from '@modules/branch/components/EditBranchDialog';
 
 /**
- * Page hiển thị chi tiết chi nhánh.
+ * Page hiển thị chi tiết chi nhánh
  * URL: /owner/branches/:id
  */
 export default function BranchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { data: branch, isLoading, isError } = useBranchDetail(id || '');
+
+  const { data, isLoading, isError } = useBranchDetail(id || '');
 
   if (!id) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-text-secondary">Không tìm thấy ID chi nhánh</p>
+      <div className="text-center py-12">
+        <p className="text-gray-500">Không tìm thấy ID chi nhánh</p>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="py-12 text-center">
-        <p className="mb-4 font-medium text-red-600">Không tìm thấy chi nhánh</p>
+      <div className="text-center py-12">
+        <p className="text-red-600 font-medium mb-4">Không tìm thấy chi nhánh</p>
         <Button onClick={() => navigate(ROUTES.OWNER.BRANCHES)}>
           Quay lại danh sách
         </Button>
@@ -36,37 +41,63 @@ export default function BranchDetailPage() {
     );
   }
 
-  if (isLoading || !branch) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="spinner spinner-md" />
-      </div>
-    );
-  }
+  const handleEdit = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleViewAllActivity = () => {
+    // TODO: Mở page/modal xem tất cả hoạt động
+    console.log('View all activity for:', id);
+  };
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="flex items-center gap-2 text-sm text-text-secondary">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-gray-500">
         <button
           onClick={() => navigate(ROUTES.OWNER.BRANCHES)}
-          className="flex items-center gap-1 hover:text-text-primary"
+          className="hover:text-gray-700 flex items-center gap-1"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="w-4 h-4" />
           Quay lại
         </button>
-        <ChevronRight className="h-4 w-4" />
-        <span className="font-medium text-text-primary">{branch.name}</span>
+        <ChevronRight className="w-4 h-4" />
+        <span className="text-gray-900 font-medium">
+          {data?.branch.name || 'Chi tiết chi nhánh'}
+        </span>
       </div>
 
-      <BranchInfoCard branch={branch} onEdit={() => setIsEditDialogOpen(true)} />
-
-      {isEditDialogOpen && (
-        <EditBranchDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          branch={branch}
-        />
+      {/* Branch Info Card */}
+      {data?.branch && (
+        <>
+          <BranchInfoCard branch={data.branch} onEdit={handleEdit} />
+          <EditBranchDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            branch={data.branch}
+          />
+        </>
       )}
+
+      {/* Activity Log & Shift Schedule */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Activity Log - 2/3 width */}
+        <div className="col-span-2">
+          <ActivityLogSection
+            logs={data?.activityLogs || []}
+            isLoading={isLoading}
+            onViewAll={handleViewAllActivity}
+          />
+        </div>
+
+        {/* Shift Schedule - 1/3 width */}
+        <div className="col-span-1">
+          <ShiftScheduleSection
+            shifts={data?.shifts || []}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
     </div>
   );
 }

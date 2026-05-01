@@ -11,8 +11,8 @@ import { branchService } from '../services/branchService';
  */
 export const useBranches = () => {
   return useQuery({
-    queryKey: queryKeys.branches.list(),
-    queryFn: async () => branchService.getList().then(r => r.data ?? []),
+    queryKey: queryKeys.branches.all,
+    queryFn: () => branchService.getList().then(r => r.data),
     staleTime: 5 * 60 * 1000, // 5 phút
     retry: 1,
   });

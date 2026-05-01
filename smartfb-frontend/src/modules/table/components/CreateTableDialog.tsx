@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -12,7 +12,6 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
-import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import {
   Select,
@@ -21,12 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@shared/components/ui/select';
-import { useCreateTable } from '@modules/table/hooks/useCreateTable';
-import type { TableArea } from '@modules/table/types/table.types';
+import { useCreateTable } from '../hooks/useCreateTable';
+import { mockTableDetails, mockTableAreas } from '../data/tableDetails';
+import type { TableDetail } from '../types/table.types';
 
 const createTableSchema = z.object({
   name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
-  zoneId: z.string().min(1, 'Vui lòng chọn khu vực'),
+  areaId: z.string().min(1, 'Vui lòng chọn khu vực'),
+  branchId: z.string().min(1, 'Vui lòng chọn chi nhánh'),
   capacity: z.number().int('Sức chứa phải là số nguyên').min(1, 'Sức chứa tối thiểu 1').max(20, 'Sức chứa tối đa 20'),
 });
 
@@ -36,25 +37,26 @@ interface CreateTableDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  zones?: TableArea[];
 }
 
-export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }: CreateTableDialogProps) => {
+export const CreateTableDialog = ({ open, onOpenChange, onSuccess }: CreateTableDialogProps) => {
   const { mutate: createTable, isPending } = useCreateTable();
 
   const {
     register,
     handleSubmit,
+    setError,
     clearErrors,
-    control,
     setValue,
+    watch,
     reset,
     formState: { errors, isDirty },
   } = useForm<CreateTableFormData>({
     resolver: zodResolver(createTableSchema),
     defaultValues: {
       name: '',
-      zoneId: '',
+      areaId: '',
+      branchId: '',
       capacity: 4,
     },
   });
@@ -65,18 +67,46 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
     }
   }, [open, reset]);
 
-  const selectedZoneId = useWatch({ control, name: 'zoneId' });
-  const selectedCapacity = useWatch({ control, name: 'capacity' });
+  const branches = useMemo(() => {
+    const branchMap = new Map<string, string>();
+    mockTableDetails.forEach((table) => {
+      if (!branchMap.has(table.branchId)) {
+        branchMap.set(table.branchId, table.branchName);
+      }
+    });
+    return Array.from(branchMap.entries()).map(([id, name]) => ({ id, name }));
+  }, []);
+
+  const areas = mockTableAreas;
+  const selectedAreaId = watch('areaId');
+  const selectedBranchId = watch('branchId');
 
   const onSubmit = (data: CreateTableFormData) => {
+    const duplicate = mockTableDetails.find(
+      (table) =>
+        table.name.toLowerCase() === data.name.toLowerCase() &&
+        table.areaId === data.areaId &&
+        table.branchId === data.branchId
+    );
+
+    if (duplicate) {
+      setError('name', { type: 'manual', message: 'Tên bàn đã tồn tại trong khu vực này' });
+      return;
+    }
+
+    // const area = mockTableAreas.find(a => a.id === data.areaId);
+    // const branch = branches.find(b => b.id === data.branchId);
+
     createTable(
       {
         name: data.name,
-        zoneId: data.zoneId,
+        areaId: data.areaId,
         capacity: data.capacity,
+        branchId: data.branchId,
+        description: '',
       },
       {
-        onSuccess: () => {
+        onSuccess: (_newTable: TableDetail) => {
           onSuccess?.();
           onOpenChange(false);
           reset();
@@ -104,44 +134,57 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
             </div>
 
             <div className="space-y-1">
-                <Label htmlFor="zoneId">Khu vực</Label>
+              <Label htmlFor="areaId">Khu vực</Label>
               <Select
-                value={selectedZoneId}
+                value={selectedAreaId}
                 onValueChange={(value) => {
-                  setValue('zoneId', value, { shouldDirty: true, shouldValidate: true });
-                  clearErrors('zoneId');
+                  setValue('areaId', value);
+                  clearErrors('areaId');
                 }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn khu vực" />
                 </SelectTrigger>
                 <SelectContent>
-                  {zones.map((zone) => (
-                    <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name} {zone.floorNumber ? `(Tầng ${zone.floorNumber})` : ''}
+                  {areas.map((area) => (
+                    <SelectItem key={area.id} value={area.id}>
+                      {area.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}
-              {zones.length === 0 && (
-                <p className="text-xs text-amber-600">
-                  Chưa có khu vực nào. Hãy tạo khu vực trước khi thêm bàn.
-                </p>
-              )}
+              {errors.areaId && <p className="text-xs text-red-500">{errors.areaId.message}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="branchId">Chi nhánh</Label>
+              <Select
+                value={selectedBranchId}
+                onValueChange={(value) => {
+                  setValue('branchId', value);
+                  clearErrors('branchId');
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn chi nhánh" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.branchId && <p className="text-xs text-red-500">{errors.branchId.message}</p>}
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="capacity">Sức chứa</Label>
-              <NumericInput
+              <Input
                 id="capacity"
-                min={1}
-                max={20}
-                value={selectedCapacity}
-                onValueChange={(value) => {
-                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true });
-                  clearErrors('capacity');
-                }}
+                type="number"
+                {...register('capacity', { valueAsNumber: true })}
               />
               {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>
@@ -151,7 +194,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={!isDirty || isPending || zones.length === 0}>
+            <Button type="submit" disabled={!isDirty || isPending}>
               {isPending ? 'Đang tạo...' : 'Thêm bàn'}
             </Button>
           </DialogFooter>

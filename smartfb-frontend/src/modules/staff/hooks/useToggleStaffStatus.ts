@@ -1,34 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutationErrorMessage';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
 
 /**
- * Hook đổi trạng thái nhân viên.
- * Hiện backend mới hỗ trợ vô hiệu hóa, nên thao tác kích hoạt lại sẽ trả lỗi có chủ đích.
+ * Hook xử lý khóa/mở khóa nhân viên
+ * Đáp ứng PB08 AC5: Khóa/mở khóa nhân viên
  */
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'ACTIVE' | 'INACTIVE' }) => {
-      if (status === 'INACTIVE') {
-        await staffService.deactivate(id, 'Vô hiệu hoá nhân viên từ giao diện quản lý');
-      } else {
-        throw new Error('Tính năng kích hoạt lại nhân viên hiện chưa được hỗ trợ');
-      }
-      return { id, status };
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'inactive' }) => {
+      return staffService.updateStatus(id, status);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(variables.id) });
-      success('Vô hiệu hoá nhân viên thành công', 'Nhân viên đã bị vô hiệu hoá');
+      queryClient.invalidateQueries({ queryKey: ['staff', 'detail', variables.id] });
+      
+      const statusText = variables.status === 'active' ? 'mở khóa' : 'khóa';
+      success('Cập nhật trạng thái thành công', `Đã ${statusText} nhân viên`);
     },
-    onError: (err: unknown) => {
-      error('Không thể cập nhật trạng thái', getStaffMutationErrorMessage(err));
+    onError: (err) => {
+      console.error('Failed to toggle staff status:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Vui lòng thử lại sau';
+      error('Không thể cập nhật trạng thái', errorMessage);
     },
   });
 };

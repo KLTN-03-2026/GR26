@@ -32,6 +32,9 @@ const ORDER_SOURCE_LABEL: Record<OrderSource, string> = {
   IN_STORE: 'Tại chỗ',
   TAKEAWAY: 'Mang đi',
   DELIVERY: 'Giao hàng',
+  POS: 'Tại quầy (POS)',
+  WEB: 'Đặt qua Web',
+  MOBILE: 'Đặt qua App',
 };
 
 /**

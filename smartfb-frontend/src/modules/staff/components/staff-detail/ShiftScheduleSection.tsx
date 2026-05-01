@@ -1,22 +1,5 @@
 import { Clock, User, Crown } from 'lucide-react';
-
-// Định nghĩa type tạm thời (sau sẽ thay bằng API thật)
-export interface ShiftStaff {
-  id: string;
-  name: string;
-  avatar?: string;
-  role?: string;
-}
-
-export interface Shift {
-  id: string;
-  name: string;
-  startTime: string;
-  endTime: string;
-  status: 'ongoing' | 'upcoming' | 'ended';
-  staff: ShiftStaff[];
-  leader: ShiftStaff;
-}
+import type { Shift } from '../../data/shiftScheduleMock';
 
 interface ShiftScheduleSectionProps {
   shifts: Shift[];

@@ -1,155 +1,115 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@shared/components/ui/dialog';
-import { Button } from '@shared/components/ui/button';
-import { Input } from '@shared/components/ui/input';
-import { Label } from '@shared/components/ui/label';
-import { useAssignUserToBranch } from '@modules/branch/hooks/useAssignUserToBranch';
-import { useBranches } from '@modules/branch/hooks/useBranches';
+} from "@shared/components/ui/dialog";
+import { Button } from "@shared/components/ui/button";
+import { Input } from "@shared/components/ui/input";
+import { Label } from "@shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@shared/components/ui/select';
-import { usePositions } from '@modules/staff/hooks/usePositions';
-import { useAssignStaffRoles } from '@modules/staff/hooks/useAssignStaffRoles';
-import { useRolesMatrix } from '@modules/staff/hooks/useRolesMatrix';
-import { StaffDatePickerField } from '@modules/staff/components/StaffDatePickerField';
-import {
-  buildStaffAddress,
-  parseStaffAddress,
-} from '@modules/staff/utils/staffAddressFormatter';
-import { filterAssignableStaffRoles } from '@modules/staff/utils/filterAssignableStaffRoles';
-import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutationErrorMessage';
-import { useToast } from '@shared/hooks/useToast';
-import { useEditStaff } from '../hooks/useEditStaff';
-import type { StaffDetail, UpdateStaffRequest, StaffGender } from '../types/staff.types';
+} from "@shared/components/ui/select";
+import { useEditStaff } from "../hooks/useEditStaff";
+import type { StaffDetailFull } from "../data/staffDetailMock";
+import type { EditStaffFormData, StaffStatus, StaffShiftType } from "../types/staff.types";
+import { positionService } from "../services/positionService";
+import { useQuery } from "@tanstack/react-query";
 
 interface EditStaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  staff: StaffDetail;
+  staff: StaffDetailFull;
   onSuccess?: () => void;
 }
 
+const SHIFT_TYPES: { value: StaffShiftType; label: string }[] = [
+  { value: 'full-time', label: 'Toàn thời gian' },
+  { value: 'part-time', label: 'Bán thời gian' },
+];
+
+const STATUSES: { value: StaffStatus; label: string }[] = [
+  { value: 'active', label: 'Đang làm' },
+  { value: 'inactive', label: 'Đã nghỉ' },
+];
+
+/**
+ * Dialog chỉnh sửa thông tin nhân viên
+ * Đã cập nhật theo Module 4 Spec (fullName, positionId, status)
+ */
 export const EditStaffDialog = ({
   open,
   onOpenChange,
   staff,
   onSuccess,
 }: EditStaffDialogProps) => {
-  const initialAddress = parseStaffAddress(staff.address);
-  const { data: positions = [] } = usePositions();
-  const { data: branches = [] } = useBranches();
-  const { data: roleMatrixData, isLoading: isRolesLoading } = useRolesMatrix();
-  const assignableRoles = filterAssignableStaffRoles(roleMatrixData?.roles ?? []);
-  const { mutateAsync: updateStaff, isPending: isUpdatingStaff } = useEditStaff();
-  const { mutateAsync: assignStaffRoles, isPending: isAssigningRoles } = useAssignStaffRoles();
-  const { mutateAsync: assignUserToBranch, isPending: isAssigningBranch } = useAssignUserToBranch();
-  const { success, error } = useToast();
-  const NO_POSITION_VALUE = '__no_position__';
-  const NO_BRANCH_VALUE = '__no_branch__';
-
-  const [formData, setFormData] = useState<UpdateStaffRequest>({
+  const { mutate: updateStaff, isPending } = useEditStaff();
+  
+  // Lấy danh sách chức vụ từ service
+  const { data: posResponse } = useQuery({
+    queryKey: ['staff', 'positions'],
+    queryFn: () => positionService.getList(),
+  });
+  const positions = posResponse?.data || [];
+  
+  const [formData, setFormData] = useState<EditStaffFormData>({
     fullName: staff.fullName,
-    phone: staff.phone,
     email: staff.email,
-    employeeCode: staff.employeeCode,
-    hireDate: staff.hireDate,
+    phone: staff.phone,
+    identityId: staff.identityId,
     dateOfBirth: staff.dateOfBirth,
-    gender: staff.gender,
-    address: '',
+    address: staff.address,
+    city: staff.city,
     positionId: staff.positionId,
+    salary: staff.salary,
+    shiftType: staff.shiftType,
+    status: staff.status,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [streetAddress, setStreetAddress] = useState(initialAddress.streetAddress);
-  const [wardDistrict, setWardDistrict] = useState(initialAddress.wardDistrict);
-  const [city, setCity] = useState(initialAddress.city);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(staff.roles[0]?.id ?? '');
-  const [selectedBranchId, setSelectedBranchId] = useState('');
-  const isPending = isUpdatingStaff || isAssigningRoles || isAssigningBranch;
-
-  const handleDialogOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      setSelectedBranchId('');
-    }
-
-    onOpenChange(nextOpen);
-  };
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.fullName?.trim()) newErrors.fullName = 'Họ tên là bắt buộc';
-    if (!formData.phone?.trim()) newErrors.phone = 'Số điện thoại là bắt buộc';
-    else if (!/^(0[1-9][0-9]{8,9})$/.test(formData.phone)) {
-      newErrors.phone = 'Số điện thoại phải có 9-11 số';
+    if (!formData.fullName.trim()) newErrors.fullName = 'Họ tên là bắt buộc';
+    if (!formData.phone.trim()) newErrors.phone = 'Số điện thoại là bắt buộc';
+    else if (!/^(0[1-9][0-9]{8})$/.test(formData.phone)) {
+      newErrors.phone = 'Số điện thoại phải có 10 số';
     }
-    if (!formData.employeeCode?.trim()) newErrors.employeeCode = 'Mã nhân viên là bắt buộc';
-    if (!formData.hireDate) newErrors.hireDate = 'Ngày vào làm là bắt buộc';
+    if (!formData.identityId.trim()) newErrors.identityId = 'CMND/CCCD là bắt buộc';
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Ngày sinh là bắt buộc';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = <TField extends keyof UpdateStaffRequest>(
-    field: TField,
-    value: UpdateStaffRequest[TField]
-  ) => {
+  const handleChange = (field: keyof EditStaffFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!validate()) return;
-
-    try {
-      const payload: UpdateStaffRequest = {
-        ...formData,
-        address: buildStaffAddress({
-          streetAddress,
-          wardDistrict,
-          city,
-        }),
-      };
-
-      await updateStaff({ id: staff.id, data: payload });
-      await assignStaffRoles({ staffId: staff.id, roleIds: selectedRoleId ? [selectedRoleId] : [] });
-
-      if (selectedBranchId) {
-        await assignUserToBranch({
-          branchId: selectedBranchId,
-          userId: staff.id,
-        });
+    
+    updateStaff(
+      { id: staff.id, data: formData },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+          onSuccess?.();
+        },
       }
-
-      const selectedBranchName =
-        branches.find((branch) => branch.id === selectedBranchId)?.name ?? '';
-
-      success(
-        'Cập nhật thành công',
-        selectedBranchId && selectedBranchName
-          ? `Thông tin nhân viên đã được cập nhật và gán thêm vào chi nhánh ${selectedBranchName}`
-          : 'Thông tin nhân viên và vai trò đã được cập nhật'
-      );
-      setSelectedBranchId('');
-      handleDialogOpenChange(false);
-      onSuccess?.();
-    } catch (err: unknown) {
-      error('Không thể cập nhật', getStaffMutationErrorMessage(err));
-    }
+    );
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
@@ -158,190 +118,199 @@ export const EditStaffDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Họ Tên */}
           <div>
-            <Label htmlFor="fullName">Họ tên <span className="text-red-500">*</span></Label>
+            <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+              Họ và tên <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="fullName"
-              value={formData.fullName || ''}
+              value={formData.fullName}
               onChange={(e) => handleChange('fullName', e.target.value)}
+              className="mt-1"
+              placeholder="VD: Nguyễn Văn A"
             />
             {errors.fullName && <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>}
           </div>
 
-          <div>
-            <Label htmlFor="phone">Số điện thoại <span className="text-red-500">*</span></Label>
-            <Input
-              id="phone"
-              value={formData.phone || ''}
-              onChange={(e) => handleChange('phone', e.target.value)}
-            />
-            {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone}</p>}
+          {/* Email & Phone */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Số điện thoại <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                className="mt-1"
+              />
+              {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone}</p>}
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email || ''}
-              onChange={(e) => handleChange('email', e.target.value)}
-            />
+          {/* Identity & DOB */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="identityId" className="text-sm font-medium text-gray-700">
+                CMND/CCCD <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="identityId"
+                value={formData.identityId}
+                onChange={(e) => handleChange('identityId', e.target.value)}
+                className="mt-1"
+              />
+              {errors.identityId && <p className="text-red-600 text-xs mt-1">{errors.identityId}</p>}
+            </div>
+            <div>
+              <Label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">
+                Ngày sinh <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                className="mt-1"
+              />
+              {errors.dateOfBirth && <p className="text-red-600 text-xs mt-1">{errors.dateOfBirth}</p>}
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="employeeCode">Mã nhân viên <span className="text-red-500">*</span></Label>
-            <Input
-              id="employeeCode"
-              value={formData.employeeCode || ''}
-              onChange={(e) => handleChange('employeeCode', e.target.value)}
-            />
-            {errors.employeeCode && <p className="text-red-600 text-xs mt-1">{errors.employeeCode}</p>}
+          {/* Address & City */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                Địa chỉ <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleChange('address', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="city" className="text-sm font-medium text-gray-700">
+                Thành phố <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleChange('city', e.target.value)}
+                className="mt-1"
+              />
+            </div>
           </div>
 
-          <StaffDatePickerField
-            id="hireDate"
-            label="Ngày vào làm"
-            required
-            value={formData.hireDate}
-            onChange={(nextValue) => handleChange('hireDate', nextValue)}
-            placeholder="dd/mm/yyyy"
-            errorMessage={errors.hireDate}
-          />
-
-          <StaffDatePickerField
-            id="dateOfBirth"
-            label="Ngày sinh"
-            value={formData.dateOfBirth}
-            onChange={(nextValue) => handleChange('dateOfBirth', nextValue)}
-            placeholder="dd/mm/yyyy"
-          />
-
-          <div>
-            <Label htmlFor="gender">Giới tính</Label>
-            <Select 
-              value={formData.gender} 
-              onValueChange={(value) => handleChange('gender', value as StaffGender)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn giới tính" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MALE">Nam</SelectItem>
-                <SelectItem value="FEMALE">Nữ</SelectItem>
-                <SelectItem value="OTHER">Khác</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Position & Status */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="position" className="text-sm font-medium text-gray-700">
+                Chức vụ <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.positionId}
+                onValueChange={(value) => handleChange('positionId', value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Chọn chức vụ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {positions.map(pos => (
+                    <SelectItem key={pos.id} value={pos.id}>
+                      {pos.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                Trạng thái <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleChange('status', value as StaffStatus)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map(s => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="streetAddress">Số nhà, đường</Label>
-            <Input
-              id="streetAddress"
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
-              placeholder="Ví dụ: 12 Nguyễn Trãi"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="wardDistrict">Phường/quận</Label>
-            <Input
-              id="wardDistrict"
-              value={wardDistrict}
-              onChange={(e) => setWardDistrict(e.target.value)}
-              placeholder="Ví dụ: Phường Bến Thành, Quận 1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="city">Thành phố</Label>
-            <Input
-              id="city"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="Ví dụ: Hồ Chí Minh"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="positionId">Chức vụ</Label>
-            <Select
-              value={formData.positionId || NO_POSITION_VALUE}
-              onValueChange={(value) =>
-                handleChange('positionId', value === NO_POSITION_VALUE ? undefined : value)
-              }
-            >
-              <SelectTrigger id="positionId">
-                <SelectValue placeholder="Chọn chức vụ" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_POSITION_VALUE}>Chưa gán chức vụ</SelectItem>
-                {positions.map((position) => (
-                  <SelectItem key={position.id} value={position.id}>
-                    {position.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-gray-500">
-              Danh sách lấy từ API chức vụ active của tenant hiện tại.
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="branchId">Gán thêm chi nhánh làm việc</Label>
-            <Select
-              value={selectedBranchId || NO_BRANCH_VALUE}
-              onValueChange={(value) => setSelectedBranchId(value === NO_BRANCH_VALUE ? '' : value)}
-              disabled={branches.length === 0}
-            >
-              <SelectTrigger id="branchId">
-                <SelectValue placeholder="Chọn chi nhánh để gán thêm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_BRANCH_VALUE}>Không thay đổi chi nhánh</SelectItem>
-                {branches.map((branch) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-gray-500">
-              Nếu chọn chi nhánh, hệ thống sẽ gán thêm nhân viên vào chi nhánh đó khi lưu.
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="roleId">Vai trò</Label>
-            <Select
-              value={selectedRoleId || NO_POSITION_VALUE}
-              onValueChange={(value) => setSelectedRoleId(value === NO_POSITION_VALUE ? '' : value)}
-              disabled={isRolesLoading}
-            >
-              <SelectTrigger id="roleId">
-                <SelectValue placeholder="Chọn vai trò" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_POSITION_VALUE}>Chưa gán vai trò</SelectItem>
-                {assignableRoles.map((role) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="mt-1 text-xs text-gray-500">
-              Vai trò quyết định quyền thực tế của nhân viên trong hệ thống.
-            </p>
+          {/* Salary & ShiftType */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="salary" className="text-sm font-medium text-gray-700">
+                Lương (VND)
+              </Label>
+              <Input
+                id="salary"
+                type="number"
+                value={formData.salary}
+                onChange={(e) => handleChange('salary', parseInt(e.target.value) || 0)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="shiftType" className="text-sm font-medium text-gray-700">
+                Loại ca làm
+              </Label>
+              <Select
+                value={formData.shiftType}
+                onValueChange={(value) => handleChange('shiftType', value as StaffShiftType)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SHIFT_TYPES.map(shift => (
+                    <SelectItem key={shift.value} value={shift.value}>
+                      {shift.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isPending}>
+        <DialogFooter className="gap-2 sm:gap-0 mt-4">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+            className="flex-1 sm:flex-none"
+          >
             Huỷ
           </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="flex-1 sm:flex-none"
+          >
             {isPending ? 'Đang cập nhật...' : 'Cập nhật'}
           </Button>
         </DialogFooter>

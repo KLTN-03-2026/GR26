@@ -1,19 +1,13 @@
-import { X, Users, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff, Circle, Square } from 'lucide-react';
-import type {
-  TableDisplayItem,
-  TableStatus,
-} from '@modules/table/types/table.types';
+import { X, Users, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
+import type { TableItem } from '../../types/table.types';
 
 interface TableDetailDrawerProps {
-  table: TableDisplayItem | null;
+  table: TableItem | null;
   isOpen: boolean;
-  isLoading?: boolean;
-  isError?: boolean;
   onClose: () => void;
-  onRetry?: () => void;
-  onEdit: (table: TableDisplayItem) => void;
-  onToggleStatus: (id: string, currentStatus: TableStatus) => void;
+  onEdit: (table: TableItem) => void;
+  onToggleStatus: (id: string, currentStatus: string) => void;
 }
 
 const getStatusBadge = (status: string, usageStatus: string) => {
@@ -32,24 +26,8 @@ const getStatusBadge = (status: string, usageStatus: string) => {
   return <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Trống</span>;
 };
 
-const ShapeIcon = ({ shape }: { shape: TableDisplayItem['shape'] }) =>
-  shape === 'square' ? (
-    <Square className="h-5 w-5 text-gray-400" />
-  ) : (
-    <Circle className="h-5 w-5 text-gray-400" />
-  );
-
-export const TableDetailDrawer = ({
-  table,
-  isOpen,
-  isLoading = false,
-  isError = false,
-  onClose,
-  onRetry,
-  onEdit,
-  onToggleStatus,
-}: TableDetailDrawerProps) => {
-  if (!isOpen && !table) return null;
+export const TableDetailDrawer = ({ table, isOpen, onClose, onEdit, onToggleStatus }: TableDetailDrawerProps) => {
+  if (!table) return null;
 
   return (
     <>
@@ -73,28 +51,6 @@ export const TableDetailDrawer = ({
         </div>
 
         <div className="p-5 space-y-5">
-          {isLoading ? (
-            <div className="flex min-h-[320px] items-center justify-center">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-                <p className="text-sm text-gray-500">Đang tải chi tiết bàn...</p>
-              </div>
-            </div>
-          ) : isError ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
-              <p className="text-sm font-medium text-red-600">Không thể tải chi tiết bàn</p>
-              {onRetry ? (
-                <Button variant="outline" className="mt-4" onClick={onRetry}>
-                  Tải lại
-                </Button>
-              ) : null}
-            </div>
-          ) : !table ? (
-            <div className="flex min-h-[320px] items-center justify-center text-center">
-              <p className="text-sm text-gray-500">Chưa có thông tin bàn để hiển thị</p>
-            </div>
-          ) : (
-            <>
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold text-gray-900">{table.name}</h3>
             {getStatusBadge(table.status, table.usageStatus)}
@@ -105,7 +61,7 @@ export const TableDetailDrawer = ({
               <MapPin className="w-5 h-5 text-gray-400" />
               <div>
                 <p className="text-xs text-gray-400">Khu vực</p>
-                <p className="font-medium">{table.zoneName || 'Chưa có khu vực'}</p>
+                <p className="font-medium">{table.areaName}</p>
               </div>
             </div>
 
@@ -118,18 +74,10 @@ export const TableDetailDrawer = ({
             </div>
 
             <div className="flex items-center gap-3 text-gray-600">
-              <ShapeIcon shape={table.shape} />
-              <div>
-                <p className="text-xs text-gray-400">Hình dạng</p>
-                <p className="font-medium">{table.shape === 'square' ? 'Bàn vuông' : 'Bàn tròn'}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 text-gray-600">
               <Building2 className="w-5 h-5 text-gray-400" />
               <div>
                 <p className="text-xs text-gray-400">Chi nhánh</p>
-                <p className="font-medium">{table.branchName || 'Đang tải...'}</p>
+                <p className="font-medium">{table.branchName}</p>
               </div>
             </div>
 
@@ -184,8 +132,6 @@ export const TableDetailDrawer = ({
               )}
             </Button>
           </div>
-            </>
-          )}
         </div>
       </div>
     </>

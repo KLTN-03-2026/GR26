@@ -32,11 +32,7 @@ export const useRegister = () => {
 
       success('Đăng ký thành công', 'Chào mừng bạn đến với SmartF&B!');
 
-      const { session } = useAuthStore.getState();
-      const homePage = getRoleHomePage(
-        session?.role ?? ROLES.OWNER,
-        session?.permissions ?? []
-      );
+      const homePage = getRoleHomePage(useAuthStore.getState().session?.role ?? ROLES.OWNER);
       navigate(homePage);
     },
     onError: (err) => {
