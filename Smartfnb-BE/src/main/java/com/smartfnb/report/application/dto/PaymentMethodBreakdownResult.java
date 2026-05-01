@@ -17,6 +17,7 @@ public record PaymentMethodBreakdownResult(
     PaymentMethodDto vietqrBreakdown,
     PaymentMethodDto bankingBreakdown,
     PaymentMethodDto otherBreakdown,
+    PaymentMethodDto payosBreakdown,
     BigDecimal totalRevenue,
     int totalOrders
 ) {

@@ -109,7 +109,10 @@ public class LoginCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 user.getId().toString(),
                 user.getTenantId().toString(),
-                primaryRole
+                primaryRole,
+                null,
+                null,
+                user.getFullName()
         );
     }
 

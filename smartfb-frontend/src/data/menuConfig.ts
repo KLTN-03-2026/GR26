@@ -18,6 +18,7 @@ import {
   Settings,
   Package,
   BrainCircuit,
+  History,
 } from 'lucide-react';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -73,6 +74,7 @@ export const menuConfig: MenuSection[] = [
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES,
           },
           { title: 'Đơn hàng', icon: ClipboardList, path: ROUTES.POS_MANAGEMENT, roles: [ROLES.OWNER] },
+          { title: 'Lịch sử ca POS', icon: History, path: ROUTES.OWNER.POS_SESSIONS, roles: [ROLES.OWNER] },
           {
             title: 'Đơn hàng',
             icon: ClipboardList,

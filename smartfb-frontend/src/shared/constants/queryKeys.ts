@@ -94,6 +94,17 @@ export const queryKeys = {
     activeByTable: (tableId: string) => ['orders', 'active', 'table', tableId] as const,
   },
 
+  // POS Sessions
+  posSessions: {
+    all: ['pos-sessions'] as const,
+    active: (branchId?: string | null) => ['pos-sessions', 'active', branchId ?? 'no-branch'] as const,
+    history: (branchId?: string | null) => ['pos-sessions', 'history', branchId ?? 'no-branch'] as const,
+    // author: Hoàng | date: 2026-04-30 | note: Breakdown doanh thu theo phương thức — live-query, stale sau 30s.
+    revenueBreakdown: (sessionId: string) => ['pos-sessions', 'revenue-breakdown', sessionId] as const,
+    // author: Hoàng | date: 2026-05-01 | note: Breakdown chi phí theo phương thức — tổng hợp từ financial invoices API filter theo ngày ca.
+    expenseBreakdown: (sessionId: string) => ['pos-sessions', 'expense-breakdown', sessionId] as const,
+  },
+
   // Payments & invoices
   payments: {
     all: ['payments'] as const,
@@ -101,6 +112,12 @@ export const queryKeys = {
     invoiceDetail: (id: string) => ['payments', 'invoice-detail', id] as const,
     invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
     orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
+  },
+
+  // Subscription gói dịch vụ của tenant hiện tại
+  subscriptions: {
+    all: ['subscriptions'] as const,
+    current: ['subscriptions', 'current'] as const,
   },
 
   // Expenses
@@ -203,6 +220,13 @@ export const queryKeys = {
     financialInvoicesAll: ['reports', 'financial', 'invoices'] as const,
     // Lịch sử hóa đơn Thu/Chi.
     financialInvoices: (filters?: Record<string, unknown>) => ['reports', 'financial', 'invoices', filters] as const,
+  },
+
+  // Account (cá nhân)
+  account: {
+    all: ['account'] as const,
+    // Profile cá nhân — GET /api/v1/account/me
+    me: ['account', 'me'] as const,
   },
 
   // AI Forecast

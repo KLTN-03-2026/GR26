@@ -16,6 +16,7 @@ import HrReportPage from '@pages/owner/HrReportPage';
 import InventoryPage from '@pages/owner/InventoryPage';
 import InventoryReportPage from '@pages/owner/InventoryReportPage';
 import MenuPage from '@pages/owner/MenuPage';
+import PackagesPage from '@pages/owner/PackagesPage';
 import RecipesPage from '@pages/owner/RecipesPage';
 import RevenuePage from '@pages/owner/RevenuePage';
 import StaffDetailPage from '@pages/owner/StaffDetailPage';
@@ -31,6 +32,9 @@ import ExpensesPage from '@pages/shared/ExpensesPage';
 import ShiftManagementPage from '@pages/owner/ShiftManagementPage';
 import ShiftTemplateDetailPage from '@pages/owner/ShiftTemplateDetailPage';
 import VouchersPage from '@pages/owner/VouchersPage';
+import PosSessionHistoryPage from '@pages/owner/PosSessionHistoryPage';
+import SettingsPage from '@pages/owner/SettingsPage';
+import { PosSessionGate } from '@modules/pos-session/components/PosSessionGate';
 import { PagePlaceholder } from '@shared/components/common/PagePlaceholder';
 import { STAFF_ROUTE_PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -156,6 +160,7 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.BRANCHES_NEW, 'Tạo chi nhánh mới', <CreateBranchPage />),
   createRoute(ROUTES.OWNER.BRANCHES_DETAIL, 'Chi tiết chi nhánh', <BranchDetailPage />),
   createRoute(ROUTES.OWNER.PROMOTIONS, 'Quản lý voucher', <VouchersPage />),
+  createRoute(ROUTES.OWNER.POS_SESSIONS, 'Lịch sử ca POS', <PosSessionHistoryPage />),
   createPlaceholderRoute(
     ROUTES.OWNER.SUPPLIERS,
     'Nhà cung cấp',
@@ -182,17 +187,11 @@ export const ownerRoutes: RouteConfigItem[] = [
     'Báo cáo nhân sự',
     <HrReportPage />
   ),
-  createPlaceholderRoute(
-    ROUTES.OWNER.SETTINGS,
-    'Cài đặt',
-    'Cài đặt',
-    'Trang cài đặt owner sẽ được triển khai ở file page riêng.'
-  ),
-  createPlaceholderRoute(
+  createRoute(ROUTES.OWNER.SETTINGS, 'Cài đặt', <SettingsPage />),
+  createRoute(
     ROUTES.OWNER.PACKAGES,
     'Gói dịch vụ',
-    'Gói dịch vụ',
-    'Trang gói dịch vụ đang dùng placeholder để hoàn thiện route map trước.'
+    <PackagesPage />
   ),
 ];
 
@@ -249,24 +248,34 @@ export const posRoutes: RouteConfigItem[] = [
   {
     path: ROUTES.POS_ORDER,
     pageTitle: 'Đặt món',
-    element: <OrderPage />,
+    element: (
+      <PosSessionGate>
+        <OrderPage />
+      </PosSessionGate>
+    ),
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_ORDER,
   },
   {
     path: ROUTES.POS_PAYMENT,
     pageTitle: 'Thanh toán',
-    element: <PaymentPage />,
+    element: (
+      <PosSessionGate>
+        <PaymentPage />
+      </PosSessionGate>
+    ),
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_PAYMENT,
   },
   {
     path: ROUTES.POS_MANAGEMENT,
     pageTitle: 'Quản lý đơn hàng',
+    // Danh sách đơn hàng là màn tra cứu vận hành, không bắt buộc mở ca POS.
     element: <OrderManagementPage />,
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
   {
     path: ROUTES.POS_ORDER_DETAIL,
     pageTitle: 'Chi tiết đơn hàng',
+    // Chi tiết đơn chỉ yêu cầu quyền xem; khi cần xử lý đơn active sẽ chuyển sang màn order có gate.
     element: <OrderDetailPage />,
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },

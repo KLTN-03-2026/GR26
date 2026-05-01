@@ -161,7 +161,10 @@ public class RegisterTenantCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 userId.toString(),
                 tenantId.toString(),
-                "OWNER"
+                "OWNER",
+                null,
+                null,
+                user.getFullName()
         );
     }
 

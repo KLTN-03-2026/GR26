@@ -80,7 +80,9 @@ public class SelectBranchCommandHandler {
                 user.getId().toString(),
                 currentTenantId.toString(),
                 primaryRole,
-                command.branchId().toString()
+                command.branchId().toString(),
+                null,
+                user.getFullName()
         );
     }
 }

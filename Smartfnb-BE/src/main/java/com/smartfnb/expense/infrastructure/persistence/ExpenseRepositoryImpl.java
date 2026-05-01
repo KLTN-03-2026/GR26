@@ -5,6 +5,7 @@ import com.smartfnb.expense.domain.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +27,14 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
         return springDataRepository.findByIdAndDeletedFalse(id).map(this::toDomain);
     }
 
+    // author: Hoàng | date: 2026-04-30 | note: Tổng chi tiền mặt từ két POS trong ca — dùng để tính endingCashExpected.
+    @Override
+    public BigDecimal sumCashExpensesByPosSessionId(UUID posSessionId) {
+        BigDecimal result = springDataRepository.sumCashExpensesByPosSessionId(posSessionId);
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+    // author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId vào mapper để lưu liên kết ca POS.
     private ExpenseJpaEntity toEntity(Expense expense) {
         ExpenseJpaEntity entity = new ExpenseJpaEntity();
         entity.setId(expense.getId());
@@ -41,9 +50,11 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
         entity.setCreatedAt(expense.getCreatedAt());
         entity.setUpdatedAt(expense.getUpdatedAt());
         entity.setDeleted(expense.isDeleted());
+        entity.setPosSessionId(expense.getPosSessionId());
         return entity;
     }
 
+    // author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId vào reconstruct để đồng bộ schema V26.
     private Expense toDomain(ExpenseJpaEntity entity) {
         return Expense.reconstruct(
             entity.getId(),
@@ -58,7 +69,8 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
             entity.getCreatedBy(),
             entity.getCreatedAt(),
             entity.getUpdatedAt(),
-            entity.isDeleted()
+            entity.isDeleted(),
+            entity.getPosSessionId()
         );
     }
 }

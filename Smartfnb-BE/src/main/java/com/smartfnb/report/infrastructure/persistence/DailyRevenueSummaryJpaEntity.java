@@ -77,10 +77,11 @@ public class DailyRevenueSummaryJpaEntity {
                 paymentBreakdown.momo(),
                 paymentBreakdown.vietqr(),
                 paymentBreakdown.banking(),
-                paymentBreakdown.other()
+                paymentBreakdown.other(),
+                paymentBreakdown.payos()
             );
         }
-        
+
         return new DailyRevenueSummary(
             id, tenantId, branchId, date,
             totalRevenue, totalOrders, avgOrderValue,
@@ -100,10 +101,11 @@ public class DailyRevenueSummaryJpaEntity {
                 domain.paymentBreakdown().momo(),
                 domain.paymentBreakdown().vietqr(),
                 domain.paymentBreakdown().banking(),
-                domain.paymentBreakdown().other()
+                domain.paymentBreakdown().other(),
+                domain.paymentBreakdown().payos()
             );
         }
-        
+
         return DailyRevenueSummaryJpaEntity.builder()
             .id(domain.id())
             .tenantId(domain.tenantId())
@@ -127,6 +129,7 @@ public class DailyRevenueSummaryJpaEntity {
         BigDecimal momo,
         BigDecimal vietqr,
         BigDecimal banking,
-        BigDecimal other
+        BigDecimal other,
+        BigDecimal payos
     ) {}
 }

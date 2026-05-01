@@ -1,6 +1,7 @@
 package com.smartfnb.payment.domain.repository;
 
 import com.smartfnb.payment.domain.model.Payment;
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,4 +32,14 @@ public interface PaymentRepository {
      * Tìm Payment theo transaction ID (dari payment gateway).
      */
     Optional<Payment> findByTransactionId(String transactionId);
+
+    /**
+     * Tổng tiền mặt đã thu thành công trong một ca POS.
+     * Dùng để tính endingCashExpected khi đóng ca.
+     * author: Hoàng | date: 2026-04-30 | note: Chỉ tính CASH COMPLETED, QR không ảnh hưởng két tiền mặt.
+     *
+     * @param posSessionId UUID ca POS
+     * @return tổng amount, trả về ZERO nếu chưa có giao dịch
+     */
+    BigDecimal sumCompletedCashPaymentsByPosSessionId(UUID posSessionId);
 }

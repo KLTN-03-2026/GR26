@@ -5,6 +5,7 @@ import { ROUTES } from '@shared/constants/routes';
 import { usePermission } from '@shared/hooks/usePermission';
 import { hasAccess } from '@shared/utils/accessControl';
 import { cn } from '@shared/utils/cn';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, LogOut, Package } from 'lucide-react';
 import { type FC, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -41,6 +42,7 @@ export const Sidebar: FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isOwner, permissions, userRole } = usePermission();
   const user = useAuthStore((state) => state.user);
   const clearAuthSession = useAuthStore((state) => state.clearAuthSession);
@@ -94,6 +96,8 @@ export const Sidebar: FC<SidebarProps> = ({
 
   const handleLogout = () => {
     clearAuthSession();
+    // Xóa toàn bộ cache để tài khoản kế tiếp không thấy data của tài khoản cũ.
+    queryClient.clear();
     navigate(ROUTES.LOGIN, { replace: true });
   };
 

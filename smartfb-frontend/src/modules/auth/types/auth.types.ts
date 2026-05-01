@@ -48,6 +48,7 @@ export interface BackendAuthResponse {
   tenantId: string;
   role: string;
   branchId?: string | null;
+  fullName?: string | null;
 }
 
 /**
@@ -87,7 +88,6 @@ export interface AuthState {
  * Payload đăng ký tenant mới
  */
 export type RegisterPayload = {
-  tenantName: string;
   email: string;
   password: string;
   ownerName: string;

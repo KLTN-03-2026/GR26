@@ -4,7 +4,6 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useToast } from '@shared/hooks/useToast';
 import { isAxiosError } from 'axios';
 import type { ApiResponse } from '@shared/types/api.types';
-import { queryKeys } from '@shared/constants/queryKeys';
 
 interface UseSelectBranchOptions {
   showSuccessToast?: boolean;
@@ -32,12 +31,9 @@ export const useSelectBranch = (options: UseSelectBranchOptions = {}) => {
         phone: currentUser?.phone,
       });
 
-      // Sau khi branch context đổi, cần refresh các query phụ thuộc JWT branch hiện tại.
-      void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.payments.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.shifts.templates.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.shifts.schedules.all });
+      // Sau khi branch context đổi, toàn bộ data phụ thuộc JWT branch cũ phải được refresh.
+      // Dùng invalidateQueries không tham số để bao phủ mọi module (tables, orders, staff, inventory...).
+      void queryClient.invalidateQueries();
 
       if (showSuccessToast) {
         success('Đổi chi nhánh thành công', 'Phiên làm việc đã chuyển sang chi nhánh mới.');

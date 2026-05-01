@@ -16,6 +16,7 @@ const mapPaymentMethodBreakdown = (
     report.momoBreakdown,
     report.vietqrBreakdown,
     report.bankingBreakdown,
+    report.payosBreakdown,
     report.otherBreakdown,
   ].map((item) => ({
     method: resolvePaymentMethodLabel(item.method),

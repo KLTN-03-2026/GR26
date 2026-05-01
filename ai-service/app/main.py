@@ -6,7 +6,6 @@ Khởi động: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -52,7 +51,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT"],
+    allow_methods=["GET", "POST", "PUT","PATCH"],
     allow_headers=[
         "Authorization",
         "Content-Type",
