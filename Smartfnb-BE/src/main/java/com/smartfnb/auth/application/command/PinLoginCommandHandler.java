@@ -112,7 +112,10 @@ public class PinLoginCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 userId.toString(),
                 tenantId.toString(),
-                primaryRole
+                primaryRole,
+                null,
+                null,
+                user.getFullName()
         );
     }
 

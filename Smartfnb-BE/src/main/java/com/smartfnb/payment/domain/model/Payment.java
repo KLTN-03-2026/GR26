@@ -33,12 +33,15 @@ public class Payment {
     private Instant paidAt; // Thời gian thanh toán thành công
     private Instant createdAt;
     private Long version;
+    // author: Hoàng | date: 2026-04-30 | note: Gắn payment với ca POS để backend tính đối soát tiền mặt cuối ca.
+    private UUID posSessionId;
 
     /**
      * Tạo Payment mới cho giao dịch tiền mặt.
+     * author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId để liên kết với ca POS đang mở.
      */
     public static Payment createCashPayment(
-            UUID tenantId, UUID orderId, BigDecimal amount, UUID cashierUserId) {
+            UUID tenantId, UUID orderId, BigDecimal amount, UUID cashierUserId, UUID posSessionId) {
         Payment payment = new Payment();
         payment.id = UUID.randomUUID();
         payment.tenantId = tenantId;
@@ -48,16 +51,19 @@ public class Payment {
         payment.status = PaymentStatus.PENDING;
         payment.cashierUserId = cashierUserId;
         payment.createdAt = Instant.now();
+        // author: Hoàng | date: 2026-04-30 | note: Gắn posSessionId — null nếu không có ca POS đang mở (không nên xảy ra ở POS quầy).
+        payment.posSessionId = posSessionId;
         return payment;
     }
 
     /**
-     * Tạo Payment mới cho thanh toán QR (VietQR/MoMo).
+     * Tạo Payment mới cho thanh toán QR (VietQR/MoMo/PayOS).
      * QR sẽ hết hạn sau 3 phút.
+     * author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId để báo cáo doanh thu theo ca, QR không cộng vào két tiền mặt.
      */
     public static Payment createQRPayment(
             UUID tenantId, UUID orderId, BigDecimal amount,
-            PaymentMethod qrMethod, UUID cashierUserId) {
+            PaymentMethod qrMethod, UUID cashierUserId, UUID posSessionId) {
         /*
          * author: Hoàng
          * date: 27-04-2026
@@ -79,6 +85,8 @@ public class Payment {
         payment.cashierUserId = cashierUserId;
         payment.qrExpiresAt = Instant.now().plusSeconds(180); // 3 phút
         payment.createdAt = Instant.now();
+        // author: Hoàng | date: 2026-04-30 | note: Gắn posSessionId để báo cáo doanh thu QR theo ca POS.
+        payment.posSessionId = posSessionId;
         return payment;
     }
 
@@ -166,11 +174,12 @@ public class Payment {
 
     /**
      * Reconstruct Payment từ JPA entity.
+     * author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId vào reconstruct để đồng bộ với schema V26.
      */
     public static Payment reconstruct(
             UUID id, UUID tenantId, UUID orderId, BigDecimal amount, PaymentMethod method,
             PaymentStatus status, String transactionId, UUID cashierUserId,
-            Instant qrExpiresAt, Instant paidAt, Instant createdAt, Long version) {
+            Instant qrExpiresAt, Instant paidAt, Instant createdAt, Long version, UUID posSessionId) {
         Payment payment = new Payment();
         payment.id = id;
         payment.tenantId = tenantId;
@@ -184,6 +193,7 @@ public class Payment {
         payment.paidAt = paidAt;
         payment.createdAt = createdAt;
         payment.version = version;
+        payment.posSessionId = posSessionId;
         return payment;
     }
 }

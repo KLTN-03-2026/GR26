@@ -53,6 +53,10 @@ public class PaymentJpaEntity {
     @Column
     private UUID cashierUserId;
 
+    // author: Hoàng | date: 2026-04-30 | note: Gắn payment với ca POS để backend tính đối soát tiền mặt cuối ca.
+    @Column
+    private UUID posSessionId;
+
     @Column
     private Instant qrExpiresAt;
 

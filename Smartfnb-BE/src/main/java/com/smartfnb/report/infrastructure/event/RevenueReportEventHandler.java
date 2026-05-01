@@ -126,21 +126,23 @@ public class RevenueReportEventHandler {
             DailyRevenueSummary old = existing.get();
             PaymentBreakdown oldBreakdown = old.paymentBreakdown() != null
                 ? old.paymentBreakdown()
-                : new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                : new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 
             BigDecimal cash = oldBreakdown.cash() != null ? oldBreakdown.cash() : BigDecimal.ZERO;
             BigDecimal momo = oldBreakdown.momo() != null ? oldBreakdown.momo() : BigDecimal.ZERO;
             BigDecimal vietqr = oldBreakdown.vietqr() != null ? oldBreakdown.vietqr() : BigDecimal.ZERO;
             BigDecimal banking = oldBreakdown.banking() != null ? oldBreakdown.banking() : BigDecimal.ZERO;
             BigDecimal other = oldBreakdown.other() != null ? oldBreakdown.other() : BigDecimal.ZERO;
+            BigDecimal payos = oldBreakdown.payos() != null ? oldBreakdown.payos() : BigDecimal.ZERO;
 
             if ("CASH".equalsIgnoreCase(paymentMethod)) cash = cash.add(amount);
             else if ("MOMO".equalsIgnoreCase(paymentMethod)) momo = momo.add(amount);
             else if ("VIETQR".equalsIgnoreCase(paymentMethod)) vietqr = vietqr.add(amount);
             else if ("BANKING".equalsIgnoreCase(paymentMethod)) banking = banking.add(amount);
+            else if ("PAYOS".equalsIgnoreCase(paymentMethod)) payos = payos.add(amount);
             else other = other.add(amount);
 
-            PaymentBreakdown newBreakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other);
+            PaymentBreakdown newBreakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other, payos);
             summary = new DailyRevenueSummary(
                 old.id(), old.tenantId(), old.branchId(), old.date(),
                 old.totalRevenue(), old.totalOrders(), old.avgOrderValue(),
@@ -156,14 +158,16 @@ public class RevenueReportEventHandler {
             BigDecimal vietqr = BigDecimal.ZERO;
             BigDecimal banking = BigDecimal.ZERO;
             BigDecimal other = BigDecimal.ZERO;
+            BigDecimal payos = BigDecimal.ZERO;
 
             if ("CASH".equalsIgnoreCase(paymentMethod)) cash = amount;
             else if ("MOMO".equalsIgnoreCase(paymentMethod)) momo = amount;
             else if ("VIETQR".equalsIgnoreCase(paymentMethod)) vietqr = amount;
             else if ("BANKING".equalsIgnoreCase(paymentMethod)) banking = amount;
+            else if ("PAYOS".equalsIgnoreCase(paymentMethod)) payos = amount;
             else other = amount;
 
-            PaymentBreakdown breakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other);
+            PaymentBreakdown breakdown = new PaymentBreakdown(cash, momo, vietqr, banking, other, payos);
             summary = new DailyRevenueSummary(
                 UUID.randomUUID(), tenantId, branchId, date,
                 BigDecimal.ZERO, 0, BigDecimal.ZERO,
@@ -190,7 +194,7 @@ public class RevenueReportEventHandler {
             // Giữ payment breakdown cũ (payment method được track riêng từ Order entity)
             PaymentBreakdown oldBreakdown = old.paymentBreakdown() != null ?
                 old.paymentBreakdown() :
-                new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                new PaymentBreakdown(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
             
             summary = new DailyRevenueSummary(
                 old.id(), tenantId, branchId, date,
@@ -202,7 +206,7 @@ public class RevenueReportEventHandler {
         } else {
             // Tạo breakdown mới với tất cả 0 (sẽ được update từ Order entity)
             PaymentBreakdown breakdown = new PaymentBreakdown(
-                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO
+                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO
             );
             summary = new DailyRevenueSummary(
                 UUID.randomUUID(), tenantId, branchId, date,

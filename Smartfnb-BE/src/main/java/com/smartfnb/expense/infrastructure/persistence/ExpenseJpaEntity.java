@@ -43,6 +43,11 @@ public class ExpenseJpaEntity {
     @Column(nullable = false)
     private ExpenseStatus status;
     
+    // author: Hoàng | date: 2026-04-30 | note: Liên kết phiếu chi tiền mặt với ca POS để trừ khỏi tiền kỳ vọng cuối ca.
+    //   Rule: chỉ expense có posSessionId != null VÀ paymentMethod='CASH' mới được tính vào cashExpenses.
+    @Column(name = "pos_session_id")
+    private UUID posSessionId;
+
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
     
