@@ -61,6 +61,7 @@ public class GetPaymentMethodBreakdownQueryHandler {
             buildPaymentMethodDto("VIETQR", breakdown.vietqr(), actualCounts.getOrDefault("VIETQR", 0), totalRevenue),
             buildPaymentMethodDto("BANKING", breakdown.banking(), actualCounts.getOrDefault("BANKING", 0), totalRevenue),
             buildPaymentMethodDto("OTHER", breakdown.other(), actualCounts.getOrDefault("OTHER", 0), totalRevenue),
+            buildPaymentMethodDto("PAYOS", breakdown.payos(), actualCounts.getOrDefault("PAYOS", 0), totalRevenue),
             totalRevenue,
             totalOrders
         );
@@ -96,6 +97,7 @@ public class GetPaymentMethodBreakdownQueryHandler {
             new PaymentMethodDto("VIETQR", zero, 0, zero),
             new PaymentMethodDto("BANKING", zero, 0, zero),
             new PaymentMethodDto("OTHER", zero, 0, zero),
+            new PaymentMethodDto("PAYOS", zero, 0, zero),
             zero,
             0
         );

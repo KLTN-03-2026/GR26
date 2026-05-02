@@ -25,17 +25,18 @@ public record DailyRevenueSummary(
 ) {
     /**
      * Cấu trúc breakdown thanh toán theo hình thức.
-     * VD: {"CASH": 1000000, "MOMO": 500000, "VIETQR": 800000}
+     * VD: {"CASH": 1000000, "MOMO": 500000, "VIETQR": 800000, "PAYOS": 300000}
      */
     public record PaymentBreakdown(
         BigDecimal cash,
         BigDecimal momo,
         BigDecimal vietqr,
         BigDecimal banking,
-        BigDecimal other
+        BigDecimal other,
+        BigDecimal payos
     ) {
         public BigDecimal total() {
-            return cash.add(momo).add(vietqr).add(banking).add(other);
+            return cash.add(momo).add(vietqr).add(banking).add(other).add(payos);
         }
     }
 

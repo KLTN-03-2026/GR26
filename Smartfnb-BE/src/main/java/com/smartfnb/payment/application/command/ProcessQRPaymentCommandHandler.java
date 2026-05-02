@@ -6,6 +6,7 @@ import com.smartfnb.payment.domain.repository.PaymentRepository;
 import com.smartfnb.payment.infrastructure.external.QRCodeProvider;
 import com.smartfnb.payment.infrastructure.persistence.OrderAdapter;
 import com.smartfnb.payment.infrastructure.persistence.OrderDto;
+import com.smartfnb.shift.infrastructure.persistence.PosSessionJpaRepository;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class ProcessQRPaymentCommandHandler {
     private final PaymentRepository paymentRepository;
     private final OrderAdapter orderAdapter;
     private final Map<String, QRCodeProvider> qrProviders;  // Inject providers by name
+    // author: Hoàng | date: 2026-04-30 | note: Gắn posSessionId cho QR payment để báo cáo doanh thu theo ca (không tính vào két tiền mặt).
+    private final PosSessionJpaRepository posSessionJpaRepository;
 
     @Transactional
     public ProcessQRPaymentResult handle(ProcessQRPaymentCommand command) {
@@ -73,9 +76,16 @@ public class ProcessQRPaymentCommandHandler {
             }
         });
 
-        // 4. Tạo Payment mới (status = PENDING)
+        // 4. Lấy active POS session để gắn posSessionId (báo cáo doanh thu theo ca, không tính vào két tiền mặt)
+        // author: Hoàng | date: 2026-04-30 | note: QR payment gắn posSessionId để tổng hợp doanh thu theo ca POS.
+        UUID posSessionId = posSessionJpaRepository
+                .findByBranchIdAndStatus(branchId, "OPEN")
+                .map(session -> session.getId())
+                .orElse(null);
+
+        // 5. Tạo Payment mới (status = PENDING)
         Payment payment = Payment.createQRPayment(
-            tenantId, command.orderId(), command.amount(), qrMethod, command.cashierUserId());
+            tenantId, command.orderId(), command.amount(), qrMethod, command.cashierUserId(), posSessionId);
 
         Payment savedPayment = paymentRepository.save(payment);
         log.info("Đã tạo QR Payment pending: paymentId={}, orderId={}, tenantId={}, branchId={}, method={}, amount={}, qrExpiresAt={}",

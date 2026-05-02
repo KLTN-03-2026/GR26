@@ -14,7 +14,7 @@ import type { RegisterPayload } from '../types/auth.types';
  *
  * @example
  * const { mutate, isPending } = useRegister();
- * mutate({ tenantName, email, password, ownerName, planSlug: 'trial' });
+ * mutate({ email, password, ownerName, planSlug: 'trial' });
  */
 export const useRegister = () => {
   const navigate = useNavigate();

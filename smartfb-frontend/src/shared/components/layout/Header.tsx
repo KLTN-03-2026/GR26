@@ -1,3 +1,4 @@
+import { useAuthStore } from '@modules/auth/stores/authStore';
 import { type FC } from 'react';
 import { Bell, Menu } from 'lucide-react';
 
@@ -12,8 +13,8 @@ export const Header: FC<HeaderProps> = ({
   showHamburger = false,
   onHamburgerClick,
 }) => {
-  // Mock user name - will get from auth store later
-  const userName = 'Orlando';
+  const user = useAuthStore((state) => state.user);
+  const userName = user?.fullName || user?.email || 'Bạn';
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur-md md:px-6 lg:px-8">

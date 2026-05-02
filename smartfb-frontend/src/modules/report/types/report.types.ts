@@ -35,6 +35,7 @@ export interface RevenuePaymentBreakdownResponse {
   vietqr: ReportNumericValue;
   banking: ReportNumericValue;
   other: ReportNumericValue;
+  payos: ReportNumericValue;
   total: ReportNumericValue;
 }
 
@@ -99,6 +100,7 @@ export interface PaymentMethodBreakdownResponse {
   vietqrBreakdown: PaymentMethodResponse;
   bankingBreakdown: PaymentMethodResponse;
   otherBreakdown: PaymentMethodResponse;
+  payosBreakdown: PaymentMethodResponse;
   totalRevenue: ReportNumericValue;
   totalOrders: number;
 }
@@ -109,6 +111,7 @@ export interface RevenuePaymentBreakdown {
   vietqr: number;
   banking: number;
   other: number;
+  payos: number;
   total: number;
 }
 
@@ -583,6 +586,7 @@ export const normalizeRevenuePaymentBreakdown = (
     vietqr: normalizeReportNumber(breakdown.vietqr),
     banking: normalizeReportNumber(breakdown.banking),
     other: normalizeReportNumber(breakdown.other),
+    payos: normalizeReportNumber(breakdown.payos),
     total: normalizeReportNumber(breakdown.total),
   };
 };
@@ -603,6 +607,8 @@ export const resolvePaymentMethodLabel = (method: string): string => {
       return 'VietQR';
     case 'BANKING':
       return 'Chuyển khoản';
+    case 'PAYOS':
+      return 'PayOS';
     case 'OTHER':
       return 'Khác';
     default:

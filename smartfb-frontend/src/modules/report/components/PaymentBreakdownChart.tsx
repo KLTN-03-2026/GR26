@@ -5,7 +5,7 @@ import { Button } from '@shared/components/ui/button';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import type { PaymentMethodBreakdown } from '../types/report.types';
 
-const PAYMENT_SKELETON_KEYS = ['cash', 'momo', 'vietqr', 'bank-transfer', 'other'];
+const PAYMENT_SKELETON_KEYS = ['cash', 'momo', 'vietqr', 'bank-transfer', 'payos', 'other'];
 
 interface PaymentBreakdownChartProps {
   data?: PaymentMethodBreakdown;
@@ -22,6 +22,7 @@ const METHOD_COLORS: Record<string, string> = {
   MOMO: '#d82d8b',
   VietQR: '#0f766e',
   'Chuyển khoản': '#2563eb',
+  PayOS: '#7c3aed',
   Khác: '#6b7280',
 };
 

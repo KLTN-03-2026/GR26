@@ -33,6 +33,7 @@ public record RevenueReportResult(
         BigDecimal vietqr,
         BigDecimal banking,
         BigDecimal other,
+        BigDecimal payos,
         BigDecimal total
     ) {}
 }

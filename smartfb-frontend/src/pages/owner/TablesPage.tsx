@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 
 import { useAuthStore } from '@modules/auth/stores/authStore';
+import { PosSessionStatusControl } from '@modules/pos-session/components/PosSessionStatusControl';
 import { useBranches } from '@modules/branch/hooks/useBranches';
 import {
   TableDialogs,
@@ -53,6 +54,7 @@ export default function TablesPage() {
     id: '',
     name: '',
   });
+  const { error: toastError } = useToast();
   const { handleSelectTable } = useTableOrderNavigation();
 
   const { mutate: editTable } = useEditTable();
@@ -105,12 +107,11 @@ export default function TablesPage() {
     );
   }
 
-  if (isError) {
+  if (isError && currentBranchId) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <p className="text-red-500 mb-4">
-       
             {error instanceof Error ? error.message : 'Lỗi không xác định'}
           </p>
           <button
@@ -150,8 +151,6 @@ export default function TablesPage() {
   const handleDelete = (id: string, name: string) => {
     setDeleteDialog({ open: true, id, name });
   };
-
-  const { error: toastError } = useToast();
 
   const handleToggleStatus = (id: string, currentStatus: TableStatus) => {
     const table = tables.find((t) => t.id === id);
@@ -198,6 +197,37 @@ export default function TablesPage() {
     refetch();
   };
 
+  // Khi không có chi nhánh cụ thể được chọn (đang ở chế độ "tất cả chi nhánh"),
+  // hiển thị trang bình thường nhưng thay TableGrid bằng thông báo mời chọn chi nhánh
+  if (!currentBranchId) {
+    return (
+      <div className="space-y-6 pb-8">
+        <TableStatsSection totalTables={0} availableTables={0} occupiedTables={0} />
+        <div className="bg-white p-4 space-y-4 rounded-2xl">
+          <TableFilterBar
+            filters={filters}
+            areas={areaOptions}
+            onSearchChange={(value) => updateFilter('search', value)}
+            onAreaChange={(value) => updateFilter('area', value)}
+            onStateChange={(value) => updateFilter('state', value)}
+            onClearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+            onCreateSingleTable={handleAddTable}
+            onCreateBulkTables={handleCreateBulkTables}
+            onManageZones={handleManageZones}
+            posSessionAction={<PosSessionStatusControl />}
+          />
+          <div className="flex items-center justify-center min-h-[300px]">
+            <div className="text-center text-gray-400">
+              <p className="text-lg font-medium mb-1">Vui lòng chọn chi nhánh</p>
+              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách bàn.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-8">
       <TableStatsSection
@@ -219,6 +249,7 @@ export default function TablesPage() {
           onCreateSingleTable={handleAddTable}
           onCreateBulkTables={handleCreateBulkTables}
           onManageZones={handleManageZones}
+          posSessionAction={<PosSessionStatusControl />}
         />
 
         <TableGrid
