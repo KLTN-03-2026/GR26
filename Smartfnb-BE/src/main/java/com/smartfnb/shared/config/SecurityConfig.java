@@ -82,7 +82,8 @@ public class SecurityConfig {
                 // Payment webhooks — public để gateway ngoài hệ thống callback, gồm PayOS.
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/payments/qr/webhook",
-                    "/api/v1/payments/qr/webhook/**"
+                    "/api/v1/payments/qr/webhook/**",
+                    "/api/v1/tenant/billing/webhook/qr"  // Webhook thanh toán gói dịch vụ
                 ).permitAll()
 
                 // File uploads (ảnh món ăn) — public, không cần JWT để hiển thị trong POS

@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,7 +63,7 @@ class BranchServiceTest {
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
         
         when(subscriptionService.getCurrentSubscription(tenantId)).thenReturn(subResp);
-        when(branchRepository.countByTenantId(tenantId)).thenReturn(2L); // 2 < 3
+        when(branchRepository.countByTenantIdAndStatus(tenantId, "ACTIVE")).thenReturn(2L); // 2 < 3
 
         BranchJpaEntity savedEntity = BranchJpaEntity.builder()
                 .id(UUID.randomUUID())
@@ -90,7 +91,7 @@ class BranchServiceTest {
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
 
         when(subscriptionService.getCurrentSubscription(tenantId)).thenReturn(subResp);
-        when(branchRepository.countByTenantId(tenantId)).thenReturn(1L); // 1 >= 1 => LIMIT EXCEEDED
+        when(branchRepository.countByTenantIdAndStatus(tenantId, "ACTIVE")).thenReturn(1L); // 1 >= 1 => LIMIT EXCEEDED
 
         // Act & Assert
         SmartFnbException exception = assertThrows(SmartFnbException.class, () -> 
@@ -112,7 +113,7 @@ class BranchServiceTest {
                 UUID.randomUUID(), tenantId, planResponse, "ACTIVE", null, null);
 
         when(subscriptionService.getCurrentSubscription(tenantId)).thenReturn(subResp);
-        when(branchRepository.countByTenantId(tenantId)).thenReturn(1L); // 1 >= default 1
+        when(branchRepository.countByTenantIdAndStatus(tenantId, "ACTIVE")).thenReturn(1L); // 1 >= default 1
 
         // Act & Assert
         SmartFnbException exception = assertThrows(SmartFnbException.class, () -> 
@@ -121,5 +122,48 @@ class BranchServiceTest {
 
         assertEquals("PLAN_LIMIT_EXCEEDED", exception.getErrorCode());
         verify(branchRepository, never()).save(any(BranchJpaEntity.class));
+    }
+
+    @Test
+    @DisplayName("Ném lỗi SmartFnbException khi xoá chi nhánh không thuộc tenant")
+    void deleteBranch_ThrowsException_WhenAccessDenied() {
+        // Arrange
+        UUID branchId = UUID.randomUUID();
+        BranchJpaEntity branch = BranchJpaEntity.builder()
+                .id(branchId)
+                .tenantId(UUID.randomUUID()) // Khác tenantId
+                .status("ACTIVE")
+                .build();
+        when(branchRepository.findById(branchId)).thenReturn(Optional.of(branch));
+
+        // Act & Assert
+        SmartFnbException exception = assertThrows(SmartFnbException.class, () ->
+            branchService.deleteBranch(tenantId, branchId)
+        );
+
+        assertEquals("ACCESS_DENIED", exception.getErrorCode());
+        verify(branchRepository, never()).save(any());
+        verify(branchUserRepository, never()).deleteByBranchId(any());
+    }
+
+    @Test
+    @DisplayName("Xoá mềm chi nhánh thành công")
+    void deleteBranch_Success() {
+        // Arrange
+        UUID branchId = UUID.randomUUID();
+        BranchJpaEntity branch = BranchJpaEntity.builder()
+                .id(branchId)
+                .tenantId(tenantId)
+                .status("ACTIVE")
+                .build();
+        when(branchRepository.findById(branchId)).thenReturn(Optional.of(branch));
+
+        // Act
+        branchService.deleteBranch(tenantId, branchId);
+
+        // Assert
+        assertEquals("INACTIVE", branch.getStatus());
+        verify(branchUserRepository).deleteByBranchId(branchId);
+        verify(branchRepository).save(branch);
     }
 }

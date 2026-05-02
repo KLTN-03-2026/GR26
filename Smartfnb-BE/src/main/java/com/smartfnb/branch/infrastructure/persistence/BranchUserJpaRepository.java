@@ -21,6 +21,11 @@ public interface BranchUserJpaRepository extends JpaRepository<BranchUserJpaEnti
     List<BranchUserJpaEntity> findByBranchId(UUID branchId);
     
     /**
+     * Huỷ toàn bộ phân công nhân viên khi xoá chi nhánh.
+     */
+    void deleteByBranchId(UUID branchId);
+
+    /**
      * Kiểm tra user có thuộc branch không
      */
     boolean existsByBranchIdAndUserId(UUID branchId, UUID userId);
