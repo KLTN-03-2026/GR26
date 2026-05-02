@@ -1011,3 +1011,64 @@ if (res.ok) {
 }
 ```
 
+
+---
+
+## ?? 11. MODULE THANH TOÁN GÓI D?CH V? (TENANT BILLING) — Prefix: `/api/v1/tenant/billing`
+
+> **Yêu c?u quy?n:** T?t c? endpoint (tr? Webhook) yêu c?u `Authorization: Bearer <token>` v?i Role `OWNER`.
+> Webhook endpoint `/webhook/qr` là **public** — không c?n JWT vì dây là callback t? Payment Gateway.
+
+### 11.1 T?o hóa don gia h?n gói
+
+- **Method:** `POST /api/v1/tenant/billing/renew`
+- **Body:** `{ "planId": "uuid", "months": 3, "note": "..." }`
+- **Response `data`:** InvoiceResponse (status=UNPAID, HTTP 201)
+
+### 11.2 Sinh mã QR thanh toán
+
+- **Method:** `POST /api/v1/tenant/billing/invoices/{invoiceId}/pay-qr`
+- **Body:** `{ "method": "VIETQR" }` (VIETQR | MOMO)
+- **Response `data`:**
+  ```json
+  {
+    "invoiceId": "uuid",
+    "invoiceNumber": "INV-202604-00001",
+    "amount": 1500000,
+    "qrCodeUrl": "https://img.vietqr.io/...",
+    "qrCodeData": "raw-qr-string",
+    "paymentMethod": "VIETQR",
+    "expiresInSeconds": 900
+  }
+  ```
+- **FE Note:** Dùng `qrCodeUrl` làm `<img src>`. Ð?m ngu?c 15 phút. N?u h?t h?n ? g?i l?i API.
+
+### 11.3 Danh sách hóa don c?a Tenant
+
+- **Method:** `GET /api/v1/tenant/billing/invoices?page=0&size=10`
+- **Response:** `Page<InvoiceResponse>`
+
+### 11.4 Webhook (Gateway Callback — Public, không c?n JWT)
+
+- **Method:** `POST /api/v1/tenant/billing/webhook/qr`
+- **Body:**
+  ```json
+  {
+    "invoiceId": "uuid",
+    "transactionId": "GATEWAY_TX_ID",
+    "status": "success",
+    "amount": 1500000,
+    "paymentMethod": "VIETQR"
+  }
+  ```
+- **K?t qu?:** T? d?ng dánh d?u PAID + gia h?n `subscriptions.expires_at`.
+
+### 11.5 Full Flow
+
+```
+POST /renew ? invoiceId (UNPAID)
+POST /invoices/{id}/pay-qr ? qrCodeUrl (QR 15 phút)
+[User quét QR]
+Gateway ? POST /webhook/qr ? T? d?ng PAID + gia h?n subscription
+FE poll GET /api/v1/subscriptions/current d? xác nh?n gia h?n thành công
+```

@@ -52,7 +52,7 @@ public class BranchService {
      */
     @Transactional(readOnly = true)
     public List<BranchResponse> getAllBranchesByTenant(UUID tenantId) {
-        return branchRepository.findByTenantId(tenantId).stream()
+        return branchRepository.findByTenantIdAndStatus(tenantId, "ACTIVE").stream()
                 .map(BranchResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -69,6 +69,7 @@ public class BranchService {
 
         return branchRepository.findAllById(assignedBranchIds).stream()
                 .filter(b -> b.getTenantId().equals(tenantId)) // Double check tenant
+                .filter(b -> "ACTIVE".equals(b.getStatus()))
                 .map(BranchResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -127,6 +128,9 @@ public class BranchService {
         if (!branch.getTenantId().equals(tenantId)) {
             throw new SmartFnbException("ACCESS_DENIED", "Bạn không có quyền sửa chi nhánh này", 403);
         }
+        if ("INACTIVE".equals(branch.getStatus())) {
+            throw new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404);
+        }
 
         branch.setName(request.name());
         branch.setCode(request.code());
@@ -140,6 +144,28 @@ public class BranchService {
     }
 
     /**
+     * Xóa mềm (soft-delete) chi nhánh và hủy gán toàn bộ nhân viên khỏi chi nhánh này.
+     */
+    @Transactional
+    public void deleteBranch(UUID tenantId, UUID branchId) {
+        BranchJpaEntity branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404));
+
+        if (!branch.getTenantId().equals(tenantId)) {
+            throw new SmartFnbException("ACCESS_DENIED", "Bạn không có quyền xoá chi nhánh này", 403);
+        }
+
+        // 1. Huỷ phân công nhân viên
+        branchUserRepository.deleteByBranchId(branchId);
+
+        // 2. Soft delete chi nhánh
+        branch.setStatus("INACTIVE");
+        branchRepository.save(branch);
+        log.info("Xoá mềm chi nhánh thành công id={}", branchId);
+    }
+
+
+    /**
      * Gán nhân viên vào chi nhánh làm việc.
      */
     @Transactional
@@ -149,6 +175,9 @@ public class BranchService {
                 .orElseThrow(() -> new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404));
         if (!branch.getTenantId().equals(tenantId)) {
             throw new SmartFnbException("ACCESS_DENIED", "Chi nhánh không thuộc tenant này", 403);
+        }
+        if ("INACTIVE".equals(branch.getStatus())) {
+            throw new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404);
         }
 
         // 2. Kiểm tra user thuộc tenant
@@ -238,6 +267,9 @@ public class BranchService {
                 .orElseThrow(() -> new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404));
         if (!branch.getTenantId().equals(tenantId)) {
             throw new SmartFnbException("ACCESS_DENIED", "Chi nhánh không thuộc tenant này", 403);
+        }
+        if ("INACTIVE".equals(branch.getStatus())) {
+            throw new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404);
         }
     }
 }

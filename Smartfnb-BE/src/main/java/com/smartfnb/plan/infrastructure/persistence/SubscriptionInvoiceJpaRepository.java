@@ -44,6 +44,12 @@ public interface SubscriptionInvoiceJpaRepository extends JpaRepository<Subscrip
     boolean existsBySubscriptionIdAndStatus(UUID subscriptionId, String status);
 
     /**
+     * Lấy hóa đơn theo ID và tenantId — bảo vệ chống IDOR.
+     * Trả Optional.empty() nếu hóa đơn không tồn tại hoặc không thuộc tenant này.
+     */
+    java.util.Optional<SubscriptionInvoiceJpaEntity> findByIdAndTenantId(UUID id, UUID tenantId);
+
+    /**
      * Lấy số hóa đơn mới nhất trong tháng để sinh invoice_number tăng dần.
      * Ví dụ: tìm số đếm lớn nhất của prefix "INV-202604-".
      */

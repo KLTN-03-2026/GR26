@@ -84,6 +84,18 @@ public class BranchController {
     }
 
     /**
+     * Xoá mềm (soft-delete) chi nhánh.
+     * Cần quyền BRANCH_EDIT.
+     */
+    @DeleteMapping("/{branchId}")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> deleteBranch(@PathVariable UUID branchId) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        branchService.deleteBranch(tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /**
      * Gán nhân viên vào làm việc tại chi nhánh.
      * Quyền: OWNER hoặc MANAGE_BRANCH.
      */
