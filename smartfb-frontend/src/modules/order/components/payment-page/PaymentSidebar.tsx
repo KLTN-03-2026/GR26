@@ -3,6 +3,10 @@ import { AlertCircle, CheckCircle2, Clock, CreditCard, QrCode, RefreshCw, Wallet
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { formatVND } from '@shared/utils/formatCurrency';
+import {
+  formatNumericInputValue,
+  sanitizeIntegerInputValue,
+} from '@shared/utils/numberInput';
 
 export type PaymentMethod = 'cash' | 'card' | 'qr';
 export type QRSubMethod = 'VIETQR' | 'MOMO' | 'PAYOS';
@@ -183,9 +187,10 @@ export const PaymentSidebar = ({
           </label>
           <Input
             id="cash-received"
-            type="number"
-            value={amountReceived}
-            onChange={(event) => onAmountReceivedChange(event.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={formatNumericInputValue(amountReceived)}
+            onChange={(event) => onAmountReceivedChange(sanitizeIntegerInputValue(event.target.value))}
             placeholder="Nhập số tiền..."
             className="h-12 rounded-2xl border-slate-200 bg-white focus-visible:ring-orange-500"
           />

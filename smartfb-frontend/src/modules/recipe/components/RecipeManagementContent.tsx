@@ -85,7 +85,7 @@ export const RecipeManagementContent = () => {
   const [editingLine, setEditingLine] = useState<RecipeLine | null>(null);
   const selectedTargetTypeLabel = RECIPE_TARGET_TYPE_LABELS[targetItemType];
   const canFilterByCategory = targetItemType === 'SELLABLE';
-
+  
   /**
    * Với thao tác tạo mới, loại bỏ các nguyên liệu đã nằm trong công thức hiện tại.
    */

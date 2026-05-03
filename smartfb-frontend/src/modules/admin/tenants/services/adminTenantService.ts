@@ -5,7 +5,7 @@ import type {
   AdminSubscription,
   AdminTenantDetail,
   AdminTenantListParams,
-  AdminTenantPlanPageResponse,
+  AdminTenantPlan,
   AdminTenantSummary,
   ChangeTenantPlanPayload,
   SuspendTenantPayload,
@@ -50,14 +50,8 @@ export const adminTenantService = {
     return response.data.data;
   },
 
-  getActivePlans: async (): Promise<AdminTenantPlanPageResponse> => {
-    const response = await api.get<ApiResponse<AdminTenantPlanPageResponse>>('/admin/plans', {
-      params: {
-        page: 0,
-        size: 100,
-        activeOnly: true,
-      },
-    });
+  getActivePlans: async (): Promise<AdminTenantPlan[]> => {
+    const response = await api.get<ApiResponse<AdminTenantPlan[]>>('/admin/plans/active');
     return response.data.data;
   },
 };

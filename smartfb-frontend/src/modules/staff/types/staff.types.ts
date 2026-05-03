@@ -86,6 +86,12 @@ export interface DeactivateStaffRequest {
   reason: string;  // max 500 chars
 }
 
+// Request đổi trạng thái khóa/mở khóa nhân viên, bắt buộc có lý do để backend ghi audit trail.
+export interface UpdateStaffStatusRequest {
+  status: StaffStatus;
+  reason: string;
+}
+
 // UI Types
 export interface StaffListItem {
   id: string;

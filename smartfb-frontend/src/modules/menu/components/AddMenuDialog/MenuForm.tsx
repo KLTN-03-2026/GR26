@@ -184,8 +184,6 @@ export const MenuForm: FC<MenuFormProps> = ({
                   onBlur={field.onBlur}
                   onChange={(event) => {
                     const nextFile = event.target.files?.[0] ?? undefined;
-                    console.log( event.target.files?.[0] );
-                    
                     field.onChange(nextFile);
                     setIsDraggingImage(false);
                   }}

@@ -2,6 +2,7 @@ import { axiosInstance as api } from '@lib/axios';
 import type { ApiResponse } from '@shared/types/api.types';
 import type {
   CreateRecipePayload,
+  RecipeBranchMenuItemConfig,
   RecipeMenuCategory,
   RecipeIngredientOption,
   RecipeLine,
@@ -52,6 +53,11 @@ interface BackendComponentCatalogResponse {
   name: string;
   type: string;
   unit: string | null;
+}
+
+interface BackendBranchItemResponse {
+  itemId: string;
+  isAvailable: boolean;
 }
 
 interface BackendCategoryResponse {
@@ -146,6 +152,16 @@ const mapMenuCategory = (category: BackendCategoryResponse): RecipeMenuCategory 
   return {
     id: category.id,
     name: category.name,
+  };
+};
+
+/**
+ * Chuẩn hóa cấu hình bật/tắt item theo chi nhánh để màn recipe không hiển thị món đã tắt.
+ */
+const mapBranchMenuItemConfig = (item: BackendBranchItemResponse): RecipeBranchMenuItemConfig => {
+  return {
+    itemId: item.itemId,
+    isAvailable: Boolean(item.isAvailable),
   };
 };
 
@@ -327,6 +343,14 @@ export const recipeService = {
   getMenuCategories: async (): Promise<RecipeMenuCategory[]> => {
     const response = await api.get<ApiResponse<BackendCategoryResponse[]>>('/menu/categories/active');
     return response.data.data.map(mapMenuCategory).sort((left, right) => left.name.localeCompare(right.name, 'vi'));
+  },
+
+  /**
+   * Lấy trạng thái phục vụ của item theo chi nhánh hiện tại.
+   */
+  getBranchMenuItems: async (branchId: string): Promise<RecipeBranchMenuItemConfig[]> => {
+    const response = await api.get<ApiResponse<BackendBranchItemResponse[]>>(`/menu/branches/${branchId}/items`);
+    return response.data.data.map(mapBranchMenuItemConfig);
   },
 
   /**

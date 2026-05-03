@@ -45,6 +45,14 @@ export interface RecipeMenuItem {
 }
 
 /**
+ * Cấu hình trạng thái phục vụ của item theo chi nhánh hiện tại.
+ */
+export interface RecipeBranchMenuItemConfig {
+  itemId: string;
+  isAvailable: boolean;
+}
+
+/**
  * Danh mục món dùng cho bộ lọc ở màn công thức.
  */
 export interface RecipeMenuCategory {

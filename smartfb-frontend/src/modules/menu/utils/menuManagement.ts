@@ -24,7 +24,7 @@ export const DEFAULT_MENU_FILTERS: MenuFilters = {
   search: '',
   categories: [],
   statuses: [],
-  sortBy: 'newest',
+  sortBy: 'availability-az',
 };
 
 /**
@@ -225,8 +225,22 @@ export const countActiveMenuFilters = (filters: MenuFilters) => {
     filters.search ? 1 : 0,
     filters.categories.length > 0 ? 1 : 0,
     filters.statuses.length > 0 ? 1 : 0,
-    filters.sortBy !== 'newest' ? 1 : 0,
+    filters.sortBy !== DEFAULT_MENU_FILTERS.sortBy ? 1 : 0,
   ].reduce((total, current) => total + current, 0);
+};
+
+/**
+ * Đưa món đang bán lên trước, sau đó sắp theo tên tiếng Việt để nhân viên tìm món nhanh hơn.
+ */
+const compareMenuAvailabilityThenName = (left: MenuItem, right: MenuItem) => {
+  const leftIsSelling = left.status === 'selling';
+  const rightIsSelling = right.status === 'selling';
+
+  if (leftIsSelling !== rightIsSelling) {
+    return leftIsSelling ? -1 : 1;
+  }
+
+  return left.name.localeCompare(right.name, 'vi', { sensitivity: 'base' });
 };
 
 /**
@@ -250,6 +264,9 @@ export const filterAndSortMenus = ({
   }
 
   switch (filters.sortBy) {
+    case 'availability-az':
+      result.sort(compareMenuAvailabilityThenName);
+      break;
     case 'newest':
       result.sort((left, right) => right.createdAt - left.createdAt);
       break;

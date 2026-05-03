@@ -3,6 +3,7 @@ import { AdminErrorState } from '@modules/admin/components/AdminErrorState';
 import { AdminLoadingState } from '@modules/admin/components/AdminLoadingState';
 import { AdminPageHeader } from '@modules/admin/components/AdminPageHeader';
 import { AdminPageToolbar } from '@modules/admin/components/AdminPageToolbar';
+import { AdminPlanDetailDrawer } from '@modules/admin/plans/components/AdminPlanDetailDrawer';
 import { AdminPlanFilters } from '@modules/admin/plans/components/AdminPlanFilters';
 import { AdminPlanFormDialog } from '@modules/admin/plans/components/AdminPlanFormDialog';
 import { AdminPlanTable } from '@modules/admin/plans/components/AdminPlanTable';
@@ -54,6 +55,7 @@ const AdminPlansPage = () => {
   const [statusFilter, setStatusFilter] = useState<AdminPlanStatusFilter>('all');
   const [currentPage, setCurrentPage] = useState(0);
   const [formState, setFormState] = useState<PlanFormState | null>(null);
+  const [viewingPlan, setViewingPlan] = useState<AdminPlan | null>(null);
   const [deactivatingPlan, setDeactivatingPlan] = useState<AdminPlan | null>(null);
 
   const listParams = useMemo<AdminPlanListParams>(() => {
@@ -226,6 +228,7 @@ const AdminPlansPage = () => {
         <>
           <AdminPlanTable
             plans={plans}
+            onViewPlan={setViewingPlan}
             onEditPlan={handleOpenEditDialog}
             onDeactivatePlan={setDeactivatingPlan}
           />
@@ -267,6 +270,15 @@ const AdminPlansPage = () => {
           onSubmit={handleSubmitForm}
         />
       ) : null}
+
+      <AdminPlanDetailDrawer
+        plan={viewingPlan}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingPlan(null);
+          }
+        }}
+      />
 
       <DeactivatePlanDialog
         plan={deactivatingPlan}

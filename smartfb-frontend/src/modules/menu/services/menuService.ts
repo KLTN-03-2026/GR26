@@ -96,6 +96,10 @@ interface BackendSetBranchItemPricePayload {
   isAvailable: boolean;
 }
 
+interface CreateMenuRequestOptions {
+  branchId?: string | null;
+}
+
 const PAGE_SIZE = 100;
 
 /**
@@ -425,8 +429,15 @@ export const menuService = {
   /**
    * Tạo mới món ăn
    */
-  create: async (payload: CreateMenuPayload): Promise<ApiResponse<MenuItem>> => {
-    const response = await api.post<ApiResponse<BackendMenuItemResponse>>('/menu/items', toMenuFormData(payload));
+  create: async (payload: CreateMenuPayload, options?: CreateMenuRequestOptions): Promise<ApiResponse<MenuItem>> => {
+    const response = await api.post<ApiResponse<BackendMenuItemResponse>>(
+      '/menu/items',
+      toMenuFormData(payload),
+      {
+        // Author: Hoàng | date: 2026-05-02 | note: branchId optional để BE tạo assignment true/false khi thêm món trong chi nhánh.
+        params: { branchId: options?.branchId ?? undefined },
+      }
+    );
 
     return {
       ...response.data,

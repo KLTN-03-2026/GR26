@@ -21,6 +21,8 @@ export const queryKeys = {
     planDetail: (id: string) => ['admin', 'plans', 'detail', id] as const,
     activePlans: () => ['admin', 'plans', 'active'] as const,
     invoices: (filters?: Record<string, unknown>) => ['admin', 'invoices', filters] as const,
+    tenantInvoices: (tenantId: string, filters?: Record<string, unknown>) =>
+      ['admin', 'tenants', tenantId, 'invoices', filters] as const,
     invoiceDetail: (id: string) => ['admin', 'invoices', 'detail', id] as const,
   },
 
@@ -67,7 +69,7 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['menu', 'list', filters] as const,
     activeList: (branchId?: string | null) => ['menu', 'active-list', branchId ?? 'global'] as const,
     detail: (id: string) => ['menu', 'detail', id] as const,
-    branchItems: (branchId: string, itemIds: string[]) => ['menu', 'branch-items', branchId, itemIds] as const,
+    branchItems: (branchId: string) => ['menu', 'branch-items', branchId] as const,
     branchItemDetail: (branchId: string, itemId: string) => ['menu', 'branch-item', branchId, itemId] as const,
     categories: ['menu', 'categories'] as const,
     addons: ['menu', 'addons'] as const,
@@ -78,6 +80,7 @@ export const queryKeys = {
   recipes: {
     all: ['recipes'] as const,
     menuItems: (filters?: Record<string, unknown>) => ['recipes', 'menu-items', filters] as const,
+    branchMenuItems: (branchId: string) => ['recipes', 'branch-menu-items', branchId] as const,
     categories: ['recipes', 'categories'] as const,
     ingredients: ['recipes', 'ingredients'] as const,
     detail: (itemId: string) => ['recipes', 'detail', itemId] as const,
@@ -118,6 +121,8 @@ export const queryKeys = {
   subscriptions: {
     all: ['subscriptions'] as const,
     current: ['subscriptions', 'current'] as const,
+    plans: ['subscriptions', 'plans'] as const,
+    invoices: (filters?: Record<string, unknown>) => ['subscriptions', 'invoices', filters] as const,
   },
 
   // Expenses
@@ -166,6 +171,14 @@ export const queryKeys = {
     all: ['suppliers'] as const,
     list: (filters?: Record<string, unknown>) => ['suppliers', 'list', filters] as const,
     detail: (id: string) => ['suppliers', 'detail', id] as const,
+    orders: (id: string) => ['suppliers', 'detail', id, 'purchase-orders'] as const,
+  },
+
+  // Đơn mua hàng từ nhà cung cấp
+  purchaseOrders: {
+    all: ['purchase-orders'] as const,
+    list: (filters?: Record<string, unknown>) => ['purchase-orders', 'list', filters] as const,
+    detail: (id: string) => ['purchase-orders', 'detail', id] as const,
   },
 
   // Shifts

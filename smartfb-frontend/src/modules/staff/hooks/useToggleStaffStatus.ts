@@ -3,29 +3,46 @@ import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutat
 import { queryKeys } from '@shared/constants/queryKeys';
 import { staffService } from '../services/staffService';
 import { useToast } from '@shared/hooks/useToast';
+import type { StaffStatus } from '../types/staff.types';
+
+interface ToggleStaffStatusVariables {
+  id: string;
+  status: StaffStatus;
+}
+
+const getDefaultStatusReason = (status: StaffStatus): string => {
+  return status === 'ACTIVE'
+    ? 'Mở khóa nhân viên từ giao diện quản lý'
+    : 'Khóa nhân viên từ giao diện quản lý';
+};
 
 /**
  * Hook đổi trạng thái nhân viên.
- * Hiện backend mới hỗ trợ vô hiệu hóa, nên thao tác kích hoạt lại sẽ trả lỗi có chủ đích.
+ * Dùng API khóa/mở khóa để nhân viên vẫn tồn tại trong hệ thống và có thể khôi phục.
  */
 export const useToggleStaffStatus = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'ACTIVE' | 'INACTIVE' }) => {
-      if (status === 'INACTIVE') {
-        await staffService.deactivate(id, 'Vô hiệu hoá nhân viên từ giao diện quản lý');
-      } else {
-        throw new Error('Tính năng kích hoạt lại nhân viên hiện chưa được hỗ trợ');
-      }
+    mutationFn: async ({ id, status }: ToggleStaffStatusVariables) => {
+      await staffService.updateStatus(id, {
+        status,
+        reason: getDefaultStatusReason(status),
+      });
       return { id, status };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.staff.detail(variables.id) });
-      success('Vô hiệu hoá nhân viên thành công', 'Nhân viên đã bị vô hiệu hoá');
+      const isActive = variables.status === 'ACTIVE';
+      success(
+        isActive ? 'Mở khóa nhân viên thành công' : 'Khóa nhân viên thành công',
+        isActive
+          ? 'Nhân viên đã có thể đăng nhập và làm việc trở lại'
+          : 'Nhân viên đã tạm thời bị khóa khỏi hệ thống'
+      );
     },
     onError: (err: unknown) => {
       error('Không thể cập nhật trạng thái', getStaffMutationErrorMessage(err));

@@ -11,7 +11,7 @@ export type MenuCategory = string;
 /**
  * Tùy chọn sắp xếp
  */
-export type MenuSortOption = 'newest' | 'price-asc' | 'price-desc';
+export type MenuSortOption = 'availability-az' | 'newest' | 'price-asc' | 'price-desc';
 
 /**
  * Tùy chọn lọc GP%

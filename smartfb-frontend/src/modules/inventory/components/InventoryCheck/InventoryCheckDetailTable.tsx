@@ -17,6 +17,7 @@ import {
 import { Input } from '@shared/components/ui/input';
 import { Button } from '@shared/components/ui/button';
 import { Textarea } from '@shared/components/ui/textarea';
+import { sanitizeDecimalInputValue } from '@shared/utils/numberInput';
 import {
     Dialog,
     DialogContent,
@@ -208,10 +209,10 @@ export const InventoryCheckDetailTable = ({
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <Input
-                                                    type="number"
-                                                    step="0.0001"
+                                                    type="text"
+                                                    inputMode="decimal"
                                                     value={displayValue}
-                                                    onChange={(e) => handleInputChange(detail.itemId, e.target.value)}
+                                                    onChange={(e) => handleInputChange(detail.itemId, sanitizeDecimalInputValue(e.target.value))}
                                                     onBlur={() => handleSave(detail.itemId)}
                                                     onKeyDown={(e) => handleKeyDown(e, detail.itemId)}
                                                     placeholder={detail.systemQuantity.toString()}

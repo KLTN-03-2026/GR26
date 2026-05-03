@@ -9,11 +9,12 @@ import {
   TableRow,
 } from '@shared/components/ui/table';
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
-import { CheckCircle2, Edit3, EyeOff } from 'lucide-react';
+import { CheckCircle2, Edit3, Eye, EyeOff } from 'lucide-react';
 import type { AdminPlan } from '../types/adminPlan.types';
 
 interface AdminPlanTableProps {
   plans: AdminPlan[];
+  onViewPlan: (plan: AdminPlan) => void;
   onEditPlan: (plan: AdminPlan) => void;
   onDeactivatePlan: (plan: AdminPlan) => void;
 }
@@ -27,6 +28,7 @@ const getEnabledFeatureCount = (plan: AdminPlan): number => {
  */
 export const AdminPlanTable = ({
   plans,
+  onViewPlan,
   onEditPlan,
   onDeactivatePlan,
 }: AdminPlanTableProps) => {
@@ -72,6 +74,16 @@ export const AdminPlanTable = ({
               </TableCell>
               <TableCell>
                 <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-admin-gray-200 text-admin-gray-700 hover:bg-admin-gray-50"
+                    onClick={() => onViewPlan(plan)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    Xem
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"

@@ -28,6 +28,7 @@ interface AddMenuDialogProps {
   onOpenChange?: (open: boolean) => void;
   onSuccess?: () => void;
   triggerClassName?: string;
+  branchId?: string | null;
 }
 
 /**
@@ -40,6 +41,7 @@ export const AddMenuDialog = ({
   onOpenChange,
   onSuccess,
   triggerClassName,
+  branchId = null,
 }: AddMenuDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const { mutateAsync: createMenu, isPending: isCreating } = useCreateMenu();
@@ -135,7 +137,8 @@ export const AddMenuDialog = ({
     }
 
     try {
-      await createMenu(payload);
+      // Author: Hoàng | date: 2026-05-02 | note: Khi đang quản lý một chi nhánh, tạo món kèm branchId để BE bật món ở chi nhánh đó và tắt ở chi nhánh khác.
+      await createMenu({ payload, branchId });
       handleOpenChange(false);
       onSuccess?.();
     } catch {

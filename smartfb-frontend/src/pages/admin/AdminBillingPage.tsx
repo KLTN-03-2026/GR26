@@ -10,6 +10,7 @@ import { CancelInvoiceDialog } from '@modules/admin/billing/components/CancelInv
 import { CreateRenewalInvoiceDialog } from '@modules/admin/billing/components/CreateRenewalInvoiceDialog';
 import { MarkInvoicePaidDialog } from '@modules/admin/billing/components/MarkInvoicePaidDialog';
 import { useAdminInvoices } from '@modules/admin/billing/hooks/useAdminInvoices';
+import { useAdminTenantInvoices } from '@modules/admin/billing/hooks/useAdminTenantInvoices';
 import { useCancelInvoice } from '@modules/admin/billing/hooks/useCancelInvoice';
 import { useCreateRenewalInvoice } from '@modules/admin/billing/hooks/useCreateRenewalInvoice';
 import { useMarkInvoicePaid } from '@modules/admin/billing/hooks/useMarkInvoicePaid';
@@ -41,6 +42,7 @@ const AdminBillingPage = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<AdminInvoice | null>(null);
   const [markPaidInvoice, setMarkPaidInvoice] = useState<AdminInvoice | null>(null);
   const [cancelInvoice, setCancelInvoice] = useState<AdminInvoice | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState('');
 
   const listParams = useMemo<AdminInvoiceListParams>(() => {
     return {
@@ -50,28 +52,54 @@ const AdminBillingPage = () => {
     };
   }, [currentPage, statusFilter]);
 
+  const tenantInvoiceParams = useMemo(() => {
+    return {
+      page: currentPage,
+      size: PAGE_SIZE,
+    };
+  }, [currentPage]);
+
   const {
-    data,
-    isLoading,
-    isError,
-    isFetching,
-    refetch,
+    data: allInvoicePage,
+    isLoading: isAllInvoicesLoading,
+    isError: isAllInvoicesError,
+    isFetching: isAllInvoicesFetching,
+    refetch: refetchAllInvoices,
   } = useAdminInvoices(listParams);
+  const {
+    data: tenantInvoicePage,
+    isLoading: isTenantInvoicesLoading,
+    isError: isTenantInvoicesError,
+    isFetching: isTenantInvoicesFetching,
+    refetch: refetchTenantInvoices,
+  } = useAdminTenantInvoices(selectedTenantId, tenantInvoiceParams);
   const { data: activeTenantsPage } = useAdminTenants({
     page: 0,
     size: 100,
     status: 'ACTIVE',
   });
-  const { data: activePlansPage } = useAdminActivePlans();
+  const { data: activePlans } = useAdminActivePlans();
   const createRenewalInvoiceMutation = useCreateRenewalInvoice();
   const markInvoicePaidMutation = useMarkInvoicePaid();
   const cancelInvoiceMutation = useCancelInvoice();
 
-  const invoices = data?.content ?? [];
-  const totalPages = data?.totalPages ?? 0;
-  const totalElements = data?.totalElements ?? 0;
   const activeTenants = activeTenantsPage?.content ?? [];
-  const activePlans = activePlansPage?.content ?? [];
+  const selectedTenant = activeTenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
+  const currentInvoicePage = selectedTenantId ? tenantInvoicePage : allInvoicePage;
+  const rawInvoices = currentInvoicePage?.content ?? [];
+  const invoices =
+    selectedTenantId && statusFilter !== 'all'
+      ? rawInvoices.filter((invoice) => invoice.status === statusFilter)
+      : rawInvoices;
+  const totalPages = currentInvoicePage?.totalPages ?? 0;
+  const totalElements =
+    selectedTenantId && statusFilter !== 'all'
+      ? invoices.length
+      : currentInvoicePage?.totalElements ?? 0;
+  const isLoading = selectedTenantId ? isTenantInvoicesLoading : isAllInvoicesLoading;
+  const isError = selectedTenantId ? isTenantInvoicesError : isAllInvoicesError;
+  const isFetching = selectedTenantId ? isTenantInvoicesFetching : isAllInvoicesFetching;
+  const activePlanOptions = activePlans ?? [];
   const totalAmountOnPage = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
 
   const handleStatusChange = (nextStatus: AdminInvoiceStatusFilter) => {
@@ -79,8 +107,18 @@ const AdminBillingPage = () => {
     setCurrentPage(0);
   };
 
+  const handleTenantChange = (tenantId: string) => {
+    setSelectedTenantId(tenantId);
+    setCurrentPage(0);
+  };
+
   const handleRetry = () => {
-    void refetch();
+    if (selectedTenantId) {
+      void refetchTenantInvoices();
+      return;
+    }
+
+    void refetchAllInvoices();
   };
 
   const handleCreateInvoice = (payload: CreateRenewalInvoicePayload) => {
@@ -162,10 +200,30 @@ const AdminBillingPage = () => {
               {formatVND(totalAmountOnPage)}
             </span>{' '}
             trên trang
+            {selectedTenant ? (
+              <>
+                {' '}· Tenant{' '}
+                <span className="font-semibold text-admin-gray-900">{selectedTenant.name}</span>
+              </>
+            ) : null}
           </>
         )}
       >
-        <AdminInvoiceTabs value={statusFilter} onChange={handleStatusChange} />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <AdminInvoiceTabs value={statusFilter} onChange={handleStatusChange} />
+          <select
+            value={selectedTenantId}
+            onChange={(event) => handleTenantChange(event.target.value)}
+            className="h-9 min-w-[260px] rounded-md border border-admin-gray-200 bg-white px-3 text-sm text-admin-gray-700 outline-none focus:border-admin-brand-500"
+          >
+            <option value="">Tất cả tenant</option>
+            {activeTenants.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>
+                {tenant.name} - {tenant.email}
+              </option>
+            ))}
+          </select>
+        </div>
       </AdminPageToolbar>
 
       {isLoading ? (
@@ -241,7 +299,7 @@ const AdminBillingPage = () => {
       <CreateRenewalInvoiceDialog
         open={isCreateDialogOpen}
         tenants={activeTenants}
-        plans={activePlans}
+        plans={activePlanOptions}
         isPending={createRenewalInvoiceMutation.isPending}
         onOpenChange={setIsCreateDialogOpen}
         onSubmit={handleCreateInvoice}

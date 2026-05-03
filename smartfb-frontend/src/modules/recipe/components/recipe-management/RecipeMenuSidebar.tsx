@@ -60,7 +60,7 @@ export const RecipeMenuSidebar = ({
       ? 'Ví dụ: Bạc xỉu, Trà đào...'
       : 'Ví dụ: Kem cheese, Cốt cà phê phin...';
   const priceLabel = targetItemType === 'SELLABLE' ? 'Giá bán' : 'Giá tham chiếu';
-
+  
   return (
     <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="space-y-1">

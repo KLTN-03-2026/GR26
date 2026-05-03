@@ -11,6 +11,10 @@ import {
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { useToast } from '@shared/hooks/useToast';
+import {
+  formatNumericInputValue,
+  sanitizeIntegerInputValue,
+} from '@shared/utils/numberInput';
 import { Wallet } from 'lucide-react';
 import { useId, useState } from 'react';
 
@@ -70,11 +74,10 @@ export const OpenPosSessionDialog = ({ open, onOpenChange }: OpenPosSessionDialo
           <Input
             id={cashInputId}
             inputMode="numeric"
-            min={0}
             placeholder="Ví dụ: 500000"
-            type="number"
-            value={startingCash}
-            onChange={(event) => setStartingCash(event.target.value)}
+            type="text"
+            value={formatNumericInputValue(startingCash)}
+            onChange={(event) => setStartingCash(sanitizeIntegerInputValue(event.target.value))}
           />
         </div>
 

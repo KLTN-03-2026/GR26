@@ -1,4 +1,5 @@
 import { Button } from '@shared/components/ui/button';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import {
   Dialog,
   DialogContent,
@@ -151,45 +152,41 @@ export const AdminPlanFormDialog = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="plan-price">Giá theo tháng</Label>
-              <Input
+              <NumericInput
                 id="plan-price"
-                type="number"
                 min={0}
                 value={formValues.priceMonthly}
-                onChange={(event) => updateField('priceMonthly', Number(event.target.value))}
+                onValueChange={(value) => updateField('priceMonthly', value)}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="plan-branches">Số chi nhánh tối đa</Label>
-              <Input
+              <NumericInput
                 id="plan-branches"
-                type="number"
                 min={0}
                 value={formValues.maxBranches}
-                onChange={(event) => updateField('maxBranches', Number(event.target.value))}
+                onValueChange={(value) => updateField('maxBranches', value)}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="plan-staff">Số nhân viên tối đa</Label>
-              <Input
+              <NumericInput
                 id="plan-staff"
-                type="number"
                 min={0}
                 value={formValues.maxStaff}
-                onChange={(event) => updateField('maxStaff', Number(event.target.value))}
+                onValueChange={(value) => updateField('maxStaff', value)}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="plan-menu-items">Số món tối đa</Label>
-              <Input
+              <NumericInput
                 id="plan-menu-items"
-                type="number"
                 min={0}
                 value={formValues.maxMenuItems}
-                onChange={(event) => updateField('maxMenuItems', Number(event.target.value))}
+                onValueChange={(value) => updateField('maxMenuItems', value)}
                 required
               />
             </div>

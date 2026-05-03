@@ -66,7 +66,7 @@ export const ChangeTenantPlanDialog = ({
 
   return (
     <Dialog open={Boolean(tenant)} onOpenChange={onOpenChange}>
-      <DialogContent className="border-admin-gray-200 sm:max-w-xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-admin-gray-200 sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">Đổi gói dịch vụ</DialogTitle>
           <DialogDescription>
