@@ -14,6 +14,7 @@ import java.util.UUID;
  */
 public record OrderCancelledEvent(
     UUID orderId,
+    UUID tenantId,
     UUID branchId,
     String orderNumber,
     Instant occurredAt

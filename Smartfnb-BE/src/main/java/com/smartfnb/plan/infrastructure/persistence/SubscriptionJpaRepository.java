@@ -16,6 +16,11 @@ public interface SubscriptionJpaRepository extends JpaRepository<SubscriptionJpa
     Optional<SubscriptionJpaEntity> findFirstByTenantIdAndStatusOrderByCreatedAtDesc(UUID tenantId, String status);
 
     /**
+     * Lấy subscription theo danh sách trạng thái (VD: ACTIVE hoặc PENDING_PAYMENT).
+     */
+    Optional<SubscriptionJpaEntity> findFirstByTenantIdAndStatusInOrderByCreatedAtDesc(UUID tenantId, List<String> statuses);
+
+    /**
      * Lấy toàn bộ lịch sử subscription của Tenant, mới nhất trước.
      * Dùng trong TenantAdminService.getTenantDetail().
      */

@@ -68,8 +68,14 @@ public class UpdateOrderStatusCommandHandler {
         // Ở đây mình sẽ tự bắn event.
         
         eventPublisher.publishEvent(new com.smartfnb.order.domain.event.OrderStatusChangedEvent(
-                savedOrder.getId(), savedOrder.getBranchId(), savedOrder.getOrderNumber(),
-                oldStatus, savedOrder.getStatus().name(), command.staffId(), Instant.now()
+                savedOrder.getId(),
+                savedOrder.getTenantId(),
+                savedOrder.getBranchId(),
+                savedOrder.getOrderNumber(),
+                oldStatus,
+                savedOrder.getStatus().name(),
+                command.staffId(),
+                Instant.now()
         ));
 
         if ("COMPLETED".equalsIgnoreCase(command.newStatus())) {

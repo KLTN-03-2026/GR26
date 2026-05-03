@@ -7,6 +7,8 @@ import com.smartfnb.order.domain.event.OrderCreatedEvent;
 import com.smartfnb.order.domain.event.OrderStatusChangedEvent;
 import com.smartfnb.order.domain.repository.OrderRepository;
 import com.smartfnb.order.domain.model.Order;
+import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
+import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -17,15 +19,7 @@ import java.util.UUID;
 
 /**
  * Lắng nghe các Domain Events từ module Order và broadcast qua WebSocket.
- *
- * <p>Các event được xử lý:
- * <ul>
- *   <li>{@link OrderCreatedEvent} → broadcast đơn mới cho bếp</li>
- *   <li>{@link OrderStatusChangedEvent} → broadcast thay đổi trạng thái</li>
- *   <li>{@link OrderCompletedEvent} → broadcast đơn hoàn thành</li>
- *   <li>{@link OrderCancelledEvent} → broadcast đơn hủy</li>
- * </ul>
- * </p>
+ * Đảm bảo mọi broadcast đều mang đầy đủ dữ liệu đơn hàng bao gồm tên bàn và nhân viên.
  *
  * @author vutq
  * @since 2026-03-31
@@ -36,145 +30,96 @@ import java.util.UUID;
 public class OrderWebSocketEventHandler {
 
     private final OrderStatusBroadcaster orderStatusBroadcaster;
+    private final OrderRepository orderRepository;
+    private final TableJpaRepository tableJpaRepository;
+    private final StaffJpaRepository staffJpaRepository;
 
     /**
      * Xử lý sự kiện đơn hàng mới được tạo.
-     * Broadcast tới /topic/orders/{branchId} để bếp nhận thông báo.
      */
     @EventListener
     @Async
     public void handleOrderCreated(OrderCreatedEvent event) {
         log.info("Nhận sự kiện đơn hàng mới: {} tại chi nhánh {}", event.orderId(), event.branchId());
-
-        // Broadcast ngay bằng thông tin từ event
-        // Event đã chứa orderId, branchId, orderNumber, occurredAt
-        orderStatusBroadcaster.broadcastNewOrder(
-            event.branchId(),
-            buildOrderResponseFromEvent(event)
-        );
-        log.info("Đã broadcast đơn mới {} tới WebSocket topic", event.orderNumber());
+        enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), true);
     }
 
     /**
      * Xử lý sự kiện trạng thái đơn hàng thay đổi.
-     * Broadcast tới /topic/orders/{branchId} để các client cập nhật UI.
      */
     @EventListener
     @Async
     public void handleOrderStatusChanged(OrderStatusChangedEvent event) {
-        log.info("Nhận sự kiện thay đổi trạng thái đơn {} từ {} sang {}",
-            event.orderId(), event.oldStatus(), event.newStatus());
-
-        // Broadcast thay đổi trạng thái
-        orderStatusBroadcaster.broadcastOrderStatus(
-            event.branchId(),
-            buildOrderResponseFromStatusChange(event)
-        );
-        log.info("Đã broadcast thay đổi trạng thái đơn {} sang {} tới WebSocket", 
-            event.orderNumber(), event.newStatus());
+        log.info("Nhận sự kiện thay đổi trạng thái đơn {} sang {}", event.orderId(), event.newStatus());
+        enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), false);
     }
 
     /**
      * Xử lý sự kiện đơn hàng hoàn tất.
-     * Broadcast để cập nhật trạng thái và trigger các process downstream.
      */
     @EventListener
     @Async
     public void handleOrderCompleted(OrderCompletedEvent event) {
         log.info("Nhận sự kiện đơn hàng hoàn tất: {}", event.orderNumber());
-
-        // Broadcast hoàn thành
-        orderStatusBroadcaster.broadcastOrderStatus(
-            event.branchId(),
-            buildOrderResponseFromCompletedEvent(event)
-        );
-        log.info("Đã broadcast đơn {} hoàn tất tới WebSocket", event.orderNumber());
+        enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), false);
     }
 
     /**
      * Xử lý sự kiện đơn hàng bị hủy.
-     * Broadcast để các client biết và cập nhật trạng thái.
      */
     @EventListener
     @Async
     public void handleOrderCancelled(OrderCancelledEvent event) {
         log.info("Nhận sự kiện đơn hàng bị hủy: {}", event.orderId());
-
-        // Broadcast hủy
-        orderStatusBroadcaster.broadcastOrderStatus(
-            event.branchId(),
-            buildOrderResponseFromCancelledEvent(event)
-        );
-        log.info("Đã broadcast đơn {} hủy tới WebSocket", event.orderId());
+        enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), false);
     }
 
     /**
-     * Xây dựng OrderResponse từ OrderCreatedEvent.
+     * Load đầy đủ thông tin đơn hàng từ DB và thực hiện broadcast.
+     * Cung cấp dữ liệu đầy đủ (Items, Table Name, Staff Name) cho Frontend.
+     *
+     * @param orderId ID đơn hàng
+     * @param tenantId ID tenant
+     * @param branchId ID chi nhánh
+     * @param isNew true nếu là đơn hàng mới tạo
      */
-    private OrderResponse buildOrderResponseFromEvent(OrderCreatedEvent event) {
-        return new OrderResponse(
-            event.orderId(),
-            event.orderNumber(),
-            null, // tableId - không có trong event
-            null, // tableName
-            null, // userId
-            null, // staffName
-            null, // source
-            "PENDING", // status vừa tạo
-            null, null, null, null, // subtotal, discount, tax, total
-            null, // notes
-            null, // createdAt
-            null, // completedAt
-            java.util.List.of() // items
-        );
-    }
+    private void enrichAndBroadcast(UUID orderId, UUID tenantId, UUID branchId, boolean isNew) {
+        Order order = orderRepository.findByIdAndTenantId(orderId, tenantId)
+            .orElse(null);
 
-    /**
-     * Xây dựng OrderResponse từ OrderStatusChangedEvent.
-     */
-    private OrderResponse buildOrderResponseFromStatusChange(OrderStatusChangedEvent event) {
-        return new OrderResponse(
-            event.orderId(),
-            event.orderNumber(),
-            null, // tableId
-            null, null, null, // tableName, userId, staffName
-            null, // source
-            event.newStatus(), // trạng thái mới
-            null, null, null, null, null, null, null, java.util.List.of()
-        );
-    }
+        if (order == null) {
+            log.warn("Không tìm thấy Order {} trong DB khi broadcast WebSocket — bỏ qua", orderId);
+            return;
+        }
 
-    /**
-     * Xây dựng OrderResponse từ OrderCompletedEvent.
-     */
-    private OrderResponse buildOrderResponseFromCompletedEvent(OrderCompletedEvent event) {
-        return new OrderResponse(
-            event.orderId(),
-            event.orderNumber(),
-            null,
-            null, null, null, // tableName, userId, staffName
-            null,
-            "COMPLETED",
-            null, null, null,
-            event.totalAmount(),
-            null, null, null,
-            java.util.List.of()
-        );
-    }
+        // Fetch Table Name
+        String tableName = null;
+        if (order.getTableId() != null) {
+            tableName = tableJpaRepository.findById(order.getTableId())
+                .map(t -> t.getName())
+                .orElse("Bàn không xác định");
+        } else {
+            tableName = "Takeaway";
+        }
 
-    /**
-     * Xây dựng OrderResponse từ OrderCancelledEvent.
-     */
-    private OrderResponse buildOrderResponseFromCancelledEvent(OrderCancelledEvent event) {
-        return new OrderResponse(
-            event.orderId(),
-            event.orderNumber(),
-            null,
-            null, null, null, // tableName, userId, staffName
-            null,
-            "CANCELLED",
-            null, null, null, null, null, null, null,
-            java.util.List.of()
-        );
+        // Fetch Staff Name
+        String staffName = null;
+        if (order.getUserId() != null) {
+            staffName = staffJpaRepository.findById(order.getUserId())
+                .map(s -> s.getFullName())
+                .orElse("Nhân viên không xác định");
+        } else {
+            staffName = "Unknown";
+        }
+
+        OrderResponse response = OrderResponse.from(order, tableName, staffName);
+        
+        if (isNew) {
+            orderStatusBroadcaster.broadcastNewOrder(branchId, response);
+        } else {
+            orderStatusBroadcaster.broadcastOrderStatus(branchId, response);
+        }
+
+        log.debug("Đã broadcast thông tin đầy đủ cho đơn {} tới WebSocket topic", order.getOrderNumber());
     }
 }
