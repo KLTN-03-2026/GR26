@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record OrderStatusChangedEvent(
     UUID orderId,
+    UUID tenantId,
     UUID branchId,
     String orderNumber,
     String oldStatus,

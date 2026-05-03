@@ -62,11 +62,11 @@ public class BillingAdminService {
         TenantJpaEntity tenant = findTenantOrThrow(request.tenantId());
         PlanJpaEntity plan = findPlanOrThrow(request.planId());
 
-        // Tìm subscription đang ACTIVE của tenant
+        // Tìm subscription đang ACTIVE hoặc PENDING_PAYMENT của tenant
         SubscriptionJpaEntity activeSubscription = subscriptionRepository
-                .findFirstByTenantIdAndStatusOrderByCreatedAtDesc(request.tenantId(), "ACTIVE")
+                .findFirstByTenantIdAndStatusInOrderByCreatedAtDesc(request.tenantId(), java.util.List.of("ACTIVE", "PENDING_PAYMENT"))
                 .orElseThrow(() -> new SmartFnbException("SUBSCRIPTION_NOT_FOUND",
-                        "Tenant chưa có subscription ACTIVE. Hãy gán gói trước khi tạo hóa đơn.", 404));
+                        "Tenant chưa có subscription hợp lệ để gia hạn. Hãy kiểm tra lại.", 404));
 
         // Guard: không tạo 2 hóa đơn UNPAID cho cùng 1 subscription
         if (invoiceRepository.existsBySubscriptionIdAndStatus(activeSubscription.getId(), "UNPAID")) {
@@ -216,6 +216,7 @@ public class BillingAdminService {
 
         LocalDateTime newExpiresAt = invoice.getBillingPeriodEnd().atStartOfDay();
         subscription.setExpiresAt(newExpiresAt);
+        subscription.setStatus("ACTIVE");
         subscriptionRepository.save(subscription);
 
         // Cập nhật tenant.plan_expires_at

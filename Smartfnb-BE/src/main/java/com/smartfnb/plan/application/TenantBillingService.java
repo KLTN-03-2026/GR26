@@ -79,11 +79,11 @@ public class TenantBillingService {
                 .orElseThrow(() -> new SmartFnbException("PLAN_NOT_FOUND",
                         "Gói dịch vụ không tồn tại: " + request.planId(), 404));
 
-        // Lấy subscription ACTIVE của tenant
+        // Lấy subscription ACTIVE hoặc PENDING_PAYMENT của tenant
         SubscriptionJpaEntity activeSubscription = subscriptionRepository
-                .findFirstByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, "ACTIVE")
+                .findFirstByTenantIdAndStatusInOrderByCreatedAtDesc(tenantId, java.util.List.of("ACTIVE", "PENDING_PAYMENT"))
                 .orElseThrow(() -> new SmartFnbException("SUBSCRIPTION_NOT_FOUND",
-                        "Tenant chưa có gói dịch vụ ACTIVE. Liên hệ Admin để được hỗ trợ.", 404));
+                        "Tenant chưa có gói dịch vụ. Liên hệ Admin để được hỗ trợ.", 404));
 
         // Guard: ngăn tạo 2 hóa đơn UNPAID cùng lúc cho cùng subscription
         if (invoiceRepository.existsBySubscriptionIdAndStatus(activeSubscription.getId(), "UNPAID")) {
@@ -299,6 +299,7 @@ public class TenantBillingService {
         // Cộng hạn đến billing_period_end của hóa đơn
         subscription.setExpiresAt(invoice.getBillingPeriodEnd().atStartOfDay());
         subscription.setPlanId(invoice.getPlanId());
+        subscription.setStatus("ACTIVE");
         subscriptionRepository.save(subscription);
 
         log.info("Đã gia hạn subscription {} — expiresAt={}",

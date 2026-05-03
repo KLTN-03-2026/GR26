@@ -1,6 +1,9 @@
 package com.smartfnb.shared.config;
 
+import com.smartfnb.auth.infrastructure.websocket.WebSocketAuthInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -12,12 +15,18 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * - /topic/tables/{branchId}  → cập nhật sơ đồ bàn realtime
  * - /topic/orders/{branchId}  → cập nhật trạng thái đơn hàng realtime (S-10)
  *
+ * <p><b>BUG FIX (BUG-2026-05-03 — BUG 2):</b> Đăng ký {@link WebSocketAuthInterceptor}
+ * vào inbound channel để xác thực JWT tại STOMP CONNECT và populate session attributes.</p>
+ *
  * @author vutq
  * @since 2026-03-28
  */
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     /**
      * Cấu hình simple in-memory message broker.
@@ -45,5 +54,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("*")
                 // SockJS fallback cho browser không hỗ trợ native WebSocket
                 .withSockJS();
+    }
+
+    /**
+     * Đăng ký WebSocketAuthInterceptor vào inbound channel.
+     * Interceptor này xác thực JWT tại STOMP CONNECT và cache claims
+     * vào session attributes để các @MessageMapping handler đọc được.
+     */
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthInterceptor);
     }
 }

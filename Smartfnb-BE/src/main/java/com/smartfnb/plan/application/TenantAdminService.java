@@ -198,7 +198,7 @@ public class TenantAdminService {
         }
 
         // Expire subscription cũ nếu có
-        subscriptionRepository.findFirstByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, "ACTIVE")
+        subscriptionRepository.findFirstByTenantIdAndStatusInOrderByCreatedAtDesc(tenantId, java.util.List.of("ACTIVE", "PENDING_PAYMENT"))
                 .ifPresent(oldSub -> {
                     oldSub.setStatus("EXPIRED");
                     subscriptionRepository.save(oldSub);
