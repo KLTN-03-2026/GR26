@@ -15,6 +15,11 @@ import { Textarea } from '@shared/components/ui/textarea';
 import { useToast } from '@shared/hooks/useToast';
 import { cn } from '@shared/utils/cn';
 import { formatVND } from '@shared/utils/formatCurrency';
+import {
+  formatNumericInputValue,
+  parseNumericInputValue,
+  sanitizeIntegerInputValue,
+} from '@shared/utils/numberInput';
 import { LockKeyhole, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 
@@ -115,14 +120,19 @@ export const ClosePosSessionDialog = ({
   // author: Hoàng | date: 2026-05-01 | note: Tính chênh lệch realtime khi nhập — dương = thừa, âm = thiếu.
   const diff = useMemo(() => {
     if (endingCashActual === '') return null;
-    const actual = Number(endingCashActual);
-    if (!Number.isFinite(actual)) return null;
+    const actual = parseNumericInputValue(endingCashActual);
+    if (actual === null) return null;
     return actual - expectedCash;
   }, [endingCashActual, expectedCash]);
 
   const handleSubmit = () => {
-    const amount = Number(endingCashActual);
-    if (!Number.isFinite(amount) || amount < 0) {
+    if (endingCashActual === '') {
+      error('Chưa nhập tiền kiểm kê', 'Vui lòng nhập số tiền kiểm kê thực tế trước khi đóng ca.');
+      return;
+    }
+
+    const amount = parseNumericInputValue(endingCashActual);
+    if (amount === null || amount < 0) {
       error('Tiền kiểm kê không hợp lệ', 'Vui lòng nhập số tiền lớn hơn hoặc bằng 0.');
       return;
     }
@@ -226,11 +236,11 @@ export const ClosePosSessionDialog = ({
               <Input
                 id={cashInputId}
                 inputMode="numeric"
-                min={0}
+                aria-invalid={endingCashActual === ''}
                 placeholder="Ví dụ: 4.500.000"
-                type="number"
-                value={endingCashActual}
-                onChange={(event) => setEndingCashActual(event.target.value)}
+                type="text"
+                value={formatNumericInputValue(endingCashActual)}
+                onChange={(event) => setEndingCashActual(sanitizeIntegerInputValue(event.target.value))}
               />
             </div>
 
@@ -300,7 +310,7 @@ export const ClosePosSessionDialog = ({
             type="button"
             variant="destructive"
             onClick={handleSubmit}
-            disabled={closeSession.isPending}
+            disabled={closeSession.isPending || endingCashActual === ''}
           >
             {closeSession.isPending ? 'Đang đóng ca...' : 'Đóng ca'}
           </Button>

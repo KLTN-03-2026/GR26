@@ -38,6 +38,7 @@ export const ROUTES = {
     PROMOTIONS_DETAIL: '/owner/promotions/:id',
     POS_SESSIONS: '/owner/pos-sessions',
     SUPPLIERS: '/owner/suppliers',
+    SUPPLIERS_DETAIL: '/owner/suppliers/:id',
     REPORTS: '/owner/reports',
     REPORT_REVENUE: '/owner/reports/revenue',
     REPORT_INVENTORY: '/owner/reports/inventory',

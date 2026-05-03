@@ -64,7 +64,7 @@ const AdminTenantsPage = () => {
     refetch,
   } = useAdminTenants(listParams);
   const {
-    data: activePlansPage,
+    data: activePlans,
     isLoading: isActivePlansLoading,
   } = useAdminActivePlans();
   const suspendTenantMutation = useSuspendTenant();
@@ -74,7 +74,7 @@ const AdminTenantsPage = () => {
   const tenants = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
   const totalElements = data?.totalElements ?? 0;
-  const activePlans = activePlansPage?.content ?? [];
+  const activePlanOptions = activePlans ?? [];
   const isStatusActionPending = suspendTenantMutation.isPending || reactivateTenantMutation.isPending;
 
   const handleFilterKeywordChange = (value: string) => {
@@ -169,7 +169,7 @@ const AdminTenantsPage = () => {
               tenant
             </span>
             <span>
-              {isActivePlansLoading ? 'Đang tải danh sách gói...' : `${formatNumber(activePlans.length)} gói active`}
+              {isActivePlansLoading ? 'Đang tải danh sách gói...' : `${formatNumber(activePlanOptions.length)} gói active`}
             </span>
           </div>
         )}
@@ -178,7 +178,7 @@ const AdminTenantsPage = () => {
           keyword={keyword}
           status={statusFilter}
           planId={planId}
-          plans={activePlans}
+          plans={activePlanOptions}
           onKeywordChange={handleFilterKeywordChange}
           onStatusChange={handleStatusChange}
           onPlanChange={handlePlanChange}
@@ -272,7 +272,7 @@ const AdminTenantsPage = () => {
         <ChangeTenantPlanDialog
           key={changePlanTenant.id}
           tenant={changePlanTenant}
-          plans={activePlans}
+          plans={activePlanOptions}
           isPending={changeTenantPlanMutation.isPending}
           onOpenChange={(open) => {
             if (!open) {

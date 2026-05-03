@@ -22,6 +22,8 @@ import RevenuePage from '@pages/owner/RevenuePage';
 import StaffDetailPage from '@pages/owner/StaffDetailPage';
 import StaffPage from '@pages/owner/StaffPage';
 import StaffPositionsPage from '@pages/owner/StaffPositionsPage';
+import SupplierDetailPage from '@pages/owner/SupplierDetailPage';
+import SuppliersPage from '@pages/owner/SuppliersPage';
 import TablesPage from '@pages/owner/TablesPage';
 import OrderDetailPage from '@pages/pos/OrderDetailPage';
 import MyShiftsPage from '@pages/pos/MyShiftsPage';
@@ -161,12 +163,8 @@ export const ownerRoutes: RouteConfigItem[] = [
   createRoute(ROUTES.OWNER.BRANCHES_DETAIL, 'Chi tiết chi nhánh', <BranchDetailPage />),
   createRoute(ROUTES.OWNER.PROMOTIONS, 'Quản lý voucher', <VouchersPage />),
   createRoute(ROUTES.OWNER.POS_SESSIONS, 'Lịch sử ca POS', <PosSessionHistoryPage />),
-  createPlaceholderRoute(
-    ROUTES.OWNER.SUPPLIERS,
-    'Nhà cung cấp',
-    'Nhà cung cấp',
-    'Page nhà cung cấp sẽ được thêm riêng ở bước triển khai module supplier.'
-  ),
+  createRoute(ROUTES.OWNER.SUPPLIERS, 'Nhà cung cấp', <SuppliersPage />),
+  createRoute(ROUTES.OWNER.SUPPLIERS_DETAIL, 'Chi tiết nhà cung cấp', <SupplierDetailPage />),
   createRoute(
     ROUTES.OWNER.REPORTS,
     'Báo cáo',

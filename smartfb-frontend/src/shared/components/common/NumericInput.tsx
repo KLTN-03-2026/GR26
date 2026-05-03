@@ -1,5 +1,10 @@
 import { forwardRef, useEffect, useState, type ChangeEvent, type FocusEvent } from 'react';
 import { Input, type InputProps } from '@shared/components/ui/input';
+import {
+  formatNumericInputValue,
+  parseNumericInputValue,
+  sanitizeNumericInputValue,
+} from '@shared/utils/numberInput';
 
 interface NumericInputProps
   extends Omit<InputProps, 'type' | 'value' | 'defaultValue' | 'onChange' | 'inputMode'> {
@@ -7,13 +12,19 @@ interface NumericInputProps
   onValueChange: (value: number) => void;
   emptyValue?: number;
   allowDecimal?: boolean;
+  formatThousands?: boolean;
   hideZeroValue?: boolean;
 }
 
 /**
  * Chuẩn hóa giá trị số sang chuỗi hiển thị cho input.
  */
-const formatDisplayValue = (value: number | null | undefined, hideZeroValue: boolean): string => {
+const formatDisplayValue = (
+  value: number | null | undefined,
+  hideZeroValue: boolean,
+  allowDecimal: boolean,
+  formatThousands: boolean,
+): string => {
   if (value === null || value === undefined) {
     return '';
   }
@@ -22,23 +33,19 @@ const formatDisplayValue = (value: number | null | undefined, hideZeroValue: boo
     return '';
   }
 
-  return String(value);
+  return formatThousands ? formatNumericInputValue(value, allowDecimal) : String(value);
 };
 
 /**
  * Parse chuỗi người dùng nhập thành number hợp lệ.
  */
 const parseNumericValue = (rawValue: string, allowDecimal: boolean): number | null => {
-  if (!rawValue.trim()) {
-    return null;
-  }
-
-  const parsedValue = allowDecimal ? Number(rawValue) : Number.parseInt(rawValue, 10);
-  return Number.isNaN(parsedValue) ? null : parsedValue;
+  return parseNumericInputValue(rawValue, allowDecimal);
 };
 
 /**
  * Input số dùng chung để tránh tình trạng dính `0` khi nhập và ẩn spinner mặc định của browser.
+ * Với số nguyên, input tự thêm dấu phân tách hàng nghìn để dễ đọc số tiền/số lượng lớn.
  */
 export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
   (
@@ -48,6 +55,7 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
       onValueChange,
       emptyValue = 0,
       allowDecimal = false,
+      formatThousands = !allowDecimal,
       hideZeroValue = false,
       onBlur,
       ...props
@@ -55,24 +63,21 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
     ref
   ) => {
     const [displayValue, setDisplayValue] = useState<string>(
-      formatDisplayValue(value, hideZeroValue)
+      formatDisplayValue(value, hideZeroValue, allowDecimal, formatThousands)
     );
 
     useEffect(() => {
-      setDisplayValue(formatDisplayValue(value, hideZeroValue));
-    }, [hideZeroValue, value]);
+      setDisplayValue(formatDisplayValue(value, hideZeroValue, allowDecimal, formatThousands));
+    }, [allowDecimal, formatThousands, hideZeroValue, value]);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
       const raw = event.target.value;
 
-      // Chỉ giữ lại ký tự số và dấu chấm thập phân (khi allowDecimal)
-      const sanitized = allowDecimal
-        ? raw.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1') // cho phép tối đa 1 dấu chấm
-        : raw.replace(/[^0-9]/g, '');
-
+      // Chỉ giữ lại ký tự số hợp lệ, phần format chỉ phục vụ hiển thị.
+      const sanitized = sanitizeNumericInputValue(raw, allowDecimal);
       const parsedValue = parseNumericValue(sanitized, allowDecimal);
 
-      setDisplayValue(sanitized);
+      setDisplayValue(formatThousands ? formatNumericInputValue(sanitized, allowDecimal) : sanitized);
 
       if (parsedValue === null) {
         return;
@@ -88,13 +93,13 @@ export const NumericInput = forwardRef<HTMLInputElement, NumericInputProps>(
         const fallbackValue = value ?? emptyValue;
         const normalizedValue = event.target.value.trim() === '' ? emptyValue : fallbackValue;
 
-        setDisplayValue(formatDisplayValue(normalizedValue, hideZeroValue));
+        setDisplayValue(formatDisplayValue(normalizedValue, hideZeroValue, allowDecimal, formatThousands));
         onValueChange(normalizedValue);
         onBlur?.(event);
         return;
       }
 
-      setDisplayValue(formatDisplayValue(parsedValue, hideZeroValue));
+      setDisplayValue(formatDisplayValue(parsedValue, hideZeroValue, allowDecimal, formatThousands));
       onValueChange(parsedValue);
       onBlur?.(event);
     };

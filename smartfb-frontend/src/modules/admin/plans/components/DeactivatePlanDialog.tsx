@@ -28,7 +28,7 @@ export const DeactivatePlanDialog = ({
 }: DeactivatePlanDialogProps) => {
   return (
     <Dialog open={Boolean(plan)} onOpenChange={onOpenChange}>
-      <DialogContent className="border-admin-gray-200">
+      <DialogContent className="border-admin-gray-200 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">Ẩn gói dịch vụ</DialogTitle>
           <DialogDescription>

@@ -5,6 +5,7 @@ import type {
   CreateStaffRequest,
   UpdateStaffRequest,
   DeactivateStaffRequest,
+  UpdateStaffStatusRequest,
 } from '../types/staff.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
@@ -95,11 +96,9 @@ export const staffService = {
 
   /**
    * Cập nhật trạng thái nhân viên (khóa/mở khóa)
-   * Sử dụng API update staff với status field
+   * PATCH /api/v1/staff/{id}/status - Đổi trạng thái làm việc, không xóa mềm nhân viên.
    */
-  updateStatus: async (id: string, status: 'ACTIVE' | 'INACTIVE'): Promise<StaffDetail> => {
-    await api.put<ApiResponse<void>>(`/staff/${id}`, { status });
-    const updatedStaff = await staffService.getById(id);
-    return updatedStaff;
+  updateStatus: async (id: string, payload: UpdateStaffStatusRequest): Promise<void> => {
+    await api.patch<ApiResponse<void>>(`/staff/${id}/status`, payload);
   },
 };

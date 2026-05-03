@@ -15,6 +15,10 @@ import {
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
+import {
+    formatNumericInputValue,
+    sanitizeIntegerInputValue,
+} from '@shared/utils/numberInput';
 import { useCreateVoucher } from '../hooks/useCreateVoucher';
 import { createVoucherSchema, type CreateVoucherFormValues } from '../schemas/voucherSchema';
 import type { DiscountType } from '../types/voucher.types';
@@ -150,9 +154,13 @@ export const CreateVoucherDialog = ({
                             </Label>
                             <Input
                                 id="discountValue"
-                                type="number"
-                                value={formData.discountValue || ''}
-                                onChange={(e) => updateField('discountValue', Number(e.target.value))}
+                                type="text"
+                                inputMode="numeric"
+                                value={formatNumericInputValue(formData.discountValue || '')}
+                                onChange={(e) => {
+                                    const sanitized = sanitizeIntegerInputValue(e.target.value);
+                                    updateField('discountValue', sanitized ? Number(sanitized) : 0);
+                                }}
                                 className={errors.discountValue ? 'border-red-500' : ''}
                                 placeholder={formData.discountType === 'PERCENT' ? '%' : 'VNĐ'}
                             />
@@ -164,9 +172,13 @@ export const CreateVoucherDialog = ({
                         <Label htmlFor="minOrderValue">Giá trị đơn tối thiểu (VNĐ)</Label>
                         <Input
                             id="minOrderValue"
-                            type="number"
-                            value={formData.minOrderValue || ''}
-                            onChange={(e) => updateField('minOrderValue', e.target.value ? Number(e.target.value) : null)}
+                            type="text"
+                            inputMode="numeric"
+                            value={formatNumericInputValue(formData.minOrderValue)}
+                            onChange={(e) => {
+                                const sanitized = sanitizeIntegerInputValue(e.target.value);
+                                updateField('minOrderValue', sanitized ? Number(sanitized) : null);
+                            }}
                             placeholder="Để trống nếu không có điều kiện"
                         />
                     </div>

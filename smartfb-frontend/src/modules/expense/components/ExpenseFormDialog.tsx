@@ -18,6 +18,10 @@ import {
   SelectValue,
 } from '@shared/components/ui/select';
 import { Textarea } from '@shared/components/ui/textarea';
+import {
+  formatNumericInputValue,
+  sanitizeIntegerInputValue,
+} from '@shared/utils/numberInput';
 import type {
   ExpenseEditablePaymentMethod,
   ExpenseFormValues,
@@ -212,11 +216,10 @@ const ExpenseFormDialogBody = ({
           </Label>
           <Input
             id="expense-amount"
-            type="number"
-            min="0"
-            step="1000"
-            value={formValues.amount}
-            onChange={(event) => updateField('amount', event.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={formatNumericInputValue(formValues.amount)}
+            onChange={(event) => updateField('amount', sanitizeIntegerInputValue(event.target.value))}
             placeholder="Ví dụ: 250000"
             disabled={isPending}
           />

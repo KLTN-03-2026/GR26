@@ -4,28 +4,23 @@ import type { BranchMenuItemConfig } from '@modules/menu/types/menu.types';
 import { queryKeys } from '@shared/constants/queryKeys';
 
 /**
- * Hook lấy cấu hình món ăn theo chi nhánh cho danh sách menu hiện tại.
- * Dùng API batch để tránh gọi từng món khi danh sách thực đơn lớn.
+ * Hook lấy toàn bộ cấu hình món ăn theo chi nhánh hiện tại.
+ * Dùng API batch để màn Thực đơn luôn bám đúng trạng thái bật/tắt và giá theo branch.
  *
  * @param branchId - ID chi nhánh đang chọn
- * @param itemIds - Danh sách món cần lấy cấu hình chi nhánh
  */
-export const useBranchMenuItems = (branchId: string | null, itemIds: string[]) => {
-  const normalizedItemIds = [...itemIds].sort();
-
+export const useBranchMenuItems = (branchId: string | null) => {
   return useQuery({
-    queryKey: queryKeys.menu.branchItems(branchId ?? 'all', normalizedItemIds),
+    queryKey: queryKeys.menu.branchItems(branchId ?? 'all'),
     queryFn: async () => {
-      if (!branchId || normalizedItemIds.length === 0) {
+      if (!branchId) {
         return [] satisfies BranchMenuItemConfig[];
       }
 
       const response = await menuService.getBranchItems(branchId);
-      const requestedItemIdSet = new Set(normalizedItemIds);
-
-      return response.data.filter((item) => requestedItemIdSet.has(item.itemId));
+      return response.data;
     },
-    enabled: Boolean(branchId) && normalizedItemIds.length > 0,
+    enabled: Boolean(branchId),
     staleTime: 60 * 1000,
   });
 };

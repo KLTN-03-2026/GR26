@@ -47,7 +47,7 @@ export const TenantStatusActionDialog = ({
 
   return (
     <Dialog open={Boolean(tenant && action)} onOpenChange={onOpenChange}>
-      <DialogContent className="border-admin-gray-200">
+      <DialogContent className="border-admin-gray-200 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">
             {isSuspend ? 'Tạm khóa tenant' : 'Mở khóa tenant'}

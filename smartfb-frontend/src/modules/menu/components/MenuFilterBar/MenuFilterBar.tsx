@@ -7,6 +7,7 @@ import { StatusFilter } from './StatusFilter';
 import { SortFilter } from './SortFilter';
 import { FilterFooter } from './FilterFooter';
 import type { MenuCategory, MenuCategoryInfo, MenuFilters, MenuSortOption, MenuStatus } from '@modules/menu/types/menu.types';
+import { DEFAULT_MENU_FILTERS } from '@modules/menu/utils';
 
 interface MenuFilterBarProps {
   categories: MenuCategoryInfo[];
@@ -36,7 +37,7 @@ export const MenuFilterBar: FC<MenuFilterBarProps> = ({
     filters.search ? 1 : 0,
     filters.categories.length > 0 ? 1 : 0,
     filters.statuses.length > 0 ? 1 : 0,
-    filters.sortBy !== 'newest' ? 1 : 0,
+    filters.sortBy !== DEFAULT_MENU_FILTERS.sortBy ? 1 : 0,
   ].reduce((acc, curr) => acc + curr, 0);
 
   const handleCategoryChange = (category: MenuCategory) => {

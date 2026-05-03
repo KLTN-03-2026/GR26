@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useAuthStore } from '@modules/auth/stores/authStore';
+import { selectCurrentBranchId, useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useDebounce } from '@shared/hooks/useDebounce';
@@ -54,7 +54,7 @@ export const useMenuManagement = () => {
 
   const debouncedSearch = useDebounce(filters.search.trim(), 400);
   const canManageMenu = can(PERMISSIONS.MENU_EDIT);
-  const selectedBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const selectedBranchId = useAuthStore(selectCurrentBranchId);
   const isBranchMode = Boolean(selectedBranchId);
 
   const menuQueryParams = useMemo(() => {
@@ -84,14 +84,13 @@ export const useMenuManagement = () => {
   const rawMenuItems = useMemo(() => data?.data ?? [], [data?.data]);
   const rawAddons = useMemo(() => addonResponse?.data ?? [], [addonResponse?.data]);
   const rawCategories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse?.data]);
-  const rawMenuItemIds = useMemo(() => rawMenuItems.map((menu) => menu.id), [rawMenuItems]);
 
   const {
     data: branchMenuConfigs = [],
     isLoading: isBranchConfigLoading,
     isFetching: isBranchConfigFetching,
     isError: isBranchConfigError,
-  } = useBranchMenuItems(selectedBranchId, rawMenuItemIds);
+  } = useBranchMenuItems(selectedBranchId);
 
   /**
    * Map danh mục theo ID để card món ăn hiển thị đúng tên từ backend.
@@ -293,6 +292,7 @@ export const useMenuManagement = () => {
     nextCategoryDisplayOrder,
     paginatedMenus,
     rawAddons,
+    selectedBranchId,
     selectedBranchName,
     showFilter,
     statusCounts,

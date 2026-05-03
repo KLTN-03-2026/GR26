@@ -6,6 +6,11 @@ import { useToast } from '@shared/hooks/useToast';
 import type { CreateMenuPayload } from '@modules/menu/types/menu.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
+interface CreateMenuMutationParams {
+  payload: CreateMenuPayload;
+  branchId?: string | null;
+}
+
 /**
  * Hook tạo mới món ăn
  * @returns Mutation object để tạo món ăn mới
@@ -15,7 +20,9 @@ export const useCreateMenu = () => {
   const { success, error } = useToast();
 
   return useMutation({
-    mutationFn: (payload: CreateMenuPayload) => menuService.create(payload),
+    mutationFn: ({ payload, branchId }: CreateMenuMutationParams) =>
+      // Author: Hoàng | date: 2026-05-02 | note: Truyền branchId khi tạo món trong branch mode để BE gán menu đúng chi nhánh.
+      menuService.create(payload, { branchId }),
     onSuccess: (response) => {
       // Invalidate để refetch danh sách
       void queryClient.invalidateQueries({ queryKey: queryKeys.menu.all });

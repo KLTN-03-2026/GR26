@@ -60,6 +60,7 @@ export const MenuManagementContent = () => {
     onUpdateEditingMenuOpen,
     paginatedMenus,
     rawAddons,
+    selectedBranchId,
     selectedBranchName,
     setIsFilterSheetOpen,
     setShowFilter,
@@ -193,6 +194,7 @@ export const MenuManagementContent = () => {
                   />
                   <AddMenuDialog
                     categories={categoryManagementItems}
+                    branchId={isBranchMode ? selectedBranchId : null}
                     triggerClassName="w-full sm:w-auto"
                   />
                 </>
@@ -251,6 +253,7 @@ export const MenuManagementContent = () => {
             categories={categoryManagementItems}
             menu={editingMenu}
             open={Boolean(editingMenu)}
+            branchId={isBranchMode ? selectedBranchId : null}
             triggerClassName="w-full sm:w-auto"
             onOpenChange={onUpdateEditingMenuOpen}
           />

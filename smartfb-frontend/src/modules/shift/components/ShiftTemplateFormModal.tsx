@@ -7,6 +7,7 @@ import {
     DialogTitle,
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import { SearchableCombobox, type SearchableComboboxOption } from '@shared/components/common/SearchableCombobox';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
@@ -247,28 +248,22 @@ export const ShiftTemplateFormModal = ({
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="shift-min-staff">Số lượng tối thiểu</Label>
-                            <Input
+                            <NumericInput
                                 id="shift-min-staff"
-                                type="number"
                                 min={1}
                                 value={formData.minStaff}
-                                onChange={(event) =>
-                                    setFormData({ ...formData, minStaff: parseInt(event.target.value) || 1 })
-                                }
+                                onValueChange={(value) => setFormData({ ...formData, minStaff: value || 1 })}
                                 className={errors.minStaff ? 'border-red-500' : ''}
                             />
                             {errors.minStaff && <p className="text-xs text-red-500">{errors.minStaff}</p>}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="shift-max-staff">Số lượng tối đa</Label>
-                            <Input
+                            <NumericInput
                                 id="shift-max-staff"
-                                type="number"
                                 min={formData.minStaff}
                                 value={formData.maxStaff}
-                                onChange={(event) =>
-                                    setFormData({ ...formData, maxStaff: parseInt(event.target.value) || 1 })
-                                }
+                                onValueChange={(value) => setFormData({ ...formData, maxStaff: value || 1 })}
                                 className={errors.maxStaff ? 'border-red-500' : ''}
                             />
                             {errors.maxStaff && <p className="text-xs text-red-500">{errors.maxStaff}</p>}

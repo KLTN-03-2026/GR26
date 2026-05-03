@@ -21,6 +21,7 @@ export const MENU_CATEGORIES: MenuCategoryInfo[] = [
  * Tùy chọn sắp xếp
  */
 export const MENU_SORT_OPTIONS: Record<MenuSortOption, { label: string }> = {
+  'availability-az': { label: 'Đang bán trước, A-Z' },
   newest: { label: 'Mới nhất' },
   'price-asc': { label: 'Giá tăng dần' },
   'price-desc': { label: 'Giá giảm dần' },

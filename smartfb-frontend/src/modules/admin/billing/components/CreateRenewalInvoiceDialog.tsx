@@ -1,4 +1,5 @@
 import { Button } from '@shared/components/ui/button';
+import { NumericInput } from '@shared/components/common/NumericInput';
 import {
   Dialog,
   DialogContent,
@@ -7,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/components/ui/dialog';
-import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { Textarea } from '@shared/components/ui/textarea';
 import { formatVND } from '@shared/utils/formatCurrency';
@@ -65,7 +65,7 @@ export const CreateRenewalInvoiceDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-admin-gray-200 sm:max-w-xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-admin-gray-200 sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">Tạo hóa đơn gia hạn</DialogTitle>
           <DialogDescription>
@@ -110,13 +110,12 @@ export const CreateRenewalInvoiceDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="invoice-months">Số tháng gia hạn</Label>
-            <Input
+            <NumericInput
               id="invoice-months"
-              type="number"
               min={1}
               max={24}
               value={months}
-              onChange={(event) => setMonths(Number(event.target.value))}
+              onValueChange={setMonths}
             />
           </div>
 
