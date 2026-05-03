@@ -23,4 +23,11 @@ public interface BranchJpaRepository extends JpaRepository<BranchJpaEntity, UUID
      * Lấy danh sách toàn bộ chi nhánh của Tenant theo trạng thái.
      */
     List<BranchJpaEntity> findByTenantIdAndStatus(UUID tenantId, String status);
+
+
+    
+  /**
+   * Lấy toàn bộ chi nhánh thuộc tenant để đồng bộ trạng thái món theo chi nhánh.
+   */
+    List<BranchJpaEntity> findByTenantId(UUID tenantId);
 }

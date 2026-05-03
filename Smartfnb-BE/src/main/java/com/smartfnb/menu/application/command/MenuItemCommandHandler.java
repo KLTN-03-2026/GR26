@@ -1,5 +1,7 @@
 package com.smartfnb.menu.application.command;
 
+import com.smartfnb.branch.infrastructure.persistence.BranchJpaEntity;
+import com.smartfnb.branch.infrastructure.persistence.BranchJpaRepository;
 import com.smartfnb.menu.application.dto.*;
 import com.smartfnb.menu.domain.exception.DuplicateMenuItemNameException;
 import com.smartfnb.menu.domain.exception.MenuItemNotFoundException;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 import com.smartfnb.plan.application.SubscriptionService;
 import com.smartfnb.plan.application.dto.SubscriptionResponse;
@@ -34,6 +37,7 @@ public class MenuItemCommandHandler {
 
     private final MenuItemJpaRepository menuItemJpaRepository;
     private final BranchItemJpaRepository branchItemJpaRepository;
+    private final BranchJpaRepository branchJpaRepository;
     private final FileStorageService fileStorageService;
     private final SubscriptionService subscriptionService;
 
@@ -47,7 +51,7 @@ public class MenuItemCommandHandler {
      * @throws DuplicateMenuItemNameException nếu tên đã tồn tại
      */
     @Transactional
-    public MenuItemResponse createMenuItem(CreateMenuItemRequest request, MultipartFile image) {
+    public MenuItemResponse createMenuItem(CreateMenuItemRequest request, MultipartFile image, UUID branchId) {
         UUID tenantId = TenantContext.requireCurrentTenantId();
 
         log.info("Tạo món ăn mới '{}' cho tenant {}", request.name(), tenantId);
@@ -89,9 +93,33 @@ public class MenuItemCommandHandler {
         entity.setIsSyncDelivery(Boolean.TRUE.equals(request.isSyncDelivery()));
 
         MenuItemJpaEntity saved = menuItemJpaRepository.save(entity);
+        // Author: Hoàng | date: 2026-05-02 | note: Nếu tạo món trong context chi nhánh, ghi rõ true/false cho từng branch để món không leak sang chi nhánh khác.
+        syncBranchAvailabilityForNewItem(tenantId, saved.getId(), branchId);
         log.info("Đã tạo item {} - '{}' (type={})", saved.getId(), saved.getName(), saved.getType());
 
         return MenuItemResponse.from(saved);
+    }
+
+    /**
+     * Author: Hoàng | date: 2026-05-02 | note: Tạo assignment chi nhánh cho món mới theo rule null = global, true/false = branch override.
+     */
+    private void syncBranchAvailabilityForNewItem(UUID tenantId, UUID itemId, UUID selectedBranchId) {
+        if (selectedBranchId == null) {
+            return;
+        }
+
+        BranchJpaEntity selectedBranch = branchJpaRepository.findById(selectedBranchId)
+                .orElseThrow(() -> new SmartFnbException("BRANCH_NOT_FOUND", "Không tìm thấy chi nhánh", 404));
+
+        if (!selectedBranch.getTenantId().equals(tenantId)) {
+            throw new SmartFnbException("ACCESS_DENIED", "Chi nhánh không thuộc tenant hiện tại", 403);
+        }
+
+        List<BranchJpaEntity> tenantBranches = branchJpaRepository.findByTenantId(tenantId);
+        for (BranchJpaEntity branch : tenantBranches) {
+            boolean isSelectedBranch = branch.getId().equals(selectedBranchId);
+            branchItemJpaRepository.upsertBranchItem(branch.getId(), itemId, null, isSelectedBranch);
+        }
     }
 
     /**

@@ -12,6 +12,9 @@ import com.smartfnb.branch.infrastructure.persistence.BranchUserJpaEntity;
 import com.smartfnb.branch.infrastructure.persistence.BranchUserJpaRepository;
 import com.smartfnb.auth.infrastructure.persistence.UserRepository;
 import com.smartfnb.auth.infrastructure.persistence.UserJpaEntity;
+import com.smartfnb.menu.infrastructure.persistence.BranchItemJpaRepository;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository;
 import com.smartfnb.plan.application.SubscriptionService;
 import com.smartfnb.plan.application.dto.SubscriptionResponse;
 import com.smartfnb.shared.AesEncryptionUtil;
@@ -43,6 +46,8 @@ public class BranchService {
     private final BranchUserJpaRepository branchUserRepository;
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
+    private final BranchItemJpaRepository branchItemJpaRepository;
+    private final MenuItemJpaRepository menuItemJpaRepository;
     // author: Hoàng | date: 27-04-2026 | note: inject cho payment config PayOS
     private final BranchPaymentConfigJpaRepository paymentConfigRepository;
     private final AesEncryptionUtil aesEncryptionUtil;
@@ -113,8 +118,29 @@ public class BranchService {
                 .build();
 
         newBranch = branchRepository.save(newBranch);
+        // Author: Hoàng | date: 2026-05-02 | note: Branch mới phải tắt mặc định các món đã có override branch để không leak món riêng chi nhánh.
+        backfillUnavailableBranchItemsForNewBranch(tenantId, newBranch.getId());
         log.info("Tạo chi nhánh thành công id={}, name={}", newBranch.getId(), newBranch.getName());
         return BranchResponse.fromEntity(newBranch);
+    }
+
+    /**
+     * Author: Hoàng | date: 2026-05-02 | note: Các item đã có branch_items được xem là branch-specific, branch mới cần row false.
+     */
+    private void backfillUnavailableBranchItemsForNewBranch(UUID tenantId, UUID newBranchId) {
+        List<UUID> activeItemIds = menuItemJpaRepository.findAllActiveByTenant(tenantId)
+                .stream()
+                .map(MenuItemJpaEntity::getId)
+                .toList();
+
+        if (activeItemIds.isEmpty()) {
+            return;
+        }
+
+        List<UUID> branchSpecificItemIds = branchItemJpaRepository.findDistinctItemIdsIn(activeItemIds);
+        for (UUID itemId : branchSpecificItemIds) {
+            branchItemJpaRepository.upsertBranchItem(newBranchId, itemId, null, false);
+        }
     }
 
     /**

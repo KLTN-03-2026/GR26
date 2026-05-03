@@ -38,6 +38,12 @@ public interface BranchItemJpaRepository
     List<BranchItemJpaEntity> findByIdBranchId(UUID branchId);
 
     /**
+     * Author: Hoàng | date: 2026-05-02 | note: Lấy các item đã có override branch để backfill trạng thái false khi tạo branch mới.
+     */
+    @Query("SELECT DISTINCT b.id.itemId FROM BranchItemJpaEntity b WHERE b.id.itemId IN :itemIds")
+    List<UUID> findDistinctItemIdsIn(@Param("itemIds") List<UUID> itemIds);
+
+    /**
      * Cập nhật hoặc tạo giá branch item (upsert).
      * Dùng ON CONFLICT DO UPDATE để tránh duplicate.
      *
