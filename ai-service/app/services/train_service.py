@@ -39,9 +39,9 @@ logger = get_logger(__name__)
 # Quy tắc: min_data ≈ n_lags × 5~6 để có đủ training sample, tránh overfit.
 # FE dùng giá trị này để hiển thị progress bar "chi nhánh đủ điều kiện AI chưa".
 MIN_DAYS_BY_FORECAST: dict[int, int] = {
-    7:  90,   # n_lags=14  → 14×6=84  → làm tròn 90
-    14: 150,  # n_lags=28  → 28×5=140 → làm tròn 150
-    21: 180,  # n_lags=28  → 28×6=168 → làm tròn 180
+    7:  120,  # n_lags=28  → 28×4=112  → làm tròn 120
+    14: 150,  # n_lags=40  → 40×4=160  → làm tròn 150 (min để vào bậc 40)
+    21: 200,  # n_lags=60  → 60×3=180  → làm tròn 200 (min để vào bậc 60)
 }
 # Fallback khi n_forecasts không nằm trong bảng trên
 MIN_DAYS_REQUIRED = 90
@@ -82,8 +82,10 @@ def _auto_n_lags(active_days: int) -> int:
     Bậc:
         < 45 ngày   →  3  (data rất ít, nhìn lại ít để tránh overfit)
         >= 45 ngày  →  7  (đủ để thấy pattern hàng tuần)
-        >= 90 ngày  → 14  (default — thấy 2 vòng pattern 2 tuần)
-        >= 180 ngày → 28  (nửa năm data — thấy được pattern tháng)
+        >= 90 ngày  → 14  (thấy 2 vòng pattern 2 tuần)
+        >= 120 ngày → 28  (23% data — thấy được pattern tháng)
+        >= 150 ngày → 40  (26.7% data — thấy rõ hơn biến động tháng)
+        >= 200 ngày → 60  (30% data, có regularization — thấy 2 tháng pattern)
         >= 365 ngày → 90  (1 năm+ data — học được pattern theo quý / mùa vụ)
 
     Args:
@@ -94,7 +96,11 @@ def _auto_n_lags(active_days: int) -> int:
     """
     if active_days >= 365:
         return 90
-    if active_days >= 180:
+    if active_days >= 200:
+        return 60
+    if active_days >= 150:
+        return 40
+    if active_days >= 120:
         return 28
     if active_days >= 90:
         return 14

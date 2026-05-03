@@ -371,8 +371,8 @@ async def update_branch_config(
     await db.commit()
 
     logger.info(
-        "Config train đã cập nhật: tenant=%s branch=%s | n_lags=%d n_forecasts=%d epochs=%d",
-        tenant.tenant_id, branch_id, body.epochs,
+        "Config train đã cập nhật: tenant=%s branch=%s | n_forecasts=%d epochs=%d",
+        tenant.tenant_id, branch_id, body.n_forecasts, body.epochs,
     )
 
     # Trigger retrain ngay cho branch này
