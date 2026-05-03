@@ -55,7 +55,7 @@ async def get_ingredient_consumption(
           AND branch_id       = :branch_id
           AND item_id         = :ingredient_id
           AND type            = 'SALE_DEDUCT'
-          AND quantity        < 0
+          AND quantity        != 0
           AND created_at     >= :start_date
         GROUP BY DATE(created_at)
         ORDER BY ds ASC
@@ -251,7 +251,7 @@ async def get_consumption_for_all_ingredients(
         WHERE it.tenant_id  = :tenant_id
           AND it.branch_id  = :branch_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND it.created_at >= :start_date
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
@@ -510,7 +510,7 @@ async def get_all_consumption_for_tenant(
         JOIN items i ON i.id = it.item_id
         WHERE it.tenant_id  = :tenant_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND it.created_at >= :start_date
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
@@ -742,7 +742,7 @@ async def get_consumption_for_branch(
         WHERE it.tenant_id  = :tenant_id
           AND it.branch_id  = :branch_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
           {date_condition}
