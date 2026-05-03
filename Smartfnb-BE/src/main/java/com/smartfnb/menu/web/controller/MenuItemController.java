@@ -119,9 +119,11 @@ public class MenuItemController {
     @Operation(summary = "Tạo món ăn mới (upload ảnh từ máy)")
     public ResponseEntity<ApiResponse<MenuItemResponse>> createMenuItem(
             @RequestPart("data") @Valid CreateMenuItemRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestParam(required = false) UUID branchId) {
 
-        MenuItemResponse result = menuItemCommandHandler.createMenuItem(request, image);
+        // Author: Hoàng | date: 2026-05-02 | note: branchId optional để tạo món riêng chi nhánh mà không thêm endpoint mới.
+        MenuItemResponse result = menuItemCommandHandler.createMenuItem(request, image, branchId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(result));
     }
 

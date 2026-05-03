@@ -49,27 +49,60 @@ public class GetPaymentMethodBreakdownQueryHandler {
             return buildEmptyBreakdown(query);
         }
         
-        // BUG FIX: Lấy transactionCount thực tế từ bảng payments thay vì tính estimate sai sót
-        Map<String, Integer> actualCounts = fetchActualTransactionCounts(query.branchId(), query.date().toString());
-        
-        // Tính phần trăm cho mỗi phương thức
+        // Author: Hoàng | date: 2026-05-02 | note: Lấy cả count lẫn amount từ bảng payments thực tế.
+        // Bug gốc: fetchActualTransactionCounts() bỏ qua cột row[2] (amount) → dùng breakdown từ
+        // daily_revenue_summaries có thể bị stale/zero khi PaymentCompletedEvent chưa xử lý xong.
+        Map<String, long[]> actualData = fetchActualPaymentData(query.branchId(), query.date().toString());
+
+        // Ưu tiên amount từ bảng payments thực tế; fallback sang summary breakdown nếu không có giao dịch nào
         return new PaymentMethodBreakdownResult(
             query.date(),
             "Branch Name",  // TODO: Lấy tên branch
-            buildPaymentMethodDto("CASH", breakdown.cash(), actualCounts.getOrDefault("CASH", 0), totalRevenue),
-            buildPaymentMethodDto("MOMO", breakdown.momo(), actualCounts.getOrDefault("MOMO", 0), totalRevenue),
-            buildPaymentMethodDto("VIETQR", breakdown.vietqr(), actualCounts.getOrDefault("VIETQR", 0), totalRevenue),
-            buildPaymentMethodDto("BANKING", breakdown.banking(), actualCounts.getOrDefault("BANKING", 0), totalRevenue),
-            buildPaymentMethodDto("OTHER", breakdown.other(), actualCounts.getOrDefault("OTHER", 0), totalRevenue),
-            buildPaymentMethodDto("PAYOS", breakdown.payos(), actualCounts.getOrDefault("PAYOS", 0), totalRevenue),
+            buildPaymentMethodDtoFromActual("CASH",    actualData, breakdown.cash(),    totalRevenue),
+            buildPaymentMethodDtoFromActual("MOMO",    actualData, breakdown.momo(),    totalRevenue),
+            buildPaymentMethodDtoFromActual("VIETQR",  actualData, breakdown.vietqr(),  totalRevenue),
+            buildPaymentMethodDtoFromActual("BANKING", actualData, breakdown.banking(), totalRevenue),
+            buildPaymentMethodDtoFromActual("OTHER",   actualData, breakdown.other(),   totalRevenue),
+            buildPaymentMethodDtoFromActual("PAYOS",   actualData, breakdown.payos(),   totalRevenue),
             totalRevenue,
             totalOrders
         );
     }
-    
+
     /**
-     * Lấy số lượng giao dịch thực tế từ bảng payments (tránh đoán count từ average order value).
+     * Lấy count và amount thực tế từ bảng payments.
+     * Query trả về: [method (String), count (Number), total (Number)]
+     * Author: Hoàng | date: 2026-05-02
      */
+    private Map<String, long[]> fetchActualPaymentData(java.util.UUID branchId, String date) {
+        List<Object[]> aggregates = paymentJpaRepository.aggregateByMethodForBranchAndDate(branchId, date);
+        return aggregates.stream()
+            .collect(Collectors.toMap(
+                row -> (String) row[0],
+                row -> new long[]{
+                    ((Number) row[1]).longValue(),                          // [0] = count
+                    ((Number) row[2]).longValue()                           // [1] = amount (VND)
+                }
+            ));
+    }
+
+    /**
+     * Build PaymentMethodDto: ưu tiên amount từ bảng payments thực tế.
+     * Author: Hoàng | date: 2026-05-02
+     */
+    private PaymentMethodDto buildPaymentMethodDtoFromActual(
+            String method, Map<String, long[]> actualData,
+            BigDecimal summaryAmount, BigDecimal totalRevenue) {
+        long[] data = actualData.get(method);
+        int count  = data != null ? (int) data[0] : 0;
+        BigDecimal amount = data != null
+            ? new BigDecimal(data[1])
+            : (summaryAmount != null ? summaryAmount : BigDecimal.ZERO);
+        return buildPaymentMethodDto(method, amount, count, totalRevenue);
+    }
+
+    /** @deprecated Thay bằng fetchActualPaymentData + buildPaymentMethodDtoFromActual */
+    @SuppressWarnings("unused")
     private Map<String, Integer> fetchActualTransactionCounts(java.util.UUID branchId, String date) {
         List<Object[]> aggregates = paymentJpaRepository.aggregateByMethodForBranchAndDate(branchId, date);
         return aggregates.stream()
