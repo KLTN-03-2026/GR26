@@ -1,6 +1,7 @@
 import { axiosInstance as api } from '@lib/axios';
 import type {
   InvoiceApiResponse,
+  InvoiceOrderSnapshotApiResponse,
   ProcessCashPaymentApiResponse,
   ProcessCashPaymentRequest,
   ProcessQRPaymentApiResponse,
@@ -60,6 +61,15 @@ export const paymentService = {
    */
   getInvoice: async (invoiceId: string): Promise<InvoiceApiResponse> => {
     const response = await api.get<InvoiceApiResponse>(`/payments/invoices/${invoiceId}`);
+    return response.data;
+  },
+
+  /**
+   * Lấy snapshot order để bổ sung topping cho chi tiết hóa đơn.
+   * BE invoice hiện chưa lưu/trả addons trong invoice item.
+   */
+  getInvoiceOrderSnapshot: async (orderId: string): Promise<InvoiceOrderSnapshotApiResponse> => {
+    const response = await api.get<InvoiceOrderSnapshotApiResponse>(`/orders/${orderId}`);
     return response.data;
   },
 

@@ -18,6 +18,8 @@ import {
   useTableOrderNavigation,
   useZones,
 } from '@modules/table/hooks';
+// Author: Hoàng | date: 2026-05-04 | note: subscribe WebSocket để đồng bộ trạng thái bàn real-time giữa nhiều máy
+import { useTableRealtime } from '@modules/table/hooks/useTableRealtime';
 import type {
   TableDisplayItem,
   TableStatus,
@@ -54,6 +56,9 @@ export default function TablesPage() {
     id: '',
     name: '',
   });
+  // Author: Hoàng | date: 2026-05-04 | note: subscribe WS để máy này tự nhận update bàn từ máy khác
+  useTableRealtime();
+
   const { error: toastError } = useToast();
   const { handleSelectTable } = useTableOrderNavigation();
 

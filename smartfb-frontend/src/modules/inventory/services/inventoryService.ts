@@ -12,6 +12,9 @@ import type {
   InventoryTransaction,
   InventoryTransactionListResult,
   InventoryTransactionParams,
+  ProductionBatch,
+  ProductionBatchListResult,
+  ProductionBatchParams,
   RecordProductionBatchPayload,
   UpdateThresholdPayload,
   WasteRecordPayload,
@@ -55,6 +58,22 @@ interface BackendTransactionResponse {
   referenceId: string | null;
   referenceType: string | null;
   note: string | null;
+  createdAt: string;
+}
+
+interface BackendProductionBatchResponse {
+  id: string;
+  subAssemblyItemId: string;
+  subAssemblyItemName: string | null;
+  expectedOutput: number | string;
+  actualOutput: number | string;
+  deltaOutput: number | string;
+  unit: string;
+  producedBy: string | null;
+  staffName: string | null;
+  producedAt: string;
+  note: string | null;
+  status: string;
   createdAt: string;
 }
 
@@ -136,6 +155,27 @@ const mapInventoryItemOption = (item: InventoryCatalogItem): InventoryItemOption
  */
 const buildCatalogTypeMap = (catalogItems: InventoryCatalogItem[]): Map<string, InventoryCatalogItemType> => {
   return new Map(catalogItems.map((item) => [item.id, item.type]));
+};
+
+/**
+ * Chuẩn hóa response mẻ sản xuất để UI xử lý số liệu và trạng thái ổn định.
+ */
+const mapProductionBatch = (batch: BackendProductionBatchResponse): ProductionBatch => {
+  return {
+    id: batch.id,
+    subAssemblyItemId: batch.subAssemblyItemId,
+    subAssemblyItemName: batch.subAssemblyItemName,
+    expectedOutput: Number(batch.expectedOutput),
+    actualOutput: Number(batch.actualOutput),
+    deltaOutput: Number(batch.deltaOutput),
+    unit: batch.unit,
+    producedBy: batch.producedBy,
+    staffName: batch.staffName,
+    producedAt: batch.producedAt,
+    note: batch.note,
+    status: batch.status as ProductionBatch['status'],
+    createdAt: batch.createdAt,
+  };
 };
 
 /**
@@ -335,5 +375,41 @@ export const inventoryService = {
       page: page.page,
       size: page.size,
     };
+  },
+
+  /**
+   * Lấy lịch sử mẻ sản xuất bán thành phẩm theo chi nhánh đang làm việc.
+   */
+  getProductionBatches: async (params?: ProductionBatchParams): Promise<ProductionBatchListResult> => {
+    const response = await api.get<ApiResponse<BackendPageResponse<BackendProductionBatchResponse>>>(
+      '/inventory/production-batches',
+      {
+        params: {
+          page: params?.page ?? 0,
+          size: params?.size ?? 20,
+        },
+      },
+    );
+
+    const page = response.data.data;
+
+    return {
+      data: page.content.map(mapProductionBatch),
+      totalElements: page.totalElements,
+      totalPages: page.totalPages,
+      page: page.page,
+      size: page.size,
+    };
+  },
+
+  /**
+   * Lấy chi tiết một mẻ sản xuất bán thành phẩm.
+   */
+  getProductionBatch: async (id: string): Promise<ProductionBatch> => {
+    const response = await api.get<ApiResponse<BackendProductionBatchResponse>>(
+      `/inventory/production-batches/${id}`,
+    );
+
+    return mapProductionBatch(response.data.data);
   },
 };

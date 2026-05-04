@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Boxes, ClipboardCheck, FlaskConical, History, type LucideIcon } from 'lucide-react';
+import { Boxes, ClipboardCheck, Factory, FlaskConical, History, type LucideIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 import { Button } from '@shared/components/ui/button';
 import { InventoryActionDialog } from '@modules/inventory/components/InventoryActionDialog';
@@ -12,6 +12,7 @@ import { InventorySummaryCards } from '@modules/inventory/components/InventorySu
 import { InventoryTable } from '@modules/inventory/components/InventoryTable';
 import { InventoryToolbar } from '@modules/inventory/components/InventoryToolbar';
 import { RecordProductionBatchDialog } from '@modules/inventory/components/RecordProductionBatchDialog';
+import { ProductionBatchHistory } from '@modules/inventory/components/ProductionBatchHistory';
 import { UpdateThresholdDialog } from '@modules/inventory/components/UpdateThresholdDialog';
 import { InventoryTransactionHistory } from '@modules/inventory/components/InventoryTransactionHistory';
 // import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
@@ -27,6 +28,7 @@ type InventoryTabValue =
   | 'ingredients'
   | 'ingredient-catalog'
   | 'semi-products'
+  | 'production-history'
   | 'history'
   | 'stockcheck';
 
@@ -52,7 +54,7 @@ export const InventoryManagementContent = () => {
     null,
   );
   const [activeTab, setActiveTab] = useState<
-    'ingredients' | 'ingredient-catalog' | 'semi-products' | 'history' | 'stockcheck'
+    'ingredients' | 'ingredient-catalog' | 'semi-products' | 'production-history' | 'history' | 'stockcheck'
   >(
     'ingredients',
   );
@@ -164,6 +166,13 @@ export const InventoryManagementContent = () => {
       label: 'Bán thành phẩm',
       mobileLabel: 'Bán TP',
       icon: Boxes,
+      visible: true,
+    },
+    {
+      value: 'production-history',
+      label: 'Lịch sử sản xuất',
+      mobileLabel: 'Sản xuất',
+      icon: Factory,
       visible: true,
     },
     {
@@ -361,8 +370,6 @@ export const InventoryManagementContent = () => {
         ) : null}
 
         <TabsContent value="semi-products" className="space-y-4">
-
-
           <InventoryToolbar
             search={filters.search}
             searchLabel={searchLabel}
@@ -422,6 +429,11 @@ export const InventoryManagementContent = () => {
             onEditThreshold={canAdjust ? onOpenThreshold : undefined}
             resolveBranchName={resolveBranchName}
           />
+        </TabsContent>
+
+        {/* Tab lịch sử mẻ sản xuất bán thành phẩm */}
+        <TabsContent value="production-history">
+          <ProductionBatchHistory />
         </TabsContent>
 
         {/* Tab 3: Lịch sử giao dịch */}

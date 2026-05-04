@@ -187,6 +187,51 @@ export interface InventoryTransactionListResult {
 }
 
 /**
+ * Trạng thái nghiệp vụ của mẻ sản xuất bán thành phẩm.
+ * Backend hiện chỉ xác nhận mẻ đã ghi nhận tồn kho.
+ */
+export type ProductionBatchStatus = 'CONFIRMED';
+
+/**
+ * Một mẻ sản xuất bán thành phẩm đã được ghi nhận.
+ * Dùng để hiển thị lịch sử sản xuất độc lập với lịch sử giao dịch kho.
+ */
+export interface ProductionBatch {
+  id: string;
+  subAssemblyItemId: string;
+  subAssemblyItemName: string | null;
+  expectedOutput: number;
+  actualOutput: number;
+  deltaOutput: number;
+  unit: string;
+  producedBy: string | null;
+  staffName: string | null;
+  producedAt: string;
+  note: string | null;
+  status: ProductionBatchStatus;
+  createdAt: string;
+}
+
+/**
+ * Params phân trang lịch sử mẻ sản xuất bán thành phẩm.
+ */
+export interface ProductionBatchParams {
+  page?: number;
+  size?: number;
+}
+
+/**
+ * Kết quả phân trang lịch sử mẻ sản xuất bán thành phẩm.
+ */
+export interface ProductionBatchListResult {
+  data: ProductionBatch[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+/**
  * Payload cập nhật mức tồn tối thiểu để hệ thống cảnh báo low-stock.
  */
 export interface UpdateThresholdPayload {
