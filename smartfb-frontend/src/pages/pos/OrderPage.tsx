@@ -60,7 +60,7 @@ export default function OrderPage() {
     currentUserName,
     hasPlacedOrder,
     isSyncingDraft,
-    isItemActionsDisabled: isSyncingDraft || hasPlacedOrder || isPlacedOrderFinalized,
+    isItemActionsDisabled: isSyncingDraft || isPlacedOrderFinalized,
     totalItemCount,
     subtotal,
     vatAmount,

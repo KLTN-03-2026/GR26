@@ -153,6 +153,13 @@ export const queryKeys = {
       list: (filters?: Record<string, unknown>) => ['inventory', 'semi-products', 'list', filters] as const,
       detail: (id: string) => ['inventory', 'semi-products', 'detail', id] as const,
     },
+    // Lịch sử mẻ sản xuất bán thành phẩm lấy trực tiếp từ bảng production_batches.
+    productionBatches: {
+      all: ['inventory', 'production-batches'] as const,
+      list: (filters?: Record<string, unknown>) =>
+        ['inventory', 'production-batches', 'list', filters] as const,
+      detail: (id: string) => ['inventory', 'production-batches', 'detail', id] as const,
+    },
     stockEntries: {
       all: ['inventory', 'stock-entries'] as const,
       list: (filters?: Record<string, unknown>) => ['inventory', 'stock-entries', 'list', filters] as const,

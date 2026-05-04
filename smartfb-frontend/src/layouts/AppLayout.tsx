@@ -192,11 +192,28 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
       );
     }
 
+    // Spinner chỉ hiển thị khi chưa trigger auto-select hoặc mutation đang in-flight.
+    // Nếu auto-select đã hoàn thành nhưng branchId vẫn null → stuck state, hiển thị nút thử lại.
+    const autoSelectInProgress =
+      autoSelectedBranchIdRef.current !== firstAccessibleBranchId || isSelectingBranch;
+
+    if (autoSelectInProgress) {
+      return (
+        <StaffBranchSetupState
+          title="Đang thiết lập chi nhánh làm việc"
+          description="Hệ thống đang tự động chọn chi nhánh đầu tiên để phiên làm việc của staff có branch context hợp lệ."
+          showSpinner
+        />
+      );
+    }
+
     return (
       <StaffBranchSetupState
-        title="Đang thiết lập chi nhánh làm việc"
-        description="Hệ thống đang tự động chọn chi nhánh đầu tiên để phiên làm việc của staff có branch context hợp lệ."
-        showSpinner
+        title="Không thể thiết lập chi nhánh mặc định"
+        description="Hệ thống chưa đồng bộ được branch context cho phiên làm việc hiện tại. Vui lòng thử lại."
+        actionLabel="Thử lại"
+        onAction={handleRetryAutoSelect}
+        isActionDisabled={isSelectingBranch}
       />
     );
   })();

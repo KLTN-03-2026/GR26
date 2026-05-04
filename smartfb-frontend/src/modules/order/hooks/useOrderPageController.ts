@@ -21,7 +21,9 @@ import {
   resolveOrderSource,
   toDialogMenuItem,
   toDraftItem,
+  toDraftItemsFromOrder,
   toOrderItemCommand,
+  toUpdateOrderItemCommand,
 } from '@modules/order/components/order-page/orderPage.utils';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
@@ -29,6 +31,7 @@ import type {
   DraftOrderMeta,
   OrderAddonSelection,
   OrderDraftItem,
+  OrderResponse,
   OrderTableContext,
 } from '@modules/order/types/order.types';
 import { buildOrderRouteSearchParams } from '@modules/order/utils';
@@ -115,9 +118,9 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     draftOrder,
     isSyncingDraft,
     clearDraft,
+    setCart,
     setTableContext,
     setDraftOrder,
-    upsertCartItem,
     removeFromCart,
     setSyncingDraft,
   } = useOrderStore();
@@ -181,6 +184,10 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         price: item.effectivePrice ?? item.branchPrice ?? item.price,
       }));
   }, [menuQuery.data?.data]);
+
+  const menuItemsById = useMemo(() => {
+    return new Map(menuItems.map((item) => [item.id, item]));
+  }, [menuItems]);
 
   const categories = useMemo(() => {
     return (categoriesQuery.data?.data ?? []).filter((category) => category.isActive !== false);
@@ -251,17 +258,76 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     setActiveCartItemId(null);
   };
 
-  const ensureLocalDraftStarted = () => {
-    if (draftOrder.createdAt) {
+  const updateOrderCaches = (order: OrderResponse) => {
+    queryClient.setQueryData(queryKeys.orders.detail(order.id), order);
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
+
+    if (order.tableId?.trim()) {
+      queryClient.setQueryData(
+        queryKeys.orders.activeByTable(order.tableId),
+        {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          tableId: order.tableId,
+          tableName: order.tableName,
+          status: order.status,
+          totalAmount: order.totalAmount,
+          createdAt: order.createdAt,
+        }
+      );
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.tables.detail(order.tableId),
+      });
+    }
+  };
+
+  const applySyncedOrder = (order: OrderResponse) => {
+    setDraftOrder({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      createdAt: order.createdAt ?? draftOrder.createdAt ?? new Date().toISOString(),
+    });
+    setCart(toDraftItemsFromOrder(order, menuItemsById));
+    updateOrderCaches(order);
+  };
+
+  const syncCartToOrder = async (nextCart: OrderDraftItem[], successMessage: string) => {
+    if (nextCart.length === 0) {
       return;
     }
 
-    setDraftOrder({
-      orderId: null,
-      orderNumber: null,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-    });
+    const activeContext = tableContext ?? nextTableContext;
+    const tableId = activeContext.tableId?.trim() || undefined;
+
+    setSyncingDraft(true);
+
+    try {
+      const response = draftOrder.orderId
+        ? await orderService.updateOrder(draftOrder.orderId, {
+            tableId,
+            items: nextCart.map(toUpdateOrderItemCommand),
+          })
+        : await orderService.placeOrder({
+            tableId,
+            source: resolveOrderSource(tableId),
+            items: nextCart.map(toOrderItemCommand),
+          });
+
+      if (!response.success) {
+        toast.error(response.error?.message ?? 'Không thể đồng bộ đơn hàng');
+        return;
+      }
+
+      applySyncedOrder(response.data);
+      toast.success(successMessage);
+    } catch {
+      toast.error('Không thể đồng bộ đơn hàng sau khi cập nhật món');
+    } finally {
+      setSyncingDraft(false);
+    }
   };
 
   const handleOpenItemDialog = (menuItemId: string) => {
@@ -278,8 +344,18 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     const nextCart = cart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
 
     if (nextCart.length === 0) {
+      if (draftOrder.orderId) {
+        await handleCancelPlacedOrder();
+        return;
+      }
+
       clearDraft();
       toast.success(`Đã xóa ${item.name} và làm trống giỏ hàng`);
+      return;
+    }
+
+    if (draftOrder.orderId) {
+      await syncCartToOrder(nextCart, `Đã xóa ${item.name} khỏi đơn hàng`);
       return;
     }
 
@@ -295,12 +371,16 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       return;
     }
 
-    upsertCartItem({
+    const nextCartItem = {
       ...item,
       quantity: nextQuantity,
       lineTotal: calculateLineTotal(item.unitPrice, nextQuantity, getSafeAddons(item)),
-    });
-    ensureLocalDraftStarted();
+    };
+    const nextCart = cart.map((cartItem) =>
+      cartItem.draftItemId === item.draftItemId ? nextCartItem : cartItem
+    );
+
+    await syncCartToOrder(nextCart, 'Đã cập nhật số lượng món');
   };
 
   const handleSubmitItem = async (payload: OrderDialogSubmitPayload) => {
@@ -330,10 +410,17 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         ? mergeCartLineQuantity(matchedCartItem, submittedDraftItem)
         : submittedDraftItem;
 
-    upsertCartItem(nextDraftItem);
-    ensureLocalDraftStarted();
+    const nextCart = matchedCartItem
+      ? cart.map((cartItem) =>
+          cartItem.draftItemId === matchedCartItem.draftItemId ? nextDraftItem : cartItem
+        )
+      : [...cart, nextDraftItem];
+
+    await syncCartToOrder(
+      nextCart,
+      matchedCartItem ? 'Đã cập nhật món trong đơn hàng' : 'Đã thêm món vào đơn hàng'
+    );
     clearActiveSelections();
-    toast.success(matchedCartItem ? 'Đã cập nhật món trong giỏ hàng' : 'Đã thêm món vào giỏ hàng');
   };
 
   const handleOpenInvoice = () => {
@@ -359,58 +446,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       return;
     }
 
-    setSyncingDraft(true);
-
-    try {
-      const tableId = activeContext.tableId?.trim() || undefined;
-      const response = await orderService.placeOrder({
-        tableId,
-        source: resolveOrderSource(tableId),
-        items: cart.map(toOrderItemCommand),
-      });
-
-      if (!response.success) {
-        toast.error(response.error?.message ?? 'Không thể tạo đơn hàng để thanh toán');
-        return;
-      }
-
-      setDraftOrder({
-        orderId: response.data.id,
-        orderNumber: response.data.orderNumber,
-        status: response.data.status,
-        createdAt: response.data.createdAt ?? draftOrder.createdAt ?? new Date().toISOString(),
-      });
-      queryClient.setQueryData(queryKeys.orders.detail(response.data.id), response.data);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
-
-      if (response.data.tableId?.trim()) {
-        queryClient.setQueryData(
-          queryKeys.orders.activeByTable(response.data.tableId),
-          {
-            id: response.data.id,
-            orderNumber: response.data.orderNumber,
-            tableId: response.data.tableId,
-            tableName: response.data.tableName,
-            status: response.data.status,
-            totalAmount: response.data.totalAmount,
-            createdAt: response.data.createdAt,
-          }
-        );
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.tables.detail(response.data.tableId),
-        });
-      }
-
-      const paymentSearchParams = buildOrderRouteSearchParams(activeContext, response.data.id);
-      navigate(`${ROUTES.POS_PAYMENT}?${paymentSearchParams.toString()}`);
-    } catch {
-      // Axios interceptor đã hiển thị lỗi chung, toast này giữ ngữ cảnh nghiệp vụ cho POS.
-      toast.error('Không thể tạo đơn hàng để chuyển sang thanh toán');
-    } finally {
-      setSyncingDraft(false);
-    }
+    toast.error('Đơn hàng chưa được tạo. Vui lòng thêm món lại trước khi thanh toán.');
   };
 
   const handleCancelPlacedOrder = async () => {
@@ -456,10 +492,10 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   };
 
   const checkoutButtonLabel = isSyncingDraft
-    ? 'Đang tạo đơn...'
+    ? 'Đang đồng bộ...'
     : hasPlacedOrder
-      ? 'Tiếp tục thanh toán'
-      : 'thanh toán';
+      ? 'Thanh toán'
+      : 'Thêm món để tạo đơn';
 
   return {
     addons,

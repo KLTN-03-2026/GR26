@@ -1,4 +1,4 @@
-import { ReceiptText, Wallet } from 'lucide-react';
+import { ReceiptText, ShoppingBag, Wallet } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
@@ -30,6 +30,18 @@ const mapPaymentMethodLabel = (method: string): string => {
   }
 };
 
+/**
+ * Map source của order sang nhãn nghiệp vụ trong hóa đơn.
+ */
+const mapOrderSourceLabel = (source?: string | null): string => {
+  switch (source?.toUpperCase()) {
+    case 'IN_STORE': return 'Tại chỗ';
+    case 'TAKEAWAY': return 'Mang về';
+    case 'DELIVERY': return 'Giao hàng';
+    default: return source ?? 'Chưa xác định';
+  }
+};
+
 interface InvoiceDetailDialogProps {
   open: boolean;
   invoiceId: string | null;
@@ -46,6 +58,8 @@ export const InvoiceDetailDialog = ({
 }: InvoiceDetailDialogProps) => {
   const { data, isLoading, isError, refetch } = useInvoiceDetail(invoiceId, open);
   const totalItemQuantity = data?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
+  const hasItemAddons = data?.items.some((item) => item.addons && item.addons.length > 0) ?? false;
+  const orderInfo = data?.order;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,7 +89,7 @@ export const InvoiceDetailDialog = ({
 
         {!isLoading && !isError && data ? (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
               <section className="rounded-card border border-border bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-100 text-orange-500">
@@ -103,6 +117,35 @@ export const InvoiceDetailDialog = ({
                   <div className="flex items-center justify-between gap-3 text-text-secondary">
                     <span>Số món</span>
                     <span className="font-semibold text-text-primary">{totalItemQuantity}</span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-card border border-border bg-slate-50 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+                    <ShoppingBag className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-text-secondary">Thông tin đơn hàng</p>
+                    <p className="text-lg font-semibold text-text-primary">
+                      {orderInfo?.orderNumber ?? 'Chưa xác định'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-3 text-text-secondary">
+                    <span>Người order</span>
+                    <span className="font-semibold text-text-primary">{orderInfo?.staffName ?? 'Chưa xác định'}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-text-secondary">
+                    <span>Hình thức</span>
+                    <span className="font-semibold text-text-primary">{mapOrderSourceLabel(orderInfo?.source)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-text-secondary">
+                    <span>Số bàn</span>
+                    <span className="font-semibold text-text-primary">{orderInfo?.tableName ?? 'Không gắn bàn'}</span>
                   </div>
                 </div>
               </section>
@@ -140,6 +183,7 @@ export const InvoiceDetailDialog = ({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Món</TableHead>
+                    {hasItemAddons ? <TableHead>Topping</TableHead> : null}
                     <TableHead>Số lượng</TableHead>
                     <TableHead>Đơn giá</TableHead>
                     <TableHead className="text-right">Thành tiền</TableHead>
@@ -149,6 +193,24 @@ export const InvoiceDetailDialog = ({
                   {data.items.map((item) => (
                     <TableRow key={`${item.itemName}-${item.unitPrice}-${item.quantity}`}>
                       <TableCell className="font-semibold text-text-primary">{item.itemName}</TableCell>
+                      {hasItemAddons ? (
+                        <TableCell>
+                          {item.addons && item.addons.length > 0 ? (
+                            <div className="space-y-1 text-sm text-text-secondary">
+                              {item.addons.map((addon) => (
+                                <p key={`${addon.addonId}-${addon.quantity}`}>
+                                  {addon.addonName} x{addon.quantity}
+                                  <span className="ml-1 text-xs">
+                                    (+{formatVND(addon.extraPrice)})
+                                  </span>
+                                </p>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-text-secondary">—</span>
+                          )}
+                        </TableCell>
+                      ) : null}
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell>{formatVND(item.unitPrice)}</TableCell>
                       <TableCell className="text-right font-semibold text-text-primary">
