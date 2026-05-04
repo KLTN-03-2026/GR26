@@ -25,7 +25,7 @@ import java.util.UUID;
  *   <li>Publish StockImportedEvent</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Component

@@ -13,7 +13,7 @@ import java.util.UUID;
  * Aggregate Root đại diện cho Hóa đơn chi.
  * Quản lý các khoản chi tiêu vận hành của chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-17
  */
 @Getter
@@ -33,10 +33,17 @@ public class Expense {
     private Instant createdAt;
     private Instant updatedAt;
     private boolean deleted;
+    // author: Hoàng | date: 2026-04-30 | note: Liên kết phiếu chi với ca POS — null nếu không phải chi từ két POS.
+    private UUID posSessionId;
 
+    /**
+     * author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId để liên kết phiếu chi tiền mặt với ca POS.
+     *   Handler tự lookup active session và truyền vào, null nếu không có ca đang mở.
+     */
     public static Expense create(
             UUID tenantId, UUID branchId, BigDecimal amount, String categoryName,
-            String description, Instant expenseDate, String paymentMethod, UUID createdBy) {
+            String description, Instant expenseDate, String paymentMethod, UUID createdBy,
+            UUID posSessionId) {
 
         Expense expense = new Expense();
         expense.id = UUID.randomUUID();
@@ -52,16 +59,19 @@ public class Expense {
         expense.createdAt = Instant.now();
         expense.updatedAt = Instant.now();
         expense.deleted = false;
+        // author: Hoàng | date: 2026-04-30 | note: posSessionId null nếu paymentMethod != CASH hoặc không có ca POS đang mở.
+        expense.posSessionId = posSessionId;
 
         return expense;
     }
 
+    // author: Hoàng | date: 2026-04-30 | note: Thêm posSessionId vào reconstruct để đồng bộ với schema V26.
     public static Expense reconstruct(
             UUID id, UUID tenantId, UUID branchId, BigDecimal amount,
             String categoryName, String description, Instant expenseDate,
             String paymentMethod, ExpenseStatus status, UUID createdBy,
-            Instant createdAt, Instant updatedAt, boolean deleted) {
-        
+            Instant createdAt, Instant updatedAt, boolean deleted, UUID posSessionId) {
+
         Expense expense = new Expense();
         expense.id = id;
         expense.tenantId = tenantId;
@@ -76,6 +86,7 @@ public class Expense {
         expense.createdAt = createdAt;
         expense.updatedAt = updatedAt;
         expense.deleted = deleted;
+        expense.posSessionId = posSessionId;
         return expense;
     }
 

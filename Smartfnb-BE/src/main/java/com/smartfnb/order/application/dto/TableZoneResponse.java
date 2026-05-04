@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * DTO response trả về thông tin khu vực bàn.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record TableZoneResponse(

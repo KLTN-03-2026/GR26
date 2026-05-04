@@ -11,7 +11,7 @@ import java.util.UUID;
  * JPA Entity cho bảng pos_sessions (phiên mở quầy POS).
  * Quản lý tiền mặt đầu/cuối ca — mỗi branch chỉ có 1 session OPEN.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity
@@ -81,6 +81,15 @@ public class PosSessionJpaEntity {
     @Column(name = "status", nullable = false, length = 10)
     private String status;
 
+    // author: Hoàng | date: 2026-04-30 | note: Lưu breakdown tại thời điểm đóng ca để history page không cần tính lại.
+    /** Tổng doanh thu tiền mặt trong ca (CASH COMPLETED payments) */
+    @Column(name = "cash_sales", precision = 12, scale = 2)
+    private BigDecimal cashSales;
+
+    /** Tổng chi tiền mặt từ két POS trong ca (CASH expenses có posSessionId) */
+    @Column(name = "cash_expenses", precision = 12, scale = 2)
+    private BigDecimal cashExpenses;
+
     /**
      * Factory method mở phiên POS mới.
      *
@@ -108,18 +117,24 @@ public class PosSessionJpaEntity {
     }
 
     /**
-     * Đóng phiên POS và ghi nhận tiền cuối ca.
+     * Đóng phiên POS và ghi nhận tiền cuối ca kèm breakdown.
+     * author: Hoàng | date: 2026-04-30 | note: Thêm cashSales và cashExpenses để lưu breakdown tại thời điểm đóng ca.
      *
-     * @param closedByUserId    UUID cashier đóng quầy
-     * @param endingCashActual  Tiền mặt thực tế kiểm đếm
-     * @param endingCashExpected Tiền mặt kỳ vọng (starting + cash orders)
-     * @param note              Ghi chú khi đóng ca
+     * @param closedByUserId     UUID cashier đóng quầy
+     * @param endingCashActual   Tiền mặt thực tế kiểm đếm
+     * @param endingCashExpected Tiền mặt kỳ vọng (startingCash + cashSales - cashExpenses)
+     * @param cashSales          Tổng doanh thu tiền mặt trong ca
+     * @param cashExpenses       Tổng chi tiền mặt từ két POS trong ca
+     * @param note               Ghi chú khi đóng ca
      */
     public void close(UUID closedByUserId, BigDecimal endingCashActual,
-                       BigDecimal endingCashExpected, String note) {
+                      BigDecimal endingCashExpected, BigDecimal cashSales,
+                      BigDecimal cashExpenses, String note) {
         this.closedByUserId = closedByUserId;
         this.endingCashActual = endingCashActual;
         this.endingCashExpected = endingCashExpected;
+        this.cashSales = cashSales;
+        this.cashExpenses = cashExpenses;
         this.cashDifference = endingCashActual.subtract(endingCashExpected);
         this.endTime = Instant.now();
         this.note = note;

@@ -1,0 +1,174 @@
+services:
+
+  # ================================================================
+  # PostgreSQL 16 — Database chính dùng chung cho BE và AI Service
+  # ================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartfnb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smartfnb}
+      POSTGRES_USER: ${POSTGRES_USER:-smartfnb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smartfnb123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smartfnb-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartfnb -d smartfnb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ================================================================
+  # Redis 7 — In-memory Cache & Message Broker
+  # ================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: smartfnb-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    networks:
+      - smartfnb-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ================================================================
+  # SmartF&B Backend — Spring Boot 3.3
+  # ================================================================
+  app:
+    build:
+      context: ./Smartfnb-BE
+      dockerfile: Dockerfile
+    container_name: smartfnb-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-smartfnb}
+      DB_USER: ${POSTGRES_USER:-smartfnb}
+      DB_PASS: ${POSTGRES_PASSWORD:-smartfnb123}
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # AI Service — gọi qua Docker DNS, không dùng localhost trong container
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8001}
+      AI_CONNECT_TIMEOUT_MS: ${AI_CONNECT_TIMEOUT_MS:-5000}
+      AI_READ_TIMEOUT_MS: ${AI_READ_TIMEOUT_MS:-10000}
+      # JWT (thay bằng secret mạnh hơn trong production)
+      JWT_SECRET: ${JWT_SECRET:-SmartFnbSuperSecretKeyForDockerDeploy2026ChangeMe!@#$%}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      JWT_REFRESH_MS: ${JWT_REFRESH_MS:-604800000}
+      # Server
+      SERVER_PORT: 8080
+      # Logging
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      # File Storage
+      UPLOAD_DIR: /app/uploads
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      # PayOS Encryption
+      # author: Hoàng | date: 2026-05-03 | note: Giữ key dev Base64 32 bytes như compose backend hiện tại; production truyền PAYOS_ENCRYPTION_KEY riêng.
+      PAYOS_ENCRYPTION_KEY: ${PAYOS_ENCRYPTION_KEY:-c21hcnRmbmItZGV2LXBheW9zLWtleS0yMDI2ISEhISE=}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    networks:
+      - smartfnb-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+
+  # ================================================================
+  # SmartF&B AI Service — FastAPI Forecast Service
+  # ================================================================
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: smartfnb-ai
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Ghi đè .env local để container dùng Postgres trong Docker network.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-smartfnb}:${POSTGRES_PASSWORD:-smartfnb123}@postgres:5432/${POSTGRES_DB:-smartfnb}
+      ENV: ${AI_ENV:-development}
+      AI_SERVICE_HOST: 0.0.0.0
+      AI_SERVICE_PORT: 8001
+      LOG_LEVEL: ${AI_LOG_LEVEL:-INFO}
+      JWT_SECRET: ${JWT_SECRET:-SmartFnbSuperSecretKeyForDockerDeploy2026ChangeMe!@#$%}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS384}
+      MODEL_STORAGE_DIR: /app/storage/models
+      LOG_DIR: /app/logs
+      NP_N_LAGS: ${NP_N_LAGS:-28}
+      NP_N_FORECASTS: ${NP_N_FORECASTS:-7}
+      NP_EPOCHS: ${NP_EPOCHS:-150}
+      NP_BATCH_SIZE: ${NP_BATCH_SIZE:-32}
+      NP_MIN_DAYS_REQUIRED: ${NP_MIN_DAYS_REQUIRED:-30}
+      TRAIN_CRON_HOUR: ${TRAIN_CRON_HOUR:-2}
+      TRAIN_CRON_DAY_OF_WEEK: ${TRAIN_CRON_DAY_OF_WEEK:-sun}
+      PREDICT_CRON_HOUR: ${PREDICT_CRON_HOUR:-0}
+      PREDICT_CRON_MINUTE: ${PREDICT_CRON_MINUTE:-30}
+      WEATHER_CRON_HOUR: ${WEATHER_CRON_HOUR:-6}
+      WEATHER_CACHE_DAYS: ${WEATHER_CACHE_DAYS:-1}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-'["http://localhost:5173","http://localhost:3000","http://localhost:8080"]'}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - ai_models:/app/storage/models
+      - ai_logs:/app/logs
+    ports:
+      - "${AI_SERVICE_HOST_PORT:-8001}:8001"
+    networks:
+      - smartfnb-net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5).read()\""
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+# ================================================================
+# Volumes — lưu trữ persistent data
+# ================================================================
+volumes:
+  postgres_data:
+    name: smartfnb-postgres-data
+  uploads_data:
+    name: smartfnb-uploads-data
+  ai_models:
+    name: smartfnb-ai-models
+  ai_logs:
+    name: smartfnb-ai-logs
+
+# ================================================================
+# Networks
+# ================================================================
+networks:
+  smartfnb-net:
+    name: smartfnb-network
+    driver: bridge

@@ -11,7 +11,7 @@ import java.util.UUID;
  * Repository cho bảng tenants.
  * Tất cả query PHẢI đảm bảo không rò rỉ dữ liệu chéo tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Repository

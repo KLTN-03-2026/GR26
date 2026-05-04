@@ -8,7 +8,7 @@ import java.util.UUID;
  * Bản ghi doanh thu hàng ngày theo chi nhánh.
  * Được cập nhật bởi RevenueReportScheduler từ sự kiện OrderCompletedEvent.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record DailyRevenueSummary(
@@ -25,17 +25,18 @@ public record DailyRevenueSummary(
 ) {
     /**
      * Cấu trúc breakdown thanh toán theo hình thức.
-     * VD: {"CASH": 1000000, "MOMO": 500000, "VIETQR": 800000}
+     * VD: {"CASH": 1000000, "MOMO": 500000, "VIETQR": 800000, "PAYOS": 300000}
      */
     public record PaymentBreakdown(
         BigDecimal cash,
         BigDecimal momo,
         BigDecimal vietqr,
         BigDecimal banking,
-        BigDecimal other
+        BigDecimal other,
+        BigDecimal payos
     ) {
         public BigDecimal total() {
-            return cash.add(momo).add(vietqr).add(banking).add(other);
+            return cash.add(momo).add(vietqr).add(banking).add(other).add(payos);
         }
     }
 

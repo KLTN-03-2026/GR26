@@ -1,6 +1,6 @@
-import { Supplier } from '../../types/supplier.types';
+import type { Supplier } from '../../types/supplier.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
-import { Badge } from '@shared/components/common/Badge';
+import { Badge } from '@shared/components/ui/badge';
 import { Mail, Phone, MapPin, User, Building2, CreditCard } from 'lucide-react';
 
 interface ProfileTabProps {
@@ -28,7 +28,7 @@ export const ProfileTab = ({ supplier }: ProfileTabProps) => {
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-gray-500">Trạng thái</span>
-            <Badge variant={supplier.isActive ? 'success' : 'warning'}>
+            <Badge className={supplier.isActive ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
               {supplier.isActive ? 'Đang hợp tác' : 'Ngừng giao dịch'}
             </Badge>
           </div>

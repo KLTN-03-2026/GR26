@@ -10,7 +10,7 @@ import java.util.UUID;
  * JPA Entity cho bảng suppliers.
  * Scoped theo tenant — không liên kết với branch (nhà cung cấp dùng chung toàn chuỗi).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-07
  */
 @Entity

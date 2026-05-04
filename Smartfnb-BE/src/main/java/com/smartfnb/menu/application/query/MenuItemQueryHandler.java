@@ -20,12 +20,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * Query Handler xử lý các truy vấn READ-ONLY cho món ăn và branch items.
  * Hỗ trợ tìm kiếm pg_trgm và lấy giá theo chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component
@@ -33,90 +36,145 @@ import java.util.UUID;
 @Slf4j
 public class MenuItemQueryHandler {
 
-    private final MenuItemJpaRepository menuItemJpaRepository;
-    private final BranchItemJpaRepository branchItemJpaRepository;
+        private final MenuItemJpaRepository menuItemJpaRepository;
+        private final BranchItemJpaRepository branchItemJpaRepository;
 
-    /**
-     * Lấy danh sách item theo type, hỗ trợ tìm kiếm pg_trgm (chỉ áp dụng cho SELLABLE).
-     *
-     * @param keyword  từ khóa tìm kiếm (null = lấy tất cả)
-     * @param type     loại item: SELLABLE (mặc định) | INGREDIENT | SUB_ASSEMBLY
-     * @param page     trang (0-indexed)
-     * @param size     số bản ghi mỗi trang
-     * @return trang danh sách item
-     */
-    public PageResponse<MenuItemResponse> listMenuItems(String keyword, String type, int page, int size) {
-        UUID tenantId = TenantContext.requireCurrentTenantId();
-        // Mặc định SELLABLE để tương thích ngược với POS flow
-        String resolvedType = (type != null && !type.isBlank()) ? type.toUpperCase() : "SELLABLE";
-        Pageable pageable = PageRequest.of(page, Math.min(size, 100),
-                Sort.by("name").ascending());
+        /**
+         * Lấy danh sách item theo type, hỗ trợ tìm kiếm pg_trgm (chỉ áp dụng cho
+         * SELLABLE).
+         *
+         * @param keyword từ khóa tìm kiếm (null = lấy tất cả)
+         * @param type    loại item: SELLABLE (mặc định) | INGREDIENT | SUB_ASSEMBLY
+         * @param page    trang (0-indexed)
+         * @param size    số bản ghi mỗi trang
+         * @return trang danh sách item
+         */
+        public PageResponse<MenuItemResponse> listMenuItems(String keyword, String type, int page, int size) {
+                UUID tenantId = TenantContext.requireCurrentTenantId();
+                // Mặc định SELLABLE để tương thích ngược với POS flow
+                String resolvedType = (type != null && !type.isBlank()) ? type.toUpperCase() : "SELLABLE";
+                int pageSize = Math.min(size, 100);
+                Pageable pageable = PageRequest.of(page, pageSize,
+                                Sort.by("name").ascending());
+                // Author: Hoàng
+                // Date: 2026-05-02
+                // Note: Native query fuzzy search đã ORDER BY similarity nên Pageable không được kèm Sort.
+                Pageable fuzzySearchPageable = PageRequest.of(page, pageSize);
 
-        Page<MenuItemResponse> result;
-        if (keyword != null && !keyword.isBlank() && "SELLABLE".equals(resolvedType)) {
-            // Fuzzy search chỉ hỗ trợ SELLABLE (POS use case)
-            result = menuItemJpaRepository
-                    .searchByNameTrgm(tenantId, keyword.trim(), pageable)
-                    .map(MenuItemResponse::from);
-        } else {
-            result = menuItemJpaRepository
-                    .findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, resolvedType, pageable)
-                    .map(MenuItemResponse::from);
+                Page<MenuItemResponse> result;
+                if (keyword != null && !keyword.isBlank() && "SELLABLE".equals(resolvedType)) {
+                        // Fuzzy search chỉ hỗ trợ SELLABLE (POS use case)
+                        result = menuItemJpaRepository
+                                        .searchByNameTrgm(tenantId, keyword.trim(), fuzzySearchPageable)
+                                        .map(MenuItemResponse::from);
+                } else {
+                        result = menuItemJpaRepository
+                                        .findByTenantIdAndTypeAndDeletedAtIsNull(tenantId, resolvedType, pageable)
+                                        .map(MenuItemResponse::from);
+                }
+
+                return PageResponse.from(result);
         }
 
-        return PageResponse.from(result);
-    }
+        /**
+         * Lấy chi tiết một món ăn theo ID.
+         *
+         * @param itemId ID món ăn
+         * @return thông tin món ăn
+         * @throws MenuItemNotFoundException nếu không tìm thấy hoặc đã xóa
+         */
+        public MenuItemResponse getMenuItemById(UUID itemId) {
+                UUID tenantId = TenantContext.requireCurrentTenantId();
 
-    /**
-     * Lấy chi tiết một món ăn theo ID.
-     *
-     * @param itemId ID món ăn
-     * @return thông tin món ăn
-     * @throws MenuItemNotFoundException nếu không tìm thấy hoặc đã xóa
-     */
-    public MenuItemResponse getMenuItemById(UUID itemId) {
-        UUID tenantId = TenantContext.requireCurrentTenantId();
+                return menuItemJpaRepository
+                                .findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
+                                .map(MenuItemResponse::from)
+                                .orElseThrow(() -> new MenuItemNotFoundException(itemId));
+        }
 
-        return menuItemJpaRepository
-                .findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
-                .map(MenuItemResponse::from)
-                .orElseThrow(() -> new MenuItemNotFoundException(itemId));
-    }
+        /**
+         * Lấy tất cả món đang active — dùng cho POS dropdown.
+         *
+         * @return danh sách món ăn active
+         */
+        public List<MenuItemResponse> listActiveMenuItems() {
+                UUID tenantId = TenantContext.requireCurrentTenantId();
 
-    /**
-     * Lấy tất cả món đang active — dùng cho POS dropdown.
-     *
-     * @return danh sách món ăn active
-     */
-    public List<MenuItemResponse> listActiveMenuItems() {
-        UUID tenantId = TenantContext.requireCurrentTenantId();
+                return menuItemJpaRepository
+                                .findAllActiveByTenant(tenantId)
+                                .stream()
+                                .map(MenuItemResponse::from)
+                                .toList();
+        }
 
-        return menuItemJpaRepository
-                .findAllActiveByTenant(tenantId)
-                .stream()
-                .map(MenuItemResponse::from)
-                .toList();
-    }
+        /**
+         * Lấy thông tin món ăn kết hợp với giá chi nhánh cụ thể.
+         * effectivePrice = branchPrice nếu có, ngược lại dùng basePrice.
+         *
+         * @param branchId ID chi nhánh
+         * @param itemId   ID món ăn
+         * @return thông tin kết hợp giá branch
+         * @throws MenuItemNotFoundException nếu món ăn không tồn tại
+         */
+        public BranchItemResponse getBranchItemPrice(UUID branchId, UUID itemId) {
+                UUID tenantId = TenantContext.requireCurrentTenantId();
 
-    /**
-     * Lấy thông tin món ăn kết hợp với giá chi nhánh cụ thể.
-     * effectivePrice = branchPrice nếu có, ngược lại dùng basePrice.
-     *
-     * @param branchId ID chi nhánh
-     * @param itemId   ID món ăn
-     * @return thông tin kết hợp giá branch
-     * @throws MenuItemNotFoundException nếu món ăn không tồn tại
-     */
-    public BranchItemResponse getBranchItemPrice(UUID branchId, UUID itemId) {
-        UUID tenantId = TenantContext.requireCurrentTenantId();
+                MenuItemJpaEntity item = menuItemJpaRepository
+                                .findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
+                                .orElseThrow(() -> new MenuItemNotFoundException(itemId));
 
-        MenuItemJpaEntity item = menuItemJpaRepository
-                .findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
-                .orElseThrow(() -> new MenuItemNotFoundException(itemId));
+                Optional<BranchItemJpaEntity> branchItem = branchItemJpaRepository
+                                .findByIdBranchIdAndIdItemId(branchId, itemId);
 
-        Optional<BranchItemJpaEntity> branchItem = branchItemJpaRepository
-                .findByIdBranchIdAndIdItemId(branchId, itemId);
+                return BranchItemResponse.from(item, branchItem.orElse(null), branchId);
+        }
 
-        return BranchItemResponse.from(item, branchItem.orElse(null), branchId);
-    }
+        /**
+         * Lấy danh sách toàn bộ món ăn tại một chi nhánh, kèm giá kết hợp (nếu có).
+         */
+        // public List<BranchItemResponse> listBranchMenuItems(UUID branchId) {
+        // UUID tenantId = TenantContext.requireCurrentTenantId();
+
+        // // Lấy tất cả menu items đang active của tenant
+        // List<MenuItemJpaEntity> activeItems =
+        // menuItemJpaRepository.findAllActiveByTenant(tenantId);
+
+        // // Lấy tất cả branch items đè giá của chi nhánh này
+        // java.util.Map<UUID, BranchItemJpaEntity> branchItemsMap =
+        // branchItemJpaRepository
+        // .findByIdBranchId(branchId)
+        // .stream()
+        // .collect(java.util.stream.Collectors.toMap(
+        // b -> b.getId().getItemId(),
+        // b -> b));
+
+        // return activeItems.stream()
+        // .map(item -> BranchItemResponse.from(item, branchItemsMap.get(item.getId()),
+        // branchId))
+        // .toList();
+        // }
+
+        public List<BranchItemResponse> listBranchMenuItems(UUID branchId) {
+                UUID tenantId = TenantContext.requireCurrentTenantId();
+
+                List<MenuItemJpaEntity> activeItems = menuItemJpaRepository.findAllActiveByTenant(tenantId);
+
+                java.util.Map<UUID, BranchItemJpaEntity> branchItemsMap = branchItemJpaRepository
+                                .findByIdBranchId(branchId)
+                                .stream()
+                                .collect(java.util.stream.Collectors.toMap(
+                                                b -> b.getId().getItemId(),
+                                                b -> b));
+
+                Collator viCollator = Collator.getInstance(Locale.forLanguageTag("vi-VN"));
+                viCollator.setStrength(Collator.PRIMARY);
+
+                return activeItems.stream()
+                                .map(item -> BranchItemResponse.from(item, branchItemsMap.get(item.getId()), branchId))
+                                .sorted(Comparator.comparing((BranchItemResponse item) -> Boolean.TRUE
+                                                .equals(item.isAvailable()) ? 0 : 1)
+                                                .thenComparing(item -> item.itemName() == null ? "" : item.itemName(),
+                                                                viCollator))
+                                .toList();
+        }
 }

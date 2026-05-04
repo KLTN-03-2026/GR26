@@ -11,12 +11,15 @@ import java.util.UUID;
  * Request DTO tạo nhân viên mới.
  * tenantId và createdByUserId được lấy từ JWT, không nhận từ client.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 public record CreateStaffRequest(
         @NotBlank(message = "Họ tên không được để trống")
         @Size(max = 255, message = "Họ tên tối đa 255 ký tự")
+        @JsonAlias({"full_name", "fullName"})
         String fullName,
 
         @NotBlank(message = "Số điện thoại không được để trống")
@@ -24,12 +27,18 @@ public record CreateStaffRequest(
         String phone,
 
         String email,
+        
+        @JsonAlias({"position_id", "positionId"})
         UUID positionId,
 
         @Size(max = 50)
+        @JsonAlias({"employee_code", "employeeCode"})
         String employeeCode,
 
+        @JsonAlias({"hire_date", "hireDate"})
         LocalDate hireDate,
+        
+        @JsonAlias({"date_of_birth", "dateOfBirth"})
         LocalDate dateOfBirth,
 
         @Pattern(regexp = "^(MALE|FEMALE|OTHER)$", message = "Giới tính phải là MALE, FEMALE hoặc OTHER")
@@ -41,5 +50,6 @@ public record CreateStaffRequest(
         String password,
 
         @Pattern(regexp = "^[0-9]{4,6}$", message = "Mã PIN phải từ 4 đến 6 chữ số")
+        @JsonAlias({"pos_pin", "posPin"})
         String posPin
 ) {}

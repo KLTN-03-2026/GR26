@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * handler này chỉ thay đổi {@code status} mà KHÔNG set {@code deleted_at}.
  * Nhân viên bị khóa vẫn hiện trong danh sách nếu FE lọc theo {@code status=INACTIVE}.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-10
  */
 @Component
@@ -36,6 +36,7 @@ public class UpdateStaffStatusCommandHandler {
 
     private final StaffJpaRepository         staffJpaRepository;
     private final StaffAuditLogJpaRepository auditLogJpaRepository;
+    private final com.smartfnb.plan.application.SubscriptionService subscriptionService;
 
     /**
      * Cập nhật trạng thái nhân viên.
@@ -79,6 +80,18 @@ public class UpdateStaffStatusCommandHandler {
         // 4. Thay đổi trạng thái
         String oldStatus = staff.getStatus();
         if (STATUS_ACTIVE.equals(newStatus)) {
+            // Guard: Kiểm tra giới hạn staff của gói trước khi kích hoạt lại
+            com.smartfnb.plan.application.dto.SubscriptionResponse sub = 
+                    subscriptionService.getCurrentSubscription(command.tenantId());
+            Integer maxStaff = sub.plan().maxStaff();
+            if (maxStaff != null) {
+                long currentActiveCount = staffJpaRepository.countByTenantIdAndStatus(command.tenantId(), STATUS_ACTIVE);
+                if (currentActiveCount >= maxStaff) {
+                    throw new com.smartfnb.shared.exception.SmartFnbException("PLAN_LIMIT_EXCEEDED",
+                            "Gói hiện tại giới hạn tối đa " + maxStaff + " nhân viên đang hoạt động. Vui lòng nâng cấp gói hoặc vô hiệu hóa nhân viên khác trước khi kích hoạt.", 403);
+                }
+            }
+            
             staff.activate();
         } else {
             staff.deactivate();

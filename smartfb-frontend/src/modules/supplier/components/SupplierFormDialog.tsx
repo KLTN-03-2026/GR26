@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,15 +9,26 @@ import {
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
-import { Supplier, CreateSupplierPayload } from '../types/supplier.types';
+import type { Supplier, CreateSupplierPayload } from '../types/supplier.types';
 
 interface SupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   supplier?: Supplier;
-  onSubmit: (payload: any) => Promise<void>;
+  onSubmit: (payload: CreateSupplierPayload) => Promise<void>;
   isLoading?: boolean;
 }
+
+const createInitialValues = (supplier?: Supplier): CreateSupplierPayload => ({
+  name: supplier?.name ?? '',
+  tax_code: supplier?.taxCode ?? '',
+  address: supplier?.address ?? '',
+  phone: supplier?.phone ?? '',
+  email: supplier?.email ?? '',
+  contact_person: supplier?.contactPerson ?? '',
+  bank_account: supplier?.bankAccount ?? '',
+  bank_name: supplier?.bankName ?? '',
+});
 
 export const SupplierFormDialog = ({
   open,
@@ -26,45 +37,17 @@ export const SupplierFormDialog = ({
   onSubmit,
   isLoading = false,
 }: SupplierFormDialogProps) => {
-  const [values, setValues] = useState<CreateSupplierPayload>({
-    name: '',
-    tax_code: '',
-    address: '',
-    phone: '',
-    email: '',
-    contact_person: '',
-    bank_account: '',
-    bank_name: '',
-  });
-
+  const [values, setValues] = useState<CreateSupplierPayload>(() => createInitialValues(supplier));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (supplier) {
-      setValues({
-        name: supplier.name,
-        tax_code: supplier.taxCode,
-        address: supplier.address,
-        phone: supplier.phone,
-        email: supplier.email,
-        contact_person: supplier.contactPerson,
-        bank_account: supplier.bankAccount,
-        bank_name: supplier.bankName,
-      });
-    } else {
-      setValues({
-        name: '',
-        tax_code: '',
-        address: '',
-        phone: '',
-        email: '',
-        contact_person: '',
-        bank_account: '',
-        bank_name: '',
-      });
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setValues(createInitialValues(supplier));
+      setErrors({});
     }
-    setErrors({});
-  }, [supplier, open]);
+
+    onOpenChange(nextOpen);
+  };
 
   const handleChange = (field: keyof CreateSupplierPayload, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -94,7 +77,7 @@ export const SupplierFormDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{supplier ? 'Chỉnh sửa nhà cung cấp' : 'Thêm nhà cung cấp mới'}</DialogTitle>

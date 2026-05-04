@@ -55,7 +55,7 @@ async def get_ingredient_consumption(
           AND branch_id       = :branch_id
           AND item_id         = :ingredient_id
           AND type            = 'SALE_DEDUCT'
-          AND quantity        < 0
+          AND quantity        != 0
           AND created_at     >= :start_date
         GROUP BY DATE(created_at)
         ORDER BY ds ASC
@@ -251,7 +251,7 @@ async def get_consumption_for_all_ingredients(
         WHERE it.tenant_id  = :tenant_id
           AND it.branch_id  = :branch_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND it.created_at >= :start_date
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
@@ -510,7 +510,7 @@ async def get_all_consumption_for_tenant(
         JOIN items i ON i.id = it.item_id
         WHERE it.tenant_id  = :tenant_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND it.created_at >= :start_date
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
@@ -567,7 +567,11 @@ async def get_branch_active_days(
     branch_id: str,
 ) -> dict:
     """
-    Thống kê số ngày chi nhánh có đơn hàng từ inventory_transactions.
+    Thống kê số ngày chi nhánh có đơn hàng từ bảng orders.
+
+    Đếm từ orders thay vì inventory_transactions để phản ánh đúng lượng data
+    lịch sử thực tế — inventory_transactions chỉ được tạo từ khi BE bật tính năng
+    deduct kho, trong khi orders lưu toàn bộ lịch sử kinh doanh.
 
     Dùng để:
     - Tự động bật yearly_seasonality khi active_days >= 730
@@ -579,7 +583,7 @@ async def get_branch_active_days(
 
     Returns:
         dict với keys:
-            active_days (int): số ngày có đơn SALE_DEDUCT
+            active_days (int): số ngày có đơn hoàn thành
             first_order_date (date | None): ngày có đơn đầu tiên
             last_order_date (date | None): ngày có đơn gần nhất
     """
@@ -588,11 +592,10 @@ async def get_branch_active_days(
             COUNT(DISTINCT DATE(created_at)) AS active_days,
             MIN(DATE(created_at))            AS first_order_date,
             MAX(DATE(created_at))            AS last_order_date
-        FROM inventory_transactions
+        FROM orders
         WHERE tenant_id = :tenant_id
           AND branch_id = :branch_id
-          AND type      = 'SALE_DEDUCT'
-          AND quantity  < 0
+          AND status    IN ('COMPLETED', 'PAID')
     """)
     result = await db.execute(sql, {"tenant_id": tenant_id, "branch_id": branch_id})
     row = result.fetchone()
@@ -739,7 +742,7 @@ async def get_consumption_for_branch(
         WHERE it.tenant_id  = :tenant_id
           AND it.branch_id  = :branch_id
           AND it.type       = 'SALE_DEDUCT'
-          AND it.quantity   < 0
+          AND it.quantity   != 0
           AND i.type        = 'INGREDIENT'
           AND i.deleted_at  IS NULL
           {date_condition}

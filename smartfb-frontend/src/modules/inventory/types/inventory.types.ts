@@ -64,6 +64,14 @@ export interface ImportStockPayload {
 }
 
 /**
+ * Payload điều phối ở frontend cho flow nhập kho.
+ * Tách wrapper để dialog nhập kho không phụ thuộc trực tiếp vào mutation hook.
+ */
+export interface ImportStockFlowPayload {
+  stockPayload: ImportStockPayload;
+}
+
+/**
  * Payload ghi nhận một mẻ sản xuất bán thành phẩm.
  * `expectedOutputQuantity` là sản lượng chuẩn để backend suy ra mức trừ đầu vào.
  */

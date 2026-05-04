@@ -6,6 +6,7 @@ import { PageMeta } from '@shared/components/common/PageMeta';
 import { OwnerLayout, StaffLayout } from '@shared/components/layout';
 import { usePermission } from '@shared/hooks/usePermission';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -59,6 +60,7 @@ const StaffBranchSetupState = ({
  */
 export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   const { isOwner, isStaff } = usePermission();
+  const queryClient = useQueryClient();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const updateBranchContext = useAuthStore((state) => state.updateBranchContext);
   const autoSelectedBranchIdRef = useRef<string | null>(null);
@@ -90,7 +92,7 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   // Cập nhật logic để staff hiển thị chi nhánh đầu tiên trong khi chờ auto-select hoàn tất
   const selectedBranchId = isOwner
     ? (currentBranchId ?? 'all')
-    : (currentBranchId ?? firstAccessibleBranchId); // Code mới của Claude
+    : (currentBranchId ?? firstAccessibleBranchId); 
 
 
   useEffect(() => {
@@ -116,6 +118,8 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
   const handleBranchChange = (branchId: string) => {
     if (branchId === 'all') {
       updateBranchContext(null);
+      // Invalidate toàn bộ cache vì owner không qua API selectBranch ở nhánh này.
+      void queryClient.invalidateQueries();
       return;
     }
 

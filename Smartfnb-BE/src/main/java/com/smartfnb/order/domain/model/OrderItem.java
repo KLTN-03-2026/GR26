@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * Entity con của Order Aggregate Root. (Domain Object)
  * 
- * @author SmartF&B Team
+ * @author vutq
  */
 @Getter
 @Builder
@@ -29,6 +29,8 @@ public class OrderItem {
     private String notes;
     private OrderItemStatus status;
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();
+
     public void init() {
         if (this.id == null) {
             this.id = UUID.randomUUID();
@@ -37,7 +39,25 @@ public class OrderItem {
             this.status = OrderItemStatus.PENDING;
         }
         if (this.totalPrice == null) {
-            this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+            this.totalPrice = this.unitPrice.add(calculateAddonsPrice()).multiply(BigDecimal.valueOf(this.quantity));
+        }
+    }
+
+    private BigDecimal calculateAddonsPrice() {
+        if (this.addons == null || this.addons.isBlank()) return BigDecimal.ZERO;
+        try {
+            com.fasterxml.jackson.databind.JsonNode root = MAPPER.readTree(this.addons);
+            if (!root.isArray()) return BigDecimal.ZERO;
+            
+            BigDecimal totalAddonPrice = BigDecimal.ZERO;
+            for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                BigDecimal extraPrice = node.has("extraPrice") ? new BigDecimal(node.get("extraPrice").asText()) : BigDecimal.ZERO;
+                int addonQty = node.has("quantity") ? node.get("quantity").asInt(1) : 1;
+                totalAddonPrice = totalAddonPrice.add(extraPrice.multiply(BigDecimal.valueOf(addonQty)));
+            }
+            return totalAddonPrice;
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
         }
     }
 
@@ -50,6 +70,6 @@ public class OrderItem {
         this.unitPrice = unitPrice;
         this.addons = addons;
         this.notes = notes;
-        this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
+        this.totalPrice = this.unitPrice.add(calculateAddonsPrice()).multiply(BigDecimal.valueOf(this.quantity));
     }
 }

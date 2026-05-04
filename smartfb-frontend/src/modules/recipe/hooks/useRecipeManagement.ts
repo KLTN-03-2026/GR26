@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
+import { selectCurrentBranchId, useAuthStore } from '@modules/auth/stores/authStore';
 import { recipeService } from '@modules/recipe/services/recipeService';
 import type {
   CreateRecipePayload,
@@ -25,6 +26,7 @@ const DEFAULT_TARGET_ITEM_TYPE: RecipeTargetItemType = 'SELLABLE';
 export const useRecipeManagement = () => {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
+  const currentBranchId = useAuthStore(selectCurrentBranchId);
 
   const [targetItemType, setTargetItemType] = useState<RecipeTargetItemType>(DEFAULT_TARGET_ITEM_TYPE);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -63,6 +65,13 @@ export const useRecipeManagement = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const branchMenuItemsQuery = useQuery({
+    queryKey: queryKeys.recipes.branchMenuItems(currentBranchId ?? 'global'),
+    queryFn: () => (currentBranchId ? recipeService.getBranchMenuItems(currentBranchId) : []),
+    enabled: Boolean(currentBranchId),
+    staleTime: 60 * 1000,
+  });
+
   const ingredientsQuery = useQuery({
     queryKey: queryKeys.recipes.ingredients,
     queryFn: () => recipeService.getIngredientOptions(),
@@ -78,15 +87,30 @@ export const useRecipeManagement = () => {
   }, [menuItemsQuery.data]);
 
   /**
+   * Map trạng thái phục vụ theo chi nhánh để ẩn món đã tắt khỏi các UI cấu hình công thức.
+   */
+  const branchAvailabilityMap = useMemo(() => {
+    return new Map((branchMenuItemsQuery.data ?? []).map((item) => [item.itemId, item.isAvailable]));
+  }, [branchMenuItemsQuery.data]);
+
+  /**
    * Lọc theo danh mục ở FE do backend hiện chưa hỗ trợ category param cho /menu/items.
    */
   const menuItems = useMemo(() => {
+    const branchVisibleItems = loadedMenuItems.filter((item) => {
+      const isGloballyActive = item.isActive !== false;
+      const isAvailableInBranch =
+        !currentBranchId || branchAvailabilityMap.get(item.id) !== false;
+
+      return isGloballyActive && isAvailableInBranch;
+    });
+
     if (targetItemType !== 'SELLABLE' || effectiveCategoryId === ALL_CATEGORY_VALUE) {
-      return loadedMenuItems;
+      return branchVisibleItems;
     }
 
-    return loadedMenuItems.filter((item) => item.categoryId === effectiveCategoryId);
-  }, [effectiveCategoryId, loadedMenuItems, targetItemType]);
+    return branchVisibleItems.filter((item) => item.categoryId === effectiveCategoryId);
+  }, [branchAvailabilityMap, currentBranchId, effectiveCategoryId, loadedMenuItems, targetItemType]);
 
   const categoryOptions = useMemo(() => {
     return [
@@ -238,9 +262,9 @@ export const useRecipeManagement = () => {
     isIngredientsLoading: ingredientsQuery.isLoading,
     isIngredientsRefreshing: ingredientsQuery.isFetching,
     isLoadingMoreMenuItems: menuItemsQuery.isFetchingNextPage,
-    isMenuItemsError: menuItemsQuery.isError,
-    isMenuItemsLoading: menuItemsQuery.isLoading,
-    isMenuItemsRefreshing: menuItemsQuery.isRefetching,
+    isMenuItemsError: menuItemsQuery.isError || branchMenuItemsQuery.isError,
+    isMenuItemsLoading: menuItemsQuery.isLoading || branchMenuItemsQuery.isLoading,
+    isMenuItemsRefreshing: menuItemsQuery.isRefetching || branchMenuItemsQuery.isFetching,
     isRecipeError: recipeDetailQuery.isError,
     isRecipeLoading: recipeDetailQuery.isLoading,
     isRecipeRefreshing: recipeDetailQuery.isFetching,

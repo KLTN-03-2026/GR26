@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  *   <li>Exception — lỗi không mong đợi</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j

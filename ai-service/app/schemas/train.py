@@ -32,10 +32,12 @@ class TrainResult(BaseModel):
 
     tenant_id: str
     status: Literal["success", "skipped", "failed"]  # Kết quả train
-    series_count: int                                  # Số series đã train
+    series_count: int                                  # Số series đã train thành công
     mae: float | None                                  # MAE cuối cùng (None nếu failed)
+    mape: float | None = None                          # MAPE % — dễ giải thích hơn MAE (VD: 8.7%)
     duration_seconds: float                            # Thời gian train (giây)
     model_path: str | None                             # Path file .np đã lưu
+    series_skipped: list[str] = []                     # Series bị skip do không đủ data (< 30 ngày)
     error: str | None = None                           # Mô tả lỗi nếu failed
 
 
@@ -55,7 +57,8 @@ class PredictTriggerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     message: str
-    status: str  # queued
+    status: str           # queued
+    branch_id: str | None = None  # None = chạy cho tất cả branch
 
 
 class TrainConfigRequest(BaseModel):
@@ -135,3 +138,36 @@ class TrainStatusResponse(BaseModel):
     mae: float | None                 # MAE cuối cùng (kỹ thuật)
     mape: float | None                # MAPE % — dễ giải thích cho chủ quán hơn MAE
     model_exists: bool                # File .np có tồn tại trên disk không
+
+
+class TrainLogItem(BaseModel):
+    """
+    Thông tin 1 lần chạy train — dùng trong GET /train/logs.
+
+    Bao gồm thời gian, kết quả MAE/MAPE, số series, lỗi (nếu có).
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    branch_id: str | None
+    started_at: datetime
+    finished_at: datetime | None
+    status: str                        # running | success | failed
+    trigger_type: str                  # scheduled | manual
+    series_count: int | None
+    mae: float | None
+    mape: float | None                 # Đọc từ train_metadata.json — None nếu chưa có
+    error_message: str | None
+    duration_seconds: float | None     # Thời gian chạy (giây) — None nếu chưa kết thúc
+
+
+class TrainLogsResponse(BaseModel):
+    """Response cho GET /train/logs — danh sách nhiều lần train gần nhất."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    tenant_id: str
+    branch_id: str | None   # None = lấy tất cả branch
+    logs: list[TrainLogItem]
+    total: int               # Tổng số log đang trả về (= len(logs))

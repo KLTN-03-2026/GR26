@@ -12,7 +12,7 @@ import java.util.UUID;
  * Handler truy vấn chi tiết một nhân viên (S-15).
  * READ ONLY — không @Transactional.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component

@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Kết quả trả về cho API danh sách nhân viên.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record StaffSummaryResult(

@@ -14,7 +14,7 @@ import java.util.UUID;
  * Spring Data JPA Repository cho bảng branch_items.
  * Quản lý giá bán và trạng thái của món ăn tại từng chi nhánh.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public interface BranchItemJpaRepository
@@ -36,6 +36,12 @@ public interface BranchItemJpaRepository
      * @return danh sách branch items
      */
     List<BranchItemJpaEntity> findByIdBranchId(UUID branchId);
+
+    /**
+     * Author: Hoàng | date: 2026-05-02 | note: Lấy các item đã có override branch để backfill trạng thái false khi tạo branch mới.
+     */
+    @Query("SELECT DISTINCT b.id.itemId FROM BranchItemJpaEntity b WHERE b.id.itemId IN :itemIds")
+    List<UUID> findDistinctItemIdsIn(@Param("itemIds") List<UUID> itemIds);
 
     /**
      * Cập nhật hoặc tạo giá branch item (upsert).

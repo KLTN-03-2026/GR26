@@ -1,11 +1,10 @@
 /**
  * Mock data chi tiết nhân viên cho trang Staff Detail
- * Đạt chuẩn Module 4 Spec
  */
 
 export interface Manager {
   id: string;
-  fullName: string;
+  name: string;
   avatar?: string;
   phone?: string;
   email?: string;
@@ -13,7 +12,8 @@ export interface Manager {
 
 export interface StaffDetailFull {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   identityId: string;
@@ -21,15 +21,15 @@ export interface StaffDetailFull {
   address: string;
   city: string;
   status: 'active' | 'inactive';
-  positionId: string;
-  positionName: string;
+  role: 'manager' | 'chef' | 'waiter' | 'cashier' | 'staff';
+  department: 'Quản lý' | 'Phục vụ' | 'Bếp' | 'Tính tiền' | 'Khác';
   branchId: string;
   branchName: string;
   shiftType: 'full-time' | 'part-time';
   hireDate: string;
   salary: number;
   attendanceRate: number;
-  posPin?: string;
+  pinPos?: string;
   accountNumber?: string;
   manager?: Manager;
   avatar?: string;
@@ -38,7 +38,8 @@ export interface StaffDetailFull {
 
 export const staffDetailMock: StaffDetailFull = {
   id: 'staff-1',
-  fullName: 'Lê Văn Nam',
+  firstName: 'Lê',
+  lastName: 'Văn Nam',
   email: 'nam.lv@smartfb.vn',
   phone: '0901234567',
   identityId: '123456789012',
@@ -46,19 +47,19 @@ export const staffDetailMock: StaffDetailFull = {
   address: '266 Nguyễn Hoàng, Hải Châu',
   city: 'TP.Đà Nẵng',
   status: 'active',
-  positionId: 'pos-1',
-  positionName: 'Quản lý',
+  role: 'manager',
+  department: 'Quản lý',
   branchId: 'branch-1',
   branchName: 'Chi nhánh Quận 1',
   shiftType: 'full-time',
   hireDate: '2024-01-15',
   salary: 15000000,
   attendanceRate: 98,
-  posPin: '1234',
+  pinPos: '1234',
   accountNumber: '1011234567890',
   manager: {
     id: 'manager-1',
-    fullName: 'Trần Văn Hoàng',
+    name: 'Trần Văn Hoàng',
     avatar: 'https://i.pravatar.cc/150?u=manager-1',
     phone: '0901234500',
     email: 'hoang.tv@smartfb.vn',

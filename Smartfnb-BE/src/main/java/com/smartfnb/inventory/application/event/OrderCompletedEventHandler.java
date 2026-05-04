@@ -32,7 +32,7 @@ import java.util.List;
  * </ol>
  * </p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Component

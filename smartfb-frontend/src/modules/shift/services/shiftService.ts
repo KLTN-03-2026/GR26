@@ -107,8 +107,8 @@ export const shiftService = {
      * Tạo ca mẫu mới
      * POST /api/v1/shift-templates
      */
-    createTemplate: async (payload: CreateShiftTemplatePayload): Promise<ApiResponse<{ id: string }>> => {
-        return api.post<ApiResponse<{ id: string }>>('/shift-templates', payload).then(r => r.data);
+    createTemplate: async (payload: CreateShiftTemplatePayload): Promise<ApiResponse<string>> => {
+        return api.post<ApiResponse<string>>('/shift-templates', payload).then(r => r.data);
     },
 
     /**
@@ -148,8 +148,8 @@ export const shiftService = {
      * Đăng ký ca làm việc
      * POST /api/v1/shifts
      */
-    registerShift: async (payload: RegisterShiftPayload): Promise<ApiResponse<{ id: string }>> => {
-        return api.post<ApiResponse<{ id: string }>>('/shifts', payload).then(r => r.data);
+    registerShift: async (payload: RegisterShiftPayload): Promise<ApiResponse<string>> => {
+        return api.post<ApiResponse<string>>('/shifts', payload).then(r => r.data);
     },
 
     /**

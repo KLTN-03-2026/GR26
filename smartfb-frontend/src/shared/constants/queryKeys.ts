@@ -11,11 +11,27 @@ export const queryKeys = {
     permissions: ['auth', 'permissions'] as const,
   },
 
+  // Admin SaaS
+  admin: {
+    all: ['admin'] as const,
+    dashboard: () => ['admin', 'dashboard'] as const,
+    tenants: (filters?: Record<string, unknown>) => ['admin', 'tenants', filters] as const,
+    tenantDetail: (id: string) => ['admin', 'tenants', 'detail', id] as const,
+    plans: (filters?: Record<string, unknown>) => ['admin', 'plans', filters] as const,
+    planDetail: (id: string) => ['admin', 'plans', 'detail', id] as const,
+    activePlans: () => ['admin', 'plans', 'active'] as const,
+    invoices: (filters?: Record<string, unknown>) => ['admin', 'invoices', filters] as const,
+    tenantInvoices: (tenantId: string, filters?: Record<string, unknown>) =>
+      ['admin', 'tenants', tenantId, 'invoices', filters] as const,
+    invoiceDetail: (id: string) => ['admin', 'invoices', 'detail', id] as const,
+  },
+
   // Branches
   branches: {
     all: ['branches'] as const,
     list: (filters?: Record<string, unknown>) => ['branches', 'list', filters] as const,
     detail: (id: string) => ['branches', 'detail', id] as const,
+    paymentConfig: (id: string) => ['branches', 'payment-config', id] as const,
   },
 
   // Tables
@@ -51,8 +67,9 @@ export const queryKeys = {
   menu: {
     all: ['menu'] as const,
     list: (filters?: Record<string, unknown>) => ['menu', 'list', filters] as const,
+    activeList: (branchId?: string | null) => ['menu', 'active-list', branchId ?? 'global'] as const,
     detail: (id: string) => ['menu', 'detail', id] as const,
-    branchItems: (branchId: string, itemIds: string[]) => ['menu', 'branch-items', branchId, itemIds] as const,
+    branchItems: (branchId: string) => ['menu', 'branch-items', branchId] as const,
     branchItemDetail: (branchId: string, itemId: string) => ['menu', 'branch-item', branchId, itemId] as const,
     categories: ['menu', 'categories'] as const,
     addons: ['menu', 'addons'] as const,
@@ -63,6 +80,7 @@ export const queryKeys = {
   recipes: {
     all: ['recipes'] as const,
     menuItems: (filters?: Record<string, unknown>) => ['recipes', 'menu-items', filters] as const,
+    branchMenuItems: (branchId: string) => ['recipes', 'branch-menu-items', branchId] as const,
     categories: ['recipes', 'categories'] as const,
     ingredients: ['recipes', 'ingredients'] as const,
     detail: (itemId: string) => ['recipes', 'detail', itemId] as const,
@@ -79,6 +97,17 @@ export const queryKeys = {
     activeByTable: (tableId: string) => ['orders', 'active', 'table', tableId] as const,
   },
 
+  // POS Sessions
+  posSessions: {
+    all: ['pos-sessions'] as const,
+    active: (branchId?: string | null) => ['pos-sessions', 'active', branchId ?? 'no-branch'] as const,
+    history: (branchId?: string | null) => ['pos-sessions', 'history', branchId ?? 'no-branch'] as const,
+    // author: Hoàng | date: 2026-04-30 | note: Breakdown doanh thu theo phương thức — live-query, stale sau 30s.
+    revenueBreakdown: (sessionId: string) => ['pos-sessions', 'revenue-breakdown', sessionId] as const,
+    // author: Hoàng | date: 2026-05-01 | note: Breakdown chi phí theo phương thức — tổng hợp từ financial invoices API filter theo ngày ca.
+    expenseBreakdown: (sessionId: string) => ['pos-sessions', 'expense-breakdown', sessionId] as const,
+  },
+
   // Payments & invoices
   payments: {
     all: ['payments'] as const,
@@ -86,6 +115,21 @@ export const queryKeys = {
     invoiceDetail: (id: string) => ['payments', 'invoice-detail', id] as const,
     invoiceSearch: (filters?: Record<string, unknown>) => ['payments', 'invoice-search', filters] as const,
     orderInvoice: (orderId: string) => ['payments', 'order-invoice', orderId] as const,
+  },
+
+  // Subscription gói dịch vụ của tenant hiện tại
+  subscriptions: {
+    all: ['subscriptions'] as const,
+    current: ['subscriptions', 'current'] as const,
+    plans: ['subscriptions', 'plans'] as const,
+    invoices: (filters?: Record<string, unknown>) => ['subscriptions', 'invoices', filters] as const,
+  },
+
+  // Expenses
+  expenses: {
+    all: ['expenses'] as const,
+    list: (filters?: Record<string, unknown>) => ['expenses', 'list', filters] as const,
+    detail: (id: string) => ['expenses', 'detail', id] as const,
   },
 
   // Inventory
@@ -127,6 +171,14 @@ export const queryKeys = {
     all: ['suppliers'] as const,
     list: (filters?: Record<string, unknown>) => ['suppliers', 'list', filters] as const,
     detail: (id: string) => ['suppliers', 'detail', id] as const,
+    orders: (id: string) => ['suppliers', 'detail', id, 'purchase-orders'] as const,
+  },
+
+  // Đơn mua hàng từ nhà cung cấp
+  purchaseOrders: {
+    all: ['purchase-orders'] as const,
+    list: (filters?: Record<string, unknown>) => ['purchase-orders', 'list', filters] as const,
+    detail: (id: string) => ['purchase-orders', 'detail', id] as const,
   },
 
   // Shifts
@@ -147,8 +199,63 @@ export const queryKeys = {
 
   // Reports
   reports: {
+    // Báo cáo doanh thu tổng quan theo khoảng ngày của một chi nhánh.
     revenue: (filters?: Record<string, unknown>) => ['reports', 'revenue', filters] as const,
+    // Heatmap doanh thu theo từng giờ trong một ngày để dựng chart cột.
+    hourlyHeatmap: (filters?: Record<string, unknown>) => ['reports', 'hourly-heatmap', filters] as const,
+    // Top sản phẩm bán chạy trong ngày của chi nhánh đang chọn.
+    topItems: (filters?: Record<string, unknown>) => ['reports', 'top-items', filters] as const,
+    // Tỷ trọng thanh toán theo phương thức để hiển thị breakdown.
+    paymentBreakdown: (filters?: Record<string, unknown>) => ['reports', 'payment-breakdown', filters] as const,
     inventory: (filters?: Record<string, unknown>) => ['reports', 'inventory', filters] as const,
+    // Tồn kho hiện tại theo chi nhánh.
+    inventoryStock: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'stock', filters] as const,
+    // Lô hàng sắp hết hạn theo ngưỡng ngày.
+    inventoryExpiring: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'expiring', filters] as const,
+    // Hao hụt nguyên liệu trong khoảng ngày.
+    inventoryWaste: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'waste', filters] as const,
+    // Biến động kho Nhập/Xuất/Tồn theo kỳ.
+    inventoryMovement: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'movement', filters] as const,
+    // Giá vốn hàng bán FIFO.
+    inventoryCogs: (filters?: Record<string, unknown>) => ['reports', 'inventory', 'cogs', filters] as const,
     hr: (filters?: Record<string, unknown>) => ['reports', 'hr', filters] as const,
+    // Chấm công tháng theo chi nhánh.
+    hrAttendance: (filters?: Record<string, unknown>) => ['reports', 'hr', 'attendance', filters] as const,
+    // Tổng chi phí nhân sự tháng.
+    hrCost: (filters?: Record<string, unknown>) => ['reports', 'hr', 'cost', filters] as const,
+    // Vi phạm chấm công trong khoảng ngày.
+    hrViolations: (filters?: Record<string, unknown>) => ['reports', 'hr', 'violations', filters] as const,
+    // Bảng lương tháng.
+    hrPayroll: (filters?: Record<string, unknown>) => ['reports', 'hr', 'payroll', filters] as const,
+    // Lịch sử check-in chi tiết.
+    hrCheckinHistory: (filters?: Record<string, unknown>) => ['reports', 'hr', 'checkin-history', filters] as const,
+    // Prefix cache sổ thu chi để refresh mọi filter sau khi tạo/sửa/xóa phiếu chi.
+    financialInvoicesAll: ['reports', 'financial', 'invoices'] as const,
+    // Lịch sử hóa đơn Thu/Chi.
+    financialInvoices: (filters?: Record<string, unknown>) => ['reports', 'financial', 'invoices', filters] as const,
+  },
+
+  // Account (cá nhân)
+  account: {
+    all: ['account'] as const,
+    // Profile cá nhân — GET /api/v1/account/me
+    me: ['account', 'me'] as const,
+  },
+
+  // AI Forecast
+  forecast: {
+    // Dự báo tồn kho toàn chi nhánh (7 ngày tới)
+    detail: (branchId: string) => ['ai-forecast', 'detail', branchId] as const,
+    // Tóm tắt số lượng theo mức độ khẩn cấp
+    summary: (branchId: string) => ['ai-forecast', 'summary', branchId] as const,
+    // Dự báo một nguyên liệu cụ thể
+    ingredient: (branchId: string, ingredientId: string) =>
+      ['ai-forecast', 'ingredient', branchId, ingredientId] as const,
+    // Trạng thái train model
+    trainStatus: (branchId: string) => ['ai-forecast', 'train-status', branchId] as const,
+    // Config train (n_forecasts, epochs, weekly_seasonality, active_days...)
+    config: (branchId: string) => ['ai-forecast', 'config', branchId] as const,
+    // Lịch sử nhiều lần train gần nhất
+    trainLogs: (branchId: string, limit?: number) => ['ai-forecast', 'train-logs', branchId, limit] as const,
   },
 } as const;

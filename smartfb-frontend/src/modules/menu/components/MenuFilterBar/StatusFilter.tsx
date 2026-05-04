@@ -13,7 +13,6 @@ interface StatusFilterProps {
 const statusStyles: Record<MenuStatus, string> = {
   selling: 'text-green-600',
   hidden: 'text-red-600',
-  pending: 'text-orange-600',
 };
 
 export const StatusFilter = ({

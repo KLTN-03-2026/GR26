@@ -8,9 +8,12 @@ import pandas as pd
 import pytest
 
 from app.utils.dataframe_builder import (
+    aggregate_to_weekly,
     build_future_df,
     build_global_df,
     build_series_id,
+    classify_demand_pattern,
+    split_by_demand_pattern,
     split_by_series,
     validate_series,
 )
@@ -334,6 +337,131 @@ class TestSplitBySeries:
         result = split_by_series(df)
         assert len(result) == 3
         assert len(result["s3"]) == 5
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# classify_demand_pattern
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestClassifyDemandPattern:
+    def _make_series(self, n_days: int, nonzero_days: int) -> pd.DataFrame:
+        """Tạo series với nonzero_days ngày y>0 và phần còn lại y=0."""
+        y = [5.0] * nonzero_days + [0.0] * (n_days - nonzero_days)
+        return pd.DataFrame({
+            "ds": pd.date_range("2024-01-01", periods=n_days, freq="D"),
+            "y": y,
+            "ID": ["s1"] * n_days,
+        })
+
+    def test_classify_regular_high_nonzero(self):
+        """90% ngày > 0 → "regular"."""
+        df = self._make_series(100, 90)
+        assert classify_demand_pattern(df) == "regular"
+
+    def test_classify_regular_boundary(self):
+        """Đúng 70% → "regular" (≥ 0.70)."""
+        df = self._make_series(100, 70)
+        assert classify_demand_pattern(df) == "regular"
+
+    def test_classify_intermittent(self):
+        """50% ngày > 0 → "intermittent"."""
+        df = self._make_series(100, 50)
+        assert classify_demand_pattern(df) == "intermittent"
+
+    def test_classify_intermittent_lower_boundary(self):
+        """Đúng 25% → "intermittent" (≥ 0.25)."""
+        df = self._make_series(100, 25)
+        assert classify_demand_pattern(df) == "intermittent"
+
+    def test_classify_sparse_low_nonzero(self):
+        """15% ngày > 0 → "sparse"."""
+        df = self._make_series(100, 15)
+        assert classify_demand_pattern(df) == "sparse"
+
+    def test_classify_sparse_all_zero(self):
+        """Toàn bộ y=0 → "sparse"."""
+        df = self._make_series(60, 0)
+        assert classify_demand_pattern(df) == "sparse"
+
+    def test_classify_empty_returns_sparse(self):
+        """DataFrame rỗng → "sparse" (safe default)."""
+        assert classify_demand_pattern(pd.DataFrame(columns=["y"])) == "sparse"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# aggregate_to_weekly
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestAggregateToWeekly:
+    def _make_daily_df(
+        self,
+        series_id: str = "s1",
+        n_days: int = 21,
+        y_value: float = 10.0,
+        start: str = "2024-01-01",
+    ) -> pd.DataFrame:
+        dates = pd.date_range(start=start, periods=n_days, freq="D")
+        return pd.DataFrame({
+            "ds": dates,
+            "y": [y_value] * n_days,
+            "ID": series_id,
+        })
+
+    def test_weekly_sum_correct(self):
+        """21 ngày × y=10 → 3 tuần × y=70 (mỗi tuần tổng 7×10=70)."""
+        df = self._make_daily_df(n_days=21, y_value=10.0, start="2024-01-01")
+        result = aggregate_to_weekly(df)
+        # Tổng y không thay đổi (chỉ gộp)
+        assert abs(result["y"].sum() - df["y"].sum()) < 1.0
+
+    def test_output_has_correct_columns(self):
+        df = self._make_daily_df(n_days=14)
+        result = aggregate_to_weekly(df)
+        assert set(result.columns) >= {"ds", "y", "ID"}
+
+    def test_fewer_rows_than_input(self):
+        """21 ngày → ít hơn 21 rows (được gộp thành tuần)."""
+        df = self._make_daily_df(n_days=21)
+        result = aggregate_to_weekly(df)
+        assert len(result) < len(df)
+
+    def test_no_missing_weeks(self):
+        """Khoảng trống giữa 2 tuần bị fill y=0."""
+        # Tạo df với gap: 7 ngày đầu + bỏ 1 tuần + 7 ngày cuối
+        dates1 = pd.date_range("2024-01-01", periods=7, freq="D")
+        dates2 = pd.date_range("2024-01-22", periods=7, freq="D")
+        df = pd.DataFrame({
+            "ds": list(dates1) + list(dates2),
+            "y": [10.0] * 14,
+            "ID": "s1",
+        })
+        result = aggregate_to_weekly(df)
+        # Tuần giữa phải có y=0
+        assert any(result["y"] == 0.0), "Tuần thiếu phải được fill y=0"
+        # Không có NaN trong y
+        assert not result["y"].isna().any()
+
+    def test_empty_df_returns_empty(self):
+        df = pd.DataFrame(columns=["ds", "y", "ID"])
+        result = aggregate_to_weekly(df)
+        assert result.empty
+
+    def test_multi_series_aggregated_independently(self):
+        """2 series khác nhau → mỗi series có weekly riêng."""
+        df = pd.concat([
+            self._make_daily_df("s1", n_days=14, y_value=5.0),
+            self._make_daily_df("s2", n_days=14, y_value=3.0, start="2024-02-01"),
+        ], ignore_index=True)
+        result = aggregate_to_weekly(df)
+        assert set(result["ID"].unique()) == {"s1", "s2"}
+        # s1 và s2 không lẫn lộn
+        assert (result[result["ID"] == "s1"]["y"] > 0).any()
+        assert (result[result["ID"] == "s2"]["y"] > 0).any()
+
+    def test_raises_on_missing_columns(self):
+        df = pd.DataFrame({"ds": pd.to_datetime(["2024-01-01"]), "y": [1.0]})
+        with pytest.raises(ValueError):
+            aggregate_to_weekly(df)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

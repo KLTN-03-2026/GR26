@@ -9,7 +9,7 @@ import java.util.UUID;
  * DTO cho một entry trong batch update vị trí bàn (Drag & Drop).
  * Dùng trong danh sách request UpdateTablePositionsRequest.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record TablePositionItem(

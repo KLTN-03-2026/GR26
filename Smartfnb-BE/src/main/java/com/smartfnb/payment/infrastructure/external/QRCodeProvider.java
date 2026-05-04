@@ -7,7 +7,7 @@ import java.util.UUID;
  * Interface cho external QR Code provider (VietQR, MoMo).
  * Implementation sẽ gọi API của payment gateway tương ứng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public interface QRCodeProvider {
@@ -24,12 +24,12 @@ public interface QRCodeProvider {
      * Lấy trạng thái thanh toán QR từ gateway.
      * Dùng để polling hoặc xác minh khi webhook đến.
      */
-    QRStatusResponse checkPaymentStatus(UUID paymentId, String transactionId) throws Exception;
+    QRStatusResponse checkPaymentStatus(UUID paymentId) throws Exception;
 
     /**
      * Hủy QR Code (nếu backend support).
      */
-    void cancelQRCode(UUID paymentId) throws Exception;
+    // void cancelQRCode(UUID paymentId) throws Exception;
 
     /**
      * Response khi QR được tạo thành công.
@@ -47,7 +47,7 @@ public interface QRCodeProvider {
     record QRStatusResponse(
         String status,         // success, pending, expired, failed
         String transactionId,
-        BigDecimal amount,
-        Long paidAtTimestamp   // Unix timestamp khi thanh toán thành công
+        BigDecimal amount
+        // Long paidAtTimestamp   // Tạm comment vì ConfirmQRPaymentCommand chưa dùng timestamp gateway
     ) {}
 }

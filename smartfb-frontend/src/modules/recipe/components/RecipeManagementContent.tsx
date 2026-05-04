@@ -85,7 +85,7 @@ export const RecipeManagementContent = () => {
   const [editingLine, setEditingLine] = useState<RecipeLine | null>(null);
   const selectedTargetTypeLabel = RECIPE_TARGET_TYPE_LABELS[targetItemType];
   const canFilterByCategory = targetItemType === 'SELLABLE';
-
+  
   /**
    * Với thao tác tạo mới, loại bỏ các nguyên liệu đã nằm trong công thức hiện tại.
    */
@@ -228,9 +228,6 @@ export const RecipeManagementContent = () => {
       <div className="mb-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900">Quản lý công thức</h1>
-          <p className="text-sm text-slate-600">
-            Trang này hỗ trợ cấu hình công thức cho cả món bán và bán thành phẩm, theo đúng contract backend hiện tại.
-          </p>
         </div>
 
         <Tabs value={targetItemType} onValueChange={(value) => setTargetItemType(value as RecipeTargetItemType)}>

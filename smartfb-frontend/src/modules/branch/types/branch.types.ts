@@ -1,12 +1,9 @@
-import type { BranchDetail } from '../data/branchDetails';
-
 /**
  * Trạng thái chi nhánh theo backend
  * ACTIVE: Đang hoạt động
  * INACTIVE: Ngừng hoạt động
- * TEMPORARILY_CLOSED: Tạm đóng chi nhánh
  */
-export type BranchStatus = 'ACTIVE' | 'INACTIVE' | 'TEMPORARILY_CLOSED';
+export type BranchStatus = 'ACTIVE' | 'INACTIVE';
 
 /**
  * Branch entity theo backend response
@@ -16,17 +13,17 @@ export interface Branch {
   tenantId: string;
   name: string;
   code: string;
-  address: string;
-  phone: string;
+  address: string | null;
+  phone: string | null;
   status: BranchStatus;
   createdAt: string;
 }
 
 /**
- * Trạng thái hiển thị ở UI danh sách chi nhánh.
- * Khác với `BranchStatus` vì màn hình quản trị đang dùng nhãn rút gọn `active/inactive`.
+ * Trạng thái dùng cho filter của màn hình danh sách chi nhánh.
+ * Bám sát enum backend để tránh map sai trạng thái.
  */
-export type BranchFilterStatus = BranchDetail['status'];
+export type BranchFilterStatus = BranchStatus;
 
 export type BranchFilters = {
   search: string;
@@ -34,8 +31,12 @@ export type BranchFilters = {
   location: string | 'all';
 };
 
-export type BranchListItem = BranchDetail & {
-  revenueDisplay: string;
+/**
+ * Item hiển thị trên bảng branch.
+ * `location` được suy ra từ địa chỉ để phục vụ filter ở UI.
+ */
+export type BranchListItem = Branch & {
+  location: string;
 };
 
 export type PaginationState = {
@@ -84,14 +85,8 @@ export type CreateBranchFormData = Step1BasicInfoData;
 export type EditBranchFormData = {
   name: string;
   code: string;
-  taxCode: string;
   address: string;
-  city: string;
   phone: string;
-  openTime: string;
-  closeTime: string;
-  managerId?: string;
-  isOpened?: boolean;
 };
 
 /**
@@ -106,9 +101,10 @@ export type CreateBranchPayload = {
 };
 
 /**
- * Payload gửi lên khi cập nhật chi nhánh
+ * Payload gửi lên khi cập nhật chi nhánh.
+ * Backend dùng chung `BranchRequest` cho create và update nên FE phải gửi đủ field.
  */
-export type UpdateBranchPayload = Partial<CreateBranchPayload>;
+export type UpdateBranchPayload = CreateBranchPayload;
 
 /**
  * Payload gán user vào chi nhánh
@@ -116,3 +112,24 @@ export type UpdateBranchPayload = Partial<CreateBranchPayload>;
 export type AssignUserToBranchPayload = {
   userId: string;
 };
+
+/**
+ * Cấu hình cổng thanh toán PayOS của một chi nhánh.
+ * BE chỉ trả về masked key — không bao giờ trả raw key.
+ */
+export interface PaymentGatewayConfig {
+  isConfigured: boolean;
+  clientId: string | null;
+  apiKeyMasked: string | null;
+  checksumKeyMasked: string | null;
+}
+
+/**
+ * Payload Owner gửi lên để lưu cấu hình PayOS cho chi nhánh.
+ * Chứa raw key — chỉ dùng khi gửi lên BE, không lưu ở FE.
+ */
+export interface PaymentGatewayConfigPayload {
+  clientId: string;
+  apiKey: string;
+  checksumKey: string;
+}

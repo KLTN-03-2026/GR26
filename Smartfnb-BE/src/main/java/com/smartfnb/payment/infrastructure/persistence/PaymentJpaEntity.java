@@ -14,7 +14,7 @@ import java.util.UUID;
  * JPA Entity đại diện cho Payment trong database.
  * Mapped từ Domain Entity Payment.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 @Entity
@@ -52,6 +52,10 @@ public class PaymentJpaEntity {
 
     @Column
     private UUID cashierUserId;
+
+    // author: Hoàng | date: 2026-04-30 | note: Gắn payment với ca POS để backend tính đối soát tiền mặt cuối ca.
+    @Column
+    private UUID posSessionId;
 
     @Column
     private Instant qrExpiresAt;

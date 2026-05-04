@@ -4,6 +4,8 @@ import type {
   CreateBranchPayload,
   UpdateBranchPayload,
   AssignUserToBranchPayload,
+  PaymentGatewayConfig,
+  PaymentGatewayConfigPayload,
 } from '../types/branch.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
@@ -18,14 +20,6 @@ export const branchService = {
    */
   getList: async (): Promise<ApiResponse<Branch[]>> => {
     return api.get<ApiResponse<Branch[]>>('/branches').then(r => r.data);
-  },
-
-  /**
-   * Lấy chi tiết một chi nhánh
-   * GET /api/v1/branches/:id
-   */
-  getById: async (id: string): Promise<ApiResponse<Branch>> => {
-    return api.get<ApiResponse<Branch>>(`/branches/${id}`).then(r => r.data);
   },
 
   /**
@@ -48,14 +42,6 @@ export const branchService = {
   },
 
   /**
-   * Xóa chi nhánh
-   * DELETE /api/v1/branches/:id
-   */
-  delete: async (id: string): Promise<ApiResponse<void>> => {
-    return api.delete<ApiResponse<void>>(`/branches/${id}`).then(r => r.data);
-  },
-
-  /**
    * Gán nhân viên vào chi nhánh
    * POST /api/v1/branches/:id/users
    * @param id - ID chi nhánh
@@ -63,5 +49,23 @@ export const branchService = {
    */
   assignUserToBranch: async (id: string, payload: AssignUserToBranchPayload): Promise<ApiResponse<void>> => {
     return api.post<ApiResponse<void>>(`/branches/${id}/users`, payload).then(r => r.data);
+  },
+
+  /**
+   * Lấy cấu hình cổng thanh toán PayOS của chi nhánh.
+   * BE chỉ trả về masked key — không bao giờ trả raw key.
+   * GET /api/v1/branches/:id/payment-config
+   */
+  getPaymentConfig: async (branchId: string): Promise<ApiResponse<PaymentGatewayConfig>> => {
+    return api.get<ApiResponse<PaymentGatewayConfig>>(`/branches/${branchId}/payment-config`).then(r => r.data);
+  },
+
+  /**
+   * Lưu cấu hình PayOS cho chi nhánh.
+   * Chỉ Owner có quyền BRANCH_EDIT mới được gọi API này.
+   * PUT /api/v1/branches/:id/payment-config
+   */
+  savePaymentConfig: async (branchId: string, payload: PaymentGatewayConfigPayload): Promise<ApiResponse<PaymentGatewayConfig>> => {
+    return api.put<ApiResponse<PaymentGatewayConfig>>(`/branches/${branchId}/payment-config`, payload).then(r => r.data);
   },
 };

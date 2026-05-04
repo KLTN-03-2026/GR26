@@ -8,11 +8,16 @@ import java.util.UUID;
  * Consumer: WebSocket -> Broadcast thông báo bếp realtime
  *           NotificationModule -> Thông báo bếp
  *
- * @author SmartF&B Team
+ * <p>tenantId được thêm vào để OrderWebSocketEventHandler có thể
+ * enrich event từ DB qua {@code findByIdAndTenantId} mà không cần
+ * thêm findById() unconstrained vào domain repository.</p>
+ *
+ * @author vutq
  * @since 2026-03-31
  */
 public record OrderCreatedEvent(
     UUID orderId,
+    UUID tenantId,
     UUID branchId,
     String orderNumber,
     Instant occurredAt

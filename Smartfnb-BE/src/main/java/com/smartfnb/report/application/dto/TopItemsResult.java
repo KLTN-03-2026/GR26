@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Kết quả Top 10 sản phẩm bán chạy theo ngày.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record TopItemsResult(

@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * <p>Bổ sung {@code baseOutputQuantity} và {@code baseOutputUnit} để cho phép
  * cập nhật sản lượng chuẩn của SUB_ASSEMBLY recipe sau khi tạo.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record UpdateRecipeRequest(

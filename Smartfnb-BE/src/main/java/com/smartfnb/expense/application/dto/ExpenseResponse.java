@@ -13,5 +13,6 @@ public record ExpenseResponse(
     String paymentMethod,
     String status,
     UUID createdBy,
+    String createdByName,
     Instant createdAt
 ) {}

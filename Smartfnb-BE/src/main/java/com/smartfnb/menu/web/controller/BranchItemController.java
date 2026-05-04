@@ -19,7 +19,7 @@ import java.util.UUID;
  * REST Controller quản lý giá bán và trạng thái của món ăn theo chi nhánh.
  * Cho phép Owner/Admin cài giá riêng tại từng cơ sở.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @RestController
@@ -47,6 +47,23 @@ public class BranchItemController {
             @PathVariable UUID itemId) {
 
         BranchItemResponse result = menuItemQueryHandler.getBranchItemPrice(branchId, itemId);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    /**
+     * Lấy toàn bộ danh sách món ăn kèm giá theo chi nhánh.
+     * Để tránh N+1 API gọi để lấy giá từng chi nhánh.
+     *
+     * @param branchId ID chi nhánh
+     * @return danh sách thông tin giá kết hợp của toàn bộ menu
+     */
+    @GetMapping
+    @PreAuthorize("hasPermission(null, 'MENU_VIEW')")
+    @Operation(summary = "Lấy danh sách giá toàn bộ menu tại chi nhánh")
+    public ResponseEntity<ApiResponse<java.util.List<BranchItemResponse>>> listBranchMenuItems(
+            @PathVariable UUID branchId) {
+        
+        java.util.List<BranchItemResponse> result = menuItemQueryHandler.listBranchMenuItems(branchId);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 

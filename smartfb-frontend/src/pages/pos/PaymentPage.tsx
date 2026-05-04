@@ -1,407 +1,527 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CreditCard, 
-  Wallet, 
-  Smartphone, 
-  ArrowLeft, 
-  CheckCircle2, 
-  ChevronRight, 
-  Receipt, 
-  Percent, 
-  User, 
-  Table2,
-  Banknote,
-  QrCode,
-  Loader2
-} from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/shared/constants/routes';
-import { useOrderStore } from '@/modules/order/stores/orderStore';
-import { orderService } from '@/modules/order/services/orderService';
-import { paymentService } from '@/modules/order/services/paymentService';
-import type { OrderResponse, PaymentMethod } from '@/modules/order/types/order.types';
-import toast from 'react-hot-toast';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import { usePaymentConfig } from '@modules/branch/hooks/usePaymentConfig';
+import { ORDER_TAX_RATE } from '@modules/order/components/order-page/orderPage.utils';
+import { PaymentEmptyState } from '@modules/order/components/payment-page/PaymentEmptyState';
+import { PaymentOrderSummary } from '@modules/order/components/payment-page/PaymentOrderSummary';
+import {
+  PaymentSidebar,
+  type PaymentMethod,
+  type QRState,
+  type QRSubMethod,
+} from '@modules/order/components/payment-page/PaymentSidebar';
+import { PaymentSuccessState } from '@modules/order/components/payment-page/PaymentSuccessState';
+import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
+import { orderService } from '@modules/order/services/orderService';
+import { useOrderStore } from '@modules/order/stores/orderStore';
+import type { OrderTableContext } from '@modules/order/types/order.types';
+import { useManualConfirmQRPayment } from '@modules/payment/hooks/useManualConfirmQRPayment';
+import { useProcessCashPayment } from '@modules/payment/hooks/useProcessCashPayment';
+import { useProcessQRPayment } from '@modules/payment/hooks/useProcessQRPayment';
+import { paymentService } from '@modules/payment/services/paymentService';
+import { queryKeys } from '@shared/constants/queryKeys';
+import { PERMISSIONS } from '@shared/constants/permissions';
+import { ROLES } from '@shared/constants/roles';
+import { ROUTES } from '@shared/constants/routes';
+import { usePermission } from '@shared/hooks/usePermission';
+import { getApiErrorMessage } from '@shared/utils/getApiErrorMessage';
+interface PaymentResultState {
+  status: 'success' | 'error';
+  title: string;
+  description: string;
+  shouldClearDraft: boolean;
+}
 
-const PAYMENT_METHODS = [
-  { id: 'cash', name: 'Tiền mặt', icon: <Wallet className="w-6 h-6 text-green-500" /> },
-  { id: 'card', name: 'Thẻ ngân hàng', icon: <CreditCard className="w-6 h-6 text-blue-500" /> },
-  { id: 'qr', name: 'Chuyển khoản / QR', icon: <Smartphone className="w-6 h-6 text-orange-500" /> },
-];
+/**
+ * Dữ liệu QR đã được tạo từ BE.
+ * qrCodeUrl  = checkoutUrl PayOS (link trang web) — dùng làm fallback
+ * qrCodeData = raw VietQR/EMVCo string từ PayOS SDK — app ngân hàng đọc trực tiếp
+ */
+interface QRData {
+  paymentId: string;
+  method: QRSubMethod;
+  qrCodeUrl: string;
+  qrCodeData: string;
+  expiresInSeconds: number;
+  generatedAt: number; // Date.now() lúc tạo
+}
 
-const PaymentPage: React.FC = () => {
-  const { orderId } = useParams<{ orderId: string }>();
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CASH');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [orderData, setOrderData] = useState<OrderResponse | null>(null);
-  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
-  
-  const [amountReceived, setAmountReceived] = useState<number | ''>('');
-  const [qrStep, setQrStep] = useState<'IDLE' | 'GENERATING' | 'READY'>('IDLE');
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  
-  const { clearCart } = useOrderStore();
+/** Interval tính giây để poll trạng thái payment QR */
+const QR_POLL_INTERVAL_MS = 3000;
+
+/** Số lần lỗi polling liên tiếp trước khi hiển thị cảnh báo cho thu ngân. */
+const QR_POLL_ERROR_WARNING_THRESHOLD = 2;
+
+/** Thông báo nghiệp vụ khi chi nhánh chưa nhập bộ key PayOS. */
+const PAYOS_NOT_CONFIGURED_MESSAGE =
+  'Chi nhánh hiện tại chưa cấu hình PayOS. Vui lòng vào Chi nhánh > Cổng thanh toán PayOS để cấu hình trước khi tạo QR PayOS.';
+
+const QR_POLLING_FALLBACK_MESSAGE =
+  'Chưa kiểm tra được trạng thái thanh toán. Nếu khách đã chuyển khoản, hãy kiểm tra PayOS/ngân hàng trước khi xác nhận thủ công.';
+
+export default function PaymentPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const { can } = usePermission();
+  const currentRole = useAuthStore((state) => state.user?.role);
+  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const {
+    cart,
+    tableContext,
+    draftOrder,
+    clearDraftAndContext,
+    setDraftOrder,
+  } = useOrderStore();
+
+  const routeOrderId = searchParams.get('orderId')?.trim() ?? '';
+  const routeTableId = searchParams.get('tableId')?.trim() ?? '';
+  const routeTableName = searchParams.get('tableName')?.trim() ?? '';
+  const routeZoneId = searchParams.get('zoneId')?.trim() ?? '';
+  const routeBranchName = searchParams.get('branchName')?.trim() ?? '';
+
+  const fallbackTableContext = useMemo<OrderTableContext>(() => ({
+    tableId: routeTableId || null,
+    tableName: routeTableName,
+    zoneId: routeZoneId || undefined,
+    zoneName: '',
+    branchId: currentBranchId,
+    branchName: routeBranchName || 'Chi nhánh hiện tại',
+  }), [currentBranchId, routeBranchName, routeTableId, routeTableName, routeZoneId]);
+
+  const displayCart = cart;
+  const displayTableContext = tableContext ?? fallbackTableContext;
+  const displayOrderId = draftOrder.orderId ?? routeOrderId;
+  const displayOrderNumber = draftOrder.orderNumber ?? null;
+  const displayCreatedAt = draftOrder.createdAt ?? new Date().toISOString();
+  const paymentConfigBranchId = displayTableContext.branchId ?? currentBranchId ?? '';
+  const canReadPaymentConfig = can(PERMISSIONS.BRANCH_EDIT);
+  const { data: paymentConfig, isLoading: isPaymentConfigLoading } =
+    usePaymentConfig(paymentConfigBranchId, canReadPaymentConfig);
+
+  const { subtotal, vatAmount, totalAmount } = useOrderPricing({
+    cart: displayCart,
+    taxRate: ORDER_TAX_RATE,
+  });
+
+  // --- Payment method state ---
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('cash');
+  const [amountReceivedDraft, setAmountReceivedDraft] = useState<string | null>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResultState | null>(null);
+
+  // --- QR state ---
+  const [qrSubMethod, setQRSubMethod] = useState<QRSubMethod>('VIETQR');
+  const [qrState, setQRState] = useState<QRState>('idle');
+  const [qrData, setQRData] = useState<QRData | null>(null);
+  const [qrTimeLeft, setQRTimeLeft] = useState(0);
+  const [qrPollingMessage, setQRPollingMessage] = useState<string | null>(null);
+  const isPayOSEnabled = canReadPaymentConfig ? Boolean(paymentConfig?.isConfigured) : true;
+  const payOSDisabledMessage = isPaymentConfigLoading
+    ? 'Đang kiểm tra cấu hình PayOS của chi nhánh hiện tại...'
+    : PAYOS_NOT_CONFIGURED_MESSAGE;
+
+  // Dùng ref để tránh stale closure trong setInterval
+  const qrDataRef = useRef<QRData | null>(null);
+  const qrPollingErrorCountRef = useRef(0);
+  qrDataRef.current = qrData;
+
+  const processCashPaymentMutation = useProcessCashPayment();
+  const processQRPaymentMutation = useProcessQRPayment();
+  const manualConfirmMutation = useManualConfirmQRPayment();
+
+  const amountReceived = amountReceivedDraft ?? (totalAmount > 0 ? String(totalAmount) : '');
+  const amountReceivedValue = Number(amountReceived) || 0;
+  const changeAmount = Math.max(0, amountReceivedValue - totalAmount);
+
+  const isProcessing =
+    processCashPaymentMutation.isPending ||
+    processQRPaymentMutation.isPending;
+
+  const tableManagementRoute =
+    currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
+
+  // --- Countdown timer khi QR active ---
+  useEffect(() => {
+    if (qrState !== 'active' || !qrData) return;
+
+    const interval = window.setInterval(() => {
+      const elapsed = Math.floor((Date.now() - qrData.generatedAt) / 1000);
+      const remaining = qrData.expiresInSeconds - elapsed;
+
+      if (remaining <= 0) {
+        setQRTimeLeft(0);
+        setQRState('expired');
+        clearInterval(interval);
+      } else {
+        setQRTimeLeft(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [qrState, qrData]);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) return;
-      setIsLoadingOrder(true);
+    if (qrSubMethod !== 'PAYOS' || isPayOSEnabled || isPaymentConfigLoading) return;
+
+    // Khi chi nhánh chưa cấu hình PayOS, tự chuyển về VietQR để tránh gọi gateway lỗi.
+    setQRSubMethod('VIETQR');
+  }, [isPayOSEnabled, isPaymentConfigLoading, qrSubMethod]);
+
+  // --- Polling trạng thái payment khi QR active ---
+  useEffect(() => {
+    if (qrState !== 'active' || !qrData) return;
+
+    qrPollingErrorCountRef.current = 0;
+    setQRPollingMessage(null);
+
+    const interval = window.setInterval(async () => {
+      // Lấy ref mới nhất để kiểm tra QR còn active không
+      if (!qrDataRef.current || qrState !== 'active') return;
+
       try {
-        const response = await orderService.getById(orderId);
-        if (response.success && response.data) {
-          setOrderData(response.data);
-        } else {
-          toast.error('Không tìm thấy thông tin đơn hàng');
-          navigate(ROUTES.POS_ORDER);
+        const currentQRData = qrDataRef.current;
+        if (!currentQRData) return;
+
+        const response =
+          currentQRData.method === 'PAYOS'
+            ? await paymentService.syncPaymentStatus(currentQRData.paymentId)
+            : await paymentService.getPayment(currentQRData.paymentId);
+        qrPollingErrorCountRef.current = 0;
+        setQRPollingMessage(null);
+
+        if (response.data?.status === 'COMPLETED') {
+          clearInterval(interval);
+          handlePaymentSuccess();
+        } else if (response.data?.status === 'FAILED') {
+          clearInterval(interval);
+          void resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+          showPaymentResult({
+            status: 'error',
+            title: 'Thanh toán QR thất bại',
+            description: 'Gateway báo thanh toán thất bại. Vui lòng thử lại hoặc đổi phương thức.',
+            shouldClearDraft: false,
+          });
         }
       } catch (error) {
-        console.error('Fetch order failed:', error);
-        toast.error('Lỗi khi tải thông tin đơn hàng');
-      } finally {
-        setIsLoadingOrder(false);
+        // Polling lỗi không dừng luồng QR, nhưng cần báo rõ để thu ngân biết hệ thống đang mất tín hiệu.
+        qrPollingErrorCountRef.current += 1;
+
+        if (qrPollingErrorCountRef.current >= QR_POLL_ERROR_WARNING_THRESHOLD) {
+          setQRPollingMessage(getApiErrorMessage(error, QR_POLLING_FALLBACK_MESSAGE));
+        }
       }
-    };
+    }, QR_POLL_INTERVAL_MS);
 
-    fetchOrder();
-  }, [orderId, navigate]);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrState, qrData?.paymentId]);
 
-  const total = orderData?.totalAmount || 0;
-  const subtotal = useMemo(() => {
-    if (!orderData) return 0;
-    return orderData.items.reduce((sum, item) => sum + item.totalPrice, 0);
-  }, [orderData]);
-  const tax = total - subtotal;
-
-  const changeAmount = useMemo(() => {
-    if (typeof amountReceived !== 'number' || !total) return 0;
-    return Math.max(0, amountReceived - total);
-  }, [amountReceived, total]);
-
-  const canConfirm = useMemo(() => {
-    if (selectedMethod === 'CASH') {
-      return typeof amountReceived === 'number' && amountReceived >= total;
+  const invalidateOrderAndTableQueries = (orderId?: string | null, tableId?: string | null) => {
+    if (orderId?.trim()) {
+      queryClient.removeQueries({ queryKey: queryKeys.orders.detail(orderId.trim()) });
     }
-    return true;
-  }, [selectedMethod, amountReceived, total]);
+    if (tableId?.trim()) {
+      queryClient.setQueryData(queryKeys.orders.activeByTable(tableId.trim()), null);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(tableId.trim()) });
+    }
+    void queryClient.invalidateQueries({ queryKey: queryKeys.tables.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.orders.active, exact: true });
+  };
 
-  useEffect(() => {
-    const fetchQR = async () => {
-      if (selectedMethod === 'VIETQR' && orderId) {
-        setQrStep('GENERATING');
-        try {
-          const response = await paymentService.generateQRPayment(orderId);
-          if (response.success && response.data) {
-            setQrCode(response.data.qrCode);
-            setQrStep('READY');
-          }
-        } catch (error) {
-          console.error('Generate QR failed:', error);
-          toast.error('Lỗi khi sinh mã QR');
-          setQrStep('IDLE');
-        }
-      } else {
-        setQrStep('IDLE');
-        setQrCode(null);
-      }
-    };
+  const navigateToTableManagement = (shouldClearDraft: boolean) => {
+    if (shouldClearDraft) clearDraftAndContext();
+    navigate(tableManagementRoute, { replace: true });
+  };
 
-    fetchQR();
-  }, [selectedMethod, orderId]);
+  const showPaymentResult = (result: PaymentResultState) => {
+    setPaymentResult(result);
+    window.setTimeout(() => {
+      navigateToTableManagement(result.shouldClearDraft);
+    }, 2000);
+  };
 
-  const handlePay = async () => {
-    if (!orderId || !orderData) return;
-    
-    setIsProcessing(true);
+  const handlePaymentSuccess = () => {
+    invalidateOrderAndTableQueries(displayOrderId, displayTableContext.tableId);
+    showPaymentResult({
+      status: 'success',
+      title: 'Thanh toán thành công',
+      description: 'Đơn hàng đã được thanh toán và hoàn tất trên hệ thống.',
+      shouldClearDraft: true,
+    });
+  };
+
+  const resetOrderAfterPaymentFailure = async (orderId: string, tableId?: string | null) => {
     try {
-      // 1. Khởi tạo thanh toán
-      const initRes = await paymentService.initiatePayment(orderId, total, selectedMethod);
-      if (initRes.success && initRes.data) {
-        const paymentId = initRes.data.id;
-
-        // 2. Xác nhận thanh toán (nếu là Tiền mặt)
-        if (selectedMethod === 'CASH') {
-          const confirmRes = await paymentService.confirmPayment(paymentId, {
-            amountReceived,
-            changeAmount
-          });
-          if (!confirmRes.success) {
-            throw new Error(confirmRes.message || 'Xác nhận thất bại');
-          }
-        }
-        
-        // 3. Với VietQR, trong thực tế thường có webhook hoặc polling.
-        // Ở đây giả định sau khi init/generate QR, ta đợi success logic.
-        // Cho mục đích demo/skeleton, ta coi như thành công nếu cash confirm ok.
-        
-        setIsSuccess(true);
-        clearCart();
-        toast.success('Thanh toán thành công!');
-      }
-    } catch (error: any) {
-      console.error('Payment failed:', error);
-      toast.error(error.message || 'Thanh toán thất bại');
+      await orderService.cancelOrder(orderId, {
+        reason: 'PAYMENT_FAILED_AFTER_ORDER_CREATED',
+      });
+    } catch {
+      // Không chặn màn kết quả thất bại
     } finally {
-      setIsProcessing(false);
+      setDraftOrder({
+        orderId: null,
+        orderNumber: null,
+        status: 'PENDING',
+        createdAt: draftOrder.createdAt ?? displayCreatedAt,
+      });
+      invalidateOrderAndTableQueries(orderId, tableId ?? displayTableContext.tableId);
     }
   };
 
-  if (isSuccess) {
+  const canConfirmPayment =
+    Boolean(displayOrderId) &&
+    displayCart.length > 0 &&
+    !isProcessing &&
+    (selectedMethod !== 'cash' || amountReceivedValue >= totalAmount);
+
+  /**
+   * Xử lý khi bấm nút chính:
+   * - cash: thanh toán ngay
+   * - qr idle/expired: tạo QR
+   */
+  const handleConfirmPayment = () => {
+    if (!displayOrderId) {
+      showPaymentResult({
+        status: 'error',
+        title: 'Chưa có đơn hàng để thanh toán',
+        description: 'Vui lòng quay lại màn order và bấm đi thanh toán để hệ thống tạo đơn trước.',
+        shouldClearDraft: false,
+      });
+      return;
+    }
+
+    if (selectedMethod === 'cash') {
+      void handleCashPayment();
+      return;
+    }
+
+    if (selectedMethod === 'qr' && (qrState === 'idle' || qrState === 'expired')) {
+      void handleGenerateQR();
+      return;
+    }
+
+    // Thẻ ngân hàng chưa tích hợp
+    const showUnsupported = async () => {
+      await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+      showPaymentResult({
+        status: 'error',
+        title: 'Thanh toán thất bại',
+        description: 'Phương thức thẻ chưa kết nối API thật. Vui lòng chọn tiền mặt hoặc QR.',
+        shouldClearDraft: false,
+      });
+    };
+    void showUnsupported();
+  };
+
+  const handleCashPayment = async () => {
+    try {
+      const response = await processCashPaymentMutation.mutateAsync({
+        orderId: displayOrderId,
+        amount: amountReceivedValue,
+      });
+
+      if (!response.success) {
+        await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+        showPaymentResult({
+          status: 'error',
+          title: 'Thanh toán thất bại',
+          description: response.error?.message ?? 'Không thể xử lý thanh toán tiền mặt.',
+          shouldClearDraft: false,
+        });
+        return;
+      }
+
+      handlePaymentSuccess();
+    } catch {
+      await resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+      showPaymentResult({
+        status: 'error',
+        title: 'Thanh toán thất bại',
+        description: 'Có lỗi xảy ra trong quá trình thanh toán. Vui lòng kiểm tra lại hệ thống.',
+        shouldClearDraft: false,
+      });
+    }
+  };
+
+  const handleGenerateQR = async () => {
+    if (qrSubMethod === 'PAYOS' && !isPayOSEnabled) {
+      showPaymentResult({
+        status: 'error',
+        title: 'PayOS chưa được cấu hình',
+        description: payOSDisabledMessage,
+        shouldClearDraft: false,
+      });
+      return;
+    }
+
+    setQRState('generating');
+    setQRData(null);
+    setQRPollingMessage(null);
+    qrPollingErrorCountRef.current = 0;
+
+    try {
+      const response = await processQRPaymentMutation.mutateAsync({
+        orderId: displayOrderId,
+        amount: totalAmount,
+        qrMethod: qrSubMethod,
+      });
+
+      if (!response.success || !response.data) {
+        setQRState('idle');
+        showPaymentResult({
+          status: 'error',
+          title: 'Không thể tạo mã QR',
+          description: response.error?.message ?? 'Hệ thống chưa tạo được mã QR. Vui lòng thử lại.',
+          shouldClearDraft: false,
+        });
+        return;
+      }
+
+      const data: QRData = {
+        paymentId: response.data.paymentId,
+        method: qrSubMethod,
+        qrCodeUrl: response.data.qrCodeUrl,
+        // qrCodeData là raw VietQR string từ PayOS SDK — app ngân hàng quét trực tiếp
+        qrCodeData: response.data.qrCodeData,
+        expiresInSeconds: response.data.expiresInSeconds,
+        generatedAt: Date.now(),
+      };
+
+      setQRData(data);
+      setQRTimeLeft(data.expiresInSeconds);
+      setQRState('active');
+    } catch (error) {
+      setQRState('idle');
+      const qrErrorMessage = getApiErrorMessage(
+        error,
+        qrSubMethod === 'PAYOS'
+          ? PAYOS_NOT_CONFIGURED_MESSAGE
+          : 'Có lỗi xảy ra khi tạo mã QR. Vui lòng thử lại.'
+      );
+      showPaymentResult({
+        status: 'error',
+        title: 'Không thể tạo mã QR',
+        description:
+          qrSubMethod === 'PAYOS' && qrErrorMessage === 'Hệ thống gặp sự cố, vui lòng thử lại sau'
+            ? PAYOS_NOT_CONFIGURED_MESSAGE
+            : qrErrorMessage,
+        shouldClearDraft: false,
+      });
+    }
+  };
+
+  /**
+   * Thu ngân xác nhận thủ công khi webhook không đến.
+   */
+  const handleManualConfirmQR = () => {
+    if (!qrData) return;
+
+    manualConfirmMutation.mutate(qrData.paymentId, {
+      onSuccess: () => {
+        handlePaymentSuccess();
+      },
+      onError: () => {
+        showPaymentResult({
+          status: 'error',
+          title: 'Xác nhận thủ công thất bại',
+          description: 'Không thể xác nhận thanh toán. Kiểm tra lại trên hệ thống ngân hàng.',
+          shouldClearDraft: false,
+        });
+      },
+    });
+  };
+
+  /**
+   * Reset QR state về idle để tạo lại khi hết hạn.
+   */
+  const handleRegenerateQR = () => {
+    setQRState('idle');
+    setQRData(null);
+    setQRTimeLeft(0);
+    setQRPollingMessage(null);
+    qrPollingErrorCountRef.current = 0;
+  };
+
+  const handleSelectMethod = (method: PaymentMethod) => {
+    setSelectedMethod(method);
+    // Reset QR state khi đổi phương thức
+    if (method !== 'qr') {
+      setQRState('idle');
+      setQRData(null);
+      setQRTimeLeft(0);
+      setQRPollingMessage(null);
+      qrPollingErrorCountRef.current = 0;
+    }
+    if (method === 'cash') {
+      setAmountReceivedDraft(null);
+    }
+  };
+
+  if (paymentResult) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-white rounded-[32px] p-12 text-center shadow-sm">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="w-32 h-32 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100"
-        >
-          <CheckCircle2 className="w-16 h-16" />
-        </motion.div>
-        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Thanh toán hoàn tất!</h1>
-        <p className="text-slate-500 text-lg mb-8 max-w-md font-medium">Đơn hàng đã được xử lý thành công. Hóa đơn đã được gửi đến hàng đợi in.</p>
-        <div className="flex gap-4">
-          <Button 
-            variant="outline" 
-            className="h-14 px-8 rounded-2xl border-2 font-bold hover:bg-slate-50 transition-all"
-          >
-            <Receipt className="mr-2 w-5 h-5" />
-            In hóa đơn
-          </Button>
-          <Button 
-            className="h-14 px-8 rounded-2xl bg-orange-500 hover:bg-orange-600 font-bold shadow-lg shadow-orange-100 transition-all"
-            onClick={() => navigate(ROUTES.POS_ORDER)}
-          >
-            Đơn hàng mới
-          </Button>
-        </div>
-      </div>
+      <PaymentSuccessState
+        status={paymentResult.status}
+        title={paymentResult.title}
+        description={paymentResult.description}
+        onPrint={paymentResult.status === 'success' ? () => window.print() : undefined}
+        onCreateNewOrder={() => navigateToTableManagement(paymentResult.shouldClearDraft)}
+      />
     );
   }
 
-  if (isLoadingOrder) {
+  if (displayCart.length === 0 || !displayOrderId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
-        <p className="text-slate-500 font-bold">Đang tải thông tin đơn hàng...</p>
-      </div>
+      <PaymentEmptyState
+        onBackToOrder={() =>
+          navigate(
+            searchParams.toString()
+              ? `${ROUTES.POS_ORDER}?${searchParams.toString()}`
+              : ROUTES.POS_ORDER
+          )
+        }
+      />
     );
   }
 
   return (
-    <div className="flex h-full gap-6 overflow-hidden p-2">
-      <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-        <header className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate(-1)}
-            className="rounded-2xl w-12 h-12 hover:bg-white hover:shadow-sm"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Thanh toán</h1>
-            <p className="text-slate-500 font-medium">Xác nhận giao dịch và in hóa đơn</p>
-          </div>
-        </header>
+    <div className="grid min-h-[calc(100vh-10rem)] grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <PaymentOrderSummary
+        cart={displayCart}
+        tableContext={displayTableContext}
+        orderNumber={displayOrderNumber}
+        createdAt={displayCreatedAt}
+        onBack={() => navigate(-1)}
+      />
 
-        <div className="flex-1 bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col gap-8 overflow-hidden">
-          <div className="flex flex-col gap-4 overflow-hidden">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <Receipt className="w-6 h-6 text-orange-500" />
-              Chi tiết đơn hàng
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 custom-scrollbar">
-              {!orderData || orderData.items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-slate-300 italic">
-                  Không có sản phẩm nào
-                </div>
-              ) : (
-                orderData.items.map(item => (
-                  <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
-                    <div className="flex items-center gap-4">
-                      <span className="w-10 h-10 bg-white shadow-sm flex items-center justify-center rounded-xl font-black text-slate-700">{item.quantity}</span>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800">{item.itemName}</span>
-                        <span className="text-xs text-slate-400 font-medium">{item.unitPrice.toLocaleString('vi-VN')} ₫ / món</span>
-                      </div>
-                    </div>
-                    <span className="font-black text-slate-900">{item.totalPrice.toLocaleString('vi-VN')} ₫</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t-2 border-slate-50 flex flex-col gap-3 mt-auto">
-            <div className="flex justify-between text-slate-500 font-medium">
-              <span>Tạm tính</span>
-              <span>{subtotal.toLocaleString('vi-VN')} ₫</span>
-            </div>
-            <div className="flex justify-between text-slate-500 font-medium">
-              <span>VAT (8%)</span>
-              <span>{tax.toLocaleString('vi-VN')} ₫</span>
-            </div>
-            <div className="flex justify-between text-4xl font-black text-slate-900 mt-2 tracking-tighter">
-              <span>Tổng thanh toán</span>
-              <span className="text-orange-500">{total.toLocaleString('vi-VN')} ₫</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-[480px] flex flex-col gap-6">
-        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col gap-8 h-full">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold text-slate-800">Phương thức thanh toán</h2>
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                onClick={() => setSelectedMethod('CASH')}
-                className={`flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all duration-300 ${
-                  selectedMethod === 'CASH' 
-                    ? 'border-orange-500 bg-orange-50 shadow-xl shadow-orange-500/5 lg:scale-[1.02]' 
-                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-200'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${selectedMethod === 'CASH' ? 'bg-white' : 'bg-slate-100'}`}>
-                  <Wallet className="w-6 h-6 text-green-500" />
-                </div>
-                <span className="font-bold text-lg text-slate-800">Tiền mặt</span>
-                {selectedMethod === 'CASH' && (
-                  <motion.div layoutId="check" className="ml-auto">
-                    <CheckCircle2 className="w-7 h-7 text-orange-500" />
-                  </motion.div>
-                )}
-              </button>
-
-              <button
-                onClick={() => setSelectedMethod('VIETQR')}
-                className={`flex items-center gap-4 p-5 rounded-[24px] border-2 transition-all duration-300 ${
-                  selectedMethod === 'VIETQR' 
-                    ? 'border-orange-500 bg-orange-50 shadow-xl shadow-orange-500/5 lg:scale-[1.02]' 
-                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-200'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${selectedMethod === 'VIETQR' ? 'bg-white' : 'bg-slate-100'}`}>
-                  <Smartphone className="w-6 h-6 text-orange-500" />
-                </div>
-                <span className="font-bold text-lg text-slate-800">VietQR</span>
-                {selectedMethod === 'VIETQR' && (
-                  <motion.div layoutId="check" className="ml-auto">
-                    <CheckCircle2 className="w-7 h-7 text-orange-500" />
-                  </motion.div>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {selectedMethod === 'CASH' && (
-              <motion.div 
-                key="cash-ui"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex flex-col gap-4 bg-slate-50 p-6 rounded-[24px] border border-slate-100"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Banknote className="w-5 h-5 text-green-500" />
-                  <span className="font-bold text-slate-700">Thanh toán tiền mặt</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400 uppercase ml-1">Số tiền khách đưa</label>
-                  <div className="relative">
-                    <Input 
-                      type="number"
-                      placeholder="Nhập số tiền..."
-                      className="h-14 pl-6 pr-12 rounded-2xl bg-white border-slate-100 text-xl font-black text-slate-800 focus-visible:ring-orange-500"
-                      value={amountReceived}
-                      onChange={(e) => setAmountReceived(Number(e.target.value) || '')}
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center mt-2 px-1">
-                  <span className="text-slate-500 font-medium">Tiền thừa trả khách:</span>
-                  <span className="text-xl font-black text-emerald-500">{changeAmount.toLocaleString('vi-VN')} ₫</span>
-                </div>
-              </motion.div>
-            )}
-
-            {selectedMethod === 'VIETQR' && (
-              <motion.div 
-                key="qr-ui"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex flex-col items-center gap-4 bg-slate-50 p-6 rounded-[24px] border border-slate-100"
-              >
-                <div className="w-full flex items-center gap-2 mb-2">
-                  <QrCode className="w-5 h-5 text-orange-500" />
-                  <span className="font-bold text-slate-700">Mã QR VietQR động</span>
-                </div>
-                
-                <div className="w-48 h-48 bg-white rounded-3xl p-3 shadow-inner flex items-center justify-center border-2 border-dashed border-slate-200">
-                  {qrStep === 'GENERATING' ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Đang sinh mã...</span>
-                    </div>
-                  ) : (
-                    <motion.img 
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      src={qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SMARTFNB_ORDER_${total}`}
-                      alt="VietQR"
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-                
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Trạng thái giao dịch</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-sm font-bold text-blue-600">Đang chờ thanh toán...</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="mt-auto pt-6 border-t border-slate-50">
-            <Button 
-              disabled={isProcessing || !canConfirm || !orderData}
-              onClick={handlePay}
-              className={`w-full h-16 rounded-[24px] text-xl font-black shadow-xl transition-all active:scale-95 group ${
-                canConfirm 
-                  ? 'bg-slate-900 hover:bg-orange-500 text-white shadow-slate-200' 
-                  : 'bg-slate-100 text-slate-400 shadow-none'
-              }`}
-            >
-              {isProcessing ? (
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  Đang xác thực...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  {!canConfirm ? 'Vui lòng nhập đủ tiền' : 'Xác nhận Đã thanh toán'}
-                  {canConfirm && <ChevronRight className="w-7 h-7 group-hover:translate-x-1 transition-transform" />}
-                </div>
-              )}
-            </Button>
-            <p className="text-center text-slate-400 text-[11px] font-medium leading-relaxed mt-4 px-4">
-              Xác nhận thanh toán sẽ cập nhật trạng thái đơn hàng và in hóa đơn GTGT.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PaymentSidebar
+        selectedMethod={selectedMethod}
+        amountReceived={amountReceived}
+        orderNumber={displayOrderNumber}
+        totalAmount={totalAmount}
+        subtotal={subtotal}
+        vatAmount={vatAmount}
+        changeAmount={changeAmount}
+        canConfirmPayment={canConfirmPayment}
+        isProcessing={isProcessing}
+        onSelectMethod={handleSelectMethod}
+        onAmountReceivedChange={(value) => setAmountReceivedDraft(value)}
+        onConfirmPayment={handleConfirmPayment}
+        qrSubMethod={qrSubMethod}
+        qrState={qrState}
+        qrCodeUrl={qrData?.qrCodeUrl ?? null}
+        qrCodeData={qrData?.qrCodeData ?? null}
+        qrTimeLeft={qrTimeLeft}
+        qrPollingMessage={qrPollingMessage}
+        isPayOSEnabled={isPayOSEnabled}
+        payOSDisabledMessage={payOSDisabledMessage}
+        isManualConfirming={manualConfirmMutation.isPending}
+        onSelectQRSubMethod={setQRSubMethod}
+        onManualConfirmQR={handleManualConfirmQR}
+        onRegenerateQR={handleRegenerateQR}
+      />
     </div>
   );
-};
-
-export default PaymentPage;
+}

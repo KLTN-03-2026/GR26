@@ -48,6 +48,7 @@ export interface BackendAuthResponse {
   tenantId: string;
   role: string;
   branchId?: string | null;
+  fullName?: string | null;
 }
 
 /**
@@ -87,7 +88,6 @@ export interface AuthState {
  * Payload đăng ký tenant mới
  */
 export type RegisterPayload = {
-  tenantName: string;
   email: string;
   password: string;
   ownerName: string;
@@ -115,7 +115,8 @@ export type VerifyOtpPayload = {
  */
 export type VerifyOtpResponse = {
   resetToken: string;
-  expiresIn: number;
+  message: string;
+  expiresIn?: number;
 };
 
 /**

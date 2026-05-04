@@ -4,9 +4,10 @@ Endpoint trigger train model thủ công và quản lý config train per-branch.
 Endpoints:
 - POST /train/trigger           — trigger train thủ công cho toàn bộ branch của tenant
 - GET  /train/status            — trạng thái train gần nhất (optional: theo branch)
+- GET  /train/logs              — lịch sử nhiều lần train (optional: theo branch, limit)
 - GET  /train/config            — đọc config train của 1 chi nhánh
 - PUT  /train/config            — cập nhật config + trigger retrain chi nhánh đó
-- POST /train/predict           — trigger predict thủ công
+- POST /train/predict           — trigger predict thủ công (optional: chỉ 1 branch)
 """
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -22,6 +23,8 @@ from app.schemas.train import (
     PredictTriggerResponse,
     TrainConfigRequest,
     TrainConfigResponse,
+    TrainLogItem,
+    TrainLogsResponse,
     TrainRequest,
     TrainStatusResponse,
     TrainTriggerResponse,
@@ -91,6 +94,27 @@ async def _run_predict_bg() -> None:
             logger.info("Background predict hoàn thành")
         except Exception as exc:
             logger.error("Background predict thất bại: %s", exc)
+
+
+async def _run_predict_branch_bg(tenant_id: str, branch_id: str) -> None:
+    """
+    Background task chạy predict cho 1 chi nhánh cụ thể — tạo session riêng.
+    Dùng khi OWNER muốn force refresh forecast của 1 branch mà không chờ cron job.
+    """
+    from app.services import predict_service
+
+    async with AsyncSessionLocal() as db:
+        try:
+            predictions = await predict_service.predict_branch(tenant_id, branch_id, db)
+            logger.info(
+                "Background predict branch xong: tenant=%s branch=%s | %d ingredients",
+                tenant_id, branch_id, len(predictions),
+            )
+        except Exception as exc:
+            logger.error(
+                "Background predict branch thất bại: tenant=%s branch=%s | %s",
+                tenant_id, branch_id, exc,
+            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -188,6 +212,78 @@ async def get_train_status(
     )
 
 
+@router.get("/logs", response_model=TrainLogsResponse)
+async def get_train_logs(
+    branch_id: str | None = Query(default=None, description="Lọc theo chi nhánh cụ thể"),
+    limit: int = Query(default=10, ge=1, le=100, description="Số lượng log tối đa trả về"),
+    tenant: TokenPayload = Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_db),
+) -> TrainLogsResponse:
+    """
+    Lấy lịch sử nhiều lần train gần nhất của tenant.
+
+    Nếu truyền branch_id → chỉ lấy log của branch đó.
+    Nếu không → lấy log của tất cả branch, sắp xếp mới nhất trước.
+
+    Args:
+        branch_id: UUID chi nhánh (tùy chọn)
+        limit: Số log tối đa cần lấy (1-100, mặc định 10)
+
+    Returns:
+        TrainLogsResponse với danh sách TrainLogItem kèm duration_seconds
+    """
+    stmt = (
+        select(TrainLog)
+        .where(TrainLog.tenant_id == tenant.tenant_id)
+    )
+    if branch_id:
+        stmt = stmt.where(TrainLog.branch_id == branch_id)
+
+    stmt = stmt.order_by(desc(TrainLog.started_at)).limit(limit)
+    result = await db.execute(stmt)
+    logs = result.scalars().all()
+
+    # Đọc MAPE từ train_metadata.json theo branch nếu có
+    # Vì TrainLog không lưu MAPE, phải đọc từ file metadata
+    mape_cache: dict[str, float | None] = {}
+
+    def _get_mape(bid: str | None) -> float | None:
+        if not bid:
+            return None
+        if bid not in mape_cache:
+            metadata = model_io.get_train_metadata(tenant.tenant_id, bid)
+            mape_cache[bid] = metadata.get("mape") if metadata else None
+        return mape_cache[bid]
+
+    log_items: list[TrainLogItem] = []
+    for log in logs:
+        # Tính thời gian chạy (giây)
+        duration: float | None = None
+        if log.finished_at and log.started_at:
+            duration = (log.finished_at - log.started_at).total_seconds()
+
+        log_items.append(TrainLogItem(
+            id=log.id,
+            branch_id=log.branch_id,
+            started_at=log.started_at,
+            finished_at=log.finished_at,
+            status=log.status,
+            trigger_type=log.trigger_type,
+            series_count=log.series_count,
+            mae=log.mae,
+            mape=_get_mape(log.branch_id),
+            error_message=log.error_message,
+            duration_seconds=duration,
+        ))
+
+    return TrainLogsResponse(
+        tenant_id=tenant.tenant_id,
+        branch_id=branch_id,
+        logs=log_items,
+        total=len(log_items),
+    )
+
+
 @router.get("/config", response_model=TrainConfigResponse)
 async def get_branch_config(
     branch_id: str = Query(..., description="ID chi nhánh cần xem config"),
@@ -275,8 +371,8 @@ async def update_branch_config(
     await db.commit()
 
     logger.info(
-        "Config train đã cập nhật: tenant=%s branch=%s | n_lags=%d n_forecasts=%d epochs=%d",
-        tenant.tenant_id, branch_id, body.epochs,
+        "Config train đã cập nhật: tenant=%s branch=%s | n_forecasts=%d epochs=%d",
+        tenant.tenant_id, branch_id, body.n_forecasts, body.epochs,
     )
 
     # Trigger retrain ngay cho branch này
@@ -306,11 +402,21 @@ async def update_branch_config(
 @router.post("/predict", response_model=PredictTriggerResponse)
 async def trigger_predict(
     background_tasks: BackgroundTasks,
+    branch_id: str | None = Query(
+        default=None,
+        description="Chỉ predict cho 1 chi nhánh cụ thể. Bỏ trống = chạy tất cả branch.",
+    ),
     tenant: TokenPayload = Depends(get_current_tenant),
 ) -> PredictTriggerResponse:
     """
-    Trigger predict thủ công cho tất cả branch — chỉ OWNER hoặc ADMIN.
-    Chạy background, trả về ngay. Dùng để test hoặc force refresh forecast.
+    Trigger predict thủ công — chỉ OWNER hoặc ADMIN.
+    Chạy background, trả về ngay. Dùng để force refresh forecast không chờ cron job.
+
+    Nếu truyền branch_id → chỉ predict branch đó (nhanh hơn, không ảnh hưởng branch khác).
+    Nếu không → predict tất cả branch của tenant.
+
+    Args:
+        branch_id: UUID chi nhánh cần predict (tùy chọn)
     """
     if tenant.role not in _ALLOWED_ROLES:
         raise HTTPException(
@@ -318,10 +424,27 @@ async def trigger_predict(
             detail=f"Chỉ {'/'.join(_ALLOWED_ROLES)} mới được trigger predict.",
         )
 
-    background_tasks.add_task(_run_predict_bg)
-    logger.info("Trigger predict thủ công bởi user=%s", tenant.user_id)
+    if branch_id:
+        # Predict 1 branch cụ thể
+        background_tasks.add_task(_run_predict_branch_bg, tenant.tenant_id, branch_id)
+        logger.info(
+            "Trigger predict thủ công: tenant=%s branch=%s by user=%s",
+            tenant.tenant_id, branch_id, tenant.user_id,
+        )
+        return PredictTriggerResponse(
+            message=f"Predict job đã được khởi động cho chi nhánh {branch_id}",
+            status="queued",
+            branch_id=branch_id,
+        )
 
+    # Predict tất cả branch của tenant
+    background_tasks.add_task(_run_predict_bg)
+    logger.info(
+        "Trigger predict thủ công (all branches): tenant=%s by user=%s",
+        tenant.tenant_id, tenant.user_id,
+    )
     return PredictTriggerResponse(
-        message="Predict job đã được khởi động",
+        message="Predict job đã được khởi động cho tất cả chi nhánh",
         status="queued",
+        branch_id=None,
     )

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Eye, Pencil, Trash2, Search, Plus } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2, Search } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -16,8 +16,7 @@ import {
 } from '@shared/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
-import { Supplier } from '../../types/supplier.types';
-import { useSuppliers } from '../../hooks/useSuppliers';
+import type { Supplier } from '../types/supplier.types';
 
 interface SupplierTableProps {
   suppliers: Supplier[];

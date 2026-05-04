@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Request DTO tạo vai trò mới.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record CreateRoleRequest(

@@ -29,7 +29,7 @@ import java.util.UUID;
  *   <li>DELETE /api/v1/suppliers/{id}   — Soft-delete (deactivate)</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-07
  */
 @RestController

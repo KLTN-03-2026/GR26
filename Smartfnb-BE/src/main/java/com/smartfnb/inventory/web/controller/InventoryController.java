@@ -39,7 +39,7 @@ import java.util.UUID;
  *
  * <p>Quy tắc: Controller chỉ delegate, không chứa business logic.</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @RestController

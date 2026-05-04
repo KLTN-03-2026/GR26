@@ -1,32 +1,36 @@
-import type { StaffStatus, StaffShiftType } from '../types/staff.types';
-
-
+/**
+ * Extended staff data với đầy đủ thông tin cho trang Staff Manager
+ */
 export interface StaffDetail {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
-  status: StaffStatus;
-  positionId: string;
-  positionName: string;
+  status: 'active' | 'inactive';
+  role: 'manager' | 'chef' | 'waiter' | 'cashier' | 'staff';
+  department: 'Quản lý' | 'Phục vụ' | 'Bếp' | 'Tính tiền' | 'Khác';
   branchId: string;
   branchName: string;
   hireDate: string;
-  shiftType: StaffShiftType;
+  shiftType: 'full-time' | 'part-time';
   attendanceRate: number;
   salary: number;
 }
 
-
+/**
+ * Mock data cho bảng danh sách nhân viên
+ */
 export const mockStaffList: StaffDetail[] = [
   {
     id: 'staff-1',
-    fullName: 'Lê Văn Nam',
+    firstName: 'Lê',
+    lastName: 'Văn Nam',
     email: 'nam.lv@smartfb.vn',
     phone: '0901234567',
     status: 'active',
-    positionId: 'pos-1',
-    positionName: 'Quản lý',
+    role: 'manager',
+    department: 'Quản lý',
     branchId: 'branch-1',
     branchName: 'Chi nhánh Quận 1',
     hireDate: '2024-01-15',
@@ -36,12 +40,13 @@ export const mockStaffList: StaffDetail[] = [
   },
   {
     id: 'staff-2',
-    fullName: 'Trần Minh Thư',
+    firstName: 'Trần',
+    lastName: 'Minh Thư',
     email: 'thu.tm@smartfb.vn',
     phone: '0901234568',
     status: 'active',
-    positionId: 'pos-2',
-    positionName: 'Phục vụ',
+    role: 'waiter',
+    department: 'Phục vụ',
     branchId: 'branch-1',
     branchName: 'Chi nhánh Quận 1',
     hireDate: '2024-03-01',
@@ -51,12 +56,13 @@ export const mockStaffList: StaffDetail[] = [
   },
   {
     id: 'staff-3',
-    fullName: 'Phạm Tuấn Kiệt',
+    firstName: 'Phạm',
+    lastName: 'Tuấn Kiệt',
     email: 'kiet.pt@smartfb.vn',
     phone: '0901234569',
     status: 'active',
-    positionId: 'pos-3',
-    positionName: 'Đầu bếp',
+    role: 'chef',
+    department: 'Bếp',
     branchId: 'branch-1',
     branchName: 'Chi nhánh Quận 1',
     hireDate: '2023-06-20',
@@ -66,12 +72,13 @@ export const mockStaffList: StaffDetail[] = [
   },
   {
     id: 'staff-4',
-    fullName: 'Nguyễn Phương Linh',
+    firstName: 'Nguyễn',
+    lastName: 'Phương Linh',
     email: 'linh.np@smartfb.vn',
     phone: '0901234570',
     status: 'active',
-    positionId: 'pos-4',
-    positionName: 'Thu ngân',
+    role: 'cashier',
+    department: 'Tính tiền',
     branchId: 'branch-1',
     branchName: 'Chi nhánh Quận 1',
     hireDate: '2024-02-10',
@@ -81,17 +88,50 @@ export const mockStaffList: StaffDetail[] = [
   },
   {
     id: 'staff-5',
-    fullName: 'Vũ Gia Huy',
+    firstName: 'Vũ',
+    lastName: 'Gia Huy',
     email: 'huy.vg@smartfb.vn',
     phone: '0901234571',
     status: 'active',
-    positionId: 'pos-2',
-    positionName: 'Phục vụ',
+    role: 'waiter',
+    department: 'Phục vụ',
     branchId: 'branch-1',
     branchName: 'Chi nhánh Quận 1',
     hireDate: '2024-04-15',
     shiftType: 'part-time',
     attendanceRate: 88,
     salary: 5000000,
+  },
+  {
+    id: 'staff-6',
+    firstName: 'Phan',
+    lastName: 'Khánh Vy',
+    email: 'vy.pk@smartfb.vn',
+    phone: '0901234572',
+    status: 'inactive',
+    role: 'waiter',
+    department: 'Phục vụ',
+    branchId: 'branch-2',
+    branchName: 'Chi nhánh Quận 3',
+    hireDate: '2023-12-01',
+    shiftType: 'part-time',
+    attendanceRate: 0,
+    salary: 5000000,
+  },
+  {
+    id: 'staff-7',
+    firstName: 'Đặng',
+    lastName: 'Thiên Phú',
+    email: 'phu.dt@smartfb.vn',
+    phone: '0901234573',
+    status: 'active',
+    role: 'chef',
+    department: 'Bếp',
+    branchId: 'branch-2',
+    branchName: 'Chi nhánh Quận 3',
+    hireDate: '2023-09-05',
+    shiftType: 'full-time',
+    attendanceRate: 94,
+    salary: 13000000,
   },
 ];

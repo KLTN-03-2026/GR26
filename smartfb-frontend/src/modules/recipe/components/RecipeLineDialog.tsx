@@ -14,6 +14,7 @@ import {
 } from '@shared/components/ui/dialog';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
+import { sanitizeDecimalInputValue } from '@shared/utils/numberInput';
 import type {
   RecipeIngredientOption,
   RecipeLine,
@@ -233,14 +234,13 @@ export const RecipeLineDialog = ({
               <Label htmlFor="recipe-quantity">Định lượng</Label>
               <Input
                 id="recipe-quantity"
-                type="number"
-                min="0.0001"
-                step="0.0001"
+                type="text"
+                inputMode="decimal"
                 value={formValues.quantity}
                 onChange={(event) => {
                   setFormValues((currentValues) => ({
                     ...currentValues,
-                    quantity: event.target.value,
+                    quantity: sanitizeDecimalInputValue(event.target.value),
                   }));
                   setFormError('');
                 }}
@@ -287,14 +287,13 @@ export const RecipeLineDialog = ({
                   <Label htmlFor="recipe-base-output-quantity">Sản lượng chuẩn <span className="text-red-500">*</span></Label>
                   <Input
                     id="recipe-base-output-quantity"
-                    type="number"
-                    min="0.0001"
-                    step="0.0001"
+                    type="text"
+                    inputMode="decimal"
                     value={formValues.baseOutputQuantity}
                     onChange={(event) => {
                       setFormValues((currentValues) => ({
                         ...currentValues,
-                        baseOutputQuantity: event.target.value,
+                        baseOutputQuantity: sanitizeDecimalInputValue(event.target.value),
                       }));
                       setFormError('');
                     }}

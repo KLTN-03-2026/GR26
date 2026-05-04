@@ -23,7 +23,7 @@ import java.util.UUID;
  * <p>Flow: Nhân viên chọn tên → nhập PIN → nhận JWT với branchId đã chọn.</p>
  * <p>Cơ chế lockout: áp dụng tương tự login thường (5 lần sai → khóa 30 phút).</p>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j
@@ -112,7 +112,10 @@ public class PinLoginCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 userId.toString(),
                 tenantId.toString(),
-                primaryRole
+                primaryRole,
+                null,
+                null,
+                user.getFullName()
         );
     }
 

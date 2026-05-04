@@ -12,7 +12,7 @@ import java.util.UUID;
  * Repository cho bảng otp_records.
  * Mọi query đều filter theo purpose để đảm bảo không nhầm lẫn OTP giữa các chức năng.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Repository

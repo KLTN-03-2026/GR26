@@ -17,6 +17,7 @@ from app.core.logging import get_logger
 from app.core.security import TokenPayload
 from app.schemas.forecast import (
     DayForecast,
+    DayWeather,
     ForecastResponse,
     ForecastSummary,
     IngredientForecast,
@@ -47,6 +48,8 @@ _SQL_BRANCH_FORECAST = text(
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
+        fr.lower_bound,
+        fr.upper_bound,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
@@ -70,6 +73,8 @@ _SQL_INGREDIENT_FORECAST = text(
         i.unit,
         fr.forecast_date,
         fr.predicted_qty,
+        fr.lower_bound,
+        fr.upper_bound,
         COALESCE(ib.quantity, 0.0)   AS current_stock
     FROM forecast_results fr
     JOIN ai_series_registry asr ON asr.id = fr.series_id
@@ -122,6 +127,8 @@ def _rows_to_ingredient_forecasts(
             DayForecast(
                 forecast_date=row.forecast_date,
                 predicted_qty=float(row.predicted_qty),
+                lower_bound=float(row.lower_bound) if row.lower_bound is not None else None,
+                upper_bound=float(row.upper_bound) if row.upper_bound is not None else None,
             )
         )
 
@@ -311,12 +318,16 @@ async def get_branch_forecast(
         except (ValueError, TypeError):
             pass
 
-    # Lấy tên chi nhánh + n_forecasts từ DB (chạy song song)
-    branch_sql = text("SELECT name FROM branches WHERE id::text = :branch_id LIMIT 1")
+    # Lấy tên + địa chỉ chi nhánh
+    branch_sql = text(
+        "SELECT name, address FROM branches WHERE id::text = :branch_id LIMIT 1"
+    )
     branch_result = await db.execute(branch_sql, {"branch_id": branch_id})
     branch_row = branch_result.fetchone()
-    branch_name = branch_row[0] if branch_row else branch_id
+    branch_name: str = branch_row[0] if branch_row else branch_id
+    branch_address: str | None = branch_row[1] if branch_row else None
 
+    # Lấy n_forecasts từ ai_train_config
     cfg_row = await db.execute(
         _SQL_BRANCH_N_FORECASTS,
         {"tenant_id": tenant.tenant_id, "branch_id": branch_id},
@@ -324,7 +335,44 @@ async def get_branch_forecast(
     cfg = cfg_row.fetchone()
     n_forecasts: int = cfg[0] if cfg else 7
 
-    # Lấy forecast data
+    # Lấy dự báo thời tiết từ weather_cache (n_forecasts ngày tới)
+    # Nếu cache rỗng (cron chưa chạy lần nào) → fetch on-the-fly rồi query lại
+    async def _fetch_weather_rows() -> list:
+        result = await db.execute(
+            text("""
+                SELECT date, temperature, precipitation
+                FROM weather_cache
+                WHERE branch_id = :branch_id
+                  AND date >= :today
+                ORDER BY date ASC
+                LIMIT :limit
+            """),
+            {"branch_id": branch_id, "today": date.today(), "limit": n_forecasts},
+        )
+        return result.fetchall()
+
+    weather_rows = await _fetch_weather_rows()
+
+    # Cache rỗng → gọi Open-Meteo ngay (non-blocking, lỗi thì bỏ qua)
+    if not weather_rows:
+        try:
+            from app.services.weather_service import fetch_weather_for_branch
+            fetched = await fetch_weather_for_branch(branch_id, db)
+            if fetched:
+                weather_rows = await _fetch_weather_rows()
+        except Exception as exc:
+            logger.warning("Fetch weather on-the-fly thất bại: branch=%s | %s", branch_id, exc)
+
+    weather_forecast: list[DayWeather] = [
+        DayWeather(
+            date=row[0],
+            temperature=float(row[1]) if row[1] is not None else None,
+            precipitation=float(row[2]) if row[2] is not None else None,
+        )
+        for row in weather_rows
+    ]
+
+    # Lấy forecast data từ forecast_results
     result = await db.execute(
         _SQL_BRANCH_FORECAST,
         {
@@ -339,7 +387,8 @@ async def get_branch_forecast(
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
     logger.info(
-        "forecast %s: %.0fms (%d ingredients)", branch_id, elapsed_ms, len(ingredients)
+        "forecast %s: %.0fms (%d ingredients, %d weather days)",
+        branch_id, elapsed_ms, len(ingredients), len(weather_forecast),
     )
 
     # Cache 5 phút — FE không cần real-time, forecast job chạy hàng đêm
@@ -348,7 +397,9 @@ async def get_branch_forecast(
     return ForecastResponse(
         branch_id=branch_id,
         branch_name=branch_name,
+        branch_address=branch_address,
         generated_at=datetime.now(),
         last_trained_at=last_trained_at,
+        weather_forecast=weather_forecast,
         ingredients=ingredients,
     )

@@ -32,7 +32,7 @@ import java.util.UUID;
  * public ResponseEntity<?> editBranch(...) { ... }
  * }</pre>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @Slf4j

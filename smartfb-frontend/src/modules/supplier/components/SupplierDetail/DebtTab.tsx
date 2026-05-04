@@ -1,4 +1,4 @@
-import { SupplierDebt } from '../../types/supplier.types';
+import type { SupplierDebt } from '../../types/supplier.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/components/ui/card';
 import { Progress } from '@shared/components/ui/progress';
 import { AlertCircle, CheckCircle2, Wallet, History } from 'lucide-react';

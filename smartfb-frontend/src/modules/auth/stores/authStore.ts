@@ -11,6 +11,18 @@ import {
   partializePersistedAuthState,
 } from '../utils/authStore.utils';
 
+/**
+ * Selector lấy branchId đang hoạt động.
+ * Ưu tiên user.branchId (đã resolved sau selectBranch), fallback về session.branchId.
+ * Dùng chung cho mọi hook/component cần branchId context.
+ */
+export const selectCurrentBranchId = (state: AuthStore): string | null =>
+  state.user?.branchId ?? state.session?.branchId ?? null;
+
+/**
+ * Store xác thực dùng chung cho toàn app.
+ * Quản lý session, profile, user hiện tại và branch context đang thao tác.
+ */
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({

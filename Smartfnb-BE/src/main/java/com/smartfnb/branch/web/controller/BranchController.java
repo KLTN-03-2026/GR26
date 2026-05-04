@@ -3,6 +3,8 @@ package com.smartfnb.branch.web.controller;
 import com.smartfnb.branch.application.BranchService;
 import com.smartfnb.branch.application.dto.BranchRequest;
 import com.smartfnb.branch.application.dto.BranchResponse;
+import com.smartfnb.branch.application.dto.PaymentConfigRequest;
+import com.smartfnb.branch.application.dto.PaymentConfigResponse;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.web.ApiResponse;
 import jakarta.validation.Valid;
@@ -18,7 +20,7 @@ import java.util.UUID;
 /**
  * Controller quản lý chi nhánh của Tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-27
  */
 @RestController
@@ -37,9 +39,19 @@ public class BranchController {
     @PreAuthorize("hasPermission(null, 'BRANCH_VIEW') or hasPermission(null, 'BRANCH_EDIT')")
     public ResponseEntity<ApiResponse<List<BranchResponse>>> getAllBranches() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-         return ResponseEntity.ok(ApiResponse.ok(
-                branchService.getAllBranchesByTenant(tenantId)
-        ));
+        String currentRole = TenantContext.getCurrentRole();
+        
+        // Nếu là OWNER hoặc chưa có role cụ thể (super_admin) thì lấy tất cả, ngược lại chỉ lấy branch được gán
+        if ("OWNER".equals(currentRole) || "SUPER_ADMIN".equals(currentRole)) {
+            return ResponseEntity.ok(ApiResponse.ok(
+                    branchService.getAllBranchesByTenant(tenantId)
+            ));
+        } else {
+            UUID userId = TenantContext.getCurrentUserId();
+            return ResponseEntity.ok(ApiResponse.ok(
+                    branchService.getAssignedBranches(tenantId, userId)
+            ));
+        }
     }
 
     /**
@@ -72,6 +84,18 @@ public class BranchController {
     }
 
     /**
+     * Xoá mềm (soft-delete) chi nhánh.
+     * Cần quyền BRANCH_EDIT.
+     */
+    @DeleteMapping("/{branchId}")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> deleteBranch(@PathVariable UUID branchId) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        branchService.deleteBranch(tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /**
      * Gán nhân viên vào làm việc tại chi nhánh.
      * Quyền: OWNER hoặc MANAGE_BRANCH.
      */
@@ -81,9 +105,43 @@ public class BranchController {
             @PathVariable UUID branchId,
             @Valid @RequestBody com.smartfnb.branch.application.dto.AssignUserRequest request) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        
+
         branchService.assignUserToBranch(tenantId, branchId, request.userId());
-        
+
         return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    // =========================================================================
+    // author: Hoàng
+    // date: 27-04-2026
+    // note: Hai endpoint quản lý cấu hình PayOS per-branch.
+    //       Chỉ Owner (BRANCH_EDIT) mới được truy cập.
+    // =========================================================================
+
+    /**
+     * Lấy cấu hình PayOS của chi nhánh (masked key).
+     * GET /api/v1/branches/{branchId}/payment-config
+     */
+    @GetMapping("/{branchId}/payment-config")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<PaymentConfigResponse>> getPaymentConfig(
+            @PathVariable UUID branchId) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        PaymentConfigResponse response = branchService.getPaymentConfig(tenantId, branchId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Lưu (hoặc cập nhật) cấu hình PayOS cho chi nhánh.
+     * PUT /api/v1/branches/{branchId}/payment-config
+     */
+    @PutMapping("/{branchId}/payment-config")
+    @PreAuthorize("hasPermission(null, 'BRANCH_EDIT')")
+    public ResponseEntity<ApiResponse<PaymentConfigResponse>> savePaymentConfig(
+            @PathVariable UUID branchId,
+            @Valid @RequestBody PaymentConfigRequest request) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        PaymentConfigResponse response = branchService.savePaymentConfig(tenantId, branchId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

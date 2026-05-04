@@ -1,4 +1,4 @@
-import { Truck, Search, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { SupplierTable } from '@modules/supplier/components/SupplierTable';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
 

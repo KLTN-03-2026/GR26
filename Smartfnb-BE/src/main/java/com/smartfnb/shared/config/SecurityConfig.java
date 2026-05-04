@@ -27,7 +27,7 @@ import java.io.Serializable;
  * Sử dụng JWT stateless — không có session.
  * Bật @PreAuthorize và @PostAuthorize cho phân quyền chi tiết.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Configuration
@@ -79,6 +79,13 @@ public class SecurityConfig {
                 // Actuator health — public
                 .requestMatchers("/actuator/health").permitAll()
 
+                // Payment webhooks — public để gateway ngoài hệ thống callback, gồm PayOS.
+                .requestMatchers(HttpMethod.POST,
+                    "/api/v1/payments/qr/webhook",
+                    "/api/v1/payments/qr/webhook/**",
+                    "/api/v1/tenant/billing/webhook/qr"  // Webhook thanh toán gói dịch vụ
+                ).permitAll()
+
                 // File uploads (ảnh món ăn) — public, không cần JWT để hiển thị trong POS
                 .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
 
@@ -128,4 +135,3 @@ public class SecurityConfig {
         return handler;
     }
 }
-

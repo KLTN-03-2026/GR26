@@ -1,20 +1,24 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Edit3, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/Tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 import { ROUTES } from '@shared/constants/routes';
 import { useSupplierDetail } from '@modules/supplier/hooks/useSupplierDetail';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
 import { ProfileTab } from '@modules/supplier/components/SupplierDetail/ProfileTab';
 import { PriceListTab } from '@modules/supplier/components/SupplierDetail/PriceListTab';
 import { DebtTab } from '@modules/supplier/components/SupplierDetail/DebtTab';
+import { PurchaseOrdersTab } from '@modules/supplier/components/SupplierDetail/PurchaseOrdersTab';
+import { CreatePurchaseOrderDialog } from '@modules/supplier/components/SupplierDetail/CreatePurchaseOrderDialog';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
+import type { CreateSupplierPayload } from '@modules/supplier/types/supplier.types';
 
 export default function SupplierDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCreatePurchaseOrderOpen, setIsCreatePurchaseOrderOpen] = useState(false);
 
   const { supplier, orders, priceList, debt, isLoading } = useSupplierDetail(id);
   const { updateSupplier, deleteSupplier, isUpdating } = useSuppliers();
@@ -30,9 +34,9 @@ export default function SupplierDetailPage() {
     }
   };
 
-  const handleSubmitEdit = async (payload: any) => {
-    if (id) {
-      await updateSupplier({ id, payload });
+  const handleSubmitEdit = async (payload: CreateSupplierPayload) => {
+    if (id && supplier) {
+      await updateSupplier({ id, payload, currentActive: supplier.isActive });
       setIsFormOpen(false);
     }
   };
@@ -71,6 +75,14 @@ export default function SupplierDetailPage() {
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
+          <Button
+            size="sm"
+            onClick={() => setIsCreatePurchaseOrderOpen(true)}
+            className="flex-1 md:flex-none"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tạo đơn mua
+          </Button>
           <Button variant="outline" size="sm" onClick={handleEdit} className="flex-1 md:flex-none">
             <Edit3 className="w-4 h-4 mr-2" />
             Chỉnh sửa
@@ -115,6 +127,9 @@ export default function SupplierDetailPage() {
           <TabsTrigger value="pricelist" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             Bảng giá nguyên liệu
           </TabsTrigger>
+          <TabsTrigger value="orders" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+            Đơn mua hàng
+          </TabsTrigger>
           <TabsTrigger value="debt" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             Công nợ & Thanh toán
           </TabsTrigger>
@@ -126,6 +141,9 @@ export default function SupplierDetailPage() {
         <TabsContent value="pricelist" className="mt-0 focus-visible:outline-none">
           <PriceListTab ingredients={priceList} />
         </TabsContent>
+        <TabsContent value="orders" className="mt-0 focus-visible:outline-none">
+          <PurchaseOrdersTab orders={orders} />
+        </TabsContent>
         <TabsContent value="debt" className="mt-0 focus-visible:outline-none">
           <DebtTab debt={debt} />
         </TabsContent>
@@ -133,11 +151,18 @@ export default function SupplierDetailPage() {
 
       {/* Edit Form Dialog */}
       <SupplierFormDialog
+        key={supplier.id}
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         supplier={supplier}
         onSubmit={handleSubmitEdit}
         isLoading={isUpdating}
+      />
+      <CreatePurchaseOrderDialog
+        open={isCreatePurchaseOrderOpen}
+        onOpenChange={setIsCreatePurchaseOrderOpen}
+        supplierId={supplier.id}
+        supplierName={supplier.name}
       />
     </div>
   );

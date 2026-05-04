@@ -25,10 +25,16 @@ export const useUpdateBranchMenuItem = () => {
       menuService.updateBranchItem(branchId, itemId, payload),
     onSuccess: (_response, variables) => {
       void queryClient.invalidateQueries({
-        queryKey: ['menu', 'branch-items', variables.branchId],
+        queryKey: queryKeys.menu.branchItems(variables.branchId),
       });
       void queryClient.invalidateQueries({
         queryKey: queryKeys.menu.branchItemDetail(variables.branchId, variables.itemId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.menu.activeList(variables.branchId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.recipes.branchMenuItems(variables.branchId),
       });
 
       success(

@@ -15,6 +15,8 @@ import com.smartfnb.rbac.infrastructure.persistence.UserRoleJpaRepository;
 import com.smartfnb.rbac.infrastructure.persistence.RolePermissionJpaEntity;
 import com.smartfnb.rbac.infrastructure.persistence.RolePermissionJpaRepository;
 import com.smartfnb.rbac.infrastructure.persistence.PermissionRepository;
+import com.smartfnb.staff.infrastructure.persistence.PositionJpaEntity;
+import com.smartfnb.staff.infrastructure.persistence.PositionJpaRepository;
 import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,7 @@ import java.util.stream.Collectors;
  *   <li>Tạo và trả JWT ngay (không cần đăng nhập lại)</li>
  * </ol>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j
@@ -58,6 +60,7 @@ public class RegisterTenantCommandHandler {
     private final RoleJpaRepository              roleJpaRepository;
     private final UserRoleJpaRepository          userRoleJpaRepository;
     private final RolePermissionJpaRepository    rolePermissionJpaRepository;
+    private final PositionJpaRepository          positionJpaRepository;
 
     /**
      * Thực thi đăng ký tenant mới.
@@ -83,10 +86,12 @@ public class RegisterTenantCommandHandler {
                 .orElseThrow(() -> new SmartFnbException("PLAN_NOT_FOUND",
                         "Gói dịch vụ '" + command.planSlug() + "' không tồn tại"));
 
+        String defaultTenantName = command.ownerName() + " Store";
+
         // 3. Tạo Tenant
         var tenant = TenantJpaEntity.builder()
-                .name(command.tenantName())
-                .slug(generateSlug(command.tenantName()))
+                .name(defaultTenantName)
+                .slug(generateSlug(defaultTenantName))
                 .email(command.email())
                 .phone(command.phone())
                 .planId(plan.getId())
@@ -139,6 +144,9 @@ public class RegisterTenantCommandHandler {
                 .toList();
         rolePermissionJpaRepository.saveAll(rolePermissions);
 
+        // 7.5 TẠO CÁC ROLE VÀ POSITION MẶC ĐỊNH (SEED DATA) CHO TENANT
+        seedDefaultRolesAndPositions(tenantId, allPermissionCodes);
+
         // 8. Tạo JWT ngay — role OWNER, lấy tất cả quyền (full permissions)
         String accessToken  = jwtService.generateAccessToken(userId, tenantId, "OWNER",
                 allPermissionCodes, null);
@@ -159,7 +167,10 @@ public class RegisterTenantCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 userId.toString(),
                 tenantId.toString(),
-                "OWNER"
+                "OWNER",
+                null,
+                null,
+                user.getFullName()
         );
     }
 
@@ -186,5 +197,69 @@ public class RegisterTenantCommandHandler {
 
         // Thêm số ngẫu nhiên 4 chữ số để tránh trùng
         return base + "-" + (int)(Math.random() * 9000 + 1000);
+    }
+
+    /**
+     * Tạo sẵn các Vai trò (Roles) và Chức vụ (Positions) mặc định bằng tiếng Việt cho Tenant mới.
+     * Giúp Frontend có sẵn data để map và sử dụng ngay.
+     */
+    private void seedDefaultRolesAndPositions(UUID tenantId, List<String> allPermissionCodes) {
+        // 1. Tạo Positions (Chức vụ - staff module)
+        var managerPosition = PositionJpaEntity.create(tenantId, "Quản lý cửa hàng", "Quản lý điều hành toàn bộ hoạt động của chi nhánh");
+        var cashierPosition = PositionJpaEntity.create(tenantId, "Thu ngân", "Phụ trách order, thanh toán và quản lý tiền mặt");
+        var chefPosition = PositionJpaEntity.create(tenantId, "Bếp trưởng / Pha chế", "Phụ trách khu vực bếp/pha chế và chất lượng món ăn");
+        var waiterPosition = PositionJpaEntity.create(tenantId, "Nhân viên phục vụ", "Phục vụ khách hàng tại bàn");
+        positionJpaRepository.saveAll(List.of(managerPosition, cashierPosition, chefPosition, waiterPosition));
+
+        // 2. Tạo Roles (Vai trò - rbac module)
+        var managerRole = RoleJpaEntity.builder()
+                .tenantId(tenantId)
+                .name("MANAGER")
+                .description("Quản lý (Toàn quyền chi nhánh, trừ thiết lập hệ thống)")
+                .isSystem(true)
+                .build();
+        var cashierRole = RoleJpaEntity.builder()
+                .tenantId(tenantId)
+                .name("CASHIER")
+                .description("Thu ngân (Bán hàng, thanh toán, đóng mở ca)")
+                .isSystem(true)
+                .build();
+        var staffRole = RoleJpaEntity.builder()
+                .tenantId(tenantId)
+                .name("STAFF")
+                .description("Nhân viên (Phục vụ, bếp, xem đơn hàng)")
+                .isSystem(true)
+                .build();
+        roleJpaRepository.saveAll(List.of(managerRole, cashierRole, staffRole));
+
+        // 3. Phân quyền cho các Role
+        // MANAGER: Tất cả trừ BRANCH_EDIT, PERMISSION_EDIT
+        List<String> managerPerms = allPermissionCodes.stream()
+                .filter(p -> !p.equals("BRANCH_EDIT") && !p.equals("PERMISSION_EDIT"))
+                .toList();
+        
+        // CASHIER: Bán hàng, thanh toán, ca làm việc, xem menu
+        List<String> cashierPerms = List.of(
+                "ORDER_VIEW", "ORDER_CREATE", "ORDER_UPDATE", "ORDER_CANCEL",
+                "PAYMENT_CREATE", "PAYMENT_REFUND", "INVOICE_VIEW", "INVOICE_PRINT",
+                "MENU_VIEW", "SHIFT_VIEW", "SHIFT_REGISTER", "SHIFT_MANAGE",
+                "PROMOTION_VIEW", "VOUCHER_APPLY"
+        );
+
+        // STAFF: Chỉ phục vụ cơ bản
+        List<String> staffPerms = List.of(
+                "ORDER_VIEW", "ORDER_CREATE", "ORDER_UPDATE",
+                "MENU_VIEW", "SHIFT_VIEW", "SHIFT_REGISTER"
+        );
+
+        // Map permission to RolePermissionJpaEntity
+        java.util.List<RolePermissionJpaEntity> rolePerms = new java.util.ArrayList<>();
+        
+        managerPerms.forEach(p -> rolePerms.add(RolePermissionJpaEntity.builder().roleId(managerRole.getId()).permissionId(p).build()));
+        cashierPerms.forEach(p -> rolePerms.add(RolePermissionJpaEntity.builder().roleId(cashierRole.getId()).permissionId(p).build()));
+        staffPerms.forEach(p -> rolePerms.add(RolePermissionJpaEntity.builder().roleId(staffRole.getId()).permissionId(p).build()));
+        
+        rolePermissionJpaRepository.saveAll(rolePerms);
+        log.info("Đã tạo bộ Roles và Positions mặc định cho tenantId={}", tenantId);
     }
 }

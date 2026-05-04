@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
  * DTO request tạo danh mục mới.
  * tenantId không nhận từ client — lấy từ JWT qua TenantContext.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 public record CreateCategoryRequest(

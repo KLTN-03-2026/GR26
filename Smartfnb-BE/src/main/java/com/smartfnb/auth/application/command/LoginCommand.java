@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  *
  * @param email    email đăng nhập
  * @param password mật khẩu gốc (chưa hash)
- * @author SmartF&amp;B Team
+ * @author vutq
  * @since 2026-03-26
  */
 public record LoginCommand(

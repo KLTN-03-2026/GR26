@@ -15,7 +15,7 @@ import java.util.UUID;
  * Ghi lịch sử mọi biến động kho: IMPORT, SALE_DEDUCT, WASTE, ADJUSTMENT.
  * Đây là audit trail bất biến — không được sửa sau khi tạo.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Entity
@@ -132,6 +132,10 @@ public class InventoryTransactionJpaEntity {
                                                                UUID referenceId,
                                                                String referenceType,
                                                                UUID userId) {
+        if ("SALE_DEDUCT".equals(transactionType) && batchId == null) {
+            throw new IllegalArgumentException("SALE_DEDUCT bắt buộc phải có batchId");
+        }
+
         InventoryTransactionJpaEntity tx = new InventoryTransactionJpaEntity();
         tx.tenantId = tenantId;
         tx.branchId = branchId;
@@ -215,5 +219,12 @@ public class InventoryTransactionJpaEntity {
         tx.note = note;
         tx.createdAt = Instant.now();
         return tx;
+    }
+
+    @PrePersist
+    protected void onPrePersist() {
+        if ("SALE_DEDUCT".equals(this.type) && this.batchId == null) {
+            throw new IllegalStateException("Giao dịch SALE_DEDUCT bắt buộc phải có batchId, tránh lệch tồn kho so với batch lịch sử.");
+        }
     }
 }

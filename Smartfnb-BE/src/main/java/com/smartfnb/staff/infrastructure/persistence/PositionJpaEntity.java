@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * JPA Entity cho bảng positions (chức vụ nhân viên theo tenant).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Entity

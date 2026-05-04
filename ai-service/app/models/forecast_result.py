@@ -10,7 +10,7 @@ giúp JOIN nhanh hơn và nhất quán với AiSeriesRegistry.
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -45,6 +45,19 @@ class ForecastResult(Base):
 
     # Số lượng gợi ý nhập thêm (tổng dự báo × safety factor 1.2 − tồn kho)
     suggested_qty: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Mức độ cấp bách: ok / warning / critical (thêm từ migration 004)
+    urgency: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+
+    # Ngày nên đặt hàng (thêm từ migration 004)
+    suggested_order_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    # True nếu kết quả dùng fallback prediction thay vì model thật (thêm từ migration 004)
+    is_fallback: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+    # Khoảng tin cậy 80% từ NeuralProphet quantiles=[0.1, 0.9] — None với model cũ chưa train lại
+    lower_bound: Mapped[float | None] = mapped_column(Float, nullable=True)
+    upper_bound: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

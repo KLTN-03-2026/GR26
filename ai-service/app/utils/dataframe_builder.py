@@ -155,6 +155,7 @@ def build_future_df(
     history_df: pd.DataFrame,
     series_id: str,
     periods: int = 7,
+    freq: str = "D",
 ) -> pd.DataFrame:
     """
     Xây dựng DataFrame (lịch sử + tương lai) để NeuralProphet predict.
@@ -166,7 +167,8 @@ def build_future_df(
     Args:
         history_df: DataFrame lịch sử với cột 'ds' (datetime) và 'y' (float)
         series_id: ID series dạng "s{int}" — gán vào cột 'ID'
-        periods: Số ngày dự báo tương lai (mặc định 7)
+        periods: Số bước dự báo tương lai (mặc định 7)
+        freq: Tần suất dự báo — "D" cho daily, "W-MON" cho weekly (mặc định "D")
 
     Returns:
         DataFrame với cột ['ds', 'y', 'ID']:
@@ -186,11 +188,13 @@ def build_future_df(
     last_date = pd.Timestamp(history_df["ds"].max())
 
     # Tạo future rows với y=NaN — NeuralProphet sẽ predict vào đây
-    future_dates = pd.date_range(
-        start=last_date + pd.Timedelta(days=1),
-        periods=periods,
-        freq="D",
-    )
+    # Với freq="W-MON": offset 1 tuần; với freq="D": offset 1 ngày
+    if freq.startswith("W"):
+        start_future = last_date + pd.Timedelta(weeks=1)
+    else:
+        start_future = last_date + pd.Timedelta(days=1)
+
+    future_dates = pd.date_range(start=start_future, periods=periods, freq=freq)
     future_rows = pd.DataFrame({
         "ds": future_dates,
         "y": float("nan"),
@@ -204,6 +208,211 @@ def build_future_df(
     # Ghép lịch sử + tương lai, sort theo ds
     result = pd.concat([history_copy, future_rows], ignore_index=True)
     result = result.sort_values("ds").reset_index(drop=True)
+    return result
+
+
+def clip_outliers_per_series(
+    df: pd.DataFrame,
+    iqr_multiplier: float = 3.0,
+) -> tuple[pd.DataFrame, dict]:
+    """
+    Clip giá trị bất thường theo từng series dùng IQR method.
+
+    Chỉ clip upper bound — không clip lower (ngày tiêu thụ = 0 là hợp lệ).
+    Giữ nguyên pattern bình thường, chỉ giới hạn spike cực đoan.
+
+    Args:
+        df: DataFrame với cột ['ID', 'y']
+        iqr_multiplier: Hệ số IQR cho upper bound (mặc định 3.0 — ít aggressive)
+
+    Returns:
+        Tuple (df_clipped, clip_report):
+        - df_clipped: DataFrame đã clip, index giữ nguyên
+        - clip_report: dict[series_id → {"clipped_rows", "upper_bound", "original_max"}]
+    """
+    missing = {"ID", "y"} - set(df.columns)
+    if missing:
+        raise ValueError(f"DataFrame thiếu cột: {missing}")
+
+    result = df.copy()
+    clip_report: dict = {}
+
+    for series_id in df["ID"].unique():
+        mask = result["ID"] == series_id
+        y = result.loc[mask, "y"]
+
+        q25 = y.quantile(0.25)
+        q75 = y.quantile(0.75)
+        iqr = q75 - q25
+        upper_bound = q75 + iqr_multiplier * iqr
+
+        clipped_count = int((y > upper_bound).sum())
+        if clipped_count > 0:
+            result.loc[mask, "y"] = y.clip(upper=upper_bound)
+            clip_report[series_id] = {
+                "clipped_rows": clipped_count,
+                "upper_bound": round(float(upper_bound), 2),
+                "original_max": round(float(y.max()), 2),
+            }
+
+    if clip_report:
+        logger.info(
+            "clip_outliers: %d series bị ảnh hưởng (iqr_multiplier=%.1f)",
+            len(clip_report),
+            iqr_multiplier,
+        )
+
+    return result, clip_report
+
+
+def classify_demand_pattern(df_series: pd.DataFrame) -> str:
+    """
+    Phân loại demand pattern của 1 ingredient series dựa trên tần suất tiêu thụ.
+
+    Ba loại:
+    - "regular":      ≥ 70% ngày có tiêu thụ (y > 0) — dùng daily model
+    - "intermittent": 25–70% ngày có tiêu thụ      — dùng weekly model
+    - "sparse":       < 25% ngày có tiêu thụ        — dùng weekly model
+
+    NeuralProphet daily model hoạt động kém khi quá nhiều y=0 liên tục.
+    Weekly aggregation giảm số zero-days, giúp model học pattern tốt hơn.
+
+    Args:
+        df_series: DataFrame của 1 series — phải có cột 'y' (float)
+
+    Returns:
+        "regular", "intermittent", hoặc "sparse"
+    """
+    if df_series.empty or "y" not in df_series.columns:
+        return "sparse"
+
+    # Tỷ lệ ngày có tiêu thụ thực sự (không phải ngày zero-fill)
+    nonzero_ratio = float((df_series["y"] > 0).mean())
+
+    if nonzero_ratio >= 0.70:
+        return "regular"
+    elif nonzero_ratio >= 0.25:
+        return "intermittent"
+    else:
+        return "sparse"
+
+
+def split_by_demand_pattern(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """
+    Tách DataFrame tổng hợp thành 3 nhóm theo demand pattern.
+
+    Phân loại từng series rồi nhóm lại theo pattern.
+    Series ngắn (< 30 ngày) mặc định là "sparse".
+
+    Args:
+        df: DataFrame với cột ['ds', 'y', 'ID']
+
+    Returns:
+        dict với 3 key "regular", "intermittent", "sparse".
+        Mỗi value là DataFrame (có thể rỗng nếu không có series nào).
+
+    Raises:
+        ValueError: DataFrame thiếu cột bắt buộc
+    """
+    missing = {"ID", "y"} - set(df.columns)
+    if missing:
+        raise ValueError(f"DataFrame thiếu cột: {missing}")
+
+    groups: dict[str, list[pd.DataFrame]] = {
+        "regular": [],
+        "intermittent": [],
+        "sparse": [],
+    }
+
+    for series_id, group in df.groupby("ID", sort=False):
+        pattern = classify_demand_pattern(group)
+        groups[pattern].append(group)
+        logger.debug("Series %s → pattern=%s (nonzero=%.0f%%)", series_id, pattern,
+                     float((group["y"] > 0).mean()) * 100)
+
+    result: dict[str, pd.DataFrame] = {}
+    for key, parts in groups.items():
+        if parts:
+            result[key] = pd.concat(parts, ignore_index=True)
+        else:
+            # Trả về DataFrame rỗng với đúng schema để caller kiểm tra .empty
+            result[key] = pd.DataFrame(columns=list(df.columns))
+
+    logger.info(
+        "split_by_demand_pattern: %d regular | %d intermittent | %d sparse",
+        result["regular"]["ID"].nunique() if not result["regular"].empty else 0,
+        result["intermittent"]["ID"].nunique() if not result["intermittent"].empty else 0,
+        result["sparse"]["ID"].nunique() if not result["sparse"].empty else 0,
+    )
+    return result
+
+
+def aggregate_to_weekly(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Gộp DataFrame ngày thành tuần cho intermittent/sparse series.
+
+    Mỗi series được gộp riêng theo tuần (W-MON = tuần kết thúc vào Thứ Hai).
+    Tuần bị thiếu (không có giao dịch) được fill y=0 để NeuralProphet không
+    bị NaN trong chuỗi thời gian liên tục.
+
+    Input:  ds=daily (datetime64), y=daily consumption (float), ID=series_id
+    Output: ds=weekly (Monday label), y=tổng tuần (float), ID=series_id
+
+    Args:
+        df: DataFrame với cột ['ds', 'y', 'ID'] theo ngày
+
+    Returns:
+        DataFrame theo tuần, sort theo (ID, ds), không có tuần bị thiếu
+
+    Raises:
+        ValueError: Thiếu cột bắt buộc
+    """
+    missing = {"ds", "y", "ID"} - set(df.columns)
+    if missing:
+        raise ValueError(f"DataFrame thiếu cột: {missing}")
+
+    if df.empty:
+        return pd.DataFrame(columns=["ds", "y", "ID"])
+
+    df_c = df[["ds", "y", "ID"]].copy()
+    df_c["ds"] = pd.to_datetime(df_c["ds"])
+
+    # Gộp theo tuần W-MON — mỗi nhóm là 1 tuần, label là ngày Monday cuối chu kỳ
+    weekly = (
+        df_c.groupby(["ID", pd.Grouper(key="ds", freq="W-MON")])["y"]
+        .sum()
+        .reset_index()
+    )
+
+    # Fill tuần bị thiếu với y=0 cho từng series
+    filled_parts: list[pd.DataFrame] = []
+    for series_id, group in weekly.groupby("ID", sort=False):
+        if group.empty:
+            continue
+        min_week = group["ds"].min()
+        max_week = group["ds"].max()
+
+        # Full range of weeks
+        all_weeks = pd.DataFrame({
+            "ds": pd.date_range(start=min_week, end=max_week, freq="W-MON"),
+        })
+        merged = all_weeks.merge(group[["ds", "y"]], on="ds", how="left")
+        merged["y"] = merged["y"].fillna(0.0)
+        merged["ID"] = series_id
+        filled_parts.append(merged)
+
+    if not filled_parts:
+        return pd.DataFrame(columns=["ds", "y", "ID"])
+
+    result = pd.concat(filled_parts, ignore_index=True)
+    result = result.sort_values(["ID", "ds"]).reset_index(drop=True)
+
+    logger.info(
+        "aggregate_to_weekly: %d series | %d ngày → %d tuần",
+        result["ID"].nunique(),
+        len(df),
+        len(result),
+    )
     return result
 
 

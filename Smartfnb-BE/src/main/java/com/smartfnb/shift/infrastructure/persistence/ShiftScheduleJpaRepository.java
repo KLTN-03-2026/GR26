@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * JPA Repository cho bảng shift_schedules (ca làm việc thực tế).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public interface ShiftScheduleJpaRepository
@@ -60,6 +60,80 @@ public interface ShiftScheduleJpaRepository
            "AND s.tenantId = :tenantId AND s.date BETWEEN :startDate AND :endDate " +
            "ORDER BY s.date")
     List<ShiftScheduleJpaEntity> findByUserAndDateRange(
+            @Param("userId") UUID userId,
+            @Param("tenantId") UUID tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    // ─── Queries with userName (JOIN users) ──────────────────────────────────
+
+    /**
+     * Lấy toàn bộ lịch ca của branch kèm tên nhân viên (JOIN users.full_name).
+     *
+     * @param branchId  UUID chi nhánh
+     * @param tenantId  UUID tenant
+     * @param startDate ngày bắt đầu (inclusive)
+     * @param endDate   ngày kết thúc (inclusive)
+     * @return Danh sách ca kèm userName
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT s.id,
+                   s.user_id,
+                   u.full_name AS user_name,
+                   s.shift_template_id,
+                   s.branch_id,
+                   s.date,
+                   s.status,
+                   s.checked_in_at,
+                   s.checked_out_at,
+                   s.actual_start_time,
+                   s.actual_end_time,
+                   s.overtime_minutes,
+                   s.note
+            FROM shift_schedules s
+            LEFT JOIN users u ON u.id = s.user_id
+            WHERE s.branch_id = :branchId
+              AND s.tenant_id = :tenantId
+              AND s.date BETWEEN :startDate AND :endDate
+            ORDER BY s.date, s.user_id
+            """)
+    List<ShiftScheduleWithUserProjection> findByBranchAndDateRangeWithUser(
+            @Param("branchId") UUID branchId,
+            @Param("tenantId") UUID tenantId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
+     * Lấy lịch ca của một nhân viên kèm tên nhân viên (JOIN users.full_name).
+     *
+     * @param userId    UUID nhân viên
+     * @param tenantId  UUID tenant
+     * @param startDate ngày bắt đầu
+     * @param endDate   ngày kết thúc
+     * @return Danh sách ca của nhân viên kèm userName
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT s.id,
+                   s.user_id,
+                   u.full_name AS user_name,
+                   s.shift_template_id,
+                   s.branch_id,
+                   s.date,
+                   s.status,
+                   s.checked_in_at,
+                   s.checked_out_at,
+                   s.actual_start_time,
+                   s.actual_end_time,
+                   s.overtime_minutes,
+                   s.note
+            FROM shift_schedules s
+            LEFT JOIN users u ON u.id = s.user_id
+            WHERE s.user_id = :userId
+              AND s.tenant_id = :tenantId
+              AND s.date BETWEEN :startDate AND :endDate
+            ORDER BY s.date
+            """)
+    List<ShiftScheduleWithUserProjection> findByUserAndDateRangeWithUser(
             @Param("userId") UUID userId,
             @Param("tenantId") UUID tenantId,
             @Param("startDate") LocalDate startDate,

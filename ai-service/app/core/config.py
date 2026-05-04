@@ -5,7 +5,7 @@ Mọi giá trị đều có default hợp lý để dev có thể chạy không 
 
 import logging
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _log = logging.getLogger(__name__)
@@ -36,7 +36,27 @@ class Settings(BaseSettings):
 
     # --- Security ---
     jwt_secret: str = "changeme"
-    jwt_algorithm: str = "HS256"
+    jwt_algorithm: str = "HS384"  # jjwt chọn HS384 cho key >= 48 bytes
+
+    # --- CORS ---
+    # Danh sách domain FE được phép gọi AI — đọc từ .env, phân cách bằng dấu phẩy
+    allowed_origins: list[str] = ["http://localhost:5173"]
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_origins(cls, v: object) -> list[str]:
+        """
+        Chuẩn hóa ALLOWED_ORIGINS từ nhiều nguồn:
+        - .env / DotEnv: dùng JSON array → '["http://a","http://b"]'
+        - Programmatic (test, override): chấp nhận chuỗi phân cách bằng dấu phẩy
+        """
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("["):
+                import json
+                return json.loads(v_stripped)
+            return [o.strip() for o in v_stripped.split(",") if o.strip()]
+        return v  # type: ignore[return-value]
 
     # --- Model Storage ---
     model_storage_dir: str = "./storage/models"
@@ -55,9 +75,11 @@ class Settings(BaseSettings):
     weather_cache_days: int = 1
 
     # --- NeuralProphet ---
-    np_n_lags: int = 14
+    np_n_lags: int = 28
     np_n_forecasts: int = 7
-    np_epochs: int = 100
+    np_epochs: int = 150
+    np_batch_size: int = 32
+    np_min_days_required: int = 30
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

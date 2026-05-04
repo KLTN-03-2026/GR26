@@ -1,56 +1,82 @@
-import { useState } from 'react';
-import { LayoutGrid, Users, Coffee } from 'lucide-react';
-import { mockTableDetails, mockTableAreas } from '@modules/table/data/tableDetails';
-import { useTableFilters } from '@modules/table/hooks/useTableFilters';
-import { TableFilterBar } from '@modules/table/components/TableFilterBar';
-import { TableGrid } from '@modules/table/components/TableGrid';
-import { TableDetailDrawer } from '@modules/table/components/TableDetailDrawer';
-import { EditTableDialog } from '@modules/table/components/EditTableDialog';
-import { DeleteTableDialog } from '@modules/table/components/DeleteTableDialog';
-import { CreateTableDialog } from '@modules/table/components/CreateTableDialog';
+
+import { useMemo, useState } from 'react';
+
+import { useAuthStore } from '@modules/auth/stores/authStore';
+import { PosSessionStatusControl } from '@modules/pos-session/components/PosSessionStatusControl';
+import { useBranches } from '@modules/branch/hooks/useBranches';
+import {
+  TableDialogs,
+  TableFilterBar,
+  TableGrid,
+  TableStatsSection,
+} from '@modules/table/components';
+import {
+  useEditTable,
+  useTableDetail,
+  useTableFilters,
+  useTableList,
+  useTableOrderNavigation,
+  useZones,
+} from '@modules/table/hooks';
+import type {
+  TableDisplayItem,
+  TableStatus,
+  UpdateTablePayload,
+} from '@modules/table/types/table.types';
+import {
+  buildTablePresentationData,
+  resolveDrawerTable,
+} from '@modules/table/utils';
+import { useToast } from '@shared/hooks/useToast';
+
 import { Button } from '@shared/components/ui/button';
-import type { TableItem } from '@modules/table/types/table.types';
-import { useEditTable } from '@modules/table/hooks/useEditTable';
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  iconBg: string;
-  label: string;
-  value: string;
-  valueColor?: string;
-}
-
-const StatCard = ({ icon, iconBg, label, value, valueColor = "text-gray-900" }: StatCardProps) => (
-  <div className="card">
-    <div className="text-sm text-gray-500 mb-1 flex items-center gap-2">
-      <div className={`w-10 h-10 flex justify-center items-center rounded-2xl ${iconBg}`}>
-        {icon}
-      </div>
-      <span className="text-amber-950 font-medium">{label}</span>
-    </div>
-    <div className={`text-3xl font-bold ${valueColor}`}>{value}</div>
-  </div>
-);
 
 export default function TablesPage() {
-  const [tables, setTables] = useState<TableItem[]>(mockTableDetails);
-  const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
+  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
+  const { data: branches = [] } = useBranches();
+  const { data: tables = [], isLoading, isError, refetch, error } = useTableList();
+  const {
+    data: zones = [],
+    isLoading: zonesLoading,
+    isError: zonesError,
+    isFetching: zonesFetching,
+    refetch: refetchZones,
+  } = useZones();
+
+  const [selectedTable, setSelectedTable] = useState<TableDisplayItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isZoneManagementDialogOpen, setIsZoneManagementDialogOpen] = useState(false);
+  const [isCreateBulkDialogOpen, setIsCreateBulkDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string; name: string }>({
     open: false,
     id: '',
     name: '',
   });
+  const { error: toastError } = useToast();
+  const { handleSelectTable } = useTableOrderNavigation();
 
   const { mutate: editTable } = useEditTable();
+  const {
+    data: selectedTableDetail,
+    isLoading: isTableDetailLoading,
+    isError: isTableDetailError,
+    refetch: refetchTableDetail,
+  } = useTableDetail(selectedTable?.id ?? '');
+
+  const { tableDisplayData, areaOptions, tableStats, zonesWithStats } = useMemo(() => {
+    return buildTablePresentationData({
+      branches,
+      zones,
+      tables,
+      currentBranchId,
+    });
+  }, [branches, currentBranchId, tables, zones]);
 
   const {
     filters,
     pagination,
-    areas,
-    branches,
     tables: filteredTables,
     totalItems,
     hasActiveFilters,
@@ -58,22 +84,65 @@ export default function TablesPage() {
     clearFilters,
     updatePage,
     totalPages,
-  } = useTableFilters(tables);
+  } = useTableFilters(tableDisplayData);
 
-  const totalTables = tables.length;
-  const availableTables = tables.filter((t) => t.usageStatus === 'available' && t.status === 'active').length;
-  const occupiedTables = tables.filter((t) => t.usageStatus === 'occupied').length;
+  const drawerTable = useMemo<TableDisplayItem | null>(() => {
+    return resolveDrawerTable({
+      branches,
+      zones,
+      currentBranchId,
+      selectedTable,
+      selectedTableDetail,
+    });
+  }, [branches, currentBranchId, selectedTable, selectedTableDetail, zones]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Đang tải danh sách bàn...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError && currentBranchId) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">
+            {error instanceof Error ? error.message : 'Lỗi không xác định'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleAddTable = () => {
     setIsCreateDialogOpen(true);
   };
 
-  const handleViewDetail = (table: TableItem) => {
+  const handleManageZones = () => {
+    setIsZoneManagementDialogOpen(true);
+  };
+
+  const handleCreateBulkTables = () => {
+    setIsCreateBulkDialogOpen(true);
+  };
+
+  const handleViewDetail = (table: TableDisplayItem) => {
     setSelectedTable(table);
     setIsDrawerOpen(true);
   };
 
-  const handleEdit = (table: TableItem) => {
+  const handleEdit = (table: TableDisplayItem) => {
     setSelectedTable(table);
     setIsEditDialogOpen(true);
     setIsDrawerOpen(false);
@@ -83,27 +152,39 @@ export default function TablesPage() {
     setDeleteDialog({ open: true, id, name });
   };
 
-  const handleToggleStatus = (id: string, currentStatus: string) => {
+  const handleToggleStatus = (id: string, currentStatus: TableStatus) => {
     const table = tables.find((t) => t.id === id);
     if (!table) return;
 
+    // Chặn inactive nếu bàn đang có đơn
+    if (
+      currentStatus === 'active' &&
+      (table.usageStatus === 'occupied' ||
+        table.usageStatus === 'unpaid' ||
+        table.usageStatus === 'reserved')
+    ) {
+      toastError(
+        'Không thể vô hiệu hóa bàn',
+        'Bàn đang có đơn hàng. Vui lòng hoàn tất hoặc hủy đơn trước khi đổi trạng thái.'
+      );
+      return;
+    }
+
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+
+    const payload: UpdateTablePayload = {
+      name: table.name,
+      zoneId: table.zoneId,
+      capacity: table.capacity,
+      isActive: nextStatus === 'active',
+      shape: table.shape,
+    };
+
     editTable(
-      {
-        id,
-        payload: {
-          name: table.name,
-          areaId: table.areaId,
-          capacity: table.capacity,
-          branchId: table.branchId,
-          status: nextStatus,
-        },
-      },
+      { id, payload },
       {
         onSuccess: () => {
-          setTables((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, status: nextStatus } : t))
-          );
+          refetch();
           if (selectedTable?.id === id) {
             setSelectedTable((prev) => prev && { ...prev, status: nextStatus });
           }
@@ -113,60 +194,77 @@ export default function TablesPage() {
   };
 
   const refetchTables = () => {
-    setTables([...mockTableDetails]);
+    refetch();
   };
+
+  // Khi không có chi nhánh cụ thể được chọn (đang ở chế độ "tất cả chi nhánh"),
+  // hiển thị trang bình thường nhưng thay TableGrid bằng thông báo mời chọn chi nhánh
+  if (!currentBranchId) {
+    return (
+      <div className="space-y-6 pb-8">
+        <TableStatsSection totalTables={0} availableTables={0} occupiedTables={0} />
+        <div className="bg-white p-4 space-y-4 rounded-2xl">
+          <TableFilterBar
+            filters={filters}
+            areas={areaOptions}
+            onSearchChange={(value) => updateFilter('search', value)}
+            onAreaChange={(value) => updateFilter('area', value)}
+            onStateChange={(value) => updateFilter('state', value)}
+            onClearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+            onCreateSingleTable={handleAddTable}
+            onCreateBulkTables={handleCreateBulkTables}
+            onManageZones={handleManageZones}
+            posSessionAction={<PosSessionStatusControl />}
+          />
+          <div className="flex items-center justify-center min-h-[300px]">
+            <div className="text-center text-gray-400">
+              <p className="text-lg font-medium mb-1">Vui lòng chọn chi nhánh</p>
+              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách bàn.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard
-          icon={<LayoutGrid className="h-5 w-5" style={{ color: "#2563EB" }} />}
-          iconBg="bg-blue-100"
-          label="Tổng số bàn"
-          value={String(totalTables).padStart(2, "0")}
-        />
-        <StatCard
-          icon={<Users className="h-5 w-5" style={{ color: "#16A34A" }} />}
-          iconBg="bg-green-100"
-          label="Bàn trống"
-          value={String(availableTables).padStart(2, "0")}
-          valueColor="text-green-600"
-        />
-        <StatCard
-          icon={<Coffee className="h-5 w-5" style={{ color: "#E86A2C" }} />}
-          iconBg="bg-orange-100"
-          label="Đang có khách"
-          value={String(occupiedTables).padStart(2, "0")}
-          valueColor="text-orange-600"
-        />
-      </div>
+      <TableStatsSection
+        totalTables={tableStats.totalTables}
+        availableTables={tableStats.availableTables}
+        occupiedTables={tableStats.occupiedTables}
+      />
 
+      {/* Main Content */}
       <div className="bg-white p-4 space-y-4 rounded-2xl">
         <TableFilterBar
           filters={filters}
-          areas={areas}
-          branches={branches}
+          areas={areaOptions}
           onSearchChange={(value) => updateFilter('search', value)}
           onAreaChange={(value) => updateFilter('area', value)}
-          onStatusChange={(value) => updateFilter('status', value)}
-          onUsageStatusChange={(value) => updateFilter('usageStatus', value)}
-          onBranchChange={(value) => updateFilter('branch', value)}
+          onStateChange={(value) => updateFilter('state', value)}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          onAddTable={handleAddTable}
+          onCreateSingleTable={handleAddTable}
+          onCreateBulkTables={handleCreateBulkTables}
+          onManageZones={handleManageZones}
+          posSessionAction={<PosSessionStatusControl />}
         />
 
         <TableGrid
           tables={filteredTables}
+          onSelectTable={handleSelectTable}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}
           onViewDetail={(id) => {
-            const table = tables.find((t) => t.id === id);
+            const table = tableDisplayData.find((item) => item.id === id);
             if (table) handleViewDetail(table);
           }}
         />
 
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-gray-500">
@@ -198,39 +296,33 @@ export default function TablesPage() {
         )}
       </div>
 
-      <TableDetailDrawer
-        table={selectedTable}
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
+      <TableDialogs
+        drawerTable={drawerTable}
+        selectedTable={selectedTable}
+        zones={zones}
+        zonesWithStats={zonesWithStats}
+        isDrawerOpen={isDrawerOpen}
+        isTableDetailLoading={isTableDetailLoading}
+        isTableDetailError={isTableDetailError}
+        isCreateDialogOpen={isCreateDialogOpen}
+        isZoneManagementDialogOpen={isZoneManagementDialogOpen}
+        isCreateBulkDialogOpen={isCreateBulkDialogOpen}
+        isEditDialogOpen={isEditDialogOpen}
+        deleteDialog={deleteDialog}
+        isZonesLoading={zonesLoading}
+        isZonesError={zonesError}
+        isZonesFetching={zonesFetching}
+        onDrawerOpenChange={setIsDrawerOpen}
+        onCreateDialogOpenChange={setIsCreateDialogOpen}
+        onZoneManagementDialogOpenChange={setIsZoneManagementDialogOpen}
+        onCreateBulkDialogOpenChange={setIsCreateBulkDialogOpen}
+        onEditDialogOpenChange={setIsEditDialogOpen}
+        onDeleteDialogOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}
+        onRetryTableDetail={refetchTableDetail}
+        onRetryZones={refetchZones}
+        onRefetchTables={refetchTables}
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
-      />
-
-      <CreateTableDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSuccess={refetchTables}
-      />
-
-      {selectedTable && (
-        <EditTableDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          table={selectedTable}
-          areas={mockTableAreas}
-          onSuccess={() => {
-            setIsEditDialogOpen(false);
-            refetchTables();
-          }}
-        />
-      )}
-
-      <DeleteTableDialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}
-        tableId={deleteDialog.id}
-        tableName={deleteDialog.name}
-        onSuccess={refetchTables}
       />
     </div>
   );

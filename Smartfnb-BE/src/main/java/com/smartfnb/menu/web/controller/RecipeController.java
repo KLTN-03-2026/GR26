@@ -20,7 +20,7 @@ import java.util.UUID;
  * REST Controller quản lý công thức chế biến (Recipe).
  * Định nghĩa nguyên liệu và định lượng cần dùng cho từng món ăn.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @RestController

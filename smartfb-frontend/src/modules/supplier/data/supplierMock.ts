@@ -1,4 +1,4 @@
-import { Supplier, SupplierIngredient, SupplierOrder } from '../types/supplier.types';
+import type { Supplier, SupplierIngredient, SupplierOrder } from '../types/supplier.types';
 
 export const mockSuppliers: Supplier[] = [
   {

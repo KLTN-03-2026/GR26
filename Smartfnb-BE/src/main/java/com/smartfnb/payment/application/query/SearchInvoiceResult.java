@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Result khi search Invoice.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record SearchInvoiceResult(

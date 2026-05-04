@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Kết quả ma trận Role-Permission cho một tenant.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record RolePermissionMatrixResult(

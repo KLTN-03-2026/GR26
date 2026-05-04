@@ -10,6 +10,7 @@ import java.util.UUID;
  *
  * @param id              UUID shift schedule
  * @param userId          UUID nhân viên
+ * @param userName        Tên đầy đủ nhân viên (JOIN từ bảng users)
  * @param shiftTemplateId UUID ca mẫu
  * @param branchId        UUID chi nhánh
  * @param date            Ngày làm việc
@@ -21,12 +22,13 @@ import java.util.UUID;
  * @param overtimeMinutes Thời gian tăng ca (phút, âm = về sớm)
  * @param note            Ghi chú
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 public record ShiftScheduleResult(
         UUID id,
         UUID userId,
+        String userName,
         UUID shiftTemplateId,
         UUID branchId,
         LocalDate date,

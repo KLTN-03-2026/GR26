@@ -18,7 +18,7 @@ import java.util.UUID;
  * Bao gồm: tạo/sửa/xóa zone, tạo/sửa/xóa bàn (soft delete),
  * và batch update vị trí Drag & Drop.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-28
  */
 @Component

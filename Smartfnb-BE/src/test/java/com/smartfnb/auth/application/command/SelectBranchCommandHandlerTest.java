@@ -86,7 +86,7 @@ class SelectBranchCommandHandlerTest {
         assertNotNull(response);
         assertEquals("new-access-token", response.accessToken());
         assertEquals("new-refresh-token", response.refreshToken());
-        assertEquals(branchId, response.branchId());
+        assertEquals(branchId.toString(), response.branchId());
     }
 
     @Test
@@ -125,6 +125,6 @@ class SelectBranchCommandHandlerTest {
         
         assertNotNull(response);
         assertEquals("owner-access-token", response.accessToken());
-        assertEquals(branchId, response.branchId());
+        assertEquals(branchId.toString(), response.branchId());
     }
 }

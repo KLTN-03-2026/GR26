@@ -7,6 +7,8 @@ import com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaEntity;
 import com.smartfnb.order.infrastructure.persistence.OrderStatusLogJpaRepository;
 import com.smartfnb.order.infrastructure.persistence.TableJpaEntity;
 import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
+import com.smartfnb.order.infrastructure.websocket.TableMapBroadcaster;
+import com.smartfnb.order.application.dto.TableResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,6 +25,7 @@ public class CancelOrderCommandHandler {
     private final OrderRepository orderRepository;
     private final OrderStatusLogJpaRepository statusLogRepository;
     private final TableJpaRepository tableRepository;
+    private final TableMapBroadcaster tableMapBroadcaster;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -43,7 +46,10 @@ public class CancelOrderCommandHandler {
                 .ifPresent(table -> {
                     // Logic thực tế có thể cần kiểm tra xem bàn còn đơn nào khác không
                     table.setStatus("AVAILABLE");
-                    tableRepository.save(table);
+                    TableJpaEntity savedTable = tableRepository.save(table);
+                    
+                    // Broadcast trạng thái bàn mới
+                    tableMapBroadcaster.broadcastSingleTable(command.branchId(), TableResponse.from(savedTable));
                 });
         }
 
@@ -60,12 +66,19 @@ public class CancelOrderCommandHandler {
 
         // Phát event
         eventPublisher.publishEvent(new com.smartfnb.order.domain.event.OrderStatusChangedEvent(
-                savedOrder.getId(), savedOrder.getBranchId(), savedOrder.getOrderNumber(),
-                oldStatus, savedOrder.getStatus().name(), command.staffId(), Instant.now()
+                savedOrder.getId(),
+                savedOrder.getTenantId(),
+                savedOrder.getBranchId(),
+                savedOrder.getOrderNumber(),
+                oldStatus,
+                savedOrder.getStatus().name(),
+                command.staffId(),
+                Instant.now()
         ));
         
         eventPublisher.publishEvent(new com.smartfnb.order.domain.event.OrderCancelledEvent(
                 savedOrder.getId(),
+                savedOrder.getTenantId(),
                 savedOrder.getBranchId(),
                 savedOrder.getOrderNumber(),
                 Instant.now()

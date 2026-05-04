@@ -30,7 +30,7 @@ import java.util.UUID;
  *   <li>POST /api/v1/pos-sessions/{id}/close — Đóng phiên POS cuối ca</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @RestController
@@ -42,6 +42,8 @@ public class PosSessionController {
     private final OpenPosSessionCommandHandler  openHandler;
     private final ClosePosSessionCommandHandler closeHandler;
     private final GetActivePosSessionQueryHandler getHandler;
+    // author: Hoàng | date: 2026-04-30 | note: Handler live-query breakdown doanh thu theo phương thức — không cần migration.
+    private final GetPosSessionRevenueBreakdownQueryHandler breakdownHandler;
 
     /**
      * Lấy phiên POS đang OPEN tại branch hiện tại.
@@ -110,5 +112,21 @@ public class PosSessionController {
         );
         closeHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /**
+     * Breakdown doanh thu theo phương thức thanh toán trong một ca POS.
+     * Query live từ bảng payments GROUP BY method — không lưu vào DB, luôn real-time.
+     *
+     * author: Hoàng | date: 2026-04-30 | note: Endpoint riêng để tránh migration V27.
+     *   Dùng cho cả OPEN (real-time) và CLOSED (tính lại nếu cần).
+     */
+    @GetMapping("/{id}/payment-breakdown")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER','CASHIER')")
+    @Operation(summary = "Breakdown doanh thu theo phương thức", description = "Query live từ payments GROUP BY method — không lưu vào DB")
+    public ResponseEntity<ApiResponse<PosSessionRevenueBreakdownResult>> getRevenueBreakdown(
+            @PathVariable UUID id) {
+        PosSessionRevenueBreakdownResult result = breakdownHandler.handle(id);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

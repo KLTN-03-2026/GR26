@@ -8,13 +8,13 @@ import java.util.UUID;
 /**
  * Response DTO thông tin Invoice.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-01
  */
 public record InvoiceResponse(
     UUID id,
     UUID orderId,
-    UUID paymentId,
+    String paymentMethod,
     String invoiceNumber,
     BigDecimal subtotal,
     BigDecimal discount,

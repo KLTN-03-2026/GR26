@@ -4,8 +4,7 @@ import { Button } from '@shared/components/ui/button';
 import { SupplierTable } from '@modules/supplier/components/SupplierTable';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
-import { Supplier } from '@modules/supplier/types/supplier.types';
-import toast from 'react-hot-toast';
+import type { CreateSupplierPayload, Supplier } from '@modules/supplier/types/supplier.types';
 
 const StatCard = ({ icon, iconBg, label, value, colorClass }: { icon: React.ReactNode; iconBg: string; label: string; value: string, colorClass?: string }) => (
   <div className="rounded-2xl border border-gray-200 p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -50,21 +49,25 @@ export default function SuppliersPage() {
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${supplier.name}"?`)) {
       try {
         await deleteSupplier(supplier.id);
-      } catch (error) {
+      } catch {
         // Lỗi đã được xử lý trong hook
       }
     }
   };
 
-  const handleSubmitForm = async (payload: any) => {
+  const handleSubmitForm = async (payload: CreateSupplierPayload) => {
     try {
       if (editingSupplier) {
-        await updateSupplier({ id: editingSupplier.id, payload });
+        await updateSupplier({
+          id: editingSupplier.id,
+          payload,
+          currentActive: editingSupplier.isActive,
+        });
       } else {
         await createSupplier(payload);
       }
       setIsFormOpen(false);
-    } catch (error) {
+    } catch {
       // Lỗi đã được xử lý trong hook
     }
   };
@@ -128,6 +131,7 @@ export default function SuppliersPage() {
 
       {/* Form Dialog */}
       <SupplierFormDialog
+        key={editingSupplier?.id ?? 'create-supplier'}
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         supplier={editingSupplier}

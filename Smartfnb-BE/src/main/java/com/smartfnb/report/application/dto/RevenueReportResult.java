@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Kết quả báo cáo doanh thu.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 public record RevenueReportResult(
@@ -33,6 +33,7 @@ public record RevenueReportResult(
         BigDecimal vietqr,
         BigDecimal banking,
         BigDecimal other,
+        BigDecimal payos,
         BigDecimal total
     ) {}
 }

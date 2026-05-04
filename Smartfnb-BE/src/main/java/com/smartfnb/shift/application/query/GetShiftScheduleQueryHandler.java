@@ -1,7 +1,7 @@
 package com.smartfnb.shift.application.query;
 
-import com.smartfnb.shift.infrastructure.persistence.ShiftScheduleJpaEntity;
 import com.smartfnb.shift.infrastructure.persistence.ShiftScheduleJpaRepository;
+import com.smartfnb.shift.infrastructure.persistence.ShiftScheduleWithUserProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
  * Hỗ trợ filter theo branch+date range hoặc user+date range.
  * READ ONLY — không @Transactional.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component
@@ -24,63 +24,64 @@ public class GetShiftScheduleQueryHandler {
     private final ShiftScheduleJpaRepository shiftScheduleJpaRepository;
 
     /**
-     * Lấy lịch ca của toàn branch trong khoảng ngày.
+     * Lấy lịch ca của toàn branch trong khoảng ngày, kèm tên nhân viên.
      * Dùng cho manager xem lịch tất cả nhân viên.
      *
      * @param branchId  UUID chi nhánh
      * @param tenantId  UUID tenant
      * @param startDate ngày bắt đầu
      * @param endDate   ngày kết thúc
-     * @return Danh sách ca làm việc
+     * @return Danh sách ca làm việc kèm userName
      */
     public List<ShiftScheduleResult> handleByBranch(
             UUID branchId, UUID tenantId, LocalDate startDate, LocalDate endDate) {
         return shiftScheduleJpaRepository
-                .findByBranchAndDateRange(branchId, tenantId, startDate, endDate)
+                .findByBranchAndDateRangeWithUser(branchId, tenantId, startDate, endDate)
                 .stream()
                 .map(this::toResult)
                 .toList();
     }
 
     /**
-     * Lấy lịch ca của một nhân viên trong khoảng ngày.
+     * Lấy lịch ca của một nhân viên trong khoảng ngày, kèm tên nhân viên.
      * Dùng cho nhân viên xem lịch cá nhân.
      *
      * @param userId    UUID nhân viên
      * @param tenantId  UUID tenant
      * @param startDate ngày bắt đầu
      * @param endDate   ngày kết thúc
-     * @return Danh sách ca của nhân viên
+     * @return Danh sách ca của nhân viên kèm userName
      */
     public List<ShiftScheduleResult> handleByUser(
             UUID userId, UUID tenantId, LocalDate startDate, LocalDate endDate) {
         return shiftScheduleJpaRepository
-                .findByUserAndDateRange(userId, tenantId, startDate, endDate)
+                .findByUserAndDateRangeWithUser(userId, tenantId, startDate, endDate)
                 .stream()
                 .map(this::toResult)
                 .toList();
     }
 
     /**
-     * Chuyển đổi JPA entity sang DTO.
+     * Chuyển đổi projection sang DTO.
      *
-     * @param entity ShiftScheduleJpaEntity
+     * @param p ShiftScheduleWithUserProjection
      * @return ShiftScheduleResult
      */
-    private ShiftScheduleResult toResult(ShiftScheduleJpaEntity entity) {
+    private ShiftScheduleResult toResult(ShiftScheduleWithUserProjection p) {
         return new ShiftScheduleResult(
-                entity.getId(),
-                entity.getUserId(),
-                entity.getShiftTemplateId(),
-                entity.getBranchId(),
-                entity.getDate(),
-                entity.getStatus(),
-                entity.getCheckedInAt(),
-                entity.getCheckedOutAt(),
-                entity.getActualStartTime(),
-                entity.getActualEndTime(),
-                entity.getOvertimeMinutes(),
-                entity.getNote()
+                p.getId(),
+                p.getUserId(),
+                p.getUserName(),        // full_name từ bảng users
+                p.getShiftTemplateId(),
+                p.getBranchId(),
+                p.getDate(),
+                p.getStatus(),
+                p.getCheckedInAt(),
+                p.getCheckedOutAt(),
+                p.getActualStartTime(),
+                p.getActualEndTime(),
+                p.getOvertimeMinutes(),
+                p.getNote()
         );
     }
 }

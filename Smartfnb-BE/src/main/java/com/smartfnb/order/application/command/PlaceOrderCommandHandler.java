@@ -7,6 +7,8 @@ import com.smartfnb.order.domain.exception.TableNotAvailableException;
 import com.smartfnb.order.infrastructure.persistence.TableJpaEntity;
 import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
 import com.smartfnb.order.infrastructure.external.MenuInventoryAdapter;
+import com.smartfnb.order.infrastructure.websocket.TableMapBroadcaster;
+import com.smartfnb.order.application.dto.TableResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,7 +23,7 @@ import java.util.stream.Collectors;
  * Xử lý lệnh tạo đơn hàng.
  * Luồng: Validate bàn -> Kiểm tra tồn kho -> Tạo đơn -> Publish event
  *
- * @author SmartF&B Team
+ * @author vutq
  */
 @Component
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class PlaceOrderCommandHandler {
     private final OrderRepository orderRepository;
     private final TableJpaRepository tableRepository;
     private final MenuInventoryAdapter inventoryAdapter;
+    private final TableMapBroadcaster tableMapBroadcaster;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -49,7 +52,10 @@ public class PlaceOrderCommandHandler {
 
             // Cập nhật trạng thái bàn sang OCCUPIED
             table.setStatus("OCCUPIED");
-            tableRepository.save(table);
+            TableJpaEntity savedTable = tableRepository.save(table);
+            
+            // Broadcast trạng thái bàn mới qua WebSocket
+            tableMapBroadcaster.broadcastSingleTable(command.branchId(), TableResponse.from(savedTable));
         }
 
         // Map items
@@ -84,7 +90,8 @@ public class PlaceOrderCommandHandler {
 
         // 5. Publish domain event
         eventPublisher.publishEvent(new com.smartfnb.order.domain.event.OrderCreatedEvent(
-            savedOrder.getId(), 
+            savedOrder.getId(),
+            savedOrder.getTenantId(),
             savedOrder.getBranchId(),
             savedOrder.getOrderNumber(),
             java.time.Instant.now()

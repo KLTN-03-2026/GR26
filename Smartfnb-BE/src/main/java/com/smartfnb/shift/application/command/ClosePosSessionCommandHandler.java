@@ -1,5 +1,7 @@
 package com.smartfnb.shift.application.command;
 
+import com.smartfnb.expense.domain.repository.ExpenseRepository;
+import com.smartfnb.payment.domain.repository.PaymentRepository;
 import com.smartfnb.shift.infrastructure.persistence.PosSessionJpaEntity;
 import com.smartfnb.shift.infrastructure.persistence.PosSessionJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,7 @@ import java.util.UUID;
  *       để cộng dồn cash orders trong tương lai)</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-06
  */
 @Component
@@ -30,6 +32,9 @@ import java.util.UUID;
 public class ClosePosSessionCommandHandler {
 
     private final PosSessionJpaRepository posSessionJpaRepository;
+    // author: Hoàng | date: 2026-04-30 | note: Tính tổng CASH payments và chi phí tiền mặt trong ca để tính endingCashExpected đúng.
+    private final PaymentRepository paymentRepository;
+    private final ExpenseRepository expenseRepository;
 
     /**
      * Đóng phiên POS và ghi nhận tiền cuối ca.
@@ -53,15 +58,28 @@ public class ClosePosSessionCommandHandler {
                     "Phiên POS đã được đóng hoặc không tồn tại: sessionId=" + command.sessionId());
         }
 
-        // 3. Tính ending_cash_expected (hiện tại = starting_cash, sau này cộng cash orders)
-        // TODO: Tích hợp Order module để tính tổng cash orders trong ca
-        BigDecimal endingCashExpected = session.getStartingCash();
+        // 3. Tính breakdown tiền mặt trong ca
+        // author: Hoàng | date: 2026-04-30 | note: Tính tiền kỳ vọng cuối ca từ tiền đầu ca và dòng tiền mặt phát sinh trong ca POS.
+        BigDecimal cashSales = paymentRepository.sumCompletedCashPaymentsByPosSessionId(session.getId());
+        BigDecimal cashExpenses = expenseRepository.sumCashExpensesByPosSessionId(session.getId());
 
-        // 4. Đóng phiên
+        // endingCashExpected = startingCash + cashSales - cashExpenses
+        // Không trừ cashRefunds vì chưa có module refund.
+        // author: Hoàng | date: 2026-04-30 | note: cashRefunds tạm thời = 0 vì chưa có module hoàn tiền.
+        BigDecimal endingCashExpected = session.getStartingCash()
+                .add(cashSales)
+                .subtract(cashExpenses);
+
+        log.info("Breakdown đóng ca: sessionId={}, startingCash={}, cashSales={}, cashExpenses={}, endingCashExpected={}",
+                session.getId(), session.getStartingCash(), cashSales, cashExpenses, endingCashExpected);
+
+        // 4. Đóng phiên và lưu breakdown
         session.close(
                 command.closedByUserId(),
                 command.endingCashActual(),
                 endingCashExpected,
+                cashSales,
+                cashExpenses,
                 command.note()
         );
         posSessionJpaRepository.save(session);

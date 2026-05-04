@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@shared/constants/queryKeys';
+import { getApiErrorMessage } from '@shared/utils/getApiErrorMessage';
 import { supplierService } from '../services/supplierService';
-import { CreateSupplierPayload, UpdateSupplierPayload } from '../types/supplier.types';
+import type { CreateSupplierPayload, UpdateSupplierPayload } from '../types/supplier.types';
 import toast from 'react-hot-toast';
 
 export const useSuppliers = () => {
@@ -8,32 +10,39 @@ export const useSuppliers = () => {
 
   // Lấy danh sách nhà cung cấp
   const { data: suppliers = [], isLoading, error } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: supplierService.getList,
+    queryKey: queryKeys.suppliers.list(),
+    queryFn: () => supplierService.getList(),
   });
 
   // Tạo nhà cung cấp mới
   const createMutation = useMutation({
     mutationFn: (payload: CreateSupplierPayload) => supplierService.create(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       toast.success('Thêm nhà cung cấp thành công');
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm nhà cung cấp');
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Có lỗi xảy ra khi thêm nhà cung cấp'));
     },
   });
 
   // Cập nhật nhà cung cấp
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateSupplierPayload }) => 
-      supplierService.update(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+      currentActive,
+    }: {
+      id: string;
+      payload: UpdateSupplierPayload;
+      currentActive: boolean;
+    }) => supplierService.update(id, payload, currentActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       toast.success('Cập nhật nhà cung cấp thành công');
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật nhà cung cấp');
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Có lỗi xảy ra khi cập nhật nhà cung cấp'));
     },
   });
 
@@ -41,11 +50,11 @@ export const useSuppliers = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => supplierService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.all });
       toast.success('Xóa nhà cung cấp thành công');
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Không thể xóa nhà cung cấp này');
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Không thể xóa nhà cung cấp này'));
     },
   });
 

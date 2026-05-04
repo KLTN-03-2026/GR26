@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { Mail, Lock, User, Phone, Store, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 import { PageMeta } from '@shared/components/common/PageMeta';
 import { BrandLogo } from '@shared/components/layout/BrandLogo';
 import { Button } from '@shared/components/ui/button';
@@ -15,7 +15,6 @@ import { ROUTES } from '@shared/constants/routes';
  * Form payload cho đăng ký tenant
  */
 interface RegisterFormValues {
-  tenantName: string;
   ownerName: string;
   email: string;
   phone: string;
@@ -40,7 +39,6 @@ export default function RegisterPage() {
     formState: { errors, touchedFields },
   } = useForm<RegisterFormValues>({
     defaultValues: {
-      tenantName: '',
       ownerName: '',
       email: '',
       phone: '',
@@ -57,7 +55,6 @@ export default function RegisterPage() {
 
   const onSubmit = (data: RegisterFormValues) => {
     register({
-      tenantName: data.tenantName,
       ownerName: data.ownerName,
       email: data.email,
       phone: data.phone,
@@ -89,42 +86,11 @@ export default function RegisterPage() {
           {/* Register Form */}
           <div className="rounded-card border border-border bg-card p-8 shadow-card">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              {/* Business Info Section */}
+              {/* Thông tin chủ quán */}
               <div className="space-y-4">
                 <h3 className="border-b border-border pb-2 text-lg font-semibold text-text-primary">
-                  Thông tin doanh nghiệp
+                  Thông tin chủ quán
                 </h3>
-
-              {/* Tenant Name */}
-              <div className="space-y-2">
-                <Label htmlFor="tenantName" className="text-sm font-semibold text-text-primary">
-                  Tên quán / doanh nghiệp <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Store className="h-5 w-5 text-primary" />
-                  </div>
-                  <Input
-                    id="tenantName"
-                    type="text"
-                    placeholder="VD: Coffee House, Restaurant ABC..."
-                    className={cn(
-                      'h-12 border-border pl-11 focus:border-primary',
-                      touchedFields.tenantName && errors.tenantName && 'border-red-500 focus:border-red-500'
-                    )}
-                    {...registerForm('tenantName', {
-                      required: 'Tên doanh nghiệp không được để trống',
-                      minLength: {
-                        value: 3,
-                        message: 'Tên doanh nghiệp phải có ít nhất 3 ký tự',
-                      },
-                    })}
-                  />
-                </div>
-                {touchedFields.tenantName && errors.tenantName && (
-                  <p className="text-sm text-red-600">{errors.tenantName.message}</p>
-                )}
-              </div>
 
               {/* Owner Name */}
               <div className="space-y-2">

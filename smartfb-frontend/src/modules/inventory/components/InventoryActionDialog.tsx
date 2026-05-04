@@ -15,6 +15,7 @@ import {
   SearchableCombobox,
   type SearchableComboboxOption,
 } from '@shared/components/common/SearchableCombobox';
+import { DateTimePicker } from '@shared/components/common/DateTimePicker';
 import { Input } from '@shared/components/ui/input';
 import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
@@ -23,7 +24,7 @@ import { Textarea } from '@shared/components/ui/textarea';
 import type {
   AdjustStockPayload,
   InventoryCatalogItemType,
-  ImportStockPayload,
+  ImportStockFlowPayload,
   InventoryItemOption,
   WasteRecordPayload,
 } from '../types/inventory.types';
@@ -189,7 +190,7 @@ interface InventoryActionDialogProps {
   selectedBranchName: string | null;
   defaultItemId?: string;
   isPending: boolean;
-  onImportSubmit?: (payload: ImportStockPayload) => void;
+  onImportSubmit?: (payload: ImportStockFlowPayload) => void;
   onAdjustSubmit?: (payload: AdjustStockPayload) => void;
   onWasteSubmit?: (payload: WasteRecordPayload) => void;
 }
@@ -539,6 +540,7 @@ export const InventoryActionDialog = ({
   const watchedPackagingPriceMode = useWatch({ control: importForm.control, name: 'packagingPriceMode' });
   const watchedTotalCost = useWatch({ control: importForm.control, name: 'totalCost' });
   const watchedCostPerPackage = useWatch({ control: importForm.control, name: 'costPerPackage' });
+  const watchedExpiryDateTime = useWatch({ control: importForm.control, name: 'expiresAt' });
   const watchedAdjustItemId = useWatch({ control: adjustForm.control, name: 'itemId' });
   const watchedAdjustNewQuantity = useWatch({ control: adjustForm.control, name: 'newQuantity' });
   const watchedWasteItemId = useWatch({ control: wasteForm.control, name: 'itemId' });
@@ -669,7 +671,7 @@ export const InventoryActionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] border-0 overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{copy.title}</DialogTitle>
           <DialogDescription>
@@ -700,7 +702,9 @@ export const InventoryActionDialog = ({
                       note: values.note || null,
                     };
 
-              onImportSubmit?.(importPayload);
+              onImportSubmit?.({
+                stockPayload: importPayload,
+              });
             })}
             className="space-y-4"
           >
@@ -854,9 +858,7 @@ export const InventoryActionDialog = ({
                         });
                       }}
                     />
-                    <p className="text-xs text-text-secondary">
-                      Nhập tổng lượng chuẩn có trong 1 kiện. Ví dụ: `1 L / hộp`, `24 L / thùng`, `25 kg / bao`.
-                    </p>
+           
                     {importForm.formState.errors.contentPerPackage && (
                       <p className="text-xs text-red-500">{importForm.formState.errors.contentPerPackage.message}</p>
                     )}
@@ -894,11 +896,7 @@ export const InventoryActionDialog = ({
                         });
                       }}
                     />
-                    <p className="text-xs text-text-secondary">
-                      {selectedImportItem?.unit
-                        ? `Đơn vị này phải quy về đơn vị chuẩn đang lưu cho item: ${standardUnitLabel}.`
-                        : 'Item chưa có đơn vị chuẩn. Chọn đơn vị phù hợp với thực tế nhập kho.'}
-                    </p>
+                   
                     {importForm.formState.errors.contentUnit && (
                       <p className="text-xs text-red-500">{importForm.formState.errors.contentUnit.message}</p>
                     )}
@@ -1012,7 +1010,18 @@ export const InventoryActionDialog = ({
 
               <div className="space-y-1.5">
                 <Label htmlFor="import-expiry">Hạn sử dụng</Label>
-                <Input id="import-expiry" type="datetime-local" {...importForm.register('expiresAt')} />
+                <DateTimePicker
+                  id="import-expiry"
+                  value={watchedExpiryDateTime}
+                  onChange={(value) => {
+                    importForm.setValue('expiresAt', value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                  placeholder="Chọn ngày giờ hết hạn"
+                  className="w-full"
+                />
               </div>
             </div>
 
@@ -1022,6 +1031,7 @@ export const InventoryActionDialog = ({
                 id="import-note"
                 rows={3}
                 {...importForm.register('note')}
+                className=' resize-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary'
                 placeholder={`Ví dụ: ${importActionLabel.toLowerCase()} lô đầu tuần từ nhà cung cấp A`}
               />
             </div>

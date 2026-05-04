@@ -16,7 +16,7 @@ import java.util.UUID;
  * Ghi lịch sử các thao tác nhạy cảm: điều chỉnh kho, thay đổi phân quyền, hoàn tiền...
  * Bắt buộc cho thao tác AdjustStock (S-14).
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-03
  */
 @Entity

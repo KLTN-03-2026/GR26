@@ -1,4 +1,4 @@
-import { SupplierIngredient } from '../../types/supplier.types';
+import type { SupplierIngredient } from '../../types/supplier.types';
 import {
   Table,
   TableBody,
@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from '@shared/components/ui/table';
-import { Badge } from '@shared/components/common/Badge';
 import { Star } from 'lucide-react';
 
 interface PriceListTabProps {

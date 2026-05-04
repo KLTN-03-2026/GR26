@@ -23,7 +23,7 @@ import java.util.UUID;
  * Hỗ trợ filter theo branch, date range, group by.
  * BẢO MẬT: Kiểm tra quyền REPORT_REVENUE trước khi trả về.
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-04-16
  */
 @Component
@@ -59,7 +59,7 @@ public class GetRevenueReportQueryHandler {
         int totalOrders = 0;
         PaymentBreakdownDto aggregatedBreakdown = new PaymentBreakdownDto(
             BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-            BigDecimal.ZERO
+            BigDecimal.ZERO, BigDecimal.ZERO
         );
         
         // Lặp qua từng ngày trong range
@@ -85,6 +85,7 @@ public class GetRevenueReportQueryHandler {
                         aggregatedBreakdown.vietqr().add(pb.vietqr() != null ? pb.vietqr() : BigDecimal.ZERO),
                         aggregatedBreakdown.banking().add(pb.banking() != null ? pb.banking() : BigDecimal.ZERO),
                         aggregatedBreakdown.other().add(pb.other() != null ? pb.other() : BigDecimal.ZERO),
+                        aggregatedBreakdown.payos().add(pb.payos() != null ? pb.payos() : BigDecimal.ZERO),
                         aggregatedBreakdown.total().add(pb.total() != null ? pb.total() : BigDecimal.ZERO)
                     );
                 }
@@ -115,7 +116,7 @@ public class GetRevenueReportQueryHandler {
             BigDecimal.ZERO,
             0,
             BigDecimal.ZERO,
-            new PaymentBreakdownDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO),
+            new PaymentBreakdownDto(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO),
             new ArrayList<>()
         );
     }
@@ -139,7 +140,8 @@ public class GetRevenueReportQueryHandler {
                 paymentBreakdown.momo(),
                 paymentBreakdown.vietqr(),
                 paymentBreakdown.banking(),
-                paymentBreakdown.other()
+                paymentBreakdown.other(),
+                paymentBreakdown.payos()
             ) : null,
             entity.getCostOfGoods(),
             entity.getGrossProfit()

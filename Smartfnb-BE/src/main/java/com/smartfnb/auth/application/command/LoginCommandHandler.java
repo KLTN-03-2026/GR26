@@ -29,7 +29,7 @@ import java.util.UUID;
  *   <li>Đăng nhập thành công → reset failedLoginCount, cập nhật lastLoginAt, cấp JWT</li>
  * </ul>
  *
- * @author SmartF&B Team
+ * @author vutq
  * @since 2026-03-26
  */
 @Slf4j
@@ -109,7 +109,10 @@ public class LoginCommandHandler {
                 jwtService.getAccessExpirationSeconds(),
                 user.getId().toString(),
                 user.getTenantId().toString(),
-                primaryRole
+                primaryRole,
+                null,
+                null,
+                user.getFullName()
         );
     }
 
