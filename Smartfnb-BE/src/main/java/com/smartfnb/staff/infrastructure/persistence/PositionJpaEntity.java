@@ -3,6 +3,7 @@ package com.smartfnb.staff.infrastructure.persistence;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -45,6 +46,10 @@ public class PositionJpaEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active;
 
+    /** Lương cơ bản */
+    @Column(name = "base_salary", precision = 12, scale = 2)
+    private BigDecimal baseSalary;
+
     /** Thời điểm tạo */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -55,14 +60,16 @@ public class PositionJpaEntity {
      * @param tenantId    UUID tenant
      * @param name        Tên chức vụ
      * @param description Mô tả
+     * @param baseSalary  Lương cơ bản
      * @return PositionJpaEntity mới
      */
-    public static PositionJpaEntity create(UUID tenantId, String name, String description) {
+    public static PositionJpaEntity create(UUID tenantId, String name, String description, BigDecimal baseSalary) {
         PositionJpaEntity entity = new PositionJpaEntity();
 
         entity.tenantId = tenantId;
         entity.name = name;
         entity.description = description;
+        entity.baseSalary = baseSalary != null ? baseSalary : BigDecimal.ZERO;
         entity.active = true;
         entity.createdAt = Instant.now();
         return entity;

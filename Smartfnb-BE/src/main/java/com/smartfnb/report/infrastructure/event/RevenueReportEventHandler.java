@@ -8,6 +8,7 @@ import com.smartfnb.report.domain.repository.DailyRevenueSummaryRepository;
 import com.smartfnb.report.domain.repository.DailyItemStatRepository;
 import com.smartfnb.report.domain.repository.HourlyRevenueStatRepository;
 import com.smartfnb.payment.domain.event.PaymentCompletedEvent;
+import com.smartfnb.inventory.domain.event.OrderCostCalculatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -111,6 +112,51 @@ public class RevenueReportEventHandler {
                 event.paymentMethod().toLowerCase(), event.amount());
         } catch (Exception e) {
             log.error("✗ Lỗi khi cập nhật payment breakdown: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Lắng nghe sự kiện OrderCostCalculatedEvent từ Inventory Module.
+     * Dùng AFTER_COMMIT để đảm bảo chạy sau khi transaction trừ kho đã commit,
+     * tránh race condition với onOrderCompleted (cùng update bảng daily_revenue_summaries).
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onOrderCostCalculated(OrderCostCalculatedEvent event) {
+        log.info("Nhận sự kiện OrderCostCalculatedEvent: branch={}, date={}, totalCost={}",
+            event.branchId(), event.date(), event.totalCost());
+        
+        try {
+            Optional<DailyRevenueSummary> existing = dailyRevenueSummaryRepo.findByBranchIdAndDate(event.branchId(), event.date());
+            DailyRevenueSummary summary;
+            
+            if (existing.isPresent()) {
+                DailyRevenueSummary old = existing.get();
+                BigDecimal newCostOfGoods = old.costOfGoods().add(event.totalCost());
+                
+                summary = new DailyRevenueSummary(
+                    old.id(), old.tenantId(), old.branchId(), old.date(),
+                    old.totalRevenue(), old.totalOrders(), old.avgOrderValue(),
+                    old.paymentBreakdown(),
+                    newCostOfGoods,
+                    old.totalRevenue().subtract(newCostOfGoods)
+                );
+            } else {
+                PaymentBreakdown breakdown = new PaymentBreakdown(
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO
+                );
+                summary = new DailyRevenueSummary(
+                    UUID.randomUUID(), event.tenantId(), event.branchId(), event.date(),
+                    BigDecimal.ZERO, 0, BigDecimal.ZERO,
+                    breakdown,
+                    event.totalCost(),
+                    BigDecimal.ZERO.subtract(event.totalCost())
+                );
+            }
+            
+            dailyRevenueSummaryRepo.save(summary);
+            log.info("Cập nhật cost_of_goods thành công.");
+        } catch (Exception e) {
+            log.error("Lỗi khi cập nhật cost_of_goods: {}", e.getMessage(), e);
         }
     }
 

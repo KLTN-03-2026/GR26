@@ -37,6 +37,7 @@ public class UpdatePositionCommandHandler {
 
         if (command.name() != null) position.setName(command.name());
         if (command.description() != null) position.setDescription(command.description());
+        if (command.baseSalary() != null) position.setBaseSalary(command.baseSalary());
         if (command.active() != null) position.setActive(command.active());
 
         positionJpaRepository.save(position);

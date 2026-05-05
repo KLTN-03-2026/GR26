@@ -63,7 +63,7 @@ public class PositionController {
             @Valid @RequestBody PositionRequest request) {
         CreatePositionCommand command = new CreatePositionCommand(
                 TenantContext.getCurrentTenantId(),
-                request.name(), request.description()
+                request.name(), request.description(), request.baseSalary()
         );
         UUID id = createPositionCommandHandler.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(id));
@@ -80,7 +80,7 @@ public class PositionController {
             @Valid @RequestBody PositionRequest request) {
         UpdatePositionCommand command = new UpdatePositionCommand(
                 TenantContext.getCurrentTenantId(), id,
-                request.name(), request.description(), null
+                request.name(), request.description(), request.baseSalary(), null
         );
         updatePositionCommandHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -97,7 +97,7 @@ public class PositionController {
             @RequestParam boolean active) {
         UpdatePositionCommand command = new UpdatePositionCommand(
                 TenantContext.getCurrentTenantId(), id,
-                null, null, active
+                null, null, null, active
         );
         updatePositionCommandHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok(null));
