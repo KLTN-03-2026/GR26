@@ -41,7 +41,7 @@ public class CreatePositionCommandHandler {
         }
 
         PositionJpaEntity position = PositionJpaEntity.create(
-                command.tenantId(), command.name(), command.description());
+                command.tenantId(), command.name(), command.description(), command.baseSalary());
         positionJpaRepository.save(position);
 
         log.info("Tạo chức vụ thành công: positionId={}", position.getId());

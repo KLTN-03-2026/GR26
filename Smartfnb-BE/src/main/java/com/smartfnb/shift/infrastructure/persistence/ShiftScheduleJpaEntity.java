@@ -40,15 +40,15 @@ public class ShiftScheduleJpaEntity {
     private UUID branchId;
 
     /** Nhân viên được gán ca */
-    @Column(name = "user_id", nullable = false, updatable = false)
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     /** Ca mẫu được áp dụng */
-    @Column(name = "shift_template_id", nullable = false, updatable = false)
+    @Column(name = "shift_template_id", nullable = false)
     private UUID shiftTemplateId;
 
     /** Ngày làm việc */
-    @Column(name = "date", nullable = false, updatable = false)
+    @Column(name = "date", nullable = false)
     private LocalDate date;
 
     /**
@@ -114,6 +114,19 @@ public class ShiftScheduleJpaEntity {
         entity.registeredBy = registeredBy;
         entity.createdAt = Instant.now();
         return entity;
+    }
+
+    /**
+     * Cập nhật thông tin ca.
+     * Chỉ áp dụng khi status = SCHEDULED.
+     */
+    public void update(UUID userId, UUID shiftTemplateId, LocalDate date) {
+        if (!isScheduled()) {
+            throw new IllegalStateException("Chỉ có thể sửa ca khi chưa check-in");
+        }
+        this.userId = userId;
+        this.shiftTemplateId = shiftTemplateId;
+        this.date = date;
     }
 
     /**

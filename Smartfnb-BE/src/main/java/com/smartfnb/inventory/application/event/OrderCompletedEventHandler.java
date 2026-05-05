@@ -8,13 +8,17 @@ import com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository;
 import com.smartfnb.order.domain.event.OrderCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import com.smartfnb.inventory.domain.event.OrderCostCalculatedEvent;
 
 /**
  * Consumer xử lý sự kiện đơn hàng hoàn tất — trừ kho theo FIFO.
@@ -46,6 +50,7 @@ public class OrderCompletedEventHandler {
     private final RecipeJpaRepository recipeJpaRepository;
 
     private final AddonJpaRepository addonJpaRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Lắng nghe sự kiện đơn hàng hoàn tất và trừ kho theo FIFO.
@@ -57,6 +62,7 @@ public class OrderCompletedEventHandler {
     @Transactional
     public void onOrderCompleted(OrderCompletedEvent event) {
         log.info("Bắt đầu trừ kho FIFO cho đơn hàng: {}", event.orderNumber());
+        BigDecimal orderTotalCost = BigDecimal.ZERO;
 
         try {
             for (OrderCompletedEvent.CompletedOrderItem orderItem : event.items()) {
@@ -75,7 +81,7 @@ public class OrderCompletedEventHandler {
                         .multiply(BigDecimal.valueOf(orderItem.quantity()));
 
                     try {
-                        inventoryDomainService.deductFifo(
+                        BigDecimal cost = inventoryDomainService.deductFifo(
                             event.tenantId(),
                             event.branchId(),
                             recipe.getIngredientItemId(),
@@ -86,6 +92,7 @@ public class OrderCompletedEventHandler {
                             "ORDER",
                             null  // System deducted
                         );
+                        orderTotalCost = orderTotalCost.add(cost != null ? cost : BigDecimal.ZERO);
                     } catch (com.smartfnb.inventory.domain.exception
                              .InsufficientStockException e) {
                         // Không throw — tránh rollback toàn bộ đơn hàng đã hoàn tất
@@ -107,7 +114,7 @@ public class OrderCompletedEventHandler {
                                 BigDecimal neededAddon = BigDecimal.valueOf((long) orderItem.quantity() * addonItem.quantity())
                                         .multiply(addonEntity.getItemQuantity());
 
-                                inventoryDomainService.deductFifo(
+                                BigDecimal cost = inventoryDomainService.deductFifo(
                                     event.tenantId(),
                                     event.branchId(),
                                     addonEntity.getItemId(),
@@ -118,6 +125,7 @@ public class OrderCompletedEventHandler {
                                     "ORDER_ADDON",
                                     null
                                 );
+                                orderTotalCost = orderTotalCost.add(cost != null ? cost : BigDecimal.ZERO);
                             }
                         } catch (com.smartfnb.inventory.domain.exception.InsufficientStockException e) {
                             log.warn("Không đủ kho khi trừ FIFO cho addon: orderId={}, addon_item={}, lý do={}",
@@ -130,6 +138,11 @@ public class OrderCompletedEventHandler {
             }
 
             log.info("Trừ kho FIFO hoàn tất cho đơn hàng: {}", event.orderNumber());
+
+            // Phát event cập nhật cost_of_goods
+            LocalDate date = event.occurredAt().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+            eventPublisher.publishEvent(new OrderCostCalculatedEvent(event.tenantId(), event.branchId(), date, orderTotalCost));
+
 
         } catch (Exception e) {
             log.error("Lỗi trừ kho FIFO cho đơn hàng {}: {}",

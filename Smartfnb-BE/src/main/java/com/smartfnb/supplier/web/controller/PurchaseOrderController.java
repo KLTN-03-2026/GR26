@@ -70,7 +70,7 @@ public class PurchaseOrderController {
             @NotNull String itemName,
             String unit,
             @NotNull @Positive BigDecimal quantity,
-            @NotNull @PositiveOrZero BigDecimal unitPrice,
+            @PositiveOrZero BigDecimal unitPrice,
             String note
     ) {}
 
@@ -101,7 +101,9 @@ public class PurchaseOrderController {
     public ResponseEntity<ApiResponse<UUID>> create(@Valid @RequestBody CreatePurchaseOrderRequest request) {
         List<CreatePurchaseOrderCommand.PurchaseOrderItemCommand> items = request.items().stream()
                 .map(i -> new CreatePurchaseOrderCommand.PurchaseOrderItemCommand(
-                        i.itemId(), i.itemName(), i.unit(), i.quantity(), i.unitPrice(), i.note()))
+                        i.itemId(), i.itemName(), i.unit(), i.quantity(), 
+                        i.unitPrice() != null ? i.unitPrice() : BigDecimal.ZERO, 
+                        i.note()))
                 .toList();
 
         UUID id = createHandler.handle(new CreatePurchaseOrderCommand(
@@ -133,7 +135,9 @@ public class PurchaseOrderController {
         List<UpdatePurchaseOrderCommand.PurchaseOrderItemCmd> items = request.items() == null ? null :
                 request.items().stream()
                         .map(i -> new UpdatePurchaseOrderCommand.PurchaseOrderItemCmd(
-                                i.itemId(), i.itemName(), i.unit(), i.quantity(), i.unitPrice(), i.note()))
+                                i.itemId(), i.itemName(), i.unit(), i.quantity(), 
+                                i.unitPrice() != null ? i.unitPrice() : BigDecimal.ZERO, 
+                                i.note()))
                         .toList();
         updateHandler.handle(new UpdatePurchaseOrderCommand(
                 id, TenantContext.getCurrentTenantId(),

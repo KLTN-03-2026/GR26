@@ -205,10 +205,10 @@ public class RegisterTenantCommandHandler {
      */
     private void seedDefaultRolesAndPositions(UUID tenantId, List<String> allPermissionCodes) {
         // 1. Tạo Positions (Chức vụ - staff module)
-        var managerPosition = PositionJpaEntity.create(tenantId, "Quản lý cửa hàng", "Quản lý điều hành toàn bộ hoạt động của chi nhánh");
-        var cashierPosition = PositionJpaEntity.create(tenantId, "Thu ngân", "Phụ trách order, thanh toán và quản lý tiền mặt");
-        var chefPosition = PositionJpaEntity.create(tenantId, "Bếp trưởng / Pha chế", "Phụ trách khu vực bếp/pha chế và chất lượng món ăn");
-        var waiterPosition = PositionJpaEntity.create(tenantId, "Nhân viên phục vụ", "Phục vụ khách hàng tại bàn");
+        var managerPosition = PositionJpaEntity.create(tenantId, "Quản lý cửa hàng", "Quản lý điều hành toàn bộ hoạt động của chi nhánh", java.math.BigDecimal.ZERO);
+        var cashierPosition = PositionJpaEntity.create(tenantId, "Thu ngân", "Phụ trách order, thanh toán và quản lý tiền mặt", java.math.BigDecimal.ZERO);
+        var chefPosition = PositionJpaEntity.create(tenantId, "Bếp trưởng / Pha chế", "Phụ trách khu vực bếp/pha chế và chất lượng món ăn", java.math.BigDecimal.ZERO);
+        var waiterPosition = PositionJpaEntity.create(tenantId, "Nhân viên phục vụ", "Phục vụ khách hàng tại bàn", java.math.BigDecimal.ZERO);
         positionJpaRepository.saveAll(List.of(managerPosition, cashierPosition, chefPosition, waiterPosition));
 
         // 2. Tạo Roles (Vai trò - rbac module)

@@ -65,4 +65,22 @@ public interface RecipeJpaRepository extends JpaRepository<RecipeJpaEntity, UUID
      */
     @Query("SELECT r FROM RecipeJpaEntity r WHERE r.targetItemId IN :targetItemIds")
     List<RecipeJpaEntity> findByTargetItemIdIn(@Param("targetItemIds") List<UUID> targetItemIds);
+
+    /**
+     * Kiểm tra xem một nguyên liệu có đang được dùng trong bất kỳ công thức nào không.
+     * Dùng để chặn xoá nguyên liệu.
+     *
+     * @param ingredientItemId ID nguyên liệu
+     * @return true nếu đang được dùng
+     */
+    boolean existsByIngredientItemId(UUID ingredientItemId);
+
+    /**
+     * Kiểm tra xem một món ăn (target) có đang có công thức nào được lính không.
+     * Dùng để chặn xoá món ăn đang có recipe.
+     *
+     * @param targetItemId ID món ăn
+     * @return true nếu đang được dùng
+     */
+    boolean existsByTargetItemId(UUID targetItemId);
 }

@@ -2,6 +2,8 @@ package com.smartfnb.staff.web.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PositiveOrZero;
+import java.math.BigDecimal;
 
 /**
  * Request DTO tạo / cập nhật chức vụ.
@@ -15,5 +17,8 @@ public record PositionRequest(
         String name,
 
         @Size(max = 255)
-        String description
+        String description,
+
+        @PositiveOrZero(message = "Lương cơ bản không được âm")
+        BigDecimal baseSalary
 ) {}
