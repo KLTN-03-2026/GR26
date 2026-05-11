@@ -56,7 +56,7 @@ services:
       redis:
         condition: service_healthy
       ai-service:
-        condition: service_healthy
+        condition: service_started
     environment:
       # Database
       DB_HOST: postgres

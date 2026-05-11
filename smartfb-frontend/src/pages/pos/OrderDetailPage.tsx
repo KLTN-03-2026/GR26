@@ -17,6 +17,8 @@ import {
 import { useOrderDetail } from '@modules/order/hooks/useOrderDetail';
 import { orderService } from '@modules/order/services/orderService';
 import type { OrderSource, OrderStatus } from '@modules/order/types/order.types';
+import { useOrderInvoice } from '@modules/payment/hooks/useOrderInvoice';
+import { resolvePaymentMethodLabel } from '@modules/payment/utils/paymentPresentation';
 import { Button } from '@shared/components/ui/button';
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
@@ -66,6 +68,8 @@ export default function OrderDetailPage() {
 
   const orderDetailQuery = useOrderDetail(orderId);
   const order = orderDetailQuery.data ?? null;
+  const shouldFetchOrderInvoice = order?.status === 'COMPLETED';
+  const orderInvoiceQuery = useOrderInvoice(order?.id, shouldFetchOrderInvoice);
 
   useEffect(() => {
     if (!order || resolveOrderNavigationTarget(order.status) !== 'pos' || !canCreateOrder) {
@@ -165,13 +169,22 @@ export default function OrderDetailPage() {
   const canCancelOrder =
     canCancelOrderPermission && order.status !== 'COMPLETED' && order.status !== 'CANCELLED';
   const paymentStatus = ORDER_PAYMENT_STATUS_FALLBACK[order.status];
-  const paymentMethodLabel = 'Tiền mặt';
+  const orderInvoice = orderInvoiceQuery.data;
+  const isOrderInvoiceLoading = orderInvoiceQuery.isLoading && shouldFetchOrderInvoice;
+  const paymentMethodLabel = shouldFetchOrderInvoice
+    ? resolvePaymentMethodLabel(orderInvoice?.invoice.paymentMethod)
+    : 'Chưa thanh toán';
   const summarySubtotal = order.subtotal ?? order.totalAmount;
   const summaryDiscount = order.discountAmount ?? 0;
   const summaryTaxAmount = order.taxAmount ?? 0;
   const summaryTotal = order.totalAmount;
-  const paymentSectionDescription =
-    'Trang này chỉ dùng dữ liệu order hiện có và tạm thời hiển thị phương thức thanh toán cố định.';
+  const paymentSectionDescription = shouldFetchOrderInvoice
+    ? isOrderInvoiceLoading
+      ? 'Đang đồng bộ dữ liệu hóa đơn để xác định phương thức thanh toán.'
+      : orderInvoice
+      ? `Dữ liệu từ hóa đơn ${orderInvoice.invoice.invoiceNumber}.`
+      : 'Chưa tìm thấy hóa đơn thanh toán tương ứng với đơn hàng này.'
+    : 'Đơn hàng chưa hoàn tất thanh toán nên chưa có phương thức thanh toán.';
 
   const handleCancelOrder = async () => {
     if (!canCancelOrder) {
@@ -359,7 +372,12 @@ export default function OrderDetailPage() {
                     {/* <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">
                       Nguồn dữ liệu
                     </p> */}
-                    <p className="mt-2 text-2xl font-black text-slate-900">{paymentMethodLabel}</p>
+                    <p className="mt-2 flex items-center gap-2 text-2xl font-black text-slate-900">
+                      {isOrderInvoiceLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
+                      ) : null}
+                      <span>{isOrderInvoiceLoading ? 'Đang tải...' : paymentMethodLabel}</span>
+                    </p>
                   </div>
 
                   <span
@@ -371,6 +389,11 @@ export default function OrderDetailPage() {
                     {paymentStatus.label}
                   </span>
                 </div>
+                {orderInvoiceQuery.isError && shouldFetchOrderInvoice ? (
+                  <p className="mt-3 text-sm font-medium text-rose-600">
+                    Không thể tải dữ liệu hóa đơn để xác định phương thức thanh toán.
+                  </p>
+                ) : null}
               </div>
 
               {/* <div className="space-y-3 rounded-[24px] border border-slate-100 bg-slate-50 p-4 text-sm">

@@ -7,11 +7,13 @@ WORKDIR /app
 
 # Copy pom.xml trước để cache Maven dependencies layer
 COPY pom.xml .
-RUN mvn dependency:go-offline -q
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline -q
 
 # Copy source code và build JAR (bỏ qua tests khi build image)
 COPY src ./src
-RUN mvn package -DskipTests -q
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn package -DskipTests -q
 
 # ================================================================
 # Stage 2: Runtime — image nhỏ gọn với JRE 21

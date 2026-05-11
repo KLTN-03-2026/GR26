@@ -19,6 +19,14 @@ import {
   buildRecipeInsights,
 } from '@modules/recipe/utils';
 import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { usePermission } from '@shared/hooks/usePermission';
 import { Tabs, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
@@ -83,6 +91,7 @@ export const RecipeManagementContent = () => {
   const canManageRecipe = can(PERMISSIONS.MENU_EDIT);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLine, setEditingLine] = useState<RecipeLine | null>(null);
+  const [deletingLine, setDeletingLine] = useState<RecipeLine | null>(null);
   const selectedTargetTypeLabel = RECIPE_TARGET_TYPE_LABELS[targetItemType];
   const canFilterByCategory = targetItemType === 'SELLABLE';
   
@@ -165,16 +174,13 @@ export const RecipeManagementContent = () => {
     setEditingLine(null);
   };
 
-  const handleDeleteRecipe = async (line: RecipeLine) => {
-    const shouldDelete = window.confirm(
-      `Bạn có chắc muốn xóa thành phần ${line.ingredientName} khỏi công thức hiện tại không?`,
-    );
-
-    if (!shouldDelete) {
+  const handleConfirmDeleteRecipe = async () => {
+    if (!deletingLine) {
       return;
     }
 
-    await onDeleteRecipe(line.id);
+    await onDeleteRecipe(deletingLine.id);
+    setDeletingLine(null);
   };
 
   if (isMenuItemsLoading) {
@@ -304,7 +310,7 @@ export const RecipeManagementContent = () => {
                 onRetryRecipe={() => void onRefetchRecipe()}
                 onCreateFirstLine={() => setIsCreateDialogOpen(true)}
                 onEditLine={setEditingLine}
-                onDeleteLine={(line) => void handleDeleteRecipe(line)}
+                onDeleteLine={setDeletingLine}
               />
             </>
           )}
@@ -342,6 +348,27 @@ export const RecipeManagementContent = () => {
             }}
             onSubmit={handleEditSubmit}
           />
+
+          <Dialog open={Boolean(deletingLine)} onOpenChange={(open) => !open && setDeletingLine(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Xóa thành phần công thức</DialogTitle>
+                <DialogDescription className="leading-6">
+                  Bạn có chắc muốn xóa thành phần{' '}
+                  <span className="font-semibold text-text-primary">{deletingLine?.ingredientName}</span>{' '}
+                  khỏi công thức hiện tại không?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="border-t pt-4">
+                <Button variant="outline" onClick={() => setDeletingLine(null)} disabled={isDeletingRecipe}>
+                  Hủy
+                </Button>
+                <Button variant="destructive" onClick={() => void handleConfirmDeleteRecipe()} disabled={isDeletingRecipe}>
+                  {isDeletingRecipe ? 'Đang xóa...' : 'Xóa thành phần'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       ) : null}
     </>

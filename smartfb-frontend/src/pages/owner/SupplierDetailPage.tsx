@@ -11,6 +11,7 @@ import { PriceListTab } from '@modules/supplier/components/SupplierDetail/PriceL
 import { DebtTab } from '@modules/supplier/components/SupplierDetail/DebtTab';
 import { PurchaseOrdersTab } from '@modules/supplier/components/SupplierDetail/PurchaseOrdersTab';
 import { CreatePurchaseOrderDialog } from '@modules/supplier/components/SupplierDetail/CreatePurchaseOrderDialog';
+import { DeleteSupplierDialog } from '@modules/supplier/components/DeleteSupplierDialog';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
 import type { CreateSupplierPayload } from '@modules/supplier/types/supplier.types';
 
@@ -19,17 +20,19 @@ export default function SupplierDetailPage() {
   const navigate = useNavigate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isCreatePurchaseOrderOpen, setIsCreatePurchaseOrderOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { supplier, orders, priceList, debt, isLoading } = useSupplierDetail(id);
-  const { updateSupplier, deleteSupplier, isUpdating } = useSuppliers();
+  const { updateSupplier, deleteSupplier, isUpdating, isDeleting } = useSuppliers();
 
   const handleEdit = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (supplier && window.confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${supplier.name}"?`)) {
+  const handleConfirmDelete = async () => {
+    if (supplier) {
       await deleteSupplier(supplier.id);
+      setIsDeleteDialogOpen(false);
       navigate(ROUTES.OWNER.SUPPLIERS);
     }
   };
@@ -87,7 +90,7 @@ export default function SupplierDetailPage() {
             <Edit3 className="w-4 h-4 mr-2" />
             Chỉnh sửa
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleDelete} className="flex-1 md:flex-none">
+          <Button variant="destructive" size="sm" onClick={() => setIsDeleteDialogOpen(true)} className="flex-1 md:flex-none">
             <Trash2 className="w-4 h-4 mr-2" />
             Xóa
           </Button>
@@ -163,6 +166,13 @@ export default function SupplierDetailPage() {
         onOpenChange={setIsCreatePurchaseOrderOpen}
         supplierId={supplier.id}
         supplierName={supplier.name}
+      />
+      <DeleteSupplierDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        supplier={supplier}
+        isPending={isDeleting}
+        onConfirm={() => void handleConfirmDelete()}
       />
     </div>
   );

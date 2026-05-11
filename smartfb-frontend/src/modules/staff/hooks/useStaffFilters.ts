@@ -3,6 +3,10 @@ import type { StaffSummary, StaffFilters, PaginationState } from '../types/staff
 
 const PAGE_SIZE = 10;
 
+// Chuẩn hóa keyword tìm kiếm để bỏ khoảng trắng thừa và không phân biệt hoa thường.
+const normalizeStaffSearchText = (value?: string | null) =>
+  (value ?? '').trim().toLocaleLowerCase('vi-VN');
+
 /**
  * Hook quản lý filter, search, và pagination cho danh sách nhân viên
  * Đáp ứng PB09: Tìm kiếm và lọc nhân viên
@@ -20,6 +24,11 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     pageSize: PAGE_SIZE,
   });
 
+  const normalizedKeyword = useMemo(
+    () => normalizeStaffSearchText(filters.keyword),
+    [filters.keyword]
+  );
+
   // Lấy danh sách unique position names từ staff
   const positions = useMemo(() => {
     const unique = new Set(staffList.map(s => s.positionName).filter(Boolean));
@@ -31,12 +40,15 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     let result = [...staffList];
 
     // Search by keyword (fullName or phone)
-    if (filters.keyword) {
-      const keywordLower = filters.keyword.toLowerCase();
-      result = result.filter(member => 
-        member.fullName?.toLowerCase().includes(keywordLower) ||
-        member.phone?.toLowerCase().includes(keywordLower)
-      );
+    if (normalizedKeyword) {
+      result = result.filter(member => {
+        const searchableText = [
+          normalizeStaffSearchText(member.fullName),
+          normalizeStaffSearchText(member.phone),
+        ].join(' ');
+
+        return searchableText.includes(normalizedKeyword);
+      });
     }
 
     // Filter by status
@@ -50,7 +62,7 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
     }
 
     return result;
-  }, [staffList, filters]);
+  }, [staffList, normalizedKeyword, filters.status, filters.positionId]);
 
   // Paginate filtered staff
   const { paginatedStaff, totalItems } = useMemo(() => {
@@ -80,8 +92,8 @@ export const useStaffFilters = (staffList: StaffSummary[]) => {
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return !!filters.keyword || !!filters.status || !!filters.positionId;
-  }, [filters]);
+    return !!normalizedKeyword || !!filters.status || !!filters.positionId;
+  }, [normalizedKeyword, filters.status, filters.positionId]);
 
   return {
     filters,

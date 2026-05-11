@@ -42,6 +42,9 @@ public class OrderController {
     private final OrderQueryHandler orderQueryHandler;
 
     @PostMapping
+    // Author: Hoàng
+    // Date: 2026-05-09
+    // Note: Xóa ký tự NBSP sau annotation vì javac báo illegal character.
     @PreAuthorize("hasAuthority('ORDER_CREATE') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(@Valid @RequestBody PlaceOrderRequest request) {
         

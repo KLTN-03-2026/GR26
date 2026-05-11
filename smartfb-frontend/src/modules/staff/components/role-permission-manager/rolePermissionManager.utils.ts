@@ -1,6 +1,7 @@
 import type { StaffPermissionDefinition } from '@modules/staff/types/role.types';
 
 export const ALL_PERMISSION_MODULES = 'ALL';
+const HIDDEN_PERMISSION_MODULES = new Set(['ADMIN']);
 
 export interface FilteredPermissionModule {
   moduleName: string;
@@ -54,6 +55,10 @@ export const groupPermissionsByModule = (
   return allPermissions.reduce<Record<string, StaffPermissionDefinition[]>>(
     (result, permission) => {
       const moduleKey = permission.module || 'OTHER';
+      // Module ADMIN thuộc khu quản trị SaaS, không hiển thị trong ma trận quyền tenant.
+      if (HIDDEN_PERMISSION_MODULES.has(moduleKey.toUpperCase())) {
+        return result;
+      }
 
       if (!result[moduleKey]) {
         result[moduleKey] = [];

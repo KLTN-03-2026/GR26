@@ -50,6 +50,23 @@ const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
+/**
+ * Format số chênh lệch kiểm kho ở tầng hiển thị.
+ * Giữ tối đa 4 chữ số thập phân cho nguyên liệu cân/đong, nhưng bỏ số 0 dư như 0.1000.
+ */
+const formatDeviationNumber = (value: number) => {
+    const roundedValue = Number(value.toFixed(4));
+    const normalizedValue = Object.is(roundedValue, -0) ? 0 : roundedValue;
+    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 }).format(normalizedValue);
+};
+
+/** Format phần trăm lệch kho gọn, tránh hiển thị 0.00% khi sai số rất nhỏ. */
+const formatDeviationPercent = (value: number) => {
+    const roundedValue = Number(value.toFixed(2));
+    const normalizedValue = Object.is(roundedValue, -0) ? 0 : roundedValue;
+    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(normalizedValue);
+};
+
 const getDeviationInfo = (detail: InventoryCheckDetail) => {
     if (detail.actualQuantity === null || detail.systemQuantity === 0) {
         return { text: '—', className: '', percent: 0, isExceed: false };
@@ -57,9 +74,11 @@ const getDeviationInfo = (detail: InventoryCheckDetail) => {
     const deviation = detail.actualQuantity - detail.systemQuantity;
     const percent = (deviation / detail.systemQuantity) * 100;
     const isExceed = Math.abs(percent) > DEVIATION_THRESHOLD_PERCENT;
+    const normalizedDeviation = Number(deviation.toFixed(4));
+    const deviationSign = normalizedDeviation > 0 ? '+' : '';
     return {
-        text: `${deviation > 0 ? '+' : ''}${deviation.toFixed(4)} (${percent.toFixed(2)}%)`,
-        className: deviation > 0 ? 'text-emerald-600' : deviation < 0 ? 'text-red-600' : 'text-text-secondary',
+        text: `${deviationSign}${formatDeviationNumber(deviation)} (${formatDeviationPercent(percent)}%)`,
+        className: normalizedDeviation > 0 ? 'text-emerald-600' : normalizedDeviation < 0 ? 'text-red-600' : 'text-text-secondary',
         isExceed,
     };
 };
@@ -292,7 +311,7 @@ export const InventoryCheckDetailTable = ({
                                 const deviation = (selectedItem.actualQuantity || 0) - selectedItem.systemQuantity;
                                 const percent = (deviation / selectedItem.systemQuantity) * 100;
                                 if (Math.abs(percent) > DEVIATION_THRESHOLD_PERCENT) {
-                                    return `Chênh lệch ${percent > 0 ? '+' : ''}${percent.toFixed(2)}% vượt quá ngưỡng ${DEVIATION_THRESHOLD_PERCENT}%. Vui lòng giải thích lý do.`;
+                                    return `Chênh lệch ${percent > 0 ? '+' : ''}${formatDeviationPercent(percent)}% vượt quá ngưỡng ${DEVIATION_THRESHOLD_PERCENT}%. Vui lòng giải thích lý do.`;
                                 }
                                 return "Nhập ghi chú cho nguyên liệu này (không bắt buộc).";
                             })()}

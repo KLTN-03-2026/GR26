@@ -1,4 +1,5 @@
 import { Plus, RefreshCcw, Search, X } from 'lucide-react';
+import { PosSessionStatusControl } from '@modules/pos-session/components/PosSessionStatusControl';
 import type { OrderStatus } from '@modules/order/types/order.types';
 import {
   DateRangePicker,
@@ -59,6 +60,8 @@ export const OrderManagementHeader = ({
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <PosSessionStatusControl />
+
             {canCreateTakeaway ? (
               <Button
                 onClick={onCreateTakeaway}

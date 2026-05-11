@@ -7,6 +7,7 @@ import type {
     ShiftStatus,
     UpdateShiftTemplatePayload,
     RegisterShiftPayload,
+    UpdateShiftSchedulePayload,
 } from '../types/shift.types';
 import type { ApiResponse } from '@shared/types/api.types';
 
@@ -150,6 +151,22 @@ export const shiftService = {
      */
     registerShift: async (payload: RegisterShiftPayload): Promise<ApiResponse<string>> => {
         return api.post<ApiResponse<string>>('/shifts', payload).then(r => r.data);
+    },
+
+    /**
+     * Cập nhật lịch ca làm việc khi ca chưa check-in
+     * PUT /api/v1/shifts/{id}
+     */
+    updateShift: async (id: string, payload: UpdateShiftSchedulePayload): Promise<ApiResponse<void>> => {
+        return api.put<ApiResponse<void>>(`/shifts/${id}`, payload).then(r => r.data);
+    },
+
+    /**
+     * Xóa lịch ca làm việc khi ca chưa check-in
+     * DELETE /api/v1/shifts/{id}
+     */
+    deleteShift: async (id: string): Promise<ApiResponse<void>> => {
+        return api.delete<ApiResponse<void>>(`/shifts/${id}`).then(r => r.data);
     },
 
     /**

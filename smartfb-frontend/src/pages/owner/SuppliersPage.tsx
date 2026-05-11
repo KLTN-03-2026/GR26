@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Truck, AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
+import { DeleteSupplierDialog } from '@modules/supplier/components/DeleteSupplierDialog';
 import { SupplierTable } from '@modules/supplier/components/SupplierTable';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
@@ -24,11 +25,13 @@ export default function SuppliersPage() {
     updateSupplier, 
     deleteSupplier,
     isCreating,
-    isUpdating
+    isUpdating,
+    isDeleting,
   } = useSuppliers();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>(undefined);
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
 
   // Thống kê
   const totalSuppliers = suppliers.length;
@@ -45,13 +48,26 @@ export default function SuppliersPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (supplier: Supplier) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${supplier.name}"?`)) {
-      try {
-        await deleteSupplier(supplier.id);
-      } catch {
-        // Lỗi đã được xử lý trong hook
-      }
+  const handleOpenDeleteDialog = (supplier: Supplier) => {
+    setDeletingSupplier(supplier);
+  };
+
+  const handleCloseDeleteDialog = (open: boolean) => {
+    if (!open) {
+      setDeletingSupplier(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingSupplier) {
+      return;
+    }
+
+    try {
+      await deleteSupplier(deletingSupplier.id);
+      setDeletingSupplier(null);
+    } catch {
+      // Lỗi đã được xử lý trong hook
     }
   };
 
@@ -125,7 +141,7 @@ export default function SuppliersPage() {
         <SupplierTable 
           suppliers={suppliers} 
           onEdit={handleOpenEditForm}
-          onDelete={handleDelete}
+          onDelete={handleOpenDeleteDialog}
         />
       </div>
 
@@ -137,6 +153,14 @@ export default function SuppliersPage() {
         supplier={editingSupplier}
         onSubmit={handleSubmitForm}
         isLoading={isCreating || isUpdating}
+      />
+
+      <DeleteSupplierDialog
+        open={Boolean(deletingSupplier)}
+        onOpenChange={handleCloseDeleteDialog}
+        supplier={deletingSupplier}
+        isPending={isDeleting}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

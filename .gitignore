@@ -39,7 +39,7 @@ ai-service/venv/
 **/.parcel-cache/
 **/.turbo/
 **/*.tsbuildinfo
-
+docker-compose_bk.yml
 # Local tool metadata
 **/.claude/
 docs

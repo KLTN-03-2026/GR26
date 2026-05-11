@@ -9,6 +9,14 @@ import { MenuFilterBar } from '@modules/menu/components/MenuFilterBar/MenuFilter
 import { MenuPagination } from '@modules/menu/components/MenuPagination/MenuPagination';
 import { useMenuManagement } from '@modules/menu/hooks';
 import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@shared/components/ui/sheet';
 import { MenuManagementErrorState } from './MenuManagementErrorState';
 import { MenuManagementLoadingState } from './MenuManagementLoadingState';
@@ -26,6 +34,7 @@ export const MenuManagementContent = () => {
     configuringBranchMenu,
     currentPage,
     debouncedSearch,
+    deletingMenu,
     editingMenu,
     filteredMenuCount,
     filters,
@@ -42,10 +51,13 @@ export const MenuManagementContent = () => {
     isFetching,
     isFilterSheetOpen,
     isLoading,
+    isDeletingMenu,
     isUpdatingBranchMenuItem,
     nextCategoryDisplayOrder,
     onApplyFilters,
+    onCancelDeleteMenu,
     onConfigureBranchMenu,
+    onConfirmDeleteMenu,
     onDeleteMenu,
     onEditMenu,
     onFilterChange,
@@ -265,6 +277,25 @@ export const MenuManagementContent = () => {
             onSubmit={onSubmitBranchConfig}
             onOpenChange={onUpdateBranchConfigOpen}
           />
+          <Dialog open={Boolean(deletingMenu)} onOpenChange={(open) => !open && onCancelDeleteMenu()}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Xóa món ăn</DialogTitle>
+                <DialogDescription className="leading-6">
+                  Bạn có chắc chắn muốn xóa món ăn{' '}
+                  <span className="font-semibold text-text-primary">{deletingMenu?.name}</span> không?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="border-t pt-4">
+                <Button variant="outline" onClick={onCancelDeleteMenu} disabled={isDeletingMenu}>
+                  Hủy
+                </Button>
+                <Button variant="destructive" onClick={onConfirmDeleteMenu} disabled={isDeletingMenu}>
+                  {isDeletingMenu ? 'Đang xóa...' : 'Xóa món ăn'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       ) : null}
     </div>

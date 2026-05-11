@@ -33,7 +33,6 @@ interface InventoryToolbarProps {
   onBranchChange: (value: string) => void;
   onLowStockChange: (value: string) => void;
   onOpenImport: () => void;
-  onOpenAdjust: () => void;
   onOpenWaste: () => void;
   onOpenProduction?: () => void;
   onOpenCreateIngredient: () => void;
@@ -65,7 +64,6 @@ export const InventoryToolbar = ({
   onBranchChange,
   onLowStockChange,
   onOpenImport,
-  onOpenAdjust: _onOpenAdjust,
   onOpenWaste,
   onOpenProduction,
   onOpenCreateIngredient,

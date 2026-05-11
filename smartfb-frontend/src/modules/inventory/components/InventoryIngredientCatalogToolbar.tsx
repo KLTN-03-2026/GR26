@@ -5,11 +5,9 @@ import { Label } from '@shared/components/ui/label';
 
 interface InventoryIngredientCatalogToolbarProps {
   canCreateItem: boolean;
-  ingredientsWithoutStockCount: number;
   onOpenCreateIngredient: () => void;
   onSearchChange: (value: string) => void;
   search: string;
-  totalCatalogItems: number;
 }
 
 /**
@@ -18,11 +16,9 @@ interface InventoryIngredientCatalogToolbarProps {
  */
 export const InventoryIngredientCatalogToolbar = ({
   canCreateItem,
-  ingredientsWithoutStockCount: _ingredientsWithoutStockCount,
   onOpenCreateIngredient,
   onSearchChange,
   search,
-  totalCatalogItems: _totalCatalogItems,
 }: InventoryIngredientCatalogToolbarProps) => {
   return (
     <div className="space-y-4 rounded-card border border-border bg-card p-4 shadow-card">

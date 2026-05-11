@@ -5,6 +5,7 @@ import { AlertTriangle, Plus } from 'lucide-react';
 import type { StaffSummary } from '@modules/staff/types/staff.types';
 import type { LocalTime, ShiftSchedule, ShiftTemplate } from '@modules/shift/types/shift.types';
 import { OwnerShiftCellDetailDialog } from '@modules/shift/components/OwnerShiftCellDetailDialog';
+import { RegisterShiftDialog } from '@modules/shift/components/RegisterShiftDialog';
 import { cn } from '@shared/utils/cn';
 
 interface OwnerWeeklyShiftRosterProps {
@@ -13,6 +14,10 @@ interface OwnerWeeklyShiftRosterProps {
   schedules: ShiftSchedule[];
   staffList: StaffSummary[];
   onAssignShift: (date: string, shiftTemplateId: string) => void;
+  onUpdateShift: (scheduleId: string, payload: { userId: string; shiftTemplateId: string; date: string }) => Promise<unknown>;
+  onDeleteShift: (scheduleId: string) => Promise<unknown>;
+  isUpdating: boolean;
+  isDeleting: boolean;
 }
 
 const formatLocalTime = (time?: LocalTime | null): string => {
@@ -115,6 +120,10 @@ export const OwnerWeeklyShiftRoster = ({
   schedules,
   staffList,
   onAssignShift,
+  onUpdateShift,
+  onDeleteShift,
+  isUpdating,
+  isDeleting,
 }: OwnerWeeklyShiftRosterProps) => {
   const normalizedWeekStart = startOfWeek(weekStartDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -132,6 +141,17 @@ export const OwnerWeeklyShiftRoster = ({
   const staffMap = buildStaffMap(staffList);
   const scheduleMap = buildScheduleMap(schedules);
   const [selectedCell, setSelectedCell] = useState<SelectedCell | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<ShiftSchedule | null>(null);
+
+  const handleEditSchedule = (schedule: ShiftSchedule) => {
+    setSelectedCell(null);
+    setEditingSchedule(schedule);
+  };
+
+  const handleDeleteSchedule = async (schedule: ShiftSchedule) => {
+    await onDeleteShift(schedule.id);
+    setSelectedCell(null);
+  };
 
   if (activeTemplates.length === 0) {
     return (
@@ -315,6 +335,34 @@ export const OwnerWeeklyShiftRoster = ({
           template={selectedCell.template}
           schedules={selectedCell.schedules}
           staffMap={staffMap}
+          onEditSchedule={handleEditSchedule}
+          onDeleteSchedule={(schedule) => void handleDeleteSchedule(schedule)}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      {editingSchedule && (
+        <RegisterShiftDialog
+          key={editingSchedule.id}
+          open={Boolean(editingSchedule)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingSchedule(null);
+            }
+          }}
+          templates={templates}
+          staffList={staffList}
+          defaultDate={editingSchedule.date}
+          defaultShiftTemplateId={editingSchedule.shiftTemplateId}
+          defaultUserId={editingSchedule.userId}
+          isPending={isUpdating}
+          title="Sửa lịch ca"
+          submitLabel="Lưu thay đổi"
+          pendingLabel="Đang lưu..."
+          onSubmit={async (payload) => {
+            await onUpdateShift(editingSchedule.id, payload);
+            setEditingSchedule(null);
+          }}
         />
       )}
     </div>

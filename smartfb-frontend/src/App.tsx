@@ -3,6 +3,7 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
 import { getRoleHomePage } from '@shared/utils/getRoleHomePage';
+import { Suspense, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import {
   adminRoutes,
@@ -17,6 +18,16 @@ import {
 
 const EMPTY_PERMISSIONS: string[] = [];
 
+const RouteLoadingFallback = () => (
+  <div className="flex min-h-[320px] items-center justify-center bg-cream text-sm font-medium text-text-secondary">
+    Đang tải trang...
+  </div>
+);
+
+const withRouteSuspense = (element: ReactNode) => (
+  <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>
+);
+
 const renderProtectedRoutes = (
   routes: RouteConfigItem[],
   allowedRoles: typeof ROLES[keyof typeof ROLES][],
@@ -25,9 +36,9 @@ const renderProtectedRoutes = (
   return routes.map(({ path, element, pageTitle, requiredPermissions }) => {
     const wrappedElement =
       layout === 'admin' ? (
-        <AdminLayout pageTitle={pageTitle}>{element}</AdminLayout>
+        <AdminLayout pageTitle={pageTitle}>{withRouteSuspense(element)}</AdminLayout>
       ) : (
-        <AppLayout pageTitle={pageTitle}>{element}</AppLayout>
+        <AppLayout pageTitle={pageTitle}>{withRouteSuspense(element)}</AppLayout>
       );
 
     return (
@@ -48,7 +59,7 @@ const renderProtectedRoutes = (
 };
 
 const renderPosRouteElement = (route: RouteConfigItem) => {
-  return <AppLayout pageTitle={route.pageTitle}>{route.element}</AppLayout>;
+  return <AppLayout pageTitle={route.pageTitle}>{withRouteSuspense(route.element)}</AppLayout>;
 };
 
 /**
@@ -78,7 +89,7 @@ function App() {
         <Route
           key={path}
           path={path}
-          element={<PublicRoute>{element}</PublicRoute>}
+          element={<PublicRoute>{withRouteSuspense(element)}</PublicRoute>}
         />
       ))}
 

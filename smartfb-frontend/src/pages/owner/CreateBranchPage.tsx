@@ -6,6 +6,14 @@ import { useCreateBranch } from '@modules/branch/hooks/useCreateBranch';
 import { step1Schema } from '@modules/branch/schemas';
 import type { CreateBranchFormData, CreateBranchPayload } from '@modules/branch/types/branch.types';
 import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { ROUTES } from '@shared/constants/routes';
 import type { ZodError } from 'zod';
 
@@ -67,18 +75,21 @@ export default function CreateBranchPage() {
   const [formData, setFormData] = useState<CreateBranchFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const isFormDirty = Object.values(formData).some((value) => value.trim() !== '');
 
   const handleCancel = () => {
     if (hasUnsavedChanges && isFormDirty) {
-      const shouldLeave = window.confirm('Bạn có dữ liệu chưa lưu. Bạn có chắc muốn hủy?');
-
-      if (!shouldLeave) {
-        return;
-      }
+      setIsCancelDialogOpen(true);
+      return;
     }
 
+    navigate(ROUTES.OWNER.BRANCHES);
+  };
+
+  const handleConfirmCancel = () => {
+    setIsCancelDialogOpen(false);
     navigate(ROUTES.OWNER.BRANCHES);
   };
 
@@ -178,6 +189,25 @@ export default function CreateBranchPage() {
           </Button>
         </div>
       </form>
+
+      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hủy tạo chi nhánh?</DialogTitle>
+            <DialogDescription className="leading-6">
+              Bạn có dữ liệu chưa lưu. Nếu rời khỏi trang, thông tin đang nhập sẽ bị mất.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+              Tiếp tục nhập
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmCancel}>
+              Hủy và rời trang
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

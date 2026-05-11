@@ -82,11 +82,14 @@ export const useTableOrderNavigation = () => {
         return;
       }
 
-      if (canCreateOrder) {
+      // Bàn trống và có quyền tạo order → mở POS trực tiếp, không cần lookup
+      if (table.usageStatus === 'available' && canCreateOrder) {
         handleOpenOrderFromTable(table);
         return;
       }
 
+      // Bàn đang có khách (occupied/unpaid) hoặc không có quyền tạo:
+      // luôn lookup orderId trước để POS mở đúng đơn đang có, không tạo đơn mới
       try {
         /**
          * Chỉ fetch order khi user thật sự click vào bàn và cần mở theo `orderId`.
@@ -101,6 +104,12 @@ export const useTableOrderNavigation = () => {
         }
       } catch {
         toast.error('Không thể kiểm tra đơn đang mở của bàn này. Vui lòng thử lại.');
+        return;
+      }
+
+      // Bàn occupied nhưng không tìm được đơn mở — trường hợp dữ liệu không đồng bộ
+      if (table.usageStatus === 'available' || canCreateOrder) {
+        handleOpenOrderFromTable(table);
         return;
       }
 
