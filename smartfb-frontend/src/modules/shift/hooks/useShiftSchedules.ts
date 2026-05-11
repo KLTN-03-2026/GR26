@@ -3,7 +3,7 @@ import { isAxiosError } from 'axios';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { shiftService } from '../services/shiftService';
-import type { RegisterShiftPayload } from '../types/shift.types';
+import type { RegisterShiftPayload, UpdateShiftSchedulePayload } from '../types/shift.types';
 import { useToast } from '@shared/hooks/useToast';
 import type { ApiResponse } from '@shared/types/api.types';
 
@@ -21,7 +21,7 @@ const getShiftScheduleMutationErrorMessage = (error: unknown, fallbackMessage: s
 
 /**
  * Hook quản lý lịch ca (Shift Schedules)
- * Bao gồm: lấy lịch ca của chi nhánh, đăng ký ca, check-in, check-out
+ * Bao gồm: lấy lịch ca, đăng ký, cập nhật, xóa, check-in và check-out
  */
 export const useShiftSchedules = () => {
     const queryClient = useQueryClient();
@@ -82,6 +82,36 @@ export const useShiftSchedules = () => {
         },
     });
 
+    // Mutation: cập nhật ca khi chưa check-in
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, payload }: { id: string; payload: UpdateShiftSchedulePayload }) => {
+            await shiftService.updateShift(id, payload);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.shifts.schedules.all });
+            queryClient.invalidateQueries({ queryKey: ['shifts', 'schedules', 'my'] });
+            toast.success('Cập nhật ca thành công');
+        },
+        onError: (error: unknown) => {
+            toast.error(getShiftScheduleMutationErrorMessage(error, 'Cập nhật ca thất bại'));
+        },
+    });
+
+    // Mutation: xóa ca khi chưa check-in
+    const deleteMutation = useMutation({
+        mutationFn: async (shiftScheduleId: string) => {
+            await shiftService.deleteShift(shiftScheduleId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.shifts.schedules.all });
+            queryClient.invalidateQueries({ queryKey: ['shifts', 'schedules', 'my'] });
+            toast.success('Xóa ca thành công');
+        },
+        onError: (error: unknown) => {
+            toast.error(getShiftScheduleMutationErrorMessage(error, 'Xóa ca thất bại'));
+        },
+    });
+
     // Mutation: check-in
     const checkInMutation = useMutation({
         mutationFn: async (shiftScheduleId: string) => {
@@ -116,9 +146,13 @@ export const useShiftSchedules = () => {
         useBranchSchedule,
         useMySchedule,
         registerShift: registerMutation.mutateAsync,
+        updateShift: updateMutation.mutateAsync,
+        deleteShift: deleteMutation.mutateAsync,
         checkIn: checkInMutation.mutateAsync,
         checkOut: checkOutMutation.mutateAsync,
         isRegistering: registerMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
         isCheckingIn: checkInMutation.isPending,
         isCheckingOut: checkOutMutation.isPending,
     };

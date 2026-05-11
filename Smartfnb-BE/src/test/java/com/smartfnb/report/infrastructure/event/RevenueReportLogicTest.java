@@ -1,6 +1,7 @@
 package com.smartfnb.report.infrastructure.event;
 
 import com.smartfnb.inventory.domain.event.OrderCostCalculatedEvent;
+import com.smartfnb.report.domain.model.DailyItemStat;
 import com.smartfnb.report.domain.model.DailyRevenueSummary;
 import com.smartfnb.report.domain.repository.DailyRevenueSummaryRepository;
 import com.smartfnb.report.domain.repository.DailyItemStatRepository;
@@ -16,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,7 +64,7 @@ public class RevenueReportLogicTest {
                 .thenReturn(Optional.of(existingSummary));
 
         OrderCostCalculatedEvent event = new OrderCostCalculatedEvent(
-                tenantId, branchId, date, additionalCost
+                tenantId, branchId, date, UUID.randomUUID(), additionalCost, List.of()
         );
 
         // Act
@@ -76,6 +78,54 @@ public class RevenueReportLogicTest {
         assertEquals(new BigDecimal("25000.00"), saved.costOfGoods(), "Cost of goods phải cộng dồn");
         // Lưu ý: grossProfit được tính lại trong logic handler là Revenue - newCost
         assertEquals(new BigDecimal("75000.00"), saved.grossProfit(), "Gross profit phải được tính lại (100k - 25k)");
+    }
+
+    @Test
+    @DisplayName("Test cập nhật cost theo món khi nhận sự kiện tính toán giá vốn")
+    void testOnOrderCostCalculated_UpdateDailyItemCost() {
+        // Arrange
+        UUID tenantId = UUID.randomUUID();
+        UUID branchId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        LocalDate date = LocalDate.now();
+        BigDecimal existingRevenue = new BigDecimal("100000.00");
+        BigDecimal additionalCost = new BigDecimal("30000.00");
+
+        DailyRevenueSummary existingSummary = new DailyRevenueSummary(
+                UUID.randomUUID(), tenantId, branchId, date,
+                existingRevenue, 1, existingRevenue,
+                null, BigDecimal.ZERO, existingRevenue
+        );
+        DailyItemStat existingItemStat = new DailyItemStat(
+                UUID.randomUUID(), tenantId, branchId, itemId, "Cold Brew",
+                date, 1, existingRevenue, BigDecimal.ZERO, new BigDecimal("100.00")
+        );
+
+        when(dailyRevenueSummaryRepo.findByBranchIdAndDate(branchId, date))
+                .thenReturn(Optional.of(existingSummary));
+        when(dailyItemStatRepo.findByBranchIdItemIdAndDate(branchId, itemId, date))
+                .thenReturn(Optional.of(existingItemStat));
+
+        OrderCostCalculatedEvent event = new OrderCostCalculatedEvent(
+                tenantId,
+                branchId,
+                date,
+                UUID.randomUUID(),
+                additionalCost,
+                List.of(new OrderCostCalculatedEvent.ItemCost(itemId, additionalCost))
+        );
+
+        // Act
+        handler.onOrderCostCalculated(event);
+
+        // Assert
+        ArgumentCaptor<DailyItemStat> itemCaptor = ArgumentCaptor.forClass(DailyItemStat.class);
+        verify(dailyItemStatRepo).save(itemCaptor.capture());
+
+        DailyItemStat savedItem = itemCaptor.getValue();
+        assertEquals(additionalCost, savedItem.cost(), "Cost theo món phải được cộng vào daily_item_stats");
+        assertTrue(savedItem.grossMargin().compareTo(new BigDecimal("100.00")) < 0,
+                "Gross margin phải nhỏ hơn 100% khi món có giá vốn");
     }
 
     @Test

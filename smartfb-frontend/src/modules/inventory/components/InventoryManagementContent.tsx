@@ -15,8 +15,6 @@ import { RecordProductionBatchDialog } from '@modules/inventory/components/Recor
 import { ProductionBatchHistory } from '@modules/inventory/components/ProductionBatchHistory';
 import { UpdateThresholdDialog } from '@modules/inventory/components/UpdateThresholdDialog';
 import { InventoryTransactionHistory } from '@modules/inventory/components/InventoryTransactionHistory';
-// import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
-// Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement
 import { InventoryCheckManagement } from '@modules/inventory/components/InventoryCheck/InventoryCheckManagement';
 import { CreateIngredientDialog } from '@modules/inventory/components/CreateIngredientDialog';
 import { useInventoryIngredientCatalogView } from '@modules/inventory/hooks/useInventoryIngredientCatalogView';
@@ -124,7 +122,6 @@ export const InventoryManagementContent = () => {
   } = useInventoryManagement(inventorySection);
   const {
     currentPage: ingredientCatalogCurrentPage,
-    ingredientsWithoutStockCount,
     isError: isIngredientCatalogError,
     isLoading: isIngredientCatalogLoading,
     onPageChange: onIngredientCatalogPageChange,
@@ -133,7 +130,6 @@ export const InventoryManagementContent = () => {
     pageSize: ingredientCatalogPageSize,
     paginatedRows: paginatedIngredientCatalogRows,
     search: ingredientCatalogSearch,
-    totalCatalogItems,
     totalFilteredItems: totalFilteredIngredientItems,
     totalPages: ingredientCatalogTotalPages,
   } = useInventoryIngredientCatalogView();
@@ -287,9 +283,6 @@ export const InventoryManagementContent = () => {
             onOpenImport={() => {
               void onOpenImport();
             }}
-            onOpenAdjust={() => {
-              void onOpenAdjust();
-            }}
             onOpenWaste={() => {
               void onOpenWaste();
             }}
@@ -343,8 +336,6 @@ export const InventoryManagementContent = () => {
                   onSearchChange={onIngredientCatalogSearchChange}
                   canCreateItem={canManageCatalogItems}
                   onOpenCreateIngredient={() => setIsCreateIngredientOpen(true)}
-                  totalCatalogItems={totalCatalogItems}
-                  ingredientsWithoutStockCount={ingredientsWithoutStockCount}
                 />
 
                 <InventoryIngredientCatalogTable
@@ -400,9 +391,6 @@ export const InventoryManagementContent = () => {
             onOpenProduction={() => {
               void onOpenProduction();
             }}
-            onOpenAdjust={() => {
-              void onOpenAdjust();
-            }}
             onOpenWaste={() => {
               void onOpenWaste();
             }}
@@ -441,10 +429,9 @@ export const InventoryManagementContent = () => {
           <InventoryTransactionHistory />
         </TabsContent>
 
-        {/* Tab 4: Kiểm kho (chỉ owner/admin mới thấy) Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement*/}
+        {/* Tab kiểm kho chỉ hiển thị cho owner/admin có quyền điều chỉnh tồn kho */}
         {canAdjust && (
           <TabsContent value="stockcheck">
-            {/* <InventoryStockCheck /> */}
             <InventoryCheckManagement />
           </TabsContent>
         )}

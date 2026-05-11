@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Settings, Loader2, BrainCircuit, CalendarDays, RefreshCw, Database, CheckCircle2, XCircle, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, parseISO } from 'date-fns';
@@ -30,6 +30,10 @@ const FORECAST_PERIOD_OPTIONS = [
   { value: 21, label: '21 ngày', sub: 'Dài hạn',   desc: 'Lên kế hoạch' },
 ] as const;
 
+const getValidForecastPeriod = (value?: number): 7 | 14 | 21 => {
+  return value && [7, 14, 21].includes(value) ? (value as 7 | 14 | 21) : 7;
+};
+
 
 interface ForecastConfigSheetProps {
   branchId: string;
@@ -46,19 +50,19 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
   const { data: config, isLoading } = useTrainConfig(branchId);
   const updateConfig = useUpdateTrainConfig(branchId);
 
-  // Form state — khởi tạo từ config hiện tại khi sheet mở
-  const [nForecasts, setNForecasts] = useState<7 | 14 | 21>(7);
-  const [weeklySeasonality, setWeeklySeasonality] = useState(true);
+  const [draftNForecasts, setDraftNForecasts] = useState<7 | 14 | 21 | null>(null);
+  const [draftWeeklySeasonality, setDraftWeeklySeasonality] = useState<boolean | null>(null);
 
-  // Đồng bộ form khi có data từ API
-  useEffect(() => {
-    if (!config) return;
-    const validPeriod = [7, 14, 21].includes(config.n_forecasts)
-      ? (config.n_forecasts as 7 | 14 | 21)
-      : 7;
-    setNForecasts(validPeriod);
-    setWeeklySeasonality(config.weekly_seasonality);
-  }, [config]);
+  const nForecasts = draftNForecasts ?? getValidForecastPeriod(config?.n_forecasts);
+  const weeklySeasonality = draftWeeklySeasonality ?? config?.weekly_seasonality ?? true;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setDraftNForecasts(null);
+      setDraftWeeklySeasonality(null);
+    }
+  };
 
   const handleSave = () => {
     updateConfig.mutate(
@@ -71,7 +75,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
       {
         onSuccess: () => {
           toast.success('Đã lưu cài đặt — AI đang retrain trong nền');
-          setOpen(false);
+          handleOpenChange(false);
         },
         onError: () => {
           toast.error('Lưu cài đặt thất bại. Vui lòng thử lại.');
@@ -81,10 +85,10 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-text-primary shadow-sm transition-colors hover:bg-slate-50"
       >
         <Settings className="h-4 w-4 text-text-secondary" />
@@ -215,7 +219,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
                       key={opt.value}
                       type="button"
                       disabled={disabled}
-                      onClick={() => !disabled && setNForecasts(opt.value)}
+	                      onClick={() => !disabled && setDraftNForecasts(opt.value)}
                       className={`relative flex flex-col items-center rounded-xl border py-3.5 px-2 text-center transition-all ${
                         disabled
                           ? 'border-slate-100 bg-slate-50 cursor-not-allowed opacity-60'
@@ -263,7 +267,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
                     </p>
                   </div>
                 </div>
-                <Switch checked={weeklySeasonality} onCheckedChange={setWeeklySeasonality} />
+                <Switch checked={weeklySeasonality} onCheckedChange={setDraftWeeklySeasonality} />
               </div>
             </div>
 

@@ -236,7 +236,7 @@ export const AiForecastContent = () => {
   const PAGE_SIZE = 9; // 3 cột × 3 hàng
 
   // Reset page khi data thay đổi
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(1); }, [branchId, data?.generated_at]);
 
   // ── Loading ────────────────────────────────────────────────────────────────

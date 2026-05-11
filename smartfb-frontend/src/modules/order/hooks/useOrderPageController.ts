@@ -1,5 +1,6 @@
+import type { StompSubscription } from '@stomp/stompjs';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
@@ -27,6 +28,7 @@ import {
 } from '@modules/order/components/order-page/orderPage.utils';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
+import { getStompClient } from '@lib/socket';
 import type {
   DraftOrderMeta,
   OrderAddonSelection,
@@ -134,6 +136,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   }, [zones]);
 
   const routeBranchName = searchParams.get('branchName')?.trim() ?? '';
+  const routeOrderId = searchParams.get('orderId')?.trim() ?? '';
   const routeTableId = searchParams.get('tableId')?.trim() ?? '';
   const routeTableName = searchParams.get('tableName')?.trim() ?? '';
   const routeZoneId = searchParams.get('zoneId')?.trim() ?? '';
@@ -294,6 +297,96 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     updateOrderCaches(order);
   };
 
+  // Ref để useEffect WS luôn đọc được giá trị mới nhất mà không cần re-subscribe khi state đổi
+  const draftOrderRef = useRef(draftOrder);
+  draftOrderRef.current = draftOrder;
+  const isSyncingDraftRef = useRef(isSyncingDraft);
+  isSyncingDraftRef.current = isSyncingDraft;
+  // Ref trỏ tới applySyncedOrder mới nhất — tránh stale closure cho menuItemsById và draftOrder
+  const applySyncedOrderRef = useRef(applySyncedOrder);
+  applySyncedOrderRef.current = applySyncedOrder;
+
+  /**
+   * Khôi phục đơn hàng từ API khi user refresh trang hoặc mở lại link có ?orderId=...
+   * Chờ menu load xong để toDraftItemsFromOrder có đủ dữ liệu map items sang cart.
+   */
+  useEffect(() => {
+    if (!routeOrderId) return;
+    if (draftOrder.orderId) return; // đã có order trong store, không cần restore
+    if (menuQuery.isLoading) return; // chờ menu load để map items đúng
+
+    let cancelled = false;
+
+    const restoreOrder = async () => {
+      try {
+        const response = await orderService.getById(routeOrderId);
+        if (cancelled || !response.success || !response.data) return;
+        // Không restore đơn đã đóng — tránh cart hiện lại sau khi huỷ/hoàn tất
+        const status = response.data.status;
+        if (status === 'CANCELLED' || status === 'COMPLETED') return;
+        applySyncedOrderRef.current(response.data);
+      } catch {
+        // Order không tồn tại hoặc user không có quyền — bỏ qua, để cart trống
+      }
+    };
+
+    void restoreOrder();
+    return () => { cancelled = true; };
+  }, [routeOrderId, draftOrder.orderId, menuQuery.isLoading]);
+
+  /**
+   * Subscribe WS topic order để đồng bộ cart khi người dùng khác cập nhật cùng đơn hàng.
+   * Chỉ sync khi: WS message có orderId khớp với draftOrder.orderId hiện tại
+   * và user không đang trong quá trình tự sync (tránh race condition ghi đè lẫn nhau).
+   *
+   * Phụ thuộc vào BE fix: OrderWebSocketEventHandler phải có @EventListener cho OrderUpdatedEvent.
+   */
+  useEffect(() => {
+    if (!currentBranchId) return;
+
+    const topic = `/topic/orders/${currentBranchId}`;
+    let subscription: StompSubscription | null = null;
+    const client = getStompClient();
+
+    const handleMessage = (payload: unknown) => {
+      const wsOrder = payload as OrderResponse;
+
+      // Chỉ sync khi WS order khớp với order đang mở và không đang trong quá trình tự sync
+      if (!wsOrder?.id || wsOrder.id !== draftOrderRef.current.orderId) return;
+      if (isSyncingDraftRef.current) return;
+
+      // Đơn bị huỷ hoặc hoàn tất từ thiết bị khác → xoá cart, không giữ lại items
+      if (wsOrder.status === 'CANCELLED' || wsOrder.status === 'COMPLETED') {
+        clearDraft();
+        return;
+      }
+
+      if (!wsOrder.items) return;
+
+      // Cập nhật cart theo dữ liệu mới từ WS — user A thấy món user B vừa thêm/xóa
+      applySyncedOrderRef.current(wsOrder);
+    };
+
+    if (client.connected) {
+      subscription = client.subscribe(topic, (message) => {
+        try { handleMessage(JSON.parse(message.body)); }
+        catch { /* bỏ qua parse lỗi */ }
+      });
+    } else {
+      const prevOnConnect = client.onConnect;
+      client.onConnect = (frame) => {
+        prevOnConnect?.(frame);
+        subscription = client.subscribe(topic, (message) => {
+          try { handleMessage(JSON.parse(message.body)); }
+          catch { /* bỏ qua parse lỗi */ }
+        });
+      };
+    }
+
+    return () => { subscription?.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBranchId]);
+
   const syncCartToOrder = async (nextCart: OrderDraftItem[], successMessage: string) => {
     if (nextCart.length === 0) {
       return;
@@ -305,8 +398,11 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     setSyncingDraft(true);
 
     try {
-      const response = draftOrder.orderId
-        ? await orderService.updateOrder(draftOrder.orderId, {
+      // Đọc draftOrder mới nhất từ store khi bắt đầu gửi request,
+      // tránh dùng orderId stale nếu WS vừa cập nhật draftOrder trước khi re-render
+      const currentOrderId = useOrderStore.getState().draftOrder.orderId;
+      const response = currentOrderId
+        ? await orderService.updateOrder(currentOrderId, {
             tableId,
             items: nextCart.map(toUpdateOrderItemCommand),
           })
@@ -314,7 +410,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
             tableId,
             source: resolveOrderSource(tableId),
             items: nextCart.map(toOrderItemCommand),
-          });
+      });
 
       if (!response.success) {
         toast.error(response.error?.message ?? 'Không thể đồng bộ đơn hàng');
@@ -341,7 +437,9 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   };
 
   const handleDeleteCartItem = async (item: OrderDraftItem) => {
-    const nextCart = cart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
+    // Đọc cart mới nhất từ store, tránh stale closure khi WS vừa cập nhật cart
+    const latestCart = useOrderStore.getState().cart;
+    const nextCart = latestCart.filter((cartItem) => cartItem.draftItemId !== item.draftItemId);
 
     if (nextCart.length === 0) {
       if (draftOrder.orderId) {
@@ -376,7 +474,8 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       quantity: nextQuantity,
       lineTotal: calculateLineTotal(item.unitPrice, nextQuantity, getSafeAddons(item)),
     };
-    const nextCart = cart.map((cartItem) =>
+    // Đọc cart mới nhất từ store, tránh stale closure khi WS vừa cập nhật cart
+    const nextCart = useOrderStore.getState().cart.map((cartItem) =>
       cartItem.draftItemId === item.draftItemId ? nextCartItem : cartItem
     );
 
@@ -400,10 +499,14 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       editingCartItem?.orderItemId
     );
 
+    // Đọc cart mới nhất từ store, tránh stale closure khi WS vừa cập nhật cart
+    // trước khi component kịp re-render (race condition giữa WS callback và user click)
+    const latestCart = useOrderStore.getState().cart;
+
     // Khi không ở chế độ edit, cùng món + cùng topping + cùng ghi chú sẽ được gộp số lượng trong cart local.
     const matchedCartItem =
       editingCartItem ??
-      cart.find((cartItem) => isSameCartLine(cartItem, submittedDraftItem)) ??
+      latestCart.find((cartItem) => isSameCartLine(cartItem, submittedDraftItem)) ??
       null;
     const nextDraftItem =
       matchedCartItem && !editingCartItem
@@ -411,10 +514,10 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
         : submittedDraftItem;
 
     const nextCart = matchedCartItem
-      ? cart.map((cartItem) =>
+      ? latestCart.map((cartItem) =>
           cartItem.draftItemId === matchedCartItem.draftItemId ? nextDraftItem : cartItem
         )
-      : [...cart, nextDraftItem];
+      : [...latestCart, nextDraftItem];
 
     await syncCartToOrder(
       nextCart,
@@ -482,6 +585,12 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
           queryKey: queryKeys.tables.detail(cancelledTableId),
         });
       }
+
+      // Xoá orderId khỏi URL để restore effect không fetch lại đơn đã huỷ
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.delete('orderId');
+      const nextSearch = nextParams.toString();
+      navigate(`${ROUTES.POS_ORDER}${nextSearch ? `?${nextSearch}` : ''}`, { replace: true });
 
       toast.success('Đã hủy đơn và làm trống giỏ hàng');
     } catch {

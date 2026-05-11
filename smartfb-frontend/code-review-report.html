@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartF&B Code Review Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #11182b;
+      --panel-2: #151f36;
+      --border: #263552;
+      --text: #e8eefc;
+      --muted: #9cadc9;
+      --critical: #ff4757;
+      --major: #ffa502;
+      --minor: #3498db;
+      --nit: #2ecc71;
+      --spring: #7ee787;
+      --fastapi: #5eead4;
+      --postgres: #93c5fd;
+      --react: #c084fc;
+      --shadow: 0 18px 55px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(52, 152, 219, 0.16), transparent 34rem),
+        radial-gradient(circle at 100% 0%, rgba(255, 165, 2, 0.12), transparent 34rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    .page { width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 40px 0 56px; }
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 22px;
+    }
+    h1 { margin: 0; font-size: clamp(30px, 4vw, 54px); line-height: 1; letter-spacing: 0; }
+    .subtitle { margin: 14px 0 0; color: var(--muted); max-width: 780px; }
+    .meta {
+      display: grid;
+      gap: 8px;
+      min-width: 260px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(17, 24, 43, 0.84);
+      box-shadow: var(--shadow);
+    }
+    .meta-row { display: flex; justify-content: space-between; gap: 14px; color: var(--muted); font-size: 14px; }
+    .meta-row strong { color: var(--text); font-weight: 700; text-align: right; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .tag {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .verdict {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: center;
+      border: 1px solid rgba(255, 71, 87, 0.45);
+      border-left: 6px solid var(--critical);
+      background: linear-gradient(135deg, rgba(255, 71, 87, 0.18), rgba(17, 24, 43, 0.92));
+      border-radius: 8px;
+      padding: 18px;
+      margin: 22px 0;
+      box-shadow: var(--shadow);
+    }
+    .verdict .icon { font-size: 34px; }
+    .verdict h2 { margin: 0 0 4px; font-size: 24px; }
+    .verdict p { margin: 0; color: var(--muted); }
+
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+    .summary-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(17, 24, 43, 0.86);
+    }
+    .summary-card .label { color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+    .summary-card .value { margin-top: 8px; font-size: 34px; font-weight: 800; line-height: 1; }
+    .critical { color: var(--critical); }
+    .major { color: var(--major); }
+    .minor { color: var(--minor); }
+    .nit { color: var(--nit); }
+
+    .distribution {
+      border: 1px solid var(--border);
+      background: rgba(17, 24, 43, 0.86);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .section-title { margin: 0 0 12px; font-size: 16px; }
+    .bar { display: flex; height: 18px; overflow: hidden; border-radius: 999px; background: #0f172a; border: 1px solid var(--border); }
+    .seg { height: 100%; }
+    .seg.spring { width: 25%; background: var(--spring); }
+    .seg.fastapi { width: 25%; background: var(--fastapi); }
+    .seg.postgres { width: 25%; background: var(--postgres); }
+    .seg.react { width: 25%; background: var(--react); }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+    .tabs {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 0;
+      background: rgba(11, 16, 32, 0.9);
+      backdrop-filter: blur(12px);
+    }
+    .tab {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      padding: 9px 13px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab.active { color: var(--text); border-color: #5b6f9b; background: rgba(255,255,255,0.1); }
+
+    .issues { display: grid; gap: 12px; margin-top: 6px; }
+    details.issue {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(17, 24, 43, 0.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+    details.issue[open] { border-color: #3c4e73; }
+    summary {
+      cursor: pointer;
+      list-style: none;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #0b1020;
+      text-transform: uppercase;
+    }
+    .badge.critical { background: var(--critical); color: white; }
+    .badge.major { background: var(--major); }
+    .badge.minor { background: var(--minor); color: white; }
+    .badge.nit { background: var(--nit); }
+    .issue-title { font-weight: 800; }
+    .layer-pill { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .issue-body { border-top: 1px solid var(--border); padding: 0 16px 16px; }
+    .location { margin: 14px 0 8px; color: var(--muted); font-size: 13px; }
+    .location code { color: var(--text); }
+    .desc { margin: 0 0 14px; color: #c7d2ea; }
+    .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .code-panel { min-width: 0; }
+    .code-title { margin: 0 0 6px; font-size: 13px; font-weight: 900; }
+    pre {
+      margin: 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: auto;
+      background: #07101f;
+      color: #dbeafe;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .kw { color: #93c5fd; }
+    .str { color: #86efac; }
+    .num { color: #fbbf24; }
+    .com { color: #94a3b8; }
+    .bad { color: #fda4af; }
+    .good { color: #86efac; }
+    .op { color: #c4b5fd; }
+    .hidden { display: none; }
+
+    @media (max-width: 860px) {
+      .header, .code-grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      summary { grid-template-columns: 1fr; }
+      .meta { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div>
+        <h1>SmartF&B Code Review Report</h1>
+        <p class="subtitle">Review toàn bộ repo theo các lớp Spring Boot, FastAPI + NeuralProphet, PostgreSQL và ReactTS. Scope loại trừ thư mục build/generated như node_modules, target, venv, dist.</p>
+        <div class="tags">
+          <span class="tag">ReactTS</span>
+          <span class="tag">Spring Boot</span>
+          <span class="tag">FastAPI</span>
+          <span class="tag">NeuralProphet</span>
+          <span class="tag">PostgreSQL</span>
+        </div>
+      </div>
+      <aside class="meta">
+        <div class="meta-row"><span>Project</span><strong>SmartF&B POS SaaS</strong></div>
+        <div class="meta-row"><span>Ngày review</span><strong>2026-05-10</strong></div>
+        <div class="meta-row"><span>Số file scan</span><strong>1,217</strong></div>
+        <div class="meta-row"><span>Reviewer</span><strong>Senior Engineer</strong></div>
+      </aside>
+    </header>
+
+    <section class="verdict">
+      <div class="icon">🔄</div>
+      <div>
+        <h2>Request Changes</h2>
+        <p>Chưa nên approve vì có 3 vấn đề Critical liên quan JWT secret fallback, tenant isolation của AI train trigger, và token nhạy cảm lưu trong localStorage. Các Major còn lại tập trung ở async blocking AI jobs, schema integrity và một số luồng UI realtime/payment.</p>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Severity summary">
+      <div class="summary-card"><div class="label">Critical</div><div class="value critical">3</div></div>
+      <div class="summary-card"><div class="label">Major</div><div class="value major">9</div></div>
+      <div class="summary-card"><div class="label">Minor</div><div class="value minor">3</div></div>
+      <div class="summary-card"><div class="label">Nit</div><div class="value nit">1</div></div>
+    </section>
+
+    <section class="distribution">
+      <h3 class="section-title">Issue Distribution By Layer</h3>
+      <div class="bar" aria-label="Layer issue distribution">
+        <div class="seg spring" title="Spring Boot: 4"></div>
+        <div class="seg fastapi" title="FastAPI/AI: 4"></div>
+        <div class="seg postgres" title="PostgreSQL: 4"></div>
+        <div class="seg react" title="ReactTS: 4"></div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background: var(--spring)"></i>Spring Boot 4</span>
+        <span><i class="dot" style="background: var(--fastapi)"></i>FastAPI/AI 4</span>
+        <span><i class="dot" style="background: var(--postgres)"></i>PostgreSQL 4</span>
+        <span><i class="dot" style="background: var(--react)"></i>ReactTS 4</span>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Issue filters">
+      <button class="tab active" data-filter="all">Tất cả</button>
+      <button class="tab" data-filter="spring">Spring Boot</button>
+      <button class="tab" data-filter="fastapi">FastAPI/AI</button>
+      <button class="tab" data-filter="postgres">PostgreSQL</button>
+      <button class="tab" data-filter="react">ReactTS</button>
+    </nav>
+
+    <section class="issues">
+      <details class="issue" data-layer="spring" open>
+        <summary><span class="badge critical">Critical</span><span class="issue-title">JWT secret có fallback production-grade hardcoded</span><span class="layer-pill">Spring Boot</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/resources/application.yml:73</code></div>
+          <p class="desc">JWT secret đang có default cố định trong config. Nếu deploy thiếu biến môi trường, tất cả access/refresh token sẽ được ký bằng secret public trong repo, tạo lỗ hổng giả mạo token.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code><span class="kw">jwt</span>:
+  <span class="kw">secret</span>: <span class="bad">${JWT_SECRET:SmartFnbSuperSecretKey2026ChangeInProduction!@#$%^&amp;*()}</span>
+  <span class="kw">expiration-ms</span>: ${JWT_EXPIRATION_MS:3600000}</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="kw">jwt</span>:
+  <span class="kw">secret</span>: <span class="good">${JWT_SECRET}</span>
+  <span class="kw">expiration-ms</span>: ${JWT_EXPIRATION_MS:3600000}
+
+<span class="com"># fail-fast bằng @ConfigurationProperties + @NotBlank + min entropy</span></code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="spring">
+        <summary><span class="badge major">Major</span><span class="issue-title">WebSocket CORS cho phép mọi origin</span><span class="layer-pill">Spring Boot</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/java/com/smartfnb/shared/config/WebSocketConfig.java:51</code></div>
+          <p class="desc">STOMP endpoint dùng <code>setAllowedOriginPatterns("*")</code>. Dù CONNECT frame có JWT interceptor, wildcard origin mở rộng bề mặt tấn công CSRF-like WebSocket, token leakage qua browser extension và abuse từ domain không kiểm soát.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>registry.addEndpoint(<span class="str">"/ws"</span>)
+    .setAllowedOriginPatterns(<span class="bad">"*"</span>)
+    .withSockJS();</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>registry.addEndpoint(<span class="str">"/ws"</span>)
+    .setAllowedOriginPatterns(appCorsProperties.allowedOrigins())
+    .withSockJS();</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="spring">
+        <summary><span class="badge major">Major</span><span class="issue-title">Subscription endpoint thiếu role/permission guard rõ ràng</span><span class="layer-pill">Spring Boot</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/java/com/smartfnb/plan/web/controller/SubscriptionController.java:32</code></div>
+          <p class="desc">Endpoint subscription hiện chỉ dựa vào <code>.anyRequest().authenticated()</code>. Thông tin gói, trạng thái thuê bao và hạn dùng là dữ liệu tenant-level nên cần guard theo OWNER hoặc permission billing/subscription cụ thể.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code><span class="kw">@GetMapping</span>(<span class="str">"/current"</span>)
+<span class="kw">public</span> ResponseEntity&lt;ApiResponse&lt;SubscriptionResponse&gt;&gt; getCurrentSubscription() { ... }</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="kw">@GetMapping</span>(<span class="str">"/current"</span>)
+<span class="kw">@PreAuthorize</span>(<span class="str">"hasRole('OWNER') or hasAuthority('SUBSCRIPTION_VIEW')"</span>)
+<span class="kw">public</span> ResponseEntity&lt;ApiResponse&lt;SubscriptionResponse&gt;&gt; getCurrentSubscription() { ... }</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="spring">
+        <summary><span class="badge minor">Minor</span><span class="issue-title">Response format chưa nhất quán ở DELETE endpoints</span><span class="layer-pill">Spring Boot</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/java/com/smartfnb/menu/web/controller/AddonController.java:122</code></div>
+          <p class="desc">Phần lớn API dùng <code>ApiResponse</code>, nhưng một số DELETE trả <code>ResponseEntity&lt;Void&gt;</code> 204. FE interceptor đang cố đọc <code>ApiResponse</code>, nên contract lỗi/thành công không đồng nhất giữa các module.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code><span class="kw">public</span> ResponseEntity&lt;Void&gt; deleteAddon(...) {
+  addonCommandHandler.deleteAddon(id);
+  <span class="kw">return</span> ResponseEntity.noContent().build();
+}</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="kw">public</span> ResponseEntity&lt;ApiResponse&lt;Void&gt;&gt; deleteAddon(...) {
+  addonCommandHandler.deleteAddon(id);
+  <span class="kw">return</span> ResponseEntity.ok(ApiResponse.ok());
+}</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="fastapi" open>
+        <summary><span class="badge critical">Critical</span><span class="issue-title">OWNER có thể trigger train cho tenant khác</span><span class="layer-pill">FastAPI/AI</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/app/api/v1/train.py:124</code></div>
+          <p class="desc"><code>TrainRequest.tenant_id</code> cho phép override tenant và role <code>OWNER</code> nằm trong danh sách được trigger. Một owner có thể gửi tenant_id bất kỳ để queue train job cho tenant khác, vi phạm tenant isolation và có thể gây resource abuse.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>_ALLOWED_ROLES = {<span class="str">"OWNER"</span>, <span class="str">"ADMIN"</span>}
+target_tenant_id = <span class="bad">body.tenant_id or tenant.tenant_id</span>
+background_tasks.add_task(_run_train_tenant_bg, target_tenant_id)</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="kw">if</span> body.tenant_id and tenant.role != <span class="str">"ADMIN"</span>:
+    <span class="kw">raise</span> HTTPException(status_code=<span class="num">403</span>, detail=<span class="str">"Không được chọn tenant khác"</span>)
+
+target_tenant_id = body.tenant_id <span class="kw">if</span> tenant.role == <span class="str">"ADMIN"</span> <span class="kw">else</span> tenant.tenant_id</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="fastapi">
+        <summary><span class="badge major">Major</span><span class="issue-title">Model được load lại mỗi lần predict job chạy</span><span class="layer-pill">FastAPI/AI</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/app/services/predict_service.py:284</code></div>
+          <p class="desc">Predict service gọi <code>model_io.load_model</code> mỗi lần predict branch. Với NeuralProphet/PyTorch, load từ disk tốn CPU/RAM và tăng latency job; nên cache model theo tenant/branch/model_type sau startup hoặc lazy-load một lần có TTL/invalidation.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>model_daily = <span class="bad">model_io.load_model</span>(tenant_id, branch_id, model_type=<span class="str">"daily"</span>)
+model_weekly = <span class="bad">model_io.load_model</span>(tenant_id, branch_id, model_type=<span class="str">"weekly"</span>)</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>model_daily = await model_registry.get_or_load(tenant_id, branch_id, <span class="str">"daily"</span>)
+model_weekly = await model_registry.get_or_load(tenant_id, branch_id, <span class="str">"weekly"</span>)
+
+<span class="com"># invalidate cache sau khi save_model/retrain thành công</span></code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="fastapi">
+        <summary><span class="badge major">Major</span><span class="issue-title">CPU-bound fit/predict block event loop</span><span class="layer-pill">FastAPI/AI</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/app/services/train_service.py:421</code> và <code>../ai-service/app/services/predict_service.py:419</code></div>
+          <p class="desc">Các hàm async gọi trực tiếp <code>model.fit()</code> và <code>model.predict()</code>. Đây là tác vụ CPU-bound/PyTorch blocking; khi chạy trong FastAPI BackgroundTasks hoặc scheduler cùng process, event loop có thể bị nghẽn và health/API bị chậm.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>metrics_daily = <span class="bad">model_daily.fit</span>(df_regular, freq=<span class="str">"D"</span>)
+raw_pred = <span class="bad">model_daily.predict</span>(future_df)</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>metrics_daily = await anyio.to_thread.run_sync(
+    model_daily.fit, df_regular, freq=<span class="str">"D"</span>
+)
+raw_pred = await anyio.to_thread.run_sync(model_daily.predict, future_df)</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="fastapi">
+        <summary><span class="badge minor">Minor</span><span class="issue-title">Pydantic schema chưa validate UUID/tenant override chặt</span><span class="layer-pill">FastAPI/AI</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/app/schemas/train.py:11</code> và <code>../ai-service/app/api/v1/train.py:405</code></div>
+          <p class="desc">Các id quan trọng như <code>tenant_id</code> và <code>branch_id</code> đang là string tự do. Điều này đẩy lỗi format xuống SQL/service layer và làm khó phân biệt 400 validation error với lỗi nghiệp vụ.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code><span class="kw">class</span> TrainRequest(BaseModel):
+    tenant_id: str | None = None
+
+branch_id: str | None = Query(default=None)</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="kw">from</span> uuid <span class="kw">import</span> UUID
+
+<span class="kw">class</span> TrainRequest(BaseModel):
+    tenant_id: UUID | None = None
+
+branch_id: UUID | None = Query(default=None)</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="postgres">
+        <summary><span class="badge major">Major</span><span class="issue-title">Tenant/branch FK quan trọng trong POS/order đang nullable</span><span class="layer-pill">PostgreSQL</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/resources/db/migration/V5__order_module.sql:2</code></div>
+          <p class="desc"><code>pos_sessions.tenant_id</code>, <code>orders.tenant_id</code>, <code>orders.branch_id</code> không có <code>NOT NULL</code>. Trong hệ multi-tenant, dữ liệu order/session không gắn tenant/branch là rủi ro data leakage, report sai và query guard không còn chắc chắn.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+branch_id UUID REFERENCES branches(id) ON DELETE CASCADE,</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>tenant_id UUID <span class="good">NOT NULL</span> REFERENCES tenants(id) ON DELETE CASCADE,
+branch_id UUID <span class="good">NOT NULL</span> REFERENCES branches(id) ON DELETE CASCADE,</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="postgres">
+        <summary><span class="badge major">Major</span><span class="issue-title">Thiếu foreign key cho supplier/item ở purchasing/inventory</span><span class="layer-pill">PostgreSQL</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../Smartfnb-BE/src/main/resources/db/migration/V7__inventory_module.sql:37</code> và <code>../Smartfnb-BE/src/main/resources/db/migration/V10__supplier_module.sql:55</code></div>
+          <p class="desc"><code>stock_batches.supplier_id</code> và <code>purchase_order_items.item_id</code> không khai báo FK. Điều này cho phép batch/PO item trỏ tới supplier hoặc item không tồn tại, làm hỏng báo cáo công nợ, nhập kho và audit.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>supplier_id UUID,
+item_id UUID NOT NULL, <span class="com">-- menu_items.id</span></code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
+item_id UUID NOT NULL REFERENCES items(id) ON DELETE RESTRICT,</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="postgres">
+        <summary><span class="badge major">Major</span><span class="issue-title">Forecast SQL cast UUID sang text làm giảm hiệu quả index</span><span class="layer-pill">PostgreSQL</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/app/api/v1/forecast.py:54</code></div>
+          <p class="desc">Query forecast join/filter bằng <code>id::text</code> và <code>branch_id::text</code>. Cast trên column khiến planner khó dùng index UUID hiện có, đặc biệt ở bảng <code>items</code>, <code>inventory_balances</code> và registry khi dữ liệu tăng.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>JOIN items i ON <span class="bad">i.id::text = asr.ingredient_id::text</span>
+WHERE <span class="bad">asr.branch_id::text = :branch_id</span></code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>JOIN items i ON i.id = asr.ingredient_id
+WHERE asr.branch_id = CAST(:branch_id AS uuid)</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="postgres">
+        <summary><span class="badge minor">Minor</span><span class="issue-title">Forecast operational quantities đang persist bằng Float</span><span class="layer-pill">PostgreSQL</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>../ai-service/alembic/versions/001_init_ai_tables.py:76</code></div>
+          <p class="desc">ML nội bộ có thể dùng float, nhưng <code>forecast_results.predicted_qty</code> và <code>suggested_qty</code> là dữ liệu vận hành dùng để đặt hàng. Persist bằng float có thể tạo sai số hiển thị/tổng hợp; nên dùng <code>NUMERIC(10,4)</code> như inventory.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>sa.Column(<span class="str">"predicted_qty"</span>, sa.<span class="bad">Float</span>(), nullable=False)
+sa.Column(<span class="str">"suggested_qty"</span>, sa.<span class="bad">Float</span>(), nullable=True)</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>sa.Column(<span class="str">"predicted_qty"</span>, sa.Numeric(<span class="num">10</span>, <span class="num">4</span>), nullable=False)
+sa.Column(<span class="str">"suggested_qty"</span>, sa.Numeric(<span class="num">10</span>, <span class="num">4</span>), nullable=True)</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="react" open>
+        <summary><span class="badge critical">Critical</span><span class="issue-title">Access/refresh token persist trong localStorage</span><span class="layer-pill">ReactTS</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>src/modules/auth/stores/authStore.ts:115</code> và <code>src/lib/axios.ts:59</code></div>
+          <p class="desc">Auth store persist session xuống localStorage và refresh token được gửi trong body khi refresh. Nếu có XSS, attacker lấy được cả access token và refresh token; refresh token nên nằm trong HttpOnly Secure SameSite cookie.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>storage: createJSONStorage(() =&gt; <span class="bad">localStorage</span>)
+
+const refreshToken = session?.refreshToken;
+const payload = refreshToken ? { refreshToken } : {};</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code><span class="com">// FE chỉ giữ profile/flags không nhạy cảm</span>
+storage: createJSONStorage(() =&gt; sessionStorage)
+
+await publicAxiosInstance.post(<span class="str">"/auth/refresh"</span>, {}, {
+  withCredentials: true
+});</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="react">
+        <summary><span class="badge major">Major</span><span class="issue-title">Payment QR polling tắt exhaustive-deps và dễ stale closure</span><span class="layer-pill">ReactTS</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>src/pages/pos/PaymentPage.tsx:173</code></div>
+          <p class="desc">Polling effect gọi <code>handlePaymentSuccess</code>, <code>resetOrderAfterPaymentFailure</code>, dùng <code>displayOrderId</code> và <code>displayTableContext</code> nhưng dependency list chỉ có <code>qrState</code>, <code>qrData?.paymentId</code>. Khi user đổi order/table hoặc state thanh toán thay đổi, interval có thể xử lý nhầm order.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>useEffect(() =&gt; {
+  ...
+  handlePaymentSuccess();
+  void resetOrderAfterPaymentFailure(displayOrderId, displayTableContext.tableId);
+  ...
+  <span class="bad">// eslint-disable-next-line react-hooks/exhaustive-deps</span>
+}, [qrState, qrData?.paymentId]);</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>const handlePaymentSuccess = useCallback(() =&gt; { ... }, [displayOrderId, displayTableContext.tableId]);
+
+useEffect(() =&gt; {
+  ...
+}, [qrState, qrData?.paymentId, handlePaymentSuccess, resetOrderAfterPaymentFailure]);</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="react">
+        <summary><span class="badge major">Major</span><span class="issue-title">Server state của orders vẫn được fetch trong Zustand store</span><span class="layer-pill">ReactTS</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>src/modules/order/stores/orderStore.ts:157</code></div>
+          <p class="desc">Store gọi <code>orderService.getOrders()</code> và tự giữ <code>orders/isLoading</code>. Đây là server state nên nên để TanStack Query quản lý cache, stale time, retry/error state; hiện tại error chỉ log console và UI không có error state đáng tin cậy.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>fetchOrders: async () =&gt; {
+  set({ isLoading: true });
+  const response = await orderService.getOrders();
+  set({ orders: response.data });
+}</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>export const useOrders = (params: OrderListParams) =&gt;
+  useQuery({
+    queryKey: queryKeys.orders.list(params),
+    queryFn: () =&gt; orderService.getOrders(params),
+  });</code></pre></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="issue" data-layer="react">
+        <summary><span class="badge nit">Nit</span><span class="issue-title">Console error còn nằm trong code runtime</span><span class="layer-pill">ReactTS</span></summary>
+        <div class="issue-body">
+          <div class="location">Vị trí: <code>src/modules/table/hooks/useDeleteTable.ts:25</code> và <code>src/modules/order/stores/orderStore.ts:166</code></div>
+          <p class="desc">Có nhiều <code>console.error</code> trong hooks/stores runtime. Với rule repo, debug/log trực tiếp không nên đi vào commit; dùng toast/user-facing error hoặc logger wrapper có env guard.</p>
+          <div class="code-grid">
+            <div class="code-panel"><p class="code-title">❌ Hiện tại</p><pre><code>catch (err) {
+  <span class="bad">console.error</span>(<span class="str">"Delete table failed"</span>, err);
+}</code></pre></div>
+            <div class="code-panel"><p class="code-title">✅ Đề xuất</p><pre><code>catch (err) {
+  error(<span class="str">"Không thể xóa bàn"</span>, getApiErrorMessage(err));
+}</code></pre></div>
+          </div>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const issues = Array.from(document.querySelectorAll('.issue'));
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const filter = tab.dataset.filter;
+        tabs.forEach((item) => item.classList.toggle('active', item === tab));
+        issues.forEach((issue) => {
+          const visible = filter === 'all' || issue.dataset.layer === filter;
+          issue.classList.toggle('hidden', !visible);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

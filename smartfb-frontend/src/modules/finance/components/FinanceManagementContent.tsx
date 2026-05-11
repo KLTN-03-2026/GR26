@@ -68,7 +68,10 @@ export const FinanceManagementContent = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedIncomeInvoiceId, setSelectedIncomeInvoiceId] = useState<string | null>(null);
 
-  const canViewIncome = can(PERMISSIONS.PAYMENT_VIEW) || can(PERMISSIONS.PAYMENT_CREATE) || can(PERMISSIONS.PAYMENT_PROCESS);
+  const canViewIncome =
+    can(PERMISSIONS.PAYMENT_VIEW) ||
+    can(PERMISSIONS.PAYMENT_CREATE) ||
+    can(PERMISSIONS.INVOICE_VIEW);
   const canViewExpense = expenseManagement.canViewExpenses;
   const currentBranchId = expenseManagement.currentBranchId;
   const currentBranchName = expenseManagement.currentBranchName;

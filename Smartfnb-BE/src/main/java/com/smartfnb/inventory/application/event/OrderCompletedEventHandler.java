@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import com.smartfnb.inventory.domain.event.OrderCostCalculatedEvent;
 
@@ -63,9 +64,12 @@ public class OrderCompletedEventHandler {
     public void onOrderCompleted(OrderCompletedEvent event) {
         log.info("Bắt đầu trừ kho FIFO cho đơn hàng: {}", event.orderNumber());
         BigDecimal orderTotalCost = BigDecimal.ZERO;
+        List<OrderCostCalculatedEvent.ItemCost> itemCosts = new ArrayList<>();
 
         try {
             for (OrderCompletedEvent.CompletedOrderItem orderItem : event.items()) {
+                BigDecimal itemTotalCost = BigDecimal.ZERO;
+
                 // Lấy tất cả nguyên liệu trong công thức của món này
                 List<RecipeJpaEntity> recipes =
                     recipeJpaRepository.findByTargetItemId(orderItem.menuItemId());
@@ -81,6 +85,10 @@ public class OrderCompletedEventHandler {
                         .multiply(BigDecimal.valueOf(orderItem.quantity()));
 
                     try {
+                        // Author: Hoàng
+                        // Date: 2026-05-09
+                        // Note: Truyền event.staffId() thay vì null để ghi đúng nhân viên thực hiện
+                        //       vào inventory_transaction — fix bug staffName = null trong lịch sử kho
                         BigDecimal cost = inventoryDomainService.deductFifo(
                             event.tenantId(),
                             event.branchId(),
@@ -90,9 +98,11 @@ public class OrderCompletedEventHandler {
                             "SALE_DEDUCT",
                             event.orderId(),
                             "ORDER",
-                            null  // System deducted
+                            event.staffId()
                         );
-                        orderTotalCost = orderTotalCost.add(cost != null ? cost : BigDecimal.ZERO);
+                        BigDecimal safeCost = cost != null ? cost : BigDecimal.ZERO;
+                        orderTotalCost = orderTotalCost.add(safeCost);
+                        itemTotalCost = itemTotalCost.add(safeCost);
                     } catch (com.smartfnb.inventory.domain.exception
                              .InsufficientStockException e) {
                         // Không throw — tránh rollback toàn bộ đơn hàng đã hoàn tất
@@ -114,6 +124,9 @@ public class OrderCompletedEventHandler {
                                 BigDecimal neededAddon = BigDecimal.valueOf((long) orderItem.quantity() * addonItem.quantity())
                                         .multiply(addonEntity.getItemQuantity());
 
+                                // Author: Hoàng
+                                // Date: 2026-05-09
+                                // Note: Truyền event.staffId() thay vì null — cùng fix với recipe deduction bên trên
                                 BigDecimal cost = inventoryDomainService.deductFifo(
                                     event.tenantId(),
                                     event.branchId(),
@@ -123,9 +136,11 @@ public class OrderCompletedEventHandler {
                                     "SALE_DEDUCT",
                                     event.orderId(),
                                     "ORDER_ADDON",
-                                    null
+                                    event.staffId()
                                 );
-                                orderTotalCost = orderTotalCost.add(cost != null ? cost : BigDecimal.ZERO);
+                                BigDecimal safeCost = cost != null ? cost : BigDecimal.ZERO;
+                                orderTotalCost = orderTotalCost.add(safeCost);
+                                itemTotalCost = itemTotalCost.add(safeCost);
                             }
                         } catch (com.smartfnb.inventory.domain.exception.InsufficientStockException e) {
                             log.warn("Không đủ kho khi trừ FIFO cho addon: orderId={}, addon_item={}, lý do={}",
@@ -135,13 +150,23 @@ public class OrderCompletedEventHandler {
                         }
                     }
                 }
+
+                // Author: Hoàng | Date: 2026-05-09 | Note: Gửi giá vốn theo món để báo cáo top item không còn gross margin 100% giả.
+                itemCosts.add(new OrderCostCalculatedEvent.ItemCost(orderItem.menuItemId(), itemTotalCost));
             }
 
             log.info("Trừ kho FIFO hoàn tất cho đơn hàng: {}", event.orderNumber());
 
             // Phát event cập nhật cost_of_goods
             LocalDate date = event.occurredAt().atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
-            eventPublisher.publishEvent(new OrderCostCalculatedEvent(event.tenantId(), event.branchId(), date, orderTotalCost));
+            eventPublisher.publishEvent(new OrderCostCalculatedEvent(
+                event.tenantId(),
+                event.branchId(),
+                date,
+                event.orderId(),
+                orderTotalCost,
+                itemCosts
+            ));
 
 
         } catch (Exception e) {

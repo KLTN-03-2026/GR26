@@ -58,7 +58,15 @@ export const OwnerShiftSchedulePanel = ({
   const startDate = format(weekStartDate, 'yyyy-MM-dd');
   const endDate = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
 
-  const { useBranchSchedule, registerShift, isRegistering } = useShiftSchedules();
+  const {
+    useBranchSchedule,
+    registerShift,
+    updateShift,
+    deleteShift,
+    isRegistering,
+    isUpdating,
+    isDeleting,
+  } = useShiftSchedules();
   const scheduleQuery = useBranchSchedule(startDate, endDate);
   const staffQuery = useStaffList({ page: 0, size: 100, status: 'ACTIVE' });
 
@@ -153,6 +161,10 @@ export const OwnerShiftSchedulePanel = ({
           schedules={schedules}
           staffList={staffList}
           onAssignShift={openRegisterDialog}
+          onUpdateShift={(scheduleId, payload) => updateShift({ id: scheduleId, payload })}
+          onDeleteShift={deleteShift}
+          isUpdating={isUpdating}
+          isDeleting={isDeleting}
         />
       )}
 

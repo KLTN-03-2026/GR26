@@ -68,6 +68,7 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
     mutateAsync: selectBranch,
     isPending: isSelectingBranch,
     isError: isSelectBranchError,
+    status: selectBranchStatus,
     reset: resetSelectBranch,
   } = useSelectBranch({
     showSuccessToast: false,
@@ -194,8 +195,7 @@ export const AppLayout = ({ children, pageTitle }: AppLayoutProps) => {
 
     // Spinner chỉ hiển thị khi chưa trigger auto-select hoặc mutation đang in-flight.
     // Nếu auto-select đã hoàn thành nhưng branchId vẫn null → stuck state, hiển thị nút thử lại.
-    const autoSelectInProgress =
-      autoSelectedBranchIdRef.current !== firstAccessibleBranchId || isSelectingBranch;
+    const autoSelectInProgress = selectBranchStatus === 'idle' || isSelectingBranch;
 
     if (autoSelectInProgress) {
       return (

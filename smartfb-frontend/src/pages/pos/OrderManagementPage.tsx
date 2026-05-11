@@ -9,7 +9,7 @@ import {
   getOrderSummaryCards,
   resolveOrderNavigationTarget,
 } from '@modules/order/components/order-management/orderManagement.utils';
-import { ORDER_LIST_DEFAULT_PAGE_SIZE, useOrders } from '@modules/order/hooks/useOrders';
+import { ORDER_LIST_DEFAULT_PAGE_SIZE, useOrderRealtime, useOrders } from '@modules/order/hooks';
 import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
 import type { DateRangePickerValue } from '@shared/components/common/DateRangePicker';
 import { PERMISSIONS } from '@shared/constants/permissions';
@@ -56,6 +56,9 @@ const OrderManagementPage = () => {
     }),
     [activeTab, dateRangeParams.from, dateRangeParams.to, page, pageSize]
   );
+
+  // Subscribe WS topic order để nhận cập nhật realtime khi order đổi trạng thái hoặc có đơn mới
+  useOrderRealtime();
 
   const orderListQuery = useOrders(orderListParams);
   const orderPage = orderListQuery.data?.data;

@@ -251,27 +251,6 @@ export const CreateStaffForm = () => {
           </div>
 
           <div>
-            <Label htmlFor="posPin">POS PIN</Label>
-            <Input
-              id="posPin"
-              inputMode="numeric"
-              maxLength={6}
-              value={values.posPin}
-              onChange={(e) =>
-                onChange(
-                  "posPin",
-                  e.target.value.replace(/\D/g, "").slice(0, 6),
-                )
-              }
-              placeholder="4 đến 6 chữ số"
-            />
-            {formErrors.posPin && (
-              <p className="text-red-600 text-xs mt-1">{formErrors.posPin}</p>
-            )}
-          
-          </div>
-
-          <div>
             <Label htmlFor="roleId">Vai trò</Label>
             <Select
               value={values.roleId || NO_POSITION_VALUE}

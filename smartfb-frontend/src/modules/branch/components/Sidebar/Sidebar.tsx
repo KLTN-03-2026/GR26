@@ -6,7 +6,7 @@ import { usePermission } from '@shared/hooks/usePermission';
 import { hasAccess } from '@shared/utils/accessControl';
 import { cn } from '@shared/utils/cn';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, LogOut, Package } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { type FC, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CollapsibleMenuItem } from './CollapsibleMenuItem';
@@ -223,11 +223,6 @@ export const Sidebar: FC<SidebarProps> = ({
       </nav>
 
       <div className="space-y-3 border-t border-border p-4">
-        <button className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 font-semibold text-white transition-colors duration-150 hover:bg-primary-hover">
-          <Package className="w-4 h-4" />
-          <span>Nâng cấp Pro</span>
-        </button>
-
         <div className="flex items-center gap-3 px-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-light font-semibold text-primary">
             {userInitials}

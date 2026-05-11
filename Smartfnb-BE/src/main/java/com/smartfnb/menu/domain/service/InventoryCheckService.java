@@ -45,13 +45,15 @@ public class InventoryCheckService {
      * @param orderLines           Danh sách (itemId → số lượng) trong đơn
      * @param currentStockProvider Function: (branchId, ingredientId) → số lượng tồn kho
      * @param ingredientNameProvider Function: ingredientId → tên nguyên liệu
+     * @param ingredientUnitProvider Function: ingredientId → đơn vị nguyên liệu
      * @throws InsufficientStockException nếu bất kỳ nguyên liệu nào không đủ
      */
     public void assertSufficientStock(
             UUID branchId,
             Map<UUID, Integer> orderLines,
             StockProvider currentStockProvider,
-            IngredientNameProvider ingredientNameProvider) {
+            IngredientNameProvider ingredientNameProvider,
+            IngredientUnitProvider ingredientUnitProvider) {
 
         if (orderLines == null || orderLines.isEmpty()) {
             return;
@@ -87,6 +89,10 @@ public class InventoryCheckService {
 
             if (available == null || available.compareTo(required) < 0) {
                 String ingredientName = ingredientNameProvider.getName(ingredientId);
+                // Author: Hoàng
+                // Date: 2026-05-09
+                // Note: Truyền unit thật vào lỗi thiếu tồn để message không còn khoảng trắng thừa.
+                String ingredientUnit = ingredientUnitProvider.getUnit(ingredientId);
                 double availableVal = available != null ? available.doubleValue() : 0.0;
 
                 log.warn("Nguyên liệu '{}' không đủ — cần {}, còn {}",
@@ -96,7 +102,7 @@ public class InventoryCheckService {
                         ingredientName,
                         required.doubleValue(),
                         availableVal,
-                        ""    // unit sẽ được resolve từ recipe nếu cần
+                        ingredientUnit
                 );
             }
         }
@@ -132,5 +138,21 @@ public class InventoryCheckService {
          * @return tên nguyên liệu
          */
         String getName(UUID ingredientId);
+    }
+
+    /**
+     * Interface functional để lấy đơn vị nguyên liệu cho error message.
+     */
+    @FunctionalInterface
+    public interface IngredientUnitProvider {
+        /**
+         * Author: Hoàng
+         * Date: 2026-05-09
+         * Note: Unit được resolve ngoài domain service để giữ module Menu không phụ thuộc Inventory.
+         *
+         * @param ingredientId ID nguyên liệu
+         * @return đơn vị nguyên liệu, hoặc chuỗi rỗng nếu chưa xác định
+         */
+        String getUnit(UUID ingredientId);
     }
 }
