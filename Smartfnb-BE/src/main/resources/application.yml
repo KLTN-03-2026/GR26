@@ -62,6 +62,22 @@ spring:
       max-file-size: 5MB       # Giới hạn mỗi file ảnh
       max-request-size: 10MB   # Giới hạn toàn bộ request
 
+  ## ------ Email (SMTP) ------
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:your-email@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        # Tắt debug trong production để tránh lộ thông tin
+        debug: false
+
 ## ------ Server ------
 server:
   port: ${SERVER_PORT:8080}

@@ -1,11 +1,13 @@
 package com.smartfnb.auth.application.command;
 
 import com.smartfnb.auth.application.dto.OtpVerifyResponse;
+import com.smartfnb.auth.domain.event.OtpGeneratedEvent;
 import com.smartfnb.auth.domain.service.OtpService;
 import com.smartfnb.auth.infrastructure.persistence.UserRepository;
 import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class ForgotPasswordCommandHandler {
     private final UserRepository  userRepository;
     private final OtpService      otpService;
     private final PasswordEncoder  passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Lưu tạm reset token → userId (in-memory).
@@ -58,10 +61,16 @@ public class ForgotPasswordCommandHandler {
         userRepository.findByEmail(command.email()).ifPresent(user -> {
             if ("ACTIVE".equals(user.getStatus())) {
                 String rawOtp = otpService.generateAndSave(user.getId(), "RESET_PASSWORD");
-                // TODO: Tích hợp Email Service để gửi OTP qua email
-                // emailService.sendOtp(command.email(), rawOtp);
-                log.info("OTP quên mật khẩu đã tạo cho userId={} — [DEV] OTP: {}",
-                        user.getId(), rawOtp);
+                
+                // Publish Domain Event để thông báo OTP đã được tạo
+                eventPublisher.publishEvent(new OtpGeneratedEvent(
+                        user.getId(),
+                        command.email(),
+                        rawOtp,
+                        "RESET_PASSWORD"
+                ));
+                
+                log.info("Đã phát sự kiện OtpGeneratedEvent cho userId={}", user.getId());
             }
         });
         // Luôn trả về OK (không tiết lộ email có tồn tại hay không)
