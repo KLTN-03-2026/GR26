@@ -22,7 +22,7 @@ export interface AdminNavGroup {
 
 /**
  * Cấu hình điều hướng khu vực admin SaaS.
- * Admin quản trị tenant, gói dịch vụ và billing, tách khỏi nghiệp vụ vận hành quán.
+ * Admin quản trị khách hàng, gói dịch vụ và billing, tách khỏi nghiệp vụ vận hành quán.
  */
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
@@ -40,7 +40,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     title: 'Quản trị SaaS',
     items: [
       {
-        title: 'Tenant',
+        title: 'Khách hàng',
         path: ROUTES.ADMIN_TENANTS,
         icon: Building2,
         description: 'Khách hàng và trạng thái thuê bao',

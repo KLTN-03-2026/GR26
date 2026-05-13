@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Mail, Phone, Shield } from 'lucide-react';
+import { AlertCircle, Mail, Phone, RefreshCcw, Shield, User } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/components/ui/form';
-import { useMyProfile } from '../hooks/useMyProfile';
-import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { useMyProfile } from '@modules/account/hooks/useMyProfile';
+import { useUpdateProfile } from '@modules/account/hooks/useUpdateProfile';
 
 const profileSchema = z.object({
   fullName: z
@@ -28,7 +28,13 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
  * Email là read-only — không thể thay đổi ở đây.
  */
 export const ProfileTab = () => {
-  const { data: profile, isLoading } = useMyProfile();
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useMyProfile();
   const { mutate: updateProfile, isPending } = useUpdateProfile();
 
   const form = useForm<ProfileFormValues>({
@@ -56,10 +62,38 @@ export const ProfileTab = () => {
     });
   };
 
+  const handleRetry = () => {
+    void refetch();
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-48 items-center justify-center">
         <div className="spinner spinner-md" />
+      </div>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <div className="flex min-h-[12rem] flex-col items-center justify-center rounded-card border border-border bg-muted/20 p-6 text-center">
+        <AlertCircle className="h-10 w-10 text-destructive" />
+        <h3 className="mt-3 text-base font-semibold text-text-primary">
+          Không thể tải thông tin cá nhân
+        </h3>
+        <p className="mt-2 max-w-md text-sm text-text-secondary">
+          Vui lòng kiểm tra phiên đăng nhập hoặc trạng thái kết nối rồi thử tải lại.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4"
+          disabled={isFetching}
+          onClick={handleRetry}
+        >
+          <RefreshCcw className="h-4 w-4" />
+          {isFetching ? 'Đang tải lại...' : 'Tải lại'}
+        </Button>
       </div>
     );
   }
@@ -72,8 +106,8 @@ export const ProfileTab = () => {
           <User className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <p className="font-semibold text-text-primary">{profile?.fullName}</p>
-          <p className="text-sm text-text-secondary">{profile?.email}</p>
+          <p className="font-semibold text-text-primary">{profile.fullName}</p>
+          <p className="text-sm text-text-secondary">{profile.email}</p>
         </div>
       </div>
 
@@ -106,7 +140,7 @@ export const ProfileTab = () => {
                 Không thể thay đổi
               </span>
             </FormLabel>
-            <Input value={profile?.email ?? ''} disabled className="bg-muted/50 cursor-not-allowed" />
+            <Input value={profile.email} disabled className="bg-muted/50 cursor-not-allowed" />
           </FormItem>
 
           {/* Số điện thoại */}
@@ -135,7 +169,7 @@ export const ProfileTab = () => {
               <span>
                 Trạng thái tài khoản:{' '}
                 <span className="font-medium text-success-text">
-                  {profile?.status === 'ACTIVE' ? 'Đang hoạt động' : profile?.status}
+                  {profile.status === 'ACTIVE' ? 'Đang hoạt động' : profile.status}
                 </span>
               </span>
             </div>

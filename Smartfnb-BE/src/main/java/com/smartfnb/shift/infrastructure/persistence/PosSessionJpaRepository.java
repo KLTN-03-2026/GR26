@@ -1,10 +1,9 @@
 package com.smartfnb.shift.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,11 +50,12 @@ public interface PosSessionJpaRepository
      *
      * @param branchId UUID chi nhánh
      * @param tenantId UUID tenant
-     * @return Danh sách sessions
+     * @param pageable Thông tin phân trang và sort
+     * @return Page sessions
      */
-    @Query("SELECT s FROM PosSessionJpaEntity s WHERE s.branchId = :branchId " +
-           "AND s.tenantId = :tenantId ORDER BY s.startTime DESC")
-    List<PosSessionJpaEntity> findByBranchIdOrderByStartTimeDesc(
-            @Param("branchId") UUID branchId,
-            @Param("tenantId") UUID tenantId);
+    // author: Hoàng | date: 2026-05-11 | note: Repository phân trang lịch sử ca POS theo branch/tenant hiện tại.
+    Page<PosSessionJpaEntity> findByBranchIdAndTenantId(
+            UUID branchId,
+            UUID tenantId,
+            Pageable pageable);
 }

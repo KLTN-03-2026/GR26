@@ -142,7 +142,7 @@ const AdminTenantsPage = () => {
     <section className="space-y-6">
       <AdminPageHeader
         eyebrow="Quản trị SaaS"
-        title="Quản lý tenant"
+        title="Quản lý khách hàng"
         description="Theo dõi khách hàng, trạng thái thuê bao và thao tác đổi gói dịch vụ."
         actions={(
           <Button
@@ -166,7 +166,7 @@ const AdminTenantsPage = () => {
               <span className="font-semibold text-admin-gray-900">
                 {formatNumber(totalElements)}
               </span>{' '}
-              tenant
+              khách hàng
             </span>
             <span>
               {isActivePlansLoading ? 'Đang tải danh sách gói...' : `${formatNumber(activePlanOptions.length)} gói active`}
@@ -187,14 +187,14 @@ const AdminTenantsPage = () => {
 
       {isLoading ? (
         <AdminLoadingState
-          title="Đang tải danh sách tenant"
-          description="Hệ thống đang lấy tenant theo bộ lọc hiện tại."
+          title="Đang tải danh sách khách hàng"
+          description="Hệ thống đang lấy khách hàng theo bộ lọc hiện tại."
         />
       ) : null}
 
       {isError ? (
         <AdminErrorState
-          title="Không thể tải danh sách tenant"
+          title="Không thể tải danh sách khách hàng"
           description="Vui lòng kiểm tra quyền admin, trạng thái backend hoặc thử tải lại dữ liệu."
           isRetrying={isFetching}
           onRetry={handleRetry}
@@ -203,8 +203,8 @@ const AdminTenantsPage = () => {
 
       {!isLoading && !isError && tenants.length === 0 ? (
         <AdminEmptyState
-          eyebrow="Chưa có tenant phù hợp"
-          title="Không tìm thấy tenant trong bộ lọc hiện tại"
+          eyebrow="Chưa có khách hàng phù hợp"
+          title="Không tìm thấy khách hàng trong bộ lọc hiện tại"
           description="Hãy đổi từ khóa, trạng thái hoặc gói dịch vụ để mở rộng kết quả tìm kiếm."
         />
       ) : null}

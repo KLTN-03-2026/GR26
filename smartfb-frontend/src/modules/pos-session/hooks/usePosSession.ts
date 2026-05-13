@@ -4,7 +4,7 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { useToast } from '@shared/hooks/useToast';
 import { getApiErrorMessage } from '@shared/utils/getApiErrorMessage';
 import { posSessionService } from '../services/posSessionService';
-import type { ClosePosSessionPayload, OpenPosSessionPayload, PosSession } from '../types/posSession.types';
+import type { ClosePosSessionPayload, OpenPosSessionPayload, PosSession, PosSessionHistoryParams } from '../types/posSession.types';
 
 /**
  * Hook đọc phiên POS đang mở của chi nhánh hiện tại.
@@ -22,13 +22,16 @@ export const useActivePosSession = () => {
 
 /**
  * Hook đọc lịch sử phiên POS của chi nhánh hiện tại.
+ *
+ * @param params - Thông tin phân trang lịch sử ca POS
  */
-export const usePosSessionHistory = () => {
+export const usePosSessionHistory = (params: PosSessionHistoryParams) => {
   const branchId = useAuthStore(selectCurrentBranchId);
 
   return useQuery({
-    queryKey: queryKeys.posSessions.history(branchId),
-    queryFn: () => posSessionService.getHistory().then((response) => response.data ?? []),
+    // author: Hoàng | date: 2026-05-11 | note: Cache theo page/size để chuyển trang không đè dữ liệu cũ.
+    queryKey: queryKeys.posSessions.history(branchId, params),
+    queryFn: () => posSessionService.getHistory(params).then((response) => response.data),
     enabled: Boolean(branchId),
     staleTime: 60 * 1000,
   });

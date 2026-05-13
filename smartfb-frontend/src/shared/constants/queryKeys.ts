@@ -51,6 +51,14 @@ export const queryKeys = {
     detail: (id: string) => ['staff', 'detail', id] as const,
   },
 
+  // Địa giới hành chính Việt Nam, dùng để chuẩn hóa địa chỉ nhân viên.
+  vietnamAddress: {
+    all: ['vietnam-address'] as const,
+    provinces: () => ['vietnam-address', 'provinces'] as const,
+    wards: (provinceCode: number | null) =>
+      ['vietnam-address', 'wards', provinceCode ?? 'no-province'] as const,
+  },
+
   // Positions
   positions: {
     all: ['positions'] as const,
@@ -101,7 +109,9 @@ export const queryKeys = {
   posSessions: {
     all: ['pos-sessions'] as const,
     active: (branchId?: string | null) => ['pos-sessions', 'active', branchId ?? 'no-branch'] as const,
-    history: (branchId?: string | null) => ['pos-sessions', 'history', branchId ?? 'no-branch'] as const,
+    // author: Hoàng | date: 2026-05-11 | note: Lịch sử ca POS cache theo page/size để hỗ trợ phân trang server-side.
+    history: (branchId?: string | null, params?: unknown) =>
+      ['pos-sessions', 'history', branchId ?? 'no-branch', params] as const,
     // author: Hoàng | date: 2026-04-30 | note: Breakdown doanh thu theo phương thức — live-query, stale sau 30s.
     revenueBreakdown: (sessionId: string) => ['pos-sessions', 'revenue-breakdown', sessionId] as const,
     // author: Hoàng | date: 2026-05-01 | note: Breakdown chi phí theo phương thức — tổng hợp từ financial invoices API filter theo ngày ca.

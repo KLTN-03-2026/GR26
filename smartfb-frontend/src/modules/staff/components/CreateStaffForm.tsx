@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 import { StaffDatePickerField } from "@modules/staff/components/StaffDatePickerField";
 import type { StaffGender } from "@modules/staff/types/staff.types";
+import {
+  SearchableCombobox,
+  type SearchableComboboxOption,
+} from "@shared/components/common/SearchableCombobox";
 import { Button } from "@shared/components/ui/button";
 import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
@@ -14,6 +18,7 @@ import {
 } from "@shared/components/ui/select";
 import { useCreateStaffForm } from "../hooks/useCreateStaffForm";
 
+// Giá trị giả để Radix Select có option rỗng nhưng vẫn giữ payload backend không nhận field không chọn.
 const NO_POSITION_VALUE = "__no_position__";
 
 export const CreateStaffForm = () => {
@@ -22,14 +27,48 @@ export const CreateStaffForm = () => {
     branches,
     formErrors,
     isPending,
+    isProvincesError,
+    isProvincesLoading,
+    isWardsError,
+    isWardsLoading,
     values,
     positions,
+    provinces,
     roles,
+    wards,
     onBack,
     onChange,
     onGeneratePassword,
+    onProvinceChange,
     onSubmit,
+    onWardChange,
   } = useCreateStaffForm();
+
+  const provinceOptions = useMemo<SearchableComboboxOption[]>(() => {
+    return provinces.map((province) => ({
+      value: String(province.code),
+      label: province.name,
+      description: province.division_type,
+      keywords: [province.codename, String(province.phone_code)],
+    }));
+  }, [provinces]);
+
+  const wardOptions = useMemo<SearchableComboboxOption[]>(() => {
+    return wards.map((ward) => ({
+      value: String(ward.code),
+      label: ward.name,
+      description: ward.division_type,
+      keywords: [ward.codename],
+    }));
+  }, [wards]);
+
+  const provinceEmptyMessage = isProvincesError
+    ? "Không tải được danh sách tỉnh/thành"
+    : "Không tìm thấy tỉnh/thành phù hợp";
+
+  const wardEmptyMessage = values.provinceCode
+    ? "Không tìm thấy phường/xã phù hợp"
+    : "Chọn tỉnh/thành trước";
 
   return (
     <div className="space-y-6 pb-8">
@@ -136,22 +175,30 @@ export const CreateStaffForm = () => {
           </div>
 
           <div>
-            <Label htmlFor="wardDistrict">Phường/quận</Label>
-            <Input
-              id="wardDistrict"
-              value={values.wardDistrict}
-              onChange={(e) => onChange("wardDistrict", e.target.value)}
-              placeholder="Ví dụ: Phường Bến Thành, Quận 1"
+            <Label htmlFor="provinceCode">Tỉnh/thành</Label>
+            <SearchableCombobox
+              id="provinceCode"
+              value={values.provinceCode}
+              options={provinceOptions}
+              placeholder={isProvincesLoading ? "Đang tải tỉnh/thành..." : "Chọn tỉnh/thành"}
+              searchPlaceholder="Tìm tỉnh/thành..."
+              emptyMessage={provinceEmptyMessage}
+              disabled={isProvincesLoading || isProvincesError}
+              onValueChange={onProvinceChange}
             />
           </div>
 
           <div>
-            <Label htmlFor="city">Thành phố</Label>
-            <Input
-              id="city"
-              value={values.city}
-              onChange={(e) => onChange("city", e.target.value)}
-              placeholder="Ví dụ: Hồ Chí Minh"
+            <Label htmlFor="wardCode">Phường/xã</Label>
+            <SearchableCombobox
+              id="wardCode"
+              value={values.wardCode}
+              options={wardOptions}
+              placeholder={isWardsLoading ? "Đang tải phường/xã..." : "Chọn phường/xã"}
+              searchPlaceholder="Tìm phường/xã..."
+              emptyMessage={isWardsError ? "Không tải được danh sách phường/xã" : wardEmptyMessage}
+              disabled={!values.provinceCode || isWardsLoading || isWardsError}
+              onValueChange={onWardChange}
             />
           </div>
 

@@ -5,10 +5,11 @@ import com.smartfnb.payment.domain.repository.PaymentRepository;
 import com.smartfnb.shift.infrastructure.persistence.PosSessionJpaEntity;
 import com.smartfnb.shift.infrastructure.persistence.PosSessionJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,13 +46,13 @@ public class GetActivePosSessionQueryHandler {
      *
      * @param branchId UUID chi nhánh
      * @param tenantId UUID tenant
-     * @return Danh sách sessions (mới nhất trước)
+     * @param pageable Thông tin phân trang và sort
+     * @return Page sessions (mới nhất trước)
      */
-    public List<PosSessionResult> handleHistory(UUID branchId, UUID tenantId) {
-        return posSessionJpaRepository.findByBranchIdOrderByStartTimeDesc(branchId, tenantId)
-                .stream()
-                .map(this::toResult)
-                .toList();
+    public Page<PosSessionResult> handleHistory(UUID branchId, UUID tenantId, Pageable pageable) {
+        // author: Hoàng | date: 2026-05-11 | note: Trả Page để FE hiển thị metadata phân trang lịch sử ca POS.
+        return posSessionJpaRepository.findByBranchIdAndTenantId(branchId, tenantId, pageable)
+                .map(this::toResult);
     }
 
     /**

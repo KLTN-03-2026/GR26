@@ -33,7 +33,7 @@ export const DeactivatePlanDialog = ({
           <DialogTitle className="text-admin-gray-900">Ẩn gói dịch vụ</DialogTitle>
           <DialogDescription>
             Gói đã ẩn sẽ không còn xuất hiện trong danh sách gói active. Backend sẽ từ chối nếu
-            vẫn còn tenant đang dùng gói này.
+            vẫn còn khách hàng đang dùng gói này.
           </DialogDescription>
         </DialogHeader>
 

@@ -1,10 +1,23 @@
+import { useState } from 'react';
 import { usePosSessionHistory } from '@modules/pos-session/hooks/usePosSession';
 import { PosSessionStatusControl } from '@modules/pos-session/components/PosSessionStatusControl';
-import type { PosSession } from '@modules/pos-session/types/posSession.types';
+import type { PosSession, PosSessionPageResponse } from '@modules/pos-session/types/posSession.types';
 import { Badge } from '@shared/components/ui/badge';
+import { Button } from '@shared/components/ui/button';
 import { formatVND } from '@shared/utils/formatCurrency';
 import { formatDateTime } from '@shared/utils/formatDate';
-import { AlertCircle, Clock, LockKeyhole, RefreshCw, Wallet } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Clock, LockKeyhole, RefreshCw, Wallet } from 'lucide-react';
+
+const POS_SESSION_PAGE_SIZE = 10;
+
+// author: Hoàng | date: 2026-05-11 | note: Page rỗng mặc định để UI phân trang không phụ thuộc response undefined khi loading.
+const EMPTY_POS_SESSION_PAGE: PosSessionPageResponse = {
+  content: [],
+  totalElements: 0,
+  totalPages: 0,
+  number: 0,
+  size: POS_SESSION_PAGE_SIZE,
+};
 
 /** Màu sắc chênh lệch tiền: âm = đỏ, dương = xanh, bằng 0 = mặc định */
 const getCashDiffColor = (diff: number | null): string => {
@@ -76,7 +89,31 @@ const SessionRow = ({ session }: SessionRowProps) => {
  * Chỉ OWNER và BRANCH_MANAGER được xem (BE giới hạn quyền).
  */
 export default function PosSessionHistoryPage() {
-  const { data: sessions = [], isLoading, isError, refetch } = usePosSessionHistory();
+  const [currentPage, setCurrentPage] = useState(0);
+  const {
+    data: sessionPage = EMPTY_POS_SESSION_PAGE,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = usePosSessionHistory({ page: currentPage, size: POS_SESSION_PAGE_SIZE });
+
+  const sessions = sessionPage.content;
+  const totalElements = sessionPage.totalElements;
+  const totalPages = sessionPage.totalPages;
+  const displayPage = totalPages > 0 ? currentPage + 1 : 0;
+  const fromItem = totalElements === 0 ? 0 : currentPage * POS_SESSION_PAGE_SIZE + 1;
+  const toItem = Math.min((currentPage + 1) * POS_SESSION_PAGE_SIZE, totalElements);
+  const isPreviousDisabled = currentPage <= 0 || isFetching;
+  const isNextDisabled = currentPage >= totalPages - 1 || isFetching;
+
+  const handlePreviousPage = () => {
+    setCurrentPage((page) => Math.max(page - 1, 0));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((page) => Math.min(page + 1, Math.max(totalPages - 1, 0)));
+  };
 
   const pageHeader = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -147,7 +184,7 @@ export default function PosSessionHistoryPage() {
       {pageHeader}
 
       <p className="text-sm text-text-secondary">
-        Tổng cộng {sessions.length} phiên - sắp xếp mới nhất trước.
+        Tổng cộng {totalElements} phiên - sắp xếp mới nhất trước.
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -193,6 +230,37 @@ export default function PosSessionHistoryPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-text-secondary">
+          Hiển thị {fromItem}-{toItem} / {totalElements} phiên
+        </p>
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePreviousPage}
+            disabled={isPreviousDisabled}
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Trước
+          </Button>
+          <span className="min-w-[96px] text-center text-sm font-medium text-text-primary">
+            Trang {displayPage} / {Math.max(totalPages, 1)}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isNextDisabled}
+          >
+            Sau
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

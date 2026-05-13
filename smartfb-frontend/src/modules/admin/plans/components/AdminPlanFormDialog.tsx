@@ -124,7 +124,7 @@ export const AdminPlanFormDialog = ({
               {isEditMode ? 'Cập nhật gói dịch vụ' : 'Tạo gói dịch vụ'}
             </DialogTitle>
             <DialogDescription>
-              Cấu hình giới hạn và tính năng cho tenant sử dụng SmartF&amp;B.
+              Cấu hình giới hạn và tính năng cho khách hàng sử dụng SmartF&amp;B.
             </DialogDescription>
           </DialogHeader>
 
@@ -226,7 +226,7 @@ export const AdminPlanFormDialog = ({
             <span>
               <span className="block text-sm font-semibold text-admin-gray-900">Đang bán</span>
               <span className="mt-1 block text-xs text-admin-gray-500">
-                Gói active sẽ hiển thị cho tenant đăng ký hoặc đổi gói.
+                Gói active sẽ hiển thị cho khách hàng đăng ký hoặc đổi gói.
               </span>
             </span>
             <Switch
