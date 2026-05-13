@@ -114,7 +114,7 @@ export const Sidebar: FC<SidebarProps> = ({
             onBlur={() => () => setIsBranchDropdownOpen(false)}
             className={cn(
               'w-full flex items-center gap-2 rounded-full border px-3 py-2 transition-all duration-150',
-              'text-sm font-medium',
+              'text-[18px] font-medium',
               isBranchDropdownOpen
                 ? 'border-primary bg-primary-light shadow-card'
                 : 'border-border bg-card hover:border-primary hover:shadow-card'
@@ -141,7 +141,7 @@ export const Sidebar: FC<SidebarProps> = ({
                       setIsBranchDropdownOpen(false);
                     }}
                     className={cn(
-                      'w-full text-left px-4 py-2.5 text-sm transition-colors duration-150',
+                      'w-full text-left px-4 py-2.5 text-[18px] transition-colors duration-150',
                       !selectedBranchId || selectedBranchId === 'all'
                         ? 'bg-primary-light font-semibold text-primary'
                         : 'text-text-primary hover:bg-hover-light'
@@ -164,7 +164,7 @@ export const Sidebar: FC<SidebarProps> = ({
                     setIsBranchDropdownOpen(false);
                   }}
                   className={cn(
-                    'w-full text-left px-4 py-2.5 text-sm truncate transition-colors duration-150',
+                    'w-full text-left px-4 py-2.5 text-[18px] truncate transition-colors duration-150',
                     selectedBranchId === branch.id
                       ? 'bg-primary-light font-semibold text-primary'
                       : 'text-text-primary hover:bg-hover-light'
@@ -228,7 +228,7 @@ export const Sidebar: FC<SidebarProps> = ({
             {userInitials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-semibold text-text-primary">{userDisplayName}</p>
+            <p className="truncate text-[18px] font-semibold text-text-primary">{userDisplayName}</p>
             <span className="inline-flex rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-medium capitalize text-primary">
               {userRole}
             </span>

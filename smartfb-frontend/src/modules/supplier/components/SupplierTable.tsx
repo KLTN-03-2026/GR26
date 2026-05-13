@@ -16,6 +16,7 @@ import {
 } from '@shared/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
+import { usePermission } from '@shared/hooks/usePermission';
 import type { Supplier } from '../types/supplier.types';
 
 interface SupplierTableProps {
@@ -27,8 +28,10 @@ interface SupplierTableProps {
 
 export const SupplierTable = ({ suppliers, onEdit, onDelete, isReadOnly = false }: SupplierTableProps) => {
   const navigate = useNavigate();
+  const { isOwner } = usePermission();
   const [searchTerm, setSearchTerm] = useState('');
 
+  const supplierBasePath = isOwner ? ROUTES.OWNER.SUPPLIERS : ROUTES.STAFF.SUPPLIERS;
   const filteredSuppliers = suppliers.filter(
     (s) =>
       s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,7 +78,7 @@ export const SupplierTable = ({ suppliers, onEdit, onDelete, isReadOnly = false 
                 <TableRow
                   key={supplier.id}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`${ROUTES.OWNER.SUPPLIERS}/${supplier.id}`)}
+                  onClick={() => navigate(`${supplierBasePath}/${supplier.id}`)}
                 >
                   <TableCell className="font-medium text-gray-900">{supplier.name}</TableCell>
                   <TableCell>
@@ -97,7 +100,7 @@ export const SupplierTable = ({ suppliers, onEdit, onDelete, isReadOnly = false 
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`${ROUTES.OWNER.SUPPLIERS}/${supplier.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`${supplierBasePath}/${supplier.id}`)}>
                           <Eye className="w-4 h-4 mr-2" />
                           Xem chi tiết
                         </DropdownMenuItem>

@@ -8,15 +8,30 @@ import {
   TableRow,
 } from '@shared/components/ui/table';
 import { Badge } from '@shared/components/ui/badge';
+import { Button } from '@shared/components/ui/button';
 import { formatVND } from '@shared/utils/formatCurrency';
 import { formatDate } from '@shared/utils/formatDate';
 
 interface PurchaseOrdersTabProps {
   orders: SupplierOrder[];
+  canSendOrder?: boolean;
+  canReceiveOrder?: boolean;
+  isActionPending?: boolean;
+  onViewOrder?: (order: SupplierOrder) => void;
+  onSendOrder?: (order: SupplierOrder) => void;
+  onReceiveOrder?: (order: SupplierOrder) => void;
 }
 
 const getStatusLabel = (status: SupplierOrder['status']): string => {
-  if (status === 'completed') {
+  if (status === 'draft') {
+    return 'Nháp';
+  }
+
+  if (status === 'sent') {
+    return 'Đã đặt hàng';
+  }
+
+  if (status === 'received') {
     return 'Đã nhận hàng';
   }
 
@@ -28,7 +43,15 @@ const getStatusLabel = (status: SupplierOrder['status']): string => {
 };
 
 const getStatusClassName = (status: SupplierOrder['status']): string => {
-  if (status === 'completed') {
+  if (status === 'draft') {
+    return 'bg-slate-100 text-slate-700';
+  }
+
+  if (status === 'sent') {
+    return 'bg-blue-100 text-blue-700';
+  }
+
+  if (status === 'received') {
     return 'bg-green-100 text-green-700';
   }
 
@@ -42,7 +65,15 @@ const getStatusClassName = (status: SupplierOrder['status']): string => {
 /**
  * Tab hiển thị đơn mua hàng của nhà cung cấp từ API purchase-orders.
  */
-export const PurchaseOrdersTab = ({ orders }: PurchaseOrdersTabProps) => {
+export const PurchaseOrdersTab = ({
+  orders,
+  canSendOrder = false,
+  canReceiveOrder = false,
+  isActionPending = false,
+  onViewOrder,
+  onSendOrder,
+  onReceiveOrder,
+}: PurchaseOrdersTabProps) => {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <Table>
@@ -52,12 +83,13 @@ export const PurchaseOrdersTab = ({ orders }: PurchaseOrdersTabProps) => {
             <TableHead className="font-semibold text-gray-700">Ngày tạo</TableHead>
             <TableHead className="text-right font-semibold text-gray-700">Tổng tiền</TableHead>
             <TableHead className="text-center font-semibold text-gray-700">Trạng thái</TableHead>
+            <TableHead className="text-right font-semibold text-gray-700">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {orders.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="h-32 text-center text-gray-500">
+              <TableCell colSpan={5} className="h-32 text-center text-gray-500">
                 Chưa có đơn mua hàng cho nhà cung cấp này
               </TableCell>
             </TableRow>
@@ -73,6 +105,34 @@ export const PurchaseOrdersTab = ({ orders }: PurchaseOrdersTabProps) => {
                   <Badge className={getStatusClassName(order.status)}>
                     {getStatusLabel(order.status)}
                   </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    {onViewOrder ? (
+                      <Button size="sm" variant="outline" onClick={() => onViewOrder(order)}>
+                        Xem
+                      </Button>
+                    ) : null}
+                    {order.status === 'draft' && canSendOrder && onSendOrder ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isActionPending}
+                        onClick={() => onSendOrder(order)}
+                      >
+                        Đã đặt hàng
+                      </Button>
+                    ) : null}
+                    {order.status === 'sent' && canReceiveOrder && onReceiveOrder ? (
+                      <Button
+                        size="sm"
+                        disabled={isActionPending}
+                        onClick={() => onReceiveOrder(order)}
+                      >
+                        Xác nhận nhận hàng
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             ))

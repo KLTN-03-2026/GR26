@@ -34,15 +34,15 @@ export const TableGrid = ({
           <LayoutGrid className="w-10 h-10 text-gray-400" />
         </div>
         <div className="text-center">
-          <p className="text-gray-500 text-lg font-medium">Không có bàn nào</p>
-          <p className="text-sm text-gray-400 mt-1">Hãy thêm bàn mới để bắt đầu</p>
+          <p className="text-gray-500 text-lg font-medium">Không có thẻ gọi khách nào</p>
+          <p className="text-sm text-gray-400 mt-1">Hãy thêm thẻ mới để bắt đầu</p>
           {onAddTable && (
             <Button
               onClick={onAddTable}
               className="mt-6 gap-2 rounded-xl shadow-sm hover:shadow-md transition-all"
             >
               <Plus className="h-4 w-4" />
-              Thêm bàn đầu tiên
+              Thêm thẻ đầu tiên
             </Button>
           )}
         </div>
@@ -57,7 +57,7 @@ export const TableGrid = ({
         <div className="flex items-center gap-2">
           <LayoutGrid className="w-4 h-4 text-primary" />
           <span className="text-sm text-gray-500">
-            Hiển thị <span className="font-semibold text-gray-700">{tables.length}</span> bàn
+            Hiển thị <span className="font-semibold text-gray-700">{tables.length}</span> thẻ
           </span>
         </div>
       </div>

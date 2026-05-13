@@ -10,7 +10,7 @@ interface SearchBarProps {
 export const SearchBar = ({
   value,
   onChange,
-  placeholder = 'Tìm kiếm bàn...',
+  placeholder = 'Tìm kiếm thẻ...',
   className = '',
 }: SearchBarProps) => {
   return (

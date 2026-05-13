@@ -110,7 +110,7 @@ export const MenuManagementContent = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-base font-semibold text-gray-900 sm:text-lg">
+                <p className="text-base font-semibold text-gray-900 ">
                   {filteredMenuCount} món đang hiển thị
                 </p>
                 {activeFilterCount > 0 ? (
@@ -129,8 +129,8 @@ export const MenuManagementContent = () => {
                       : 'Đang đồng bộ dữ liệu thực đơn...'
                   : isBranchMode
                     ? canManageMenu
-                      ? `Đang quản lý giá bán và trạng thái phục vụ tại ${selectedBranchName}.`
-                      : `Đang xem giá bán và trạng thái phục vụ tại ${selectedBranchName}.`
+                      ? ``
+                      : ``
                     : canManageMenu
                       ? 'Quản lý món ăn, danh mục và topping của hệ thống.'
                       : 'Xem danh sách món ăn, danh mục và topping hiện có.'}

@@ -5,7 +5,7 @@ import { tableService } from '@modules/table/services/tableService';
 import type { TableArea, UpdateZonePayload } from '@modules/table/types/table.types';
 
 /**
- * Hook cập nhật thông tin khu vực bàn.
+ * Hook cập nhật thông tin máy gọi thẻ.
  */
 export const useEditZone = () => {
   const queryClient = useQueryClient();
@@ -20,11 +20,11 @@ export const useEditZone = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.zones });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
-      success('Cập nhật khu vực thành công', `Khu vực ${zone.name} đã được cập nhật`);
+      success('Cập nhật máy gọi thẻ thành công', `Máy gọi thẻ ${zone.name} đã được cập nhật`);
     },
     onError: (err) => {
       const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
-      error('Cập nhật khu vực thất bại', message);
+      error('Cập nhật máy gọi thẻ thất bại', message);
     },
   });
 };

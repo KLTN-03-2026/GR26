@@ -14,7 +14,7 @@ interface ZoneManagementSectionProps {
 }
 
 /**
- * Hiển thị danh sách khu vực để thao tác CRUD ngay trong trang quản lý bàn.
+ * Hiển thị danh sách máy gọi thẻ để thao tác CRUD ngay trong trang quản lý thẻ.
  */
 export const ZoneManagementSection = ({
   zones,
@@ -28,16 +28,16 @@ export const ZoneManagementSection = ({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <MapPinned className="h-4 w-4 text-primary" />
-            <h2 className="text-base font-semibold text-gray-900">Quản lý khu vực</h2>
+            <h2 className="text-base font-semibold text-gray-900">Quản lý máy gọi thẻ</h2>
           </div>
           <p className="text-sm text-gray-500">
-            Danh sách khu vực đang có trong chi nhánh và số bàn tương ứng.
+            Danh sách máy gọi thẻ đang có trong chi nhánh và số thẻ tương ứng.
           </p>
         </div>
 
         <Button onClick={onCreateZone} className="h-9 gap-2 rounded-xl shadow-sm">
           <Plus className="h-4 w-4" />
-          Tạo khu vực
+          Tạo máy gọi thẻ
         </Button>
       </div>
 
@@ -46,9 +46,9 @@ export const ZoneManagementSection = ({
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
             <Layers3 className="h-6 w-6" />
           </div>
-          <p className="text-sm font-medium text-gray-700">Chi nhánh chưa có khu vực nào</p>
+          <p className="text-sm font-medium text-gray-700">Chi nhánh chưa có máy gọi thẻ nào</p>
           <p className="mt-1 text-sm text-gray-500">
-            Hãy tạo khu vực trước để nhóm bàn theo tầng hoặc không gian phục vụ.
+            Hãy tạo máy gọi thẻ trước để gán thẻ và phát tín hiệu cho khách.
           </p>
         </div>
       ) : (
@@ -62,17 +62,17 @@ export const ZoneManagementSection = ({
                 <p className="truncate text-sm font-semibold text-gray-900">{zone.name}</p>
                 <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                   <span className="rounded-full bg-white px-2.5 py-1">
-                    Tầng {zone.floorNumber}
+                    Máy {zone.floorNumber}
                   </span>
                   <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
-                    {zone.tableCount} bàn
+                    {zone.tableCount} thẻ
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between gap-3 sm:justify-end">
                 <p className="text-xs text-gray-500 sm:max-w-[220px] sm:text-right">
-                  {zone.tableCount === 0 ? 'Đang trống' : `${zone.tableCount} bàn đang được gán`}
+                  {zone.tableCount === 0 ? 'Chưa có thẻ' : `${zone.tableCount} thẻ đang được gán`}
                 </p>
                 <div className="flex gap-1">
                   <Button

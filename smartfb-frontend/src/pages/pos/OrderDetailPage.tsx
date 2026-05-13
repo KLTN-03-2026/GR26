@@ -256,7 +256,7 @@ export default function OrderDetailPage() {
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {/* <div className="rounded-[24px] bg-slate-50 p-4">
-            <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Bàn / hình thức</p>
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Thẻ / hình thức</p>
             <p className="mt-2 text-xl font-black text-slate-900">{order.tableName || 'Mang đi'}</p>
           </div> */}
 

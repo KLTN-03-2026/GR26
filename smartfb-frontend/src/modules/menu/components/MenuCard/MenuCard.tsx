@@ -131,7 +131,7 @@ export const MenuCard: FC<MenuCardProps> = ({
 
         <div className="flex items-start gap-2">
           {/* Product Name */}
-          <h3 className="mt-1 min-h-10 font-sans text-sm font-semibold text-gray-900 line-clamp-2 md:min-h-12 md:text-lg">
+          <h3 className="mt-1 min-h-10 font-sans text-[18px] font-semibold text-gray-900 line-clamp-2 md:min-h-12">
             {menu.name}
           </h3>
 

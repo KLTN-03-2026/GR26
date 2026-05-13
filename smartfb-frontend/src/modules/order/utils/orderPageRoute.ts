@@ -26,7 +26,7 @@ export const isSameOrderContext = (
 };
 
 /**
- * Dựng lại context bàn hoặc mang đi từ chi tiết đơn hàng để POS mở đúng cart đang thao tác.
+ * Dựng lại context thẻ hoặc mang đi từ chi tiết đơn hàng để POS mở đúng cart đang thao tác.
  */
 export const resolveTableContextFromOrder = (
   order: OrderResponse,
@@ -50,7 +50,7 @@ export const resolveTableContextFromOrder = (
 };
 
 /**
- * Giữ toàn bộ context của bàn trên URL để POS và payment có thể khôi phục đúng đơn đang thao tác.
+ * Giữ toàn bộ context của thẻ trên URL để POS và payment có thể khôi phục đúng đơn đang thao tác.
  */
 export const buildOrderRouteSearchParams = (
   context: OrderTableContext | null | undefined,

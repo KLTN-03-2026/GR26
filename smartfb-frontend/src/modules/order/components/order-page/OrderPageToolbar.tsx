@@ -6,7 +6,7 @@ import { Input } from '@shared/components/ui/input';
 interface OrderPageToolbarProps {
   cartActions: ReactNode;
   searchKeyword: string;
-  /** Tên bàn hiện tại — hiển thị giữa ô tìm kiếm và nút giỏ hàng */
+  /** Mã thẻ hiện tại — hiển thị giữa ô tìm kiếm và nút giỏ hàng */
   tableName: string;
   onSearchKeywordChange: (value: string) => void;
   onClearSearch: () => void;
@@ -45,7 +45,7 @@ export const OrderPageToolbar = ({
           ) : null}
         </div>
 
-        {/* Tên bàn — giữa search và nút giỏ hàng */}
+        {/* Mã thẻ — giữa search và nút giỏ hàng */}
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-700">
           <UtensilsCrossed className="h-4 w-4" />
           <span className="max-w-[120px] truncate">{tableName}</span>

@@ -36,8 +36,8 @@ interface WsOrderPayload {
  * 1. Invalidate toàn bộ danh sách order đang active để refetch lại trang hiện tại.
  * 2. Partial update cache chi tiết đơn (chỉ status/amount) nếu đang được cache
  *    — tránh ghi đè addons chưa normalize.
- * 3. Invalidate cache active order theo bàn nếu order có tableId
- *    — POS bàn phát hiện đơn đang mở thay đổi trạng thái.
+ * 3. Invalidate cache active order theo thẻ nếu order có tableId
+ *    — POS thẻ phát hiện đơn đang mở thay đổi trạng thái.
  *
  * Subscribe topic: /topic/orders/{branchId}
  *
@@ -84,7 +84,7 @@ export const useOrderRealtime = () => {
         }
       );
 
-      // 3. Invalidate active order của bàn để POS bàn đồng bộ trạng thái
+      // 3. Invalidate active order của thẻ để POS thẻ đồng bộ trạng thái
       if (order.tableId) {
         void queryClient.invalidateQueries({
           queryKey: queryKeys.orders.activeByTable(order.tableId),

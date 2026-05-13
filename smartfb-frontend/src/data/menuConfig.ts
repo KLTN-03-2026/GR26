@@ -65,9 +65,9 @@ export const menuConfig: MenuSection[] = [
         title: 'Vận Hành',
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
-          { title: 'Bàn', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER] },
+          { title: 'Thẻ gọi khách', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER] },
           {
-            title: 'Bàn',
+            title: 'Thẻ gọi khách',
             icon: Table,
             path: ROUTES.STAFF.TABLES,
             roles: [ROLES.STAFF],
@@ -132,6 +132,13 @@ export const menuConfig: MenuSection[] = [
             path: ROUTES.STAFF.RECIPES,
             roles: [ROLES.STAFF],
             requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+          },
+          {
+            title: 'Đơn mua hàng',
+            icon: Truck,
+            path: ROUTES.STAFF.SUPPLIERS,
+            roles: [ROLES.STAFF],
+            requiredPermissions: STAFF_ROUTE_PERMISSIONS.SUPPLIERS,
           },
           { title: 'Dự báo AI', icon: BrainCircuit, path: ROUTES.OWNER.AI_FORECAST, roles: [ROLES.OWNER] },
           {

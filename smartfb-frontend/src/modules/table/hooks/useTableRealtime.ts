@@ -36,17 +36,17 @@ const mapUsageStatus = (status: string): TableItem['usageStatus'] => {
 };
 
 /**
- * Hook subscribe WebSocket topic bàn của chi nhánh hiện tại.
- * Khi BE broadcast trạng thái bàn mới (OCCUPIED / AVAILABLE),
+ * Hook subscribe WebSocket topic thẻ gọi khách của chi nhánh hiện tại.
+ * Khi BE broadcast trạng thái table mới (OCCUPIED / AVAILABLE),
  * hook cập nhật trực tiếp React Query cache — không refetch,
  * không có loading flicker.
  *
  * Xử lý cả 2 dạng payload BE có thể gửi:
- * - TableResponse   (single object) — khi 1 bàn đổi trạng thái
+ * - TableResponse   (single object) — khi 1 thẻ đổi trạng thái
  * - TableResponse[] (mảng)          — khi batch update positions
  *
  * @example
- * // Gọi trong TablesPage hoặc layout bọc ngoài trang bàn
+ * // Gọi trong TablesPage hoặc layout bọc ngoài trang thẻ
  * useTableRealtime();
  */
 export const useTableRealtime = () => {
@@ -70,13 +70,13 @@ export const useTableRealtime = () => {
         ? (payload as WsTablePayload[])
         : [payload as WsTablePayload];
 
-      // Cập nhật cache danh sách bàn
+      // Cập nhật cache danh sách thẻ
       queryClient.setQueryData<TableItem[]>(
         queryKeys.tables.list(),
         (cached) => {
           if (!cached) return cached;
 
-          // Map từng bàn nhận được vào cache hiện có
+          // Map từng thẻ nhận được vào cache hiện có
           return cached.map((item) => {
             const updated = tables.find((t) => t.id === item.id);
             if (!updated) return item;
@@ -93,7 +93,7 @@ export const useTableRealtime = () => {
         }
       );
 
-      // Cập nhật cache chi tiết từng bàn nếu đang được cache
+      // Cập nhật cache chi tiết từng thẻ nếu đang được cache
       tables.forEach((t) => {
         queryClient.setQueryData<TableItem>(
           queryKeys.tables.detail(t.id),

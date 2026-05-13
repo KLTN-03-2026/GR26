@@ -37,7 +37,7 @@ export const queryKeys = {
   // Tables
   tables: {
     all: ['tables'] as const,
-    // Prefix danh sách bàn, dùng khi chỉ cần refresh trạng thái bàn mà không đụng khu vực.
+    // Prefix danh sách thẻ, dùng khi chỉ cần refresh trạng thái thẻ mà không đụng máy gọi thẻ.
     lists: ['tables', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['tables', 'list', filters] as const,
     detail: (id: string) => ['tables', 'detail', id] as const,
@@ -97,7 +97,7 @@ export const queryKeys = {
   // Orders
   orders: {
     all: ['orders'] as const,
-    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của bàn.
+    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của thẻ.
     lists: ['orders', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,

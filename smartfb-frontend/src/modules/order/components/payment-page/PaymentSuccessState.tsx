@@ -39,11 +39,11 @@ export const PaymentSuccessState = ({
         <p className="mt-3 text-slate-500">
           {description ??
             (isSuccess
-              ? 'Đơn hàng đã hoàn tất ở quầy. Bạn có thể quay lại để tạo đơn mới cho bàn tiếp theo.'
-              : 'Giao dịch chưa hoàn tất. Hệ thống sẽ quay về khu vực bàn để bạn kiểm tra lại.')}
+              ? 'Đơn hàng đã hoàn tất ở quầy. Bạn có thể quay lại để tạo đơn mới cho thẻ tiếp theo.'
+              : 'Giao dịch chưa hoàn tất. Hệ thống sẽ quay về danh sách thẻ để bạn kiểm tra lại.')}
         </p>
         <p className="mt-2 text-sm font-medium text-slate-400">
-          Hệ thống sẽ tự quay về khu vực bàn sau 2 giây.
+          Hệ thống sẽ tự quay về danh sách thẻ sau 2 giây.
         </p>
 
         {(onPrint || onCreateNewOrder) && (
@@ -65,7 +65,7 @@ export const PaymentSuccessState = ({
                 onClick={onCreateNewOrder}
                 className="rounded-full bg-orange-500 hover:bg-orange-600"
               >
-                Về khu vực bàn
+                Về danh sách thẻ
               </Button>
             )}
           </div>

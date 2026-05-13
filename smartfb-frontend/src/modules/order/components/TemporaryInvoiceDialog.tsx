@@ -58,7 +58,7 @@ export const TemporaryInvoiceDialog = ({
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Xem trước in tạm</p>
-              <p className="text-xl font-black text-slate-900">Hóa đơn tạm bàn</p>
+              <p className="text-xl font-black text-slate-900">Hóa đơn tạm thẻ</p>
             </div>
           </div>
 
@@ -78,13 +78,13 @@ export const TemporaryInvoiceDialog = ({
                 <span className="text-right font-semibold text-slate-900">{orderNumber}</span>
               </div>
               <div className="flex justify-between gap-3">
-                <span className="font-semibold text-slate-500">Bàn</span>
+                <span className="font-semibold text-slate-500">Thẻ</span>
                 <span className="text-right font-semibold text-slate-900">
                   {tableContext?.tableName || 'Mang đi'}
                 </span>
               </div>
               <div className="flex justify-between gap-3">
-                <span className="font-semibold text-slate-500">Khu vực</span>
+                <span className="font-semibold text-slate-500">Máy gọi thẻ</span>
                 <span className="text-right font-semibold text-slate-900">
                   {tableContext?.zoneName || 'Chưa chọn'}
                 </span>
