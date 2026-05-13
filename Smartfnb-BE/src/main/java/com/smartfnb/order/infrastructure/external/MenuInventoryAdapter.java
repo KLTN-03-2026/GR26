@@ -55,8 +55,9 @@ public class MenuInventoryAdapter {
         // Author: Hoàng
         // Date: 2026-05-09
         // Note: Tên/unit nguyên liệu phải lấy từ catalog items trước; tồn kho chỉ là snapshot theo chi nhánh.
-        InventoryCheckService.IngredientNameProvider nameProvider =
-                ingredientId -> resolveIngredientName(branchId, ingredientId);
+        // Note: Tên/unit nguyên liệu/món phải lấy từ catalog items trước; tồn kho chỉ là snapshot theo chi nhánh.
+        InventoryCheckService.ItemNameProvider nameProvider =
+                itemId -> resolveItemName(branchId, itemId);
         InventoryCheckService.IngredientUnitProvider unitProvider =
                 ingredientId -> resolveIngredientUnit(branchId, ingredientId);
 
@@ -66,14 +67,15 @@ public class MenuInventoryAdapter {
     // Author: Hoàng
     // Date: 2026-05-09
     // Note: Resolve tên nguyên liệu từ items.name để lỗi thiếu tồn vẫn đúng khi branch chưa có inventory_balances.
-    private String resolveIngredientName(UUID branchId, UUID ingredientId) {
-        return menuItemJpaRepository.findById(ingredientId)
+    // Note: Resolve tên từ items.name để lỗi thiếu tồn/thiếu công thức vẫn đúng khi branch chưa có inventory_balances.
+    private String resolveItemName(UUID branchId, UUID itemId) {
+        return menuItemJpaRepository.findById(itemId)
                 .map(MenuItemJpaEntity::getName)
                 .filter(name -> !name.isBlank())
-                .orElseGet(() -> inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, ingredientId)
+                .orElseGet(() -> inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, itemId)
                         .map(InventoryBalanceJpaEntity::getItemName)
                         .filter(name -> !name.isBlank())
-                        .orElse("Nguyên liệu " + ingredientId.toString().substring(0, 5)));
+                        .orElse("Sản phẩm " + itemId.toString().substring(0, 5)));
     }
 
     // Author: Hoàng
