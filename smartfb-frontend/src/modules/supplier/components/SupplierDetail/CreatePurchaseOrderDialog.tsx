@@ -13,6 +13,7 @@ import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { Textarea } from '@shared/components/ui/textarea';
 import { SearchableCombobox } from '@shared/components/common/SearchableCombobox';
+import { selectCurrentBranchId, useAuthStore } from '@modules/auth/stores/authStore';
 import { useInventoryIngredientOptions } from '@modules/inventory/hooks/useInventoryIngredientOptions';
 import { useCreatePurchaseOrder } from '@modules/supplier/hooks/usePurchaseOrders';
 import { formatVND } from '@shared/utils/formatCurrency';
@@ -50,6 +51,8 @@ const toPositiveNumber = (value: string): number => {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 };
 
+const normalizeNumericText = (value: string): string => value.replace(/\D/g, '');
+
 /**
  * Dialog tạo đơn mua hàng nháp cho một nhà cung cấp.
  */
@@ -59,6 +62,7 @@ export const CreatePurchaseOrderDialog = ({
   supplierId,
   supplierName,
 }: CreatePurchaseOrderDialogProps) => {
+  const currentBranchId = useAuthStore(selectCurrentBranchId);
   const { data: ingredientOptions = [], isLoading: isLoadingIngredients } = useInventoryIngredientOptions();
   const createPurchaseOrder = useCreatePurchaseOrder();
   const [expectedDate, setExpectedDate] = useState('');
@@ -146,6 +150,10 @@ export const CreatePurchaseOrderDialog = ({
   const validate = (): boolean => {
     const nextErrors: Record<string, string> = {};
 
+    if (!currentBranchId) {
+      nextErrors.branch = 'Vui lòng chọn một chi nhánh làm việc trước khi tạo đơn mua hàng';
+    }
+
     lines.forEach((line, index) => {
       if (!line.itemId) {
         nextErrors[`item-${line.localId}`] = `Dòng ${index + 1}: Chưa chọn nguyên liệu`;
@@ -165,6 +173,7 @@ export const CreatePurchaseOrderDialog = ({
   };
 
   const buildPayload = (): CreatePurchaseOrderPayload => ({
+    branchId: currentBranchId ?? undefined,
     supplierId,
     note: note.trim() || undefined,
     expectedDate: expectedDate || undefined,
@@ -201,7 +210,7 @@ export const CreatePurchaseOrderDialog = ({
         <DialogHeader>
           <DialogTitle>Tạo đơn mua hàng</DialogTitle>
           <DialogDescription>
-            Tạo đơn nháp cho nhà cung cấp {supplierName}. Sau khi tạo có thể gửi đơn ở bước tiếp theo.
+            Tạo đơn nháp cho nhà cung cấp {supplierName}. Sau khi tạo, owner sẽ tự liên hệ nhà cung cấp và xác nhận đã đặt hàng.
           </DialogDescription>
         </DialogHeader>
 
@@ -282,11 +291,13 @@ export const CreatePurchaseOrderDialog = ({
                   <div className="space-y-1.5">
                     <Label>Đơn giá</Label>
                     <Input
-                      type="number"
-                      min="0"
-                      step="1000"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={line.unitPrice}
-                      onChange={(event) => updateLine(line.localId, 'unitPrice', event.target.value)}
+                      onChange={(event) =>
+                        updateLine(line.localId, 'unitPrice', normalizeNumericText(event.target.value))
+                      }
                       disabled={createPurchaseOrder.isPending}
                     />
                   </div>

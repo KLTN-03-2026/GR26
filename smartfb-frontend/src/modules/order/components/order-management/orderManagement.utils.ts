@@ -73,7 +73,7 @@ interface BuildOrderPageSearchParamsOptions {
 }
 
 /**
- * Chuẩn hóa query params cho màn POS order để có thể khôi phục lại đúng đơn/bàn sau điều hướng.
+ * Chuẩn hóa query params cho màn POS order để có thể khôi phục lại đúng đơn/thẻ sau điều hướng.
  */
 export const buildOrderPageSearchParams = ({
   orderId,

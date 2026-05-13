@@ -327,15 +327,11 @@ export const RecipeLineDialog = ({
             </div>
           ) : null}
 
-          {mode === 'edit' ? (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Backend hiện chỉ hỗ trợ sửa định lượng và đơn vị. Muốn đổi thành phần, hãy xóa dòng hiện tại rồi tạo dòng mới.
-            </div>
-          ) : null}
+
 
           {resolvedIngredientOptions.length === 0 ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-              Chưa có item `INGREDIENT` hoặc `SUB_ASSEMBLY` nào khả dụng để đưa vào công thức. Hãy tạo dữ liệu trước rồi quay lại cấu hình.
+              Chưa có nguyên liệu hoặc nguyên liệu bán thành phẩm  nào khả dụng để đưa vào công thức. Hãy tạo dữ liệu trước rồi quay lại cấu hình.
             </div>
           ) : null}
         </div>

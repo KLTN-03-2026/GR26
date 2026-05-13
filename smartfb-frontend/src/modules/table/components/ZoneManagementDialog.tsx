@@ -28,13 +28,13 @@ const zoneManagementSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'Tên khu vực phải có ít nhất 2 ký tự')
-    .max(100, 'Tên khu vực không quá 100 ký tự'),
+    .min(1, 'Tên máy gọi thẻ phải có ít nhất 2 ký tự')
+    .max(100, 'Tên máy gọi thẻ không quá 100 ký tự'),
   floorNumber: z
     .number()
-    .int('Số tầng phải là số nguyên')
-    .min(1, 'Số tầng tối thiểu là 1')
-    .max(99, 'Số tầng tối đa là 99'),
+    .int('Số máy phải là số nguyên')
+    .min(1, 'Số máy tối thiểu là 1')
+    .max(99, 'Số máy tối đa là 99'),
 });
 
 type ZoneManagementFormData = z.infer<typeof zoneManagementSchema>;
@@ -60,7 +60,7 @@ const buildEditValues = (zone: TableArea): ZoneManagementFormData => ({
 });
 
 /**
- * Modal quản lý khu vực theo pattern form bên trái, danh sách bên phải.
+ * Modal quản lý máy gọi thẻ theo pattern form bên trái, danh sách bên phải.
  */
 export const ZoneManagementDialog = ({
   open,
@@ -168,7 +168,7 @@ export const ZoneManagementDialog = ({
       >
         <DialogContent className="flex h-[min(800px,90vh)] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden border-0 p-0">
           <DialogHeader className="shrink-0 border-b border-amber-100 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
-            <DialogTitle className="text-lg text-gray-900 sm:text-xl">Quản lý khu vực</DialogTitle>
+            <DialogTitle className="text-lg text-gray-900 sm:text-xl">Quản lý máy gọi thẻ</DialogTitle>
           </DialogHeader>
 
           <div className="grid min-h-0 flex-1 gap-4 overflow-hidden px-4 pb-4 pt-2 sm:gap-6 sm:px-6 sm:pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
@@ -180,20 +180,20 @@ export const ZoneManagementDialog = ({
               <div className="space-y-4">
                 <div className="space-y-1">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                    Khu vực
+                    Máy gọi thẻ
                   </span>
                   <h3 className="text-base font-semibold text-gray-900">
-                    {isEditing ? 'Sửa khu vực' : 'Tạo khu vực mới'}
+                    {isEditing ? 'Sửa máy gọi thẻ' : 'Tạo máy gọi thẻ mới'}
                   </h3>
                 </div>
 
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="zone-management-name">Tên khu vực</Label>
+                    <Label htmlFor="zone-management-name">Tên máy gọi thẻ</Label>
                     <Input
                       id="zone-management-name"
                       {...form.register('name')}
-                      placeholder="Ví dụ: Tầng 1, Sân vườn, VIP"
+                      placeholder="Ví dụ: Máy A, Máy B, Máy quầy chính"
                     />
                     {form.formState.errors.name && (
                       <p className="text-xs text-red-500">{form.formState.errors.name.message}</p>
@@ -201,7 +201,7 @@ export const ZoneManagementDialog = ({
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="zone-management-floor">Số tầng</Label>
+                    <Label htmlFor="zone-management-floor">Số máy</Label>
                     <NumericInput
                       id="zone-management-floor"
                       min={1}
@@ -221,7 +221,7 @@ export const ZoneManagementDialog = ({
 
                   <div className="flex gap-2">
                     <Button type="submit" disabled={isPending || !form.formState.isDirty}>
-                      {isPending ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo khu vực'}
+                      {isPending ? 'Đang lưu...' : isEditing ? 'Lưu thay đổi' : 'Tạo máy gọi thẻ'}
                     </Button>
                     {isEditing && (
                       <Button type="button" variant="outline" onClick={resetToCreateMode}>
@@ -245,20 +245,20 @@ export const ZoneManagementDialog = ({
                 </div>
               ) : isError ? (
                 <div className="flex min-h-52 flex-col items-center justify-center rounded-3xl border border-dashed border-red-200 bg-red-50/60 px-6 text-center">
-                  <p className="text-sm font-medium text-red-700">Không thể tải danh sách khu vực</p>
+                  <p className="text-sm font-medium text-red-700">Không thể tải danh sách máy gọi thẻ</p>
                   <Button variant="outline" className="mt-4" onClick={onRetry}>
                     Tải lại
                   </Button>
                 </div>
               ) : sortedZones.length === 0 ? (
                 <div className="flex min-h-52 flex-col items-center justify-center rounded-3xl border border-dashed border-amber-200 bg-amber-50/60 px-6 text-center">
-                  <p className="text-sm font-medium text-amber-900">Chưa có khu vực nào</p>
+                  <p className="text-sm font-medium text-amber-900">Chưa có máy gọi thẻ nào</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-gray-900">
-                      Danh sách khu vực
+                      Danh sách máy gọi thẻ
                       <span className="ml-2 text-sm font-normal text-gray-500">
                         {activeZoneCount} mục
                       </span>
@@ -284,10 +284,10 @@ export const ZoneManagementDialog = ({
                               </p>
                               <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                                 <span className="rounded-full bg-white px-2.5 py-1 font-medium text-gray-600">
-                                  Tầng {zone.floorNumber}
+                                  Máy {zone.floorNumber}
                                 </span>
                                 <span className="rounded-full bg-sky-100 px-2.5 py-1 font-medium text-sky-700">
-                                  {zone.tableCount} bàn
+                                  {zone.tableCount} thẻ
                                 </span>
                               </div>
                             </div>
@@ -324,7 +324,7 @@ export const ZoneManagementDialog = ({
                                   }}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Xóa khu vực
+                                  Xóa máy gọi thẻ
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -332,8 +332,8 @@ export const ZoneManagementDialog = ({
 
                           <p className="mt-auto pt-4 text-xs text-gray-500">
                             {canDelete
-                              ? 'Khu vực đang trống, có thể xóa.'
-                              : `Khu vực đang có ${zone.tableCount} bàn được gán.`}
+                              ? 'Máy gọi thẻ chưa có thẻ, có thể xóa.'
+                              : `Máy gọi thẻ đang có ${zone.tableCount} thẻ được gán.`}
                           </p>
                         </article>
                       );

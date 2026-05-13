@@ -43,7 +43,7 @@ export const TableFilterBar = ({
 }: TableFilterBarProps) => {
   const stateOptions = [
     { value: 'active', label: 'Hoạt động' },
-    { value: 'occupied', label: 'Có khách' },
+    { value: 'occupied', label: 'Đang giao khách' },
     { value: 'inactive', label: 'Không hoạt động' },
   ];
 
@@ -54,7 +54,7 @@ export const TableFilterBar = ({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Tìm theo tên bàn..."
+            placeholder="Tìm theo mã/tên thẻ..."
             value={filters.search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="h-10 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -67,7 +67,7 @@ export const TableFilterBar = ({
             value={filters.area}
             onChange={onAreaChange}
             options={areas}
-            placeholder="Khu vực"
+            placeholder="Máy gọi thẻ"
             className="w-full sm:w-[180px]"
           />
 
@@ -107,15 +107,15 @@ export const TableFilterBar = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 rounded-xl border-gray-100 p-2 shadow-lg">
-              <DropdownMenuLabel>Quản lý bàn và khu vực</DropdownMenuLabel>
+              <DropdownMenuLabel>Quản lý thẻ và máy gọi</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onManageZones} className="cursor-pointer gap-3 rounded-lg py-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                   <MapPinned className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">Quản lý khu vực</span>
-                  <span className="text-xs text-gray-500">Tạo mới, sửa và xóa khu vực trong modal</span>
+                  <span className="font-medium text-gray-900">Quản lý máy gọi thẻ</span>
+                  <span className="text-xs text-gray-500">Tạo mới, sửa và xóa máy gọi trong modal</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onCreateSingleTable} className="cursor-pointer gap-3 rounded-lg py-2.5">
@@ -123,8 +123,8 @@ export const TableFilterBar = ({
                   <SquarePen className="h-4 w-4" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">Tạo từng bàn</span>
-                  <span className="text-xs text-gray-500">Nhập thủ công cho một bàn</span>
+                  <span className="font-medium text-gray-900">Tạo từng thẻ</span>
+                  <span className="text-xs text-gray-500">Nhập thủ công cho một thẻ</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onCreateBulkTables} className="cursor-pointer gap-3 rounded-lg py-2.5">
@@ -133,7 +133,7 @@ export const TableFilterBar = ({
                 </div>
                 <div className="flex flex-col">
                   <span className="font-medium text-gray-900">Tạo hàng loạt</span>
-                  <span className="text-xs text-gray-500">Sinh nhiều bàn theo tiền tố và số thứ tự</span>
+                  <span className="text-xs text-gray-500">Sinh nhiều thẻ theo tiền tố và số thứ tự</span>
                 </div>
               </DropdownMenuItem>
             </DropdownMenuContent>

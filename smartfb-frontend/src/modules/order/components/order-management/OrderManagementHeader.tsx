@@ -88,7 +88,7 @@ export const OrderManagementHeader = ({
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Tìm mã đơn hoặc tên bàn trong trang hiện tại..."
+              placeholder="Tìm mã đơn hoặc mã thẻ trong trang hiện tại..."
               className="h-14 rounded-2xl border-slate-200 bg-slate-50 pl-12 text-base focus-visible:ring-orange-500"
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}

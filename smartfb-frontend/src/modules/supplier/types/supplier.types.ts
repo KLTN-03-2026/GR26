@@ -52,7 +52,7 @@ export interface SupplierOrder {
   orderNumber: string;
   entryDate: string;
   totalAmount: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'draft' | 'sent' | 'received' | 'cancelled';
 }
 
 export type BackendPurchaseOrderStatus = 'DRAFT' | 'SENT' | 'RECEIVED' | 'CANCELLED';
@@ -92,6 +92,7 @@ export interface PurchaseOrderItemPayload {
 }
 
 export interface CreatePurchaseOrderPayload {
+  branchId?: string;
   supplierId: string;
   note?: string;
   expectedDate?: string;

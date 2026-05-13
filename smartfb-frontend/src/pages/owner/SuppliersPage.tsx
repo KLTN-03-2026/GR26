@@ -5,6 +5,8 @@ import { DeleteSupplierDialog } from '@modules/supplier/components/DeleteSupplie
 import { SupplierTable } from '@modules/supplier/components/SupplierTable';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
+import { PERMISSIONS } from '@shared/constants/permissions';
+import { usePermission } from '@shared/hooks/usePermission';
 import type { CreateSupplierPayload, Supplier } from '@modules/supplier/types/supplier.types';
 
 const StatCard = ({ icon, iconBg, label, value, colorClass }: { icon: React.ReactNode; iconBg: string; label: string; value: string, colorClass?: string }) => (
@@ -18,6 +20,7 @@ const StatCard = ({ icon, iconBg, label, value, colorClass }: { icon: React.Reac
 );
 
 export default function SuppliersPage() {
+  const { can, isOwner } = usePermission();
   const { 
     suppliers, 
     isLoading, 
@@ -32,6 +35,15 @@ export default function SuppliersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>(undefined);
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
+  const canManageSuppliers = isOwner;
+  const canViewPurchaseOrders =
+    can(PERMISSIONS.SUPPLIER_VIEW) ||
+    can(PERMISSIONS.PURCHASE_ORDER_EDIT) ||
+    can(PERMISSIONS.INVENTORY_IMPORT);
+  const pageTitle = canManageSuppliers ? 'Quản lý nhà cung cấp' : 'Đơn mua hàng';
+  const pageDescription = canManageSuppliers
+    ? 'Danh sách các đối tác cung ứng nguyên liệu toàn chuỗi'
+    : 'Chọn nhà cung cấp để tạo đơn nháp hoặc xác nhận nhận hàng theo quyền được cấp';
 
   // Thống kê
   const totalSuppliers = suppliers.length;
@@ -101,16 +113,18 @@ export default function SuppliersPage() {
       {/* Header & Stats */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý nhà cung cấp</h1>
-          <p className="text-sm text-gray-500">Danh sách các đối tác cung ứng nguyên liệu toàn chuỗi</p>
+          <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+          <p className="text-sm text-gray-500">{pageDescription}</p>
         </div>
-        <Button 
-          onClick={handleOpenAddForm}
-          className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-6"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Thêm nhà cung cấp
-        </Button>
+        {canManageSuppliers && (
+          <Button
+            onClick={handleOpenAddForm}
+            className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-6"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm nhà cung cấp
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -142,6 +156,7 @@ export default function SuppliersPage() {
           suppliers={suppliers} 
           onEdit={handleOpenEditForm}
           onDelete={handleOpenDeleteDialog}
+          isReadOnly={!canManageSuppliers || !canViewPurchaseOrders}
         />
       </div>
 

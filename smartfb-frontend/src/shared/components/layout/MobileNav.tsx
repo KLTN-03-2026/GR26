@@ -88,10 +88,10 @@ const BOTTOM_NAV_ITEMS: readonly BottomNavItem[] = [
     staffPermissions: STAFF_ROUTE_PERMISSIONS.POS_MANAGEMENT,
   },
   {
-    label: 'Bàn',
+    label: 'Thẻ',
     icon: Table,
-    ownerLabel: 'Bàn',
-    staffLabel: 'Bàn',
+    ownerLabel: 'Thẻ',
+    staffLabel: 'Thẻ',
     ownerIcon: Table,
     staffIcon: Table,
     ownerPath: ROUTES.OWNER.TABLES,
@@ -264,7 +264,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                 onBlur={() => setTimeout(() => setIsBranchDropdownOpen(false), 200)}
                 className={cn(
                   'w-full flex items-center gap-2 rounded-full border px-3 py-2 transition-all duration-150',
-                  'text-sm font-medium',
+                  'text-[18px] font-medium',
                   isBranchDropdownOpen
                     ? 'border-primary bg-primary-light shadow-card'
                     : 'border-border bg-card hover:border-primary hover:shadow-card'
@@ -292,7 +292,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                           onClose();
                         }}
                         className={cn(
-                          'w-full text-left px-4 py-2.5 text-sm transition-colors duration-150',
+                          'w-full text-left px-4 py-2.5 text-[18px] transition-colors duration-150',
                           !selectedBranchId || selectedBranchId === 'all'
                             ? 'bg-primary-light font-semibold text-primary'
                             : 'text-text-primary hover:bg-hover-light'
@@ -316,7 +316,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                         onClose();
                       }}
                       className={cn(
-                        'w-full text-left px-4 py-2.5 text-sm truncate transition-colors duration-150',
+                        'w-full text-left px-4 py-2.5 text-[18px] truncate transition-colors duration-150',
                         selectedBranchId === branch.id
                           ? 'bg-primary-light font-semibold text-primary'
                           : 'text-text-primary hover:bg-hover-light'
@@ -377,7 +377,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                               onClick={() => toggleItem(item.title)}
                               className={cn(
                                 'w-full flex items-center justify-between px-2 py-2.5 rounded-lg transition-colors duration-150',
-                                'text-sm font-medium tracking-wide',
+                                'text-[18px] font-medium tracking-wide',
                                 !isActive && !isChildActive
                                   ? 'text-text-secondary hover:bg-hover-light hover:text-primary'
                                   : 'text-primary'
@@ -427,7 +427,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                           onClick={onClose}
                           className={cn(
                             'flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-150',
-                            'text-sm font-medium tracking-wide',
+                            'text-[18px] font-medium tracking-wide',
                             !isActive
                               ? 'text-text-secondary hover:bg-hover-light hover:text-primary'
                               : 'text-primary'

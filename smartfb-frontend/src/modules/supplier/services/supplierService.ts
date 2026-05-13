@@ -44,15 +44,23 @@ const mapSupplier = (s: BackendSupplier): Supplier => ({
 const mapPurchaseOrderStatus = (
   status: BackendPurchaseOrderStatus
 ): SupplierOrder['status'] => {
+  if (status === 'DRAFT') {
+    return 'draft';
+  }
+
+  if (status === 'SENT') {
+    return 'sent';
+  }
+
   if (status === 'RECEIVED') {
-    return 'completed';
+    return 'received';
   }
 
   if (status === 'CANCELLED') {
     return 'cancelled';
   }
 
-  return 'pending';
+  return 'draft';
 };
 
 const mapPurchaseOrder = (order: BackendPurchaseOrderSummary): SupplierOrder => ({
@@ -109,6 +117,7 @@ const getPurchaseOrderPage = async (
 const toBackendPurchaseOrderPayload = (
   payload: CreatePurchaseOrderPayload | UpdatePurchaseOrderPayload
 ): CreatePurchaseOrderPayload => ({
+  branchId: payload.branchId,
   supplierId: payload.supplierId,
   note: normalizeOptionalText(payload.note),
   expectedDate: normalizeOptionalText(payload.expectedDate),

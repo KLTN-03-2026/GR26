@@ -100,7 +100,7 @@ export const OrderManagementList = ({
 
               <div className="flex items-center gap-4 border-y border-slate-100 py-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold uppercase text-slate-500">
-                  {order.tableName ? 'Bàn' : 'POS'}
+                  {order.tableName ? 'Thẻ' : 'POS'}
                 </div>
                 <span className="text-sm font-medium text-slate-600">
                   {order.staffName || 'Chưa có thông tin nhân viên'}

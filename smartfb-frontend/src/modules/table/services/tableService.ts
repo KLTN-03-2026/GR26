@@ -45,7 +45,7 @@ interface UpdateTableRequestBody {
 }
 
 /**
- * Chuẩn hóa dữ liệu bàn từ backend sang model FE.
+ * Chuẩn hóa dữ liệu table từ backend sang model thẻ gọi khách ở FE.
  */
 const mapTableResponse = (item: BackendTableResponse, branchId: string): TableItem => ({
   id: item.id,
@@ -65,7 +65,7 @@ const mapTableResponse = (item: BackendTableResponse, branchId: string): TableIt
 });
 
 /**
- * Chuẩn hóa dữ liệu khu vực từ backend sang model FE.
+ * Chuẩn hóa dữ liệu zone từ backend sang model máy gọi thẻ ở FE.
  */
 const mapZoneResponse = (zone: BackendZoneResponse): TableArea => ({
   id: zone.id,
@@ -102,7 +102,7 @@ const mapUsageStatus = (backendStatus: string): TableItem['usageStatus'] => {
 
 export const tableService = {
   /**
-   * Lấy danh sách bàn - GET /branches/{branchId}/tables
+   * Lấy danh sách thẻ gọi khách - GET /branches/{branchId}/tables
    * API trả về ApiResponse<List<TableResponse>>
    */
   getList: async (): Promise<TableItem[]> => {
@@ -112,7 +112,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể tải danh sách bàn');
+      throw new Error(response.data.error?.message || 'Không thể tải danh sách thẻ gọi khách');
     }
 
     return (response.data.data || []).map((item: BackendTableResponse) =>
@@ -121,7 +121,7 @@ export const tableService = {
   },
 
   /**
-   * Lấy chi tiết bàn - GET /branches/{branchId}/tables/{tableId}
+   * Lấy chi tiết thẻ gọi khách - GET /branches/{branchId}/tables/{tableId}
    */
   getById: async (id: string): Promise<TableItem> => {
     const branchId = getCurrentBranchId();
@@ -130,7 +130,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không tìm thấy bàn');
+      throw new Error(response.data.error?.message || 'Không tìm thấy thẻ gọi khách');
     }
 
     const item = response.data.data;
@@ -139,7 +139,7 @@ export const tableService = {
   },
 
   /**
-   * Tạo bàn mới - POST /branches/{branchId}/tables
+   * Tạo thẻ gọi khách mới - POST /branches/{branchId}/tables
    * Body theo CreateTableRequest: { zoneId, name, capacity, shape }
    */
   create: async (payload: CreateTablePayload): Promise<TableItem> => {
@@ -155,7 +155,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể tạo bàn mới');
+      throw new Error(response.data.error?.message || 'Không thể tạo thẻ mới');
     }
 
     const item = response.data.data;
@@ -164,7 +164,7 @@ export const tableService = {
   },
 
   /**
-   * Cập nhật bàn - PUT /branches/{branchId}/tables/{tableId}
+   * Cập nhật thẻ gọi khách - PUT /branches/{branchId}/tables/{tableId}
    * Body theo UpdateTableRequest: { name, zoneId, capacity, shape, isActive }
    */
   update: async (id: string, payload: UpdateTablePayload): Promise<TableItem> => {
@@ -184,7 +184,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể cập nhật bàn');
+      throw new Error(response.data.error?.message || 'Không thể cập nhật thẻ');
     }
 
     const item = response.data.data;
@@ -193,7 +193,7 @@ export const tableService = {
   },
 
   /**
-   * Xóa bàn (soft delete) - DELETE /branches/{branchId}/tables/{tableId}
+   * Xóa thẻ gọi khách (soft delete) - DELETE /branches/{branchId}/tables/{tableId}
    */
   delete: async (id: string): Promise<void> => {
     const branchId = getCurrentBranchId();
@@ -202,12 +202,12 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể xóa bàn');
+      throw new Error(response.data.error?.message || 'Không thể xóa thẻ');
     }
   },
 
   /**
-   * Batch update vị trí bàn (Drag & Drop) - PUT /branches/{branchId}/tables/positions
+   * Batch update vị trí thẻ - PUT /branches/{branchId}/tables/positions
    * WebSocket broadcast tự động
    */
   batchUpdatePositions: async (positions: BatchUpdatePositionsPayload): Promise<void> => {
@@ -218,12 +218,12 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể cập nhật vị trí bàn');
+      throw new Error(response.data.error?.message || 'Không thể cập nhật vị trí thẻ');
     }
   },
 
   /**
-   * Lấy danh sách khu vực - GET /branches/{branchId}/zones
+   * Lấy danh sách máy gọi thẻ - GET /branches/{branchId}/zones
    * API trả về ApiResponse<List<TableZoneResponse>>
    */
   getZones: async (): Promise<TableArea[]> => {
@@ -233,14 +233,14 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể tải danh sách khu vực');
+      throw new Error(response.data.error?.message || 'Không thể tải danh sách máy gọi thẻ');
     }
 
     return (response.data.data || []).map(mapZoneResponse);
   },
 
   /**
-   * Tạo khu vực mới - POST /branches/{branchId}/zones
+   * Tạo máy gọi thẻ mới - POST /branches/{branchId}/zones
    * Body theo CreateTableZoneRequest: { name, floorNumber }
    */
   createZone: async (payload: CreateZonePayload): Promise<TableArea> => {
@@ -254,14 +254,14 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể tạo khu vực');
+      throw new Error(response.data.error?.message || 'Không thể tạo máy gọi thẻ');
     }
 
     return mapZoneResponse(response.data.data);
   },
 
   /**
-   * Cập nhật khu vực - PUT /branches/{branchId}/zones/{zoneId}
+   * Cập nhật máy gọi thẻ - PUT /branches/{branchId}/zones/{zoneId}
    * Body theo UpdateTableZoneRequest: { name, floorNumber }
    */
   updateZone: async (id: string, payload: UpdateZonePayload): Promise<TableArea> => {
@@ -275,14 +275,14 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể cập nhật khu vực');
+      throw new Error(response.data.error?.message || 'Không thể cập nhật máy gọi thẻ');
     }
 
     return mapZoneResponse(response.data.data);
   },
 
   /**
-   * Xóa khu vực - DELETE /branches/{branchId}/zones/{zoneId}
+   * Xóa máy gọi thẻ - DELETE /branches/{branchId}/zones/{zoneId}
    */
   deleteZone: async (id: string): Promise<void> => {
     const branchId = getCurrentBranchId();
@@ -291,12 +291,12 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể xóa khu vực');
+      throw new Error(response.data.error?.message || 'Không thể xóa máy gọi thẻ');
     }
   },
 
   /**
-   * Lấy số bàn đang có khách - GET /branches/{branchId}/tables/stats/occupied-count
+   * Lấy số thẻ đang giao khách - GET /branches/{branchId}/tables/stats/occupied-count
    */
   getOccupiedCount: async (): Promise<number> => {
     const branchId = getCurrentBranchId();
@@ -305,7 +305,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể lấy số bàn đang có khách');
+      throw new Error(response.data.error?.message || 'Không thể lấy số thẻ đang giao khách');
     }
 
     return response.data.data ?? 0;

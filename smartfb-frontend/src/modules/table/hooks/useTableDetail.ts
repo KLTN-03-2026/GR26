@@ -4,9 +4,9 @@ import { tableService } from '../services/tableService';
 import type { TableItem } from '../types/table.types'; 
 
 /**
- * Hook lấy chi tiết bàn theo `tableId`.
+ * Hook lấy chi tiết thẻ gọi khách theo `tableId`.
  *
- * @param tableId - ID bàn cần tải chi tiết để hiển thị drawer hoặc dialog
+ * @param tableId - ID thẻ cần tải chi tiết để hiển thị drawer hoặc dialog
  */
 export const useTableDetail = (tableId: string) => {
   return useQuery<TableItem, Error>({

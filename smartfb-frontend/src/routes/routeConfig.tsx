@@ -125,7 +125,7 @@ export const ownerRoutes: RouteConfigItem[] = [
     'Dashboard',
     <DashboardPage />
   ),
-  createRoute(ROUTES.OWNER.TABLES, 'Quản lý bàn', <TablesPage />),
+  createRoute(ROUTES.OWNER.TABLES, 'Quản lý thẻ gọi khách', <TablesPage />),
   createRoute(
     ROUTES.OWNER.ORDERS,
     'Quản lý đơn hàng',
@@ -205,7 +205,7 @@ export const staffRoutes: RouteConfigItem[] = [
   ),
   createRoute(
     ROUTES.STAFF.TABLES,
-    'Bàn',
+    'Thẻ gọi khách',
     <TablesPage />,
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES }
   ),
@@ -229,6 +229,12 @@ export const staffRoutes: RouteConfigItem[] = [
   }),
   createRoute(ROUTES.STAFF.RECIPES, 'Công thức', <RecipesPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.RECIPES,
+  }),
+  createRoute(ROUTES.STAFF.SUPPLIERS, 'Nhà cung cấp', <SuppliersPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.SUPPLIERS,
+  }),
+  createRoute(ROUTES.STAFF.SUPPLIERS_DETAIL, 'Chi tiết nhà cung cấp', <SupplierDetailPage />, {
+    requiredPermissions: STAFF_ROUTE_PERMISSIONS.SUPPLIERS,
   }),
   createRoute(ROUTES.STAFF.INVENTORY, 'Quản lý kho', <InventoryPage />, {
     requiredPermissions: STAFF_ROUTE_PERMISSIONS.INVENTORY,

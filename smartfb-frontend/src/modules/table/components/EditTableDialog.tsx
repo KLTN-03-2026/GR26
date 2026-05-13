@@ -13,7 +13,6 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
-import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import {
   Select,
@@ -27,13 +26,9 @@ import type { TableItem, TableArea, UpdateTablePayload } from '../types/table.ty
 
 // SỬA: Schema dùng zoneId thay vì areaName
 const editTableSchema = z.object({
-  name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
-  zoneId: z.string().min(1, 'Vui lòng chọn khu vực'),  // ĐỔI: areaName -> zoneId
-  capacity: z
-    .number()
-    .int('Sức chứa phải là số nguyên')
-    .min(1, 'Sức chứa phải lớn hơn 0')
-    .max(20, 'Sức chứa không quá 20'),
+  name: z.string().min(2, 'Mã thẻ phải có ít nhất 2 ký tự').max(50, 'Mã thẻ không quá 50 ký tự'),
+  zoneId: z.string().min(1, 'Vui lòng chọn máy gọi thẻ'),  // ĐỔI: areaName -> zoneId
+  capacity: z.number().int().min(1).max(20),
   isActive: z.boolean(),  // ĐỔI: status string -> isActive boolean
 });
 
@@ -85,14 +80,13 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
 
   const selectedIsActive = useWatch({ control, name: 'isActive' });  // ĐỔI
   const selectedZoneId = useWatch({ control, name: 'zoneId' });  // ĐỔI
-  const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: EditTableFormData) => {
     if (hasActiveOrder) return;
     const payload: UpdateTablePayload = {
       name: data.name,
       zoneId: data.zoneId,
-      capacity: data.capacity,
+      capacity: table.capacity,
       isActive: data.isActive,
     };
     
@@ -111,9 +105,9 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa bàn</DialogTitle>
+          <DialogTitle>Chỉnh sửa thẻ gọi khách</DialogTitle>
           <DialogDescription>
-            Cập nhật thông tin bàn <strong>{table.name}</strong>
+            Cập nhật thông tin thẻ <strong>{table.name}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -121,9 +115,9 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 mb-4">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <div className="text-sm">
-              <p className="font-semibold text-amber-800">Không thể chỉnh sửa bàn này</p>
+              <p className="font-semibold text-amber-800">Không thể chỉnh sửa thẻ này</p>
               <p className="mt-0.5 text-amber-700">
-                Bàn đang có đơn hàng ({table.usageStatus === 'unpaid' ? 'chờ thanh toán' : table.usageStatus === 'reserved' ? 'đã đặt trước' : 'đang phục vụ'}).
+                Thẻ đang có đơn hàng ({table.usageStatus === 'unpaid' ? 'chờ thanh toán' : table.usageStatus === 'reserved' ? 'đã giữ trước' : 'đang giao khách'}).
                 Vui lòng hoàn tất hoặc hủy đơn trước khi chỉnh sửa.
               </p>
             </div>
@@ -133,45 +127,30 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="name">Tên bàn</Label>
+              <Label htmlFor="name">Mã/tên thẻ</Label>
               <Input id="name" {...register('name')} disabled={hasActiveOrder} />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="zoneId">Khu vực</Label>  {/* ĐỔI */}
+              <Label htmlFor="zoneId">Máy gọi thẻ</Label>  {/* ĐỔI */}
               <Select
                 value={selectedZoneId}
                 onValueChange={(value) => setValue('zoneId', value, { shouldDirty: true })}
                 disabled={hasActiveOrder}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khu vực" />
+                  <SelectValue placeholder="Chọn máy gọi thẻ" />
                 </SelectTrigger>
                 <SelectContent>
                   {zones.map((zone) => (  // ĐỔI
                     <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name} {zone.floorNumber ? `(Tầng ${zone.floorNumber})` : ''}
+                      {zone.name} {zone.floorNumber ? `(Máy ${zone.floorNumber})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}  {/* ĐỔI */}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="capacity">Sức chứa</Label>
-              <NumericInput
-                id="capacity"
-                min={1}
-                max={20}
-                value={selectedCapacity}
-                onValueChange={(value) =>
-                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true })
-                }
-                disabled={hasActiveOrder}
-              />
-              {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>
 
             <div className="space-y-1">

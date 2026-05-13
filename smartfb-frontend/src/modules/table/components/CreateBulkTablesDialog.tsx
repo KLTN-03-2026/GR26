@@ -27,12 +27,15 @@ import {
   SelectValue,
 } from '@shared/components/ui/select';
 
+// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ gọi khách không dùng thông tin này.
+const DEFAULT_PAGER_CARD_CAPACITY = 1;
+
 const createBulkTablesSchema = z.object({
-  zoneId: z.string().min(1, 'Vui lòng chọn khu vực'),
+  zoneId: z.string().min(1, 'Vui lòng chọn máy gọi thẻ'),
   namePrefix: z
     .string()
     .trim()
-    .min(1, 'Vui lòng nhập tiền tố tên bàn')
+    .min(1, 'Vui lòng nhập tiền tố mã thẻ')
     .max(30, 'Tiền tố không quá 30 ký tự'),
   startNumber: z
     .number()
@@ -42,13 +45,9 @@ const createBulkTablesSchema = z.object({
   quantity: z
     .number()
     .int('Số lượng phải là số nguyên')
-    .min(2, 'Tạo hàng loạt tối thiểu 2 bàn')
-    .max(50, 'Mỗi lần chỉ tạo tối đa 50 bàn'),
-  capacity: z
-    .number()
-    .int('Sức chứa phải là số nguyên')
-    .min(1, 'Sức chứa tối thiểu là 1')
-    .max(20, 'Sức chứa tối đa là 20'),
+    .min(2, 'Tạo hàng loạt tối thiểu 2 thẻ')
+    .max(50, 'Mỗi lần chỉ tạo tối đa 50 thẻ'),
+  capacity: z.number().int().min(1).max(20),
 });
 
 type CreateBulkTablesFormData = z.infer<typeof createBulkTablesSchema>;
@@ -79,10 +78,10 @@ export const CreateBulkTablesDialog = ({
     resolver: zodResolver(createBulkTablesSchema),
     defaultValues: {
       zoneId: '',
-      namePrefix: 'Bàn ',
+      namePrefix: 'Thẻ ',
       startNumber: 1,
       quantity: 10,
-      capacity: 4,
+      capacity: DEFAULT_PAGER_CARD_CAPACITY,
     },
   });
 
@@ -95,7 +94,6 @@ export const CreateBulkTablesDialog = ({
   const selectedZoneId = useWatch({ control, name: 'zoneId' });
   const selectedStartNumber = useWatch({ control, name: 'startNumber' });
   const selectedQuantity = useWatch({ control, name: 'quantity' });
-  const selectedCapacity = useWatch({ control, name: 'capacity' });
   const selectedNamePrefix = useWatch({ control, name: 'namePrefix' });
 
   const previewTableNames = useMemo(() => {
@@ -117,7 +115,7 @@ export const CreateBulkTablesDialog = ({
         namePrefix: data.namePrefix.trim(),
         startNumber: data.startNumber,
         quantity: data.quantity,
-        capacity: data.capacity,
+        capacity: DEFAULT_PAGER_CARD_CAPACITY,
       },
       {
         onSuccess: (result: CreateBulkTablesResult) => {
@@ -135,16 +133,16 @@ export const CreateBulkTablesDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle>Tạo bàn hàng loạt</DialogTitle>
+          <DialogTitle>Tạo thẻ hàng loạt</DialogTitle>
           <DialogDescription>
-            Sinh nhanh nhiều bàn trong cùng một khu vực theo tiền tố và số thứ tự.
+            Sinh nhanh nhiều thẻ gọi khách theo máy gọi thẻ, tiền tố và số thứ tự.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleCreateBulkTables)} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="bulk-zoneId">Khu vực</Label>
+              <Label htmlFor="bulk-zoneId">Máy gọi thẻ</Label>
               <Select
                 value={selectedZoneId}
                 onValueChange={(value) => {
@@ -153,12 +151,12 @@ export const CreateBulkTablesDialog = ({
                 }}
               >
                 <SelectTrigger id="bulk-zoneId" className="w-full">
-                  <SelectValue placeholder="Chọn khu vực" />
+                  <SelectValue placeholder="Chọn máy gọi thẻ" />
                 </SelectTrigger>
                 <SelectContent>
                   {zones.map((zone) => (
                     <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name} {zone.floorNumber ? `(Tầng ${zone.floorNumber})` : ''}
+                      {zone.name} {zone.floorNumber ? `(Máy ${zone.floorNumber})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -166,14 +164,14 @@ export const CreateBulkTablesDialog = ({
               {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}
               {zones.length === 0 && (
                 <p className="text-xs text-amber-600">
-                  Chưa có khu vực nào. Hãy tạo khu vực trước khi dùng chế độ tạo hàng loạt.
+                  Chưa có máy gọi thẻ nào. Hãy tạo máy gọi thẻ trước khi dùng chế độ tạo hàng loạt.
                 </p>
               )}
             </div>
 
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="namePrefix">Tiền tố tên bàn</Label>
-              <Input id="namePrefix" {...register('namePrefix')} placeholder="Ví dụ: Bàn A-, VIP-" />
+              <Label htmlFor="namePrefix">Tiền tố mã thẻ</Label>
+              <Input id="namePrefix" {...register('namePrefix')} placeholder="Ví dụ: Thẻ A-, Máy A-" />
               {errors.namePrefix && (
                 <p className="text-xs text-red-500">{errors.namePrefix.message}</p>
               )}
@@ -197,7 +195,7 @@ export const CreateBulkTablesDialog = ({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="quantity">Số lượng bàn</Label>
+              <Label htmlFor="quantity">Số lượng thẻ</Label>
               <NumericInput
                 id="quantity"
                 min={2}
@@ -210,25 +208,10 @@ export const CreateBulkTablesDialog = ({
               />
               {errors.quantity && <p className="text-xs text-red-500">{errors.quantity.message}</p>}
             </div>
-
-            <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="capacity">Sức chứa mỗi bàn</Label>
-              <NumericInput
-                id="capacity"
-                min={1}
-                max={20}
-                value={selectedCapacity}
-                onValueChange={(value) => {
-                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true });
-                  clearErrors('capacity');
-                }}
-              />
-              {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
-            </div>
           </div>
 
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-800">Xem trước tên bàn</p>
+            <p className="text-sm font-medium text-gray-800">Xem trước mã thẻ</p>
             {previewTableNames.length > 0 ? (
               <>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -243,13 +226,13 @@ export const CreateBulkTablesDialog = ({
                 </div>
                 {previewTableNames.length > 6 && (
                   <p className="mt-2 text-xs text-gray-500">
-                    Và thêm {previewTableNames.length - 6} bàn nữa theo cùng quy tắc đặt tên.
+                    Và thêm {previewTableNames.length - 6} thẻ nữa theo cùng quy tắc đặt mã.
                   </p>
                 )}
               </>
             ) : (
               <p className="mt-2 text-xs text-gray-500">
-                Nhập tiền tố, số bắt đầu và số lượng để xem trước danh sách bàn.
+                Nhập tiền tố, số bắt đầu và số lượng để xem trước danh sách thẻ.
               </p>
             )}
           </div>

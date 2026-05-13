@@ -4,7 +4,7 @@ import { orderService } from '@modules/order/services/orderService';
 import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
 import { queryKeys } from '@shared/constants/queryKeys';
 
-// Các trạng thái này xem như order đã kết thúc, không được mở lại từ màn bàn.
+// Các trạng thái này xem như order đã kết thúc, không được mở lại từ màn thẻ.
 const CLOSED_ORDER_STATUSES: readonly OrderStatus[] = ['COMPLETED', 'CANCELLED'];
 
 const resolveOrderCreatedTimestamp = (createdAt?: string): number => {
@@ -17,7 +17,7 @@ const resolveOrderCreatedTimestamp = (createdAt?: string): number => {
 };
 
 /**
- * Chỉ giữ lại đơn chưa kết thúc để màn bàn và POS có thể mở tiếp đúng order đang hoạt động.
+ * Chỉ giữ lại đơn chưa kết thúc để màn thẻ và POS có thể mở tiếp đúng order đang hoạt động.
  */
 const filterOpenOrders = (orders: OrderListItemResponse[]): OrderListItemResponse[] => {
   return orders.filter((order) => {
@@ -26,7 +26,7 @@ const filterOpenOrders = (orders: OrderListItemResponse[]): OrderListItemRespons
 };
 
 /**
- * Một bàn chỉ nên có tối đa 1 order đang mở.
+ * Một thẻ chỉ nên có tối đa 1 order đang mở.
  * Nếu backend trả trùng dữ liệu, FE ưu tiên đơn mới nhất để giảm nguy cơ mở nhầm order cũ.
  */
 export const buildOpenOrdersByTableMap = (
@@ -52,7 +52,7 @@ export const buildOpenOrdersByTableMap = (
 };
 
 /**
- * Hook trả về map `tableId -> order đang mở` để màn bàn mở tiếp đúng đơn hiện tại.
+ * Hook trả về map `tableId -> order đang mở` để màn thẻ mở tiếp đúng đơn hiện tại.
  */
 export const useOpenOrdersByTable = () => {
   const query = useQuery<OrderListItemResponse[]>({

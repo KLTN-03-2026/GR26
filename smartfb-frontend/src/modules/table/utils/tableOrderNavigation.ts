@@ -1,7 +1,7 @@
 import type { TableDisplayItem } from '@modules/table/types/table.types';
 
 /**
- * Build query string cho màn POS để có thể khôi phục lại đúng context của bàn sau khi refresh.
+ * Build query string cho màn POS để có thể khôi phục lại đúng context thẻ sau khi refresh.
  */
 export const buildTableOrderSearchParams = (
   table: TableDisplayItem,
