@@ -44,6 +44,10 @@ public class BranchJpaEntity {
     @Column(name = "longitude", precision = 10, scale = 7)
     private java.math.BigDecimal longitude;
 
+    @Column(name = "gps_checkin_radius_meters", nullable = false)
+    @Builder.Default
+    private Integer gpsCheckinRadiusMeters = 200;
+
     @Column(name = "phone", length = 20)
     private String phone;
 

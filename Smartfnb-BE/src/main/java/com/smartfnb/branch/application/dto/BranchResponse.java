@@ -13,6 +13,7 @@ public record BranchResponse(
         String phone,
         java.math.BigDecimal latitude,
         java.math.BigDecimal longitude,
+        Integer gpsCheckinRadiusMeters,
         String status,
         LocalDateTime createdAt
 ) {
@@ -25,6 +26,7 @@ public record BranchResponse(
                 entity.getPhone(),
                 entity.getLatitude(),
                 entity.getLongitude(),
+                entity.getGpsCheckinRadiusMeters(),
                 entity.getStatus(),
                 entity.getCreatedAt()
         );

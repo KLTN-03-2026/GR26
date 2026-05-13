@@ -5,6 +5,7 @@ import com.smartfnb.shared.web.ApiResponse;
 import com.smartfnb.shift.application.command.*;
 import com.smartfnb.shift.application.query.*;
 import com.smartfnb.shift.web.dto.RegisterShiftRequest;
+import com.smartfnb.shift.web.dto.CheckInRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -160,6 +161,8 @@ public class ShiftScheduleController {
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
+
+
     /**
      * Nhân viên check-in bắt đầu ca.
      * Chỉ nhân viên có ca mới được check-in.
@@ -167,11 +170,18 @@ public class ShiftScheduleController {
     @PostMapping("/{id}/checkin")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Check-in ca làm việc")
-    public ResponseEntity<ApiResponse<Void>> checkIn(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> checkIn(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) CheckInRequest request) {
+        Double latitude = request != null ? request.latitude() : null;
+        Double longitude = request != null ? request.longitude() : null;
+        
         CheckInCommand command = new CheckInCommand(
                 TenantContext.getCurrentTenantId(),
                 id,
-                TenantContext.getCurrentUserId()
+                TenantContext.getCurrentUserId(),
+                latitude,
+                longitude
         );
         checkInHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok());

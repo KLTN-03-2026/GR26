@@ -81,6 +81,15 @@ public class ShiftScheduleJpaEntity {
     @Column(name = "note", length = 500)
     private String note;
 
+    @Column(name = "checkin_latitude", precision = 10, scale = 7)
+    private java.math.BigDecimal checkinLatitude;
+
+    @Column(name = "checkin_longitude", precision = 10, scale = 7)
+    private java.math.BigDecimal checkinLongitude;
+
+    @Column(name = "checkin_distance_meters")
+    private Integer checkinDistanceMeters;
+
     /** UUID người đăng ký ca (có thể là manager hoặc chính nhân viên) */
     @Column(name = "registered_by")
     private UUID registeredBy;
@@ -133,13 +142,24 @@ public class ShiftScheduleJpaEntity {
      * Nhân viên check-in.
      * Chỉ được thực hiện khi status = SCHEDULED.
      *
-     * @param now       thời điểm check-in
-     * @param startTime giờ bắt đầu thực tế
+     * @param now                   thời điểm check-in
+     * @param startTime             giờ bắt đầu thực tế
+     * @param checkinLatitude       vĩ độ (có thể null)
+     * @param checkinLongitude      kinh độ (có thể null)
+     * @param checkinDistanceMeters khoảng cách tới chi nhánh (có thể null)
      */
-    public void checkIn(Instant now, LocalTime startTime) {
+    public void checkIn(Instant now, LocalTime startTime, 
+                        Double checkinLatitude, Double checkinLongitude, Integer checkinDistanceMeters) {
         this.checkedInAt = now;
         this.actualStartTime = startTime.withNano(0);
         this.status = "CHECKED_IN";
+        if (checkinLatitude != null) {
+            this.checkinLatitude = java.math.BigDecimal.valueOf(checkinLatitude);
+        }
+        if (checkinLongitude != null) {
+            this.checkinLongitude = java.math.BigDecimal.valueOf(checkinLongitude);
+        }
+        this.checkinDistanceMeters = checkinDistanceMeters;
     }
 
     /**

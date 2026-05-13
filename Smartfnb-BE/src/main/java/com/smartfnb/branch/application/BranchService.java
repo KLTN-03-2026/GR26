@@ -114,6 +114,7 @@ public class BranchService {
                 .phone(request.phone())
                 .latitude(request.latitude())
                 .longitude(request.longitude())
+                .gpsCheckinRadiusMeters(request.gpsCheckinRadiusMeters() != null ? request.gpsCheckinRadiusMeters() : 200)
                 .status("ACTIVE")
                 .build();
 
@@ -164,8 +165,21 @@ public class BranchService {
         branch.setPhone(request.phone());
         branch.setLatitude(request.latitude());
         branch.setLongitude(request.longitude());
+        if (request.gpsCheckinRadiusMeters() != null) {
+            branch.setGpsCheckinRadiusMeters(request.gpsCheckinRadiusMeters());
+        }
 
         branch = branchRepository.save(branch);
+        return BranchResponse.fromEntity(branch);
+    }
+
+    /**
+     * Lấy thông tin chi nhánh theo ID.
+     */
+    @Transactional(readOnly = true)
+    public BranchResponse getBranch(UUID tenantId, UUID branchId) {
+        validateBranchAccess(tenantId, branchId);
+        BranchJpaEntity branch = branchRepository.findById(branchId).orElseThrow();
         return BranchResponse.fromEntity(branch);
     }
 

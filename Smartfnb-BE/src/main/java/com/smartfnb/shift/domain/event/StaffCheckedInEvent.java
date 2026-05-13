@@ -19,5 +19,6 @@ public record StaffCheckedInEvent(
         UUID shiftTemplateId,
         LocalDate shiftDate,
         String shiftName,
-        Instant checkedInAt
+        Instant checkedInAt,
+        Integer checkinDistanceMeters
 ) {}

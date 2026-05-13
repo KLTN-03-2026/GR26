@@ -18,5 +18,7 @@ import java.util.UUID;
 public record CheckInCommand(
         @NotNull UUID tenantId,
         @NotNull UUID scheduleId,
-        @NotNull UUID userId
+        @NotNull UUID userId,
+        Double latitude,
+        Double longitude
 ) {}
