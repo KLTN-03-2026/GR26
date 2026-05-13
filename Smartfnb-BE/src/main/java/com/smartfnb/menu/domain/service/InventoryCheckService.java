@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Domain Service kiểm tra tồn kho nguyên liệu trước khi đặt đơn hàng.
@@ -52,7 +53,7 @@ public class InventoryCheckService {
             UUID branchId,
             Map<UUID, Integer> orderLines,
             StockProvider currentStockProvider,
-            IngredientNameProvider ingredientNameProvider,
+            ItemNameProvider itemNameProvider,
             IngredientUnitProvider ingredientUnitProvider) {
 
         if (orderLines == null || orderLines.isEmpty()) {
@@ -65,9 +66,17 @@ public class InventoryCheckService {
         List<UUID> itemIds = new ArrayList<>(orderLines.keySet());
         List<RecipeJpaEntity> allRecipes = recipeJpaRepository.findByTargetItemIdIn(itemIds);
 
-        if (allRecipes.isEmpty()) {
-            log.debug("Không có công thức nào — bỏ qua kiểm tra tồn kho");
-            return;
+        // Kiểm tra bắt buộc: Mọi món trong đơn hàng đều phải có công thức (Recipe)
+        Set<UUID> itemsWithRecipe = allRecipes.stream()
+                .map(RecipeJpaEntity::getTargetItemId)
+                .collect(Collectors.toSet());
+
+        for (UUID itemId : itemIds) {
+            if (!itemsWithRecipe.contains(itemId)) {
+                String itemName = itemNameProvider.getName(itemId);
+                log.warn("Món '{}' (ID: {}) chưa có công thức, từ chối tạo đơn hàng.", itemName, itemId);
+                throw new com.smartfnb.menu.domain.exception.MissingRecipeException(itemName, itemId);
+            }
         }
 
         // Tính tổng nguyên liệu cần dùng: ingredientId → tổng lượng cần
@@ -88,7 +97,7 @@ public class InventoryCheckService {
             BigDecimal available = currentStockProvider.getStock(branchId, ingredientId);
 
             if (available == null || available.compareTo(required) < 0) {
-                String ingredientName = ingredientNameProvider.getName(ingredientId);
+                String ingredientName = itemNameProvider.getName(ingredientId);
                 // Author: Hoàng
                 // Date: 2026-05-09
                 // Note: Truyền unit thật vào lỗi thiếu tồn để message không còn khoảng trắng thừa.
@@ -127,17 +136,17 @@ public class InventoryCheckService {
     }
 
     /**
-     * Interface functional để lấy tên nguyên liệu cho error message.
+     * Interface functional để lấy tên món / nguyên liệu cho error message.
      */
     @FunctionalInterface
-    public interface IngredientNameProvider {
+    public interface ItemNameProvider {
         /**
-         * Lấy tên nguyên liệu theo ID.
+         * Lấy tên theo ID.
          *
-         * @param ingredientId ID nguyên liệu
-         * @return tên nguyên liệu
+         * @param itemId ID món hoặc nguyên liệu
+         * @return tên
          */
-        String getName(UUID ingredientId);
+        String getName(UUID itemId);
     }
 
     /**
