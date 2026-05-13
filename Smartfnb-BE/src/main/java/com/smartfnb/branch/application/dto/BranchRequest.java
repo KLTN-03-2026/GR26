@@ -20,6 +20,8 @@ public record BranchRequest(
 
         java.math.BigDecimal latitude,
         
-        java.math.BigDecimal longitude
+        java.math.BigDecimal longitude,
+
+        Integer gpsCheckinRadiusMeters
 ) {
 }
