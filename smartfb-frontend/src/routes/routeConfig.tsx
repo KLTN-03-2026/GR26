@@ -10,6 +10,7 @@ import { Navigate } from 'react-router-dom';
 const AdminBillingPage = lazy(() => import('@pages/admin/AdminBillingPage'));
 const AdminDashboardPage = lazy(() => import('@pages/admin/AdminDashboardPage'));
 const AdminPlansPage = lazy(() => import('@pages/admin/AdminPlansPage'));
+const AdminSettingsPage = lazy(() => import('@pages/admin/AdminSettingsPage'));
 const AdminTenantsPage = lazy(() => import('@pages/admin/AdminTenantsPage'));
 const ForgotPasswordPage = lazy(() => import('@pages/auth/ForgotPasswordPage'));
 const LoginPage = lazy(() => import('@pages/auth/LoginPage'));
@@ -103,7 +104,7 @@ export const adminRoutes: RouteConfigItem[] = [
   ),
   createRoute(
     ROUTES.ADMIN_TENANTS,
-    'Quản lý tenant',
+    'Quản lý khách hàng',
     <AdminTenantsPage />
   ),
   createRoute(
@@ -111,11 +112,10 @@ export const adminRoutes: RouteConfigItem[] = [
     'Billing',
     <AdminBillingPage />
   ),
-  createPlaceholderRoute(
+  createRoute(
     ROUTES.ADMIN_SETTINGS,
     'Cài đặt admin',
-    'Cài đặt admin',
-    'Thiết lập khu vực quản trị SaaS sẽ được triển khai sau khi hoàn thiện các luồng chính.'
+    <AdminSettingsPage />
   ),
 ];
 

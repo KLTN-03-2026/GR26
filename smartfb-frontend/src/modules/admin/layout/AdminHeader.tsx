@@ -77,7 +77,7 @@ export const AdminHeader = ({ pageTitle, onOpenMobileMenu }: AdminHeaderProps) =
           <Search className="h-4 w-4 shrink-0" />
           <input
             type="search"
-            placeholder="Tìm tenant, gói, hóa đơn..."
+            placeholder="Tìm khách hàng, gói, hóa đơn..."
             className="min-w-0 flex-1 bg-transparent text-sm text-admin-gray-900 outline-none placeholder:text-admin-gray-500"
           />
         </label>

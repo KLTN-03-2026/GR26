@@ -5,6 +5,8 @@ import type {
   OpenPosSessionPayload,
   PosSession,
   PosSessionExpenseBreakdown,
+  PosSessionHistoryParams,
+  PosSessionPageResponse,
   PosSessionRevenueBreakdown,
 } from '../types/posSession.types';
 
@@ -40,8 +42,11 @@ export const posSessionService = {
   /**
    * Lấy lịch sử phiên POS của chi nhánh hiện tại.
    */
-  getHistory: async (): Promise<ApiResponse<PosSession[]>> => {
-    return api.get<ApiResponse<PosSession[]>>('/pos-sessions').then((response) => response.data);
+  getHistory: async (params: PosSessionHistoryParams): Promise<ApiResponse<PosSessionPageResponse>> => {
+    // author: Hoàng | date: 2026-05-11 | note: Truyền page/size để backend phân trang lịch sử ca POS.
+    return api
+      .get<ApiResponse<PosSessionPageResponse>>('/pos-sessions', { params })
+      .then((response) => response.data);
   },
 
   /**

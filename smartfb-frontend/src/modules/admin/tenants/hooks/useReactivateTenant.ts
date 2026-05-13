@@ -4,7 +4,7 @@ import { adminTenantService } from '../services/adminTenantService';
 import toast from 'react-hot-toast';
 
 /**
- * Hook mở khóa tenant.
+ * Hook mở khóa khách hàng.
  */
 export const useReactivateTenant = () => {
   const queryClient = useQueryClient();
@@ -13,10 +13,10 @@ export const useReactivateTenant = () => {
     mutationFn: (tenantId: string) => adminTenantService.reactivateTenant(tenantId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success('Đã mở khóa tenant');
+      toast.success('Đã mở khóa khách hàng');
     },
     onError: () => {
-      toast.error('Không thể mở khóa tenant');
+      toast.error('Không thể mở khóa khách hàng');
     },
   });
 };

@@ -4,7 +4,7 @@ import { adminTenantService } from '../services/adminTenantService';
 import type { AdminTenantListParams } from '../types/adminTenant.types';
 
 /**
- * Hook lấy danh sách tenant có phân trang và filter.
+ * Hook lấy danh sách khách hàng có phân trang và filter.
  */
 export const useAdminTenants = (params: AdminTenantListParams) =>
   useQuery({

@@ -10,7 +10,7 @@ interface SuspendTenantVariables {
 }
 
 /**
- * Hook tạm khóa tenant.
+ * Hook tạm khóa khách hàng.
  */
 export const useSuspendTenant = () => {
   const queryClient = useQueryClient();
@@ -20,10 +20,10 @@ export const useSuspendTenant = () => {
       adminTenantService.suspendTenant(tenantId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success('Đã tạm khóa tenant');
+      toast.success('Đã tạm khóa khách hàng');
     },
     onError: () => {
-      toast.error('Không thể tạm khóa tenant');
+      toast.error('Không thể tạm khóa khách hàng');
     },
   });
 };

@@ -13,7 +13,7 @@ interface AdminTenantFiltersProps {
 }
 
 /**
- * Bộ lọc danh sách tenant gồm tìm kiếm, trạng thái và gói dịch vụ.
+ * Bộ lọc danh sách khách hàng gồm tìm kiếm, trạng thái và gói dịch vụ.
  */
 export const AdminTenantFilters = ({
   keyword,
@@ -29,7 +29,7 @@ export const AdminTenantFilters = ({
       <Input
         value={keyword}
         onChange={(event) => onKeywordChange(event.target.value)}
-        placeholder="Tìm theo tên tenant hoặc email..."
+        placeholder="Tìm theo tên khách hàng hoặc email..."
         className="border-admin-gray-200 focus-visible:ring-admin-brand-500"
       />
       <select

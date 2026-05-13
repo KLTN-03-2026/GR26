@@ -10,7 +10,7 @@ interface ChangeTenantPlanVariables {
 }
 
 /**
- * Hook đổi hoặc nâng cấp gói dịch vụ cho tenant.
+ * Hook đổi hoặc nâng cấp gói dịch vụ cho khách hàng.
  */
 export const useChangeTenantPlan = () => {
   const queryClient = useQueryClient();
@@ -20,10 +20,10 @@ export const useChangeTenantPlan = () => {
       adminTenantService.changeTenantPlan(tenantId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success('Đã đổi gói dịch vụ cho tenant');
+      toast.success('Đã đổi gói dịch vụ cho khách hàng');
     },
     onError: () => {
-      toast.error('Không thể đổi gói dịch vụ cho tenant');
+      toast.error('Không thể đổi gói dịch vụ cho khách hàng');
     },
   });
 };

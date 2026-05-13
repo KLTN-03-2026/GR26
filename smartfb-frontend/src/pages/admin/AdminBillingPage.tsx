@@ -164,7 +164,7 @@ const AdminBillingPage = () => {
       <AdminPageHeader
         eyebrow="Billing SaaS"
         title="Quản lý hóa đơn subscription"
-        description="Theo dõi invoice, tạo hóa đơn gia hạn và xác nhận thanh toán cho tenant."
+        description="Theo dõi invoice, tạo hóa đơn gia hạn và xác nhận thanh toán cho khách hàng."
         actions={(
           <>
             <Button
@@ -202,7 +202,7 @@ const AdminBillingPage = () => {
             trên trang
             {selectedTenant ? (
               <>
-                {' '}· Tenant{' '}
+                {' '}· Khách hàng{' '}
                 <span className="font-semibold text-admin-gray-900">{selectedTenant.name}</span>
               </>
             ) : null}
@@ -216,7 +216,7 @@ const AdminBillingPage = () => {
             onChange={(event) => handleTenantChange(event.target.value)}
             className="h-9 min-w-[260px] rounded-md border border-admin-gray-200 bg-white px-3 text-sm text-admin-gray-700 outline-none focus:border-admin-brand-500"
           >
-            <option value="">Tất cả tenant</option>
+            <option value="">Tất cả khách hàng</option>
             {activeTenants.map((tenant) => (
               <option key={tenant.id} value={tenant.id}>
                 {tenant.name} - {tenant.email}
@@ -246,7 +246,7 @@ const AdminBillingPage = () => {
         <AdminEmptyState
           eyebrow="Chưa có hóa đơn phù hợp"
           title="Không tìm thấy invoice trong bộ lọc hiện tại"
-          description="Bạn có thể đổi trạng thái hoặc tạo hóa đơn gia hạn mới cho tenant."
+          description="Bạn có thể đổi trạng thái hoặc tạo hóa đơn gia hạn mới cho khách hàng."
           action={(
             <Button
               type="button"

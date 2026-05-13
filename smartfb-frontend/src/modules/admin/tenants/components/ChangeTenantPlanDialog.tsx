@@ -34,7 +34,7 @@ const getDefaultExpireDate = (): string => {
 };
 
 /**
- * Dialog đổi gói dịch vụ cho tenant.
+ * Dialog đổi gói dịch vụ cho khách hàng.
  */
 export const ChangeTenantPlanDialog = ({
   tenant,
@@ -70,13 +70,13 @@ export const ChangeTenantPlanDialog = ({
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">Đổi gói dịch vụ</DialogTitle>
           <DialogDescription>
-            Chọn gói mới và ngày hết hạn mới cho tenant.
+            Chọn gói mới và ngày hết hạn mới cho khách hàng.
           </DialogDescription>
         </DialogHeader>
 
         {tenant ? (
           <div className="rounded-lg bg-admin-gray-50 p-4">
-            <p className="text-sm text-admin-gray-500">Tenant</p>
+            <p className="text-sm text-admin-gray-500">Khách hàng</p>
             <p className="mt-1 font-semibold text-admin-gray-900">{tenant.name}</p>
             <p className="mt-1 text-sm text-admin-gray-500">Gói hiện tại: {tenant.planName}</p>
           </div>

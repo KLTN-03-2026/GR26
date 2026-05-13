@@ -8,6 +8,7 @@ import { useAssignStaffRoles } from '@modules/staff/hooks/useAssignStaffRoles';
 import { usePositions } from '@modules/staff/hooks/usePositions';
 import { useRolesMatrix } from '@modules/staff/hooks/useRolesMatrix';
 import { useStaffList } from '@modules/staff/hooks/useStaffList';
+import { useVietnamProvinces, useVietnamWards } from '@modules/staff/hooks/useVietnamAddress';
 import type { CreateStaffRequest, StaffGender } from '@modules/staff/types/staff.types';
 import { buildStaffAddress } from '@modules/staff/utils/staffAddressFormatter';
 import { filterAssignableStaffRoles } from '@modules/staff/utils/filterAssignableStaffRoles';
@@ -29,7 +30,9 @@ export interface CreateStaffFormValues {
   gender: StaffGender;
   streetAddress: string;
   wardDistrict: string;
+  wardCode: string;
   city: string;
+  provinceCode: string;
   positionId: string;
   password: string;
   posPin: string;
@@ -49,7 +52,9 @@ const getDefaultValues = (branchId = ''): CreateStaffFormValues => ({
   gender: 'MALE',
   streetAddress: '',
   wardDistrict: '',
+  wardCode: '',
   city: '',
+  provinceCode: '',
   positionId: '',
   password: '',
   posPin: '',
@@ -85,11 +90,27 @@ export const useCreateStaffForm = () => {
   const { data: roleMatrixData, isLoading: isRolesLoading } = useRolesMatrix();
   const { data: branches = [] } = useBranches();
   const { data: staffPage } = useStaffList({ page: 0, size: 1 });
+  const {
+    data: provinces = [],
+    isLoading: isProvincesLoading,
+    isError: isProvincesError,
+  } = useVietnamProvinces();
   const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
   const [generatedAt] = useState(() => new Date());
 
   const [values, setValues] = useState<CreateStaffFormValues>(() => getDefaultValues());
   const [formErrors, setFormErrors] = useState<CreateStaffFormErrors>({});
+
+  const selectedProvinceCode = useMemo(() => {
+    const provinceCode = Number(values.provinceCode);
+    return Number.isFinite(provinceCode) && provinceCode > 0 ? provinceCode : null;
+  }, [values.provinceCode]);
+
+  const {
+    data: wards = [],
+    isLoading: isWardsLoading,
+    isError: isWardsError,
+  } = useVietnamWards(selectedProvinceCode);
 
   const resolvedBranchId = useMemo(() => {
     return values.branchId || resolveDefaultBranchId(
@@ -140,6 +161,30 @@ export const useCreateStaffForm = () => {
   ) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     setFormErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const handleProvinceChange = (provinceCode: string) => {
+    const selectedProvince = provinces.find((province) => String(province.code) === provinceCode);
+
+    setValues((prev) => ({
+      ...prev,
+      provinceCode,
+      city: selectedProvince?.name ?? '',
+      wardCode: '',
+      wardDistrict: '',
+    }));
+    setFormErrors((prev) => ({ ...prev, provinceCode: '', city: '', wardCode: '', wardDistrict: '' }));
+  };
+
+  const handleWardChange = (wardCode: string) => {
+    const selectedWard = wards.find((ward) => String(ward.code) === wardCode);
+
+    setValues((prev) => ({
+      ...prev,
+      wardCode,
+      wardDistrict: selectedWard?.name ?? '',
+    }));
+    setFormErrors((prev) => ({ ...prev, wardCode: '', wardDistrict: '' }));
   };
 
   const validateForm = (): boolean => {
@@ -292,11 +337,19 @@ export const useCreateStaffForm = () => {
     isPending: isCreating || isAssigningRoles || isAssigningBranch,
     isRolesLoading,
     branches,
+    provinces,
+    wards,
+    isProvincesLoading,
+    isProvincesError,
+    isWardsLoading,
+    isWardsError,
     values: formValues,
     onBack: () => {
       navigate(ROUTES.OWNER.STAFF);
     },
     onChange: handleChange,
+    onProvinceChange: handleProvinceChange,
+    onWardChange: handleWardChange,
     onGeneratePassword: () => {
       handleChange(
         'password',

@@ -29,26 +29,26 @@ const getTenantStatusLabel = (status: string): string => {
 };
 
 /**
- * Lưới tổng quan dashboard admin gồm metric, tenant gần đây, invoice cần xử lý và phân bổ plan.
+ * Lưới tổng quan dashboard admin gồm metric, khách hàng gần đây, invoice cần xử lý và phân bổ plan.
  */
 export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
   const metrics = [
     {
-      title: 'Tổng tenant',
+      title: 'Tổng khách hàng',
       value: formatNumber(overview.totalTenants),
-      helper: `${formatNumber(overview.activeTenants)} tenant đang hoạt động`,
+      helper: `${formatNumber(overview.activeTenants)} khách hàng đang hoạt động`,
       icon: Building2,
       tone: 'brand' as const,
     },
     {
-      title: 'Tenant active',
+      title: 'Khách hàng hoạt động',
       value: formatNumber(overview.activeTenants),
       helper: 'Đang sử dụng hệ thống',
       icon: Users,
       tone: 'success' as const,
     },
     {
-      title: 'Tenant tạm khóa',
+      title: 'Khách hàng tạm khóa',
       value: formatNumber(overview.suspendedTenants),
       helper: 'Cần theo dõi hoặc xử lý billing',
       icon: AlertTriangle,
@@ -74,15 +74,15 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
       <section className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
         <AdminDataTableShell>
           <div className="border-b border-admin-gray-200 px-5 py-4">
-            <h2 className="text-base font-semibold text-admin-gray-900">Tenant mới gần đây</h2>
+            <h2 className="text-base font-semibold text-admin-gray-900">Khách hàng mới gần đây</h2>
             <p className="mt-1 text-sm text-admin-gray-500">
-              5 tenant mới nhất trong hệ thống SaaS.
+              5 khách hàng mới nhất trong hệ thống SaaS.
             </p>
           </div>
           <table className="w-full min-w-[680px] text-left">
             <thead className="bg-admin-gray-50 text-xs font-semibold uppercase tracking-wide text-admin-gray-500">
               <tr>
-                <th className="px-5 py-3">Tenant</th>
+                <th className="px-5 py-3">Khách hàng</th>
                 <th className="px-5 py-3">Gói</th>
                 <th className="px-5 py-3">Trạng thái</th>
                 <th className="px-5 py-3">Chi nhánh</th>
@@ -156,7 +156,7 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
                 <PackageCheck className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-admin-gray-900">Phân bổ tenant theo gói</h2>
+                <h2 className="text-base font-semibold text-admin-gray-900">Phân bổ khách hàng theo gói</h2>
                 <p className="mt-1 text-sm text-admin-gray-500">
                   {formatNumber(overview.activePlans)} gói active đang được cấu hình.
                 </p>

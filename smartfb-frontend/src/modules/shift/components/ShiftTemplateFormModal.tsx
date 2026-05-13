@@ -8,9 +8,15 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { NumericInput } from '@shared/components/common/NumericInput';
-import { SearchableCombobox, type SearchableComboboxOption } from '@shared/components/common/SearchableCombobox';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@shared/components/ui/select';
 import { useShiftTemplates } from '../hooks/useShiftTemplates';
 import type { LocalTime, ShiftTemplate, CreateShiftTemplatePayload } from '../types/shift.types';
 
@@ -21,44 +27,42 @@ interface ShiftTemplateFormModalProps {
     onSuccess?: () => void;
 }
 
+interface ShiftTimeSelectProps {
+    id: string;
+    value: string;
+    hasError?: boolean;
+    onValueChange: (value: string) => void;
+}
+
+// Giờ mặc định khi owner tạo ca mẫu mới.
 const DEFAULT_START_TIME = '09:00';
 const DEFAULT_END_TIME = '17:00';
+
+// Khoảng cách giữa các mốc giờ làm việc để lịch ca không bị nhập lẻ phút.
 const SHIFT_TIME_STEP_MINUTES = 30;
 
-const getShiftTimeDescription = (hour: number) => {
-    if (hour < 11) {
-        return 'Buổi sáng';
-    }
+// Danh sách giờ hiển thị theo chuẩn Việt Nam 24h `HH:mm`.
+const SHIFT_TIME_OPTIONS = Array.from({ length: (24 * 60) / SHIFT_TIME_STEP_MINUTES }, (_, index) => {
+    const totalMinutes = index * SHIFT_TIME_STEP_MINUTES;
+    const hour = Math.floor(totalMinutes / 60);
+    const minute = totalMinutes % 60;
 
-    if (hour < 14) {
-        return 'Buổi trưa';
-    }
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
 
-    if (hour < 18) {
-        return 'Buổi chiều';
-    }
-
-    return 'Buổi tối';
-};
-
-/**
- * Danh sách mốc giờ cố định để owner chọn ca nhanh và tránh nhập sai format giờ.
- */
-const SHIFT_TIME_OPTIONS: SearchableComboboxOption[] = Array.from(
-    { length: (24 * 60) / SHIFT_TIME_STEP_MINUTES },
-    (_, index) => {
-        const totalMinutes = index * SHIFT_TIME_STEP_MINUTES;
-        const hour = Math.floor(totalMinutes / 60);
-        const minute = totalMinutes % 60;
-        const value = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-
-        return {
-            value,
-            label: value,
-            description: getShiftTimeDescription(hour),
-            keywords: [value.replace(':', ''), `${hour}h${minute ? minute : ''}`],
-        };
-    },
+const ShiftTimeSelect = ({ id, value, hasError = false, onValueChange }: ShiftTimeSelectProps) => (
+    <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger id={id} className={hasError ? 'border-red-500' : ''}>
+            <SelectValue placeholder="Chọn giờ" />
+        </SelectTrigger>
+        <SelectContent className="max-h-72">
+            {SHIFT_TIME_OPTIONS.map((time) => (
+                <SelectItem key={time} value={time}>
+                    {time}
+                </SelectItem>
+            ))}
+        </SelectContent>
+    </Select>
 );
 
 const formatTimeForInput = (time: LocalTime | null | undefined, fallback: string): string => {
@@ -216,13 +220,9 @@ export const ShiftTemplateFormModal = ({
                             <Label htmlFor="shift-start-time">
                                 Giờ bắt đầu <span className="text-red-500">*</span>
                             </Label>
-                            <SearchableCombobox
+                            <ShiftTimeSelect
                                 id="shift-start-time"
                                 value={formData.startTime}
-                                options={SHIFT_TIME_OPTIONS}
-                                placeholder="Chọn giờ bắt đầu"
-                                searchPlaceholder="Tìm giờ, ví dụ 09:00"
-                                emptyMessage="Không tìm thấy mốc giờ phù hợp"
                                 onValueChange={(startTime) => setFormData({ ...formData, startTime })}
                             />
                         </div>
@@ -230,15 +230,11 @@ export const ShiftTemplateFormModal = ({
                             <Label htmlFor="shift-end-time">
                                 Giờ kết thúc <span className="text-red-500">*</span>
                             </Label>
-                            <SearchableCombobox
+                            <ShiftTimeSelect
                                 id="shift-end-time"
                                 value={formData.endTime}
-                                options={SHIFT_TIME_OPTIONS}
-                                placeholder="Chọn giờ kết thúc"
-                                searchPlaceholder="Tìm giờ, ví dụ 17:00"
-                                emptyMessage="Không tìm thấy mốc giờ phù hợp"
+                                hasError={Boolean(errors.endTime)}
                                 onValueChange={(endTime) => setFormData({ ...formData, endTime })}
-                                className={errors.endTime ? 'border-red-500' : ''}
                             />
                             {errors.endTime && <p className="text-xs text-red-500">{errors.endTime}</p>}
                         </div>

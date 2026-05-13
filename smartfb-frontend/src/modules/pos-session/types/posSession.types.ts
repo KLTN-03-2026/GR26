@@ -19,6 +19,23 @@ export interface PosSession {
   cashExpenses: number | null;
 }
 
+// author: Hoàng | date: 2026-05-11 | note: Params phân trang lịch sử ca POS theo contract backend Spring Page.
+export interface PosSessionHistoryParams {
+  /** Trang hiện tại, 0-indexed theo Spring Pageable */
+  page: number;
+  /** Số bản ghi mỗi trang */
+  size: number;
+}
+
+// author: Hoàng | date: 2026-05-11 | note: Response phân trang từ GET /pos-sessions để FE render totalElements/totalPages.
+export interface PosSessionPageResponse {
+  content: PosSession[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 // author: Hoàng | date: 2026-04-30 | note: DTO phản ánh response từ GET /pos-sessions/{id}/payment-breakdown — query live, không lưu DB.
 export interface PosSessionPaymentMethodEntry {
   /** Tên enum phương thức: CASH, VIETQR, MOMO, PAYOS, ZALOPAY */

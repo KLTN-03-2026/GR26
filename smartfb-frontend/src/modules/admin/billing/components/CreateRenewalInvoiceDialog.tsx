@@ -29,7 +29,7 @@ interface CreateRenewalInvoiceDialogProps {
 }
 
 /**
- * Dialog tạo hóa đơn gia hạn subscription cho tenant.
+ * Dialog tạo hóa đơn gia hạn subscription cho khách hàng.
  */
 export const CreateRenewalInvoiceDialog = ({
   open,
@@ -69,20 +69,20 @@ export const CreateRenewalInvoiceDialog = ({
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">Tạo hóa đơn gia hạn</DialogTitle>
           <DialogDescription>
-            Tạo invoice UNPAID để theo dõi thanh toán subscription của tenant.
+            Tạo invoice UNPAID để theo dõi thanh toán subscription của khách hàng.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="invoice-tenant">Tenant</Label>
+            <Label htmlFor="invoice-tenant">Khách hàng</Label>
             <select
               id="invoice-tenant"
               value={tenantId}
               onChange={(event) => setTenantId(event.target.value)}
               className="h-10 w-full rounded-md border border-admin-gray-200 bg-white px-3 text-sm text-admin-gray-700 outline-none focus:border-admin-brand-500"
             >
-              {tenants.length === 0 ? <option value="">Chưa có tenant</option> : null}
+              {tenants.length === 0 ? <option value="">Chưa có khách hàng</option> : null}
               {tenants.map((tenant) => (
                 <option key={tenant.id} value={tenant.id}>
                   {tenant.name} - {tenant.email}

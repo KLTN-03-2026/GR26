@@ -3,14 +3,14 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { adminTenantService } from '../services/adminTenantService';
 
 /**
- * Hook lấy chi tiết tenant khi admin mở drawer.
+ * Hook lấy chi tiết khách hàng khi admin mở drawer.
  */
 export const useAdminTenantDetail = (tenantId: string | null) =>
   useQuery({
     queryKey: queryKeys.admin.tenantDetail(tenantId ?? 'unknown'),
     queryFn: () => {
       if (!tenantId) {
-        throw new Error('Thiếu tenantId để tải chi tiết tenant');
+        throw new Error('Thiếu tenantId để tải chi tiết khách hàng');
       }
 
       return adminTenantService.getTenantDetail(tenantId);

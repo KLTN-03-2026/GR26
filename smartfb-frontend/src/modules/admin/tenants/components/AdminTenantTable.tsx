@@ -23,7 +23,7 @@ interface AdminTenantTableProps {
 }
 
 /**
- * Bảng tenant trong khu vực admin SaaS.
+ * Bảng khách hàng trong khu vực admin SaaS.
  */
 export const AdminTenantTable = ({
   tenants,
@@ -37,7 +37,7 @@ export const AdminTenantTable = ({
       <Table className="min-w-[940px]">
         <TableHeader className="bg-admin-gray-50">
           <TableRow className="hover:bg-admin-gray-50">
-            <TableHead className="text-admin-gray-500">Tenant</TableHead>
+            <TableHead className="text-admin-gray-500">Khách hàng</TableHead>
             <TableHead className="text-admin-gray-500">Gói hiện tại</TableHead>
             <TableHead className="text-admin-gray-500">Hết hạn</TableHead>
             <TableHead className="text-admin-gray-500">Chi nhánh</TableHead>

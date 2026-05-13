@@ -43,7 +43,7 @@ export const AdminSidebar = ({ onNavigate }: AdminSidebarProps) => {
           <div className="min-w-0">
             <p className="text-sm font-semibold text-admin-gray-900">Admin SaaS</p>
             <p className="mt-1 text-xs leading-5 text-admin-gray-500">
-              Quản trị tenant, gói dịch vụ và billing toàn hệ thống.
+              Quản trị khách hàng, gói dịch vụ và billing toàn hệ thống.
             </p>
           </div>
         </div>

@@ -12,7 +12,7 @@ import type {
 } from '../types/adminTenant.types';
 
 /**
- * Service quản lý tenant admin.
+ * Service quản lý khách hàng admin.
  * Chỉ gọi API, không chứa logic hiển thị hoặc xử lý state.
  */
 export const adminTenantService = {
