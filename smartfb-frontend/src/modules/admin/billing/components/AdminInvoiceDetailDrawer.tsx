@@ -37,6 +37,8 @@ const getPaymentMethodLabel = (method: string | null | undefined): string => {
     CASH: 'Tiền mặt',
     MOMO: 'MoMo',
     ZALOPAY: 'ZaloPay',
+    VIETQR: 'VietQR',
+    PAYOS: 'PayOS',
   };
   return map[method] ?? method;
 };

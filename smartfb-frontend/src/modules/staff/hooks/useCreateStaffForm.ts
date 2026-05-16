@@ -16,7 +16,10 @@ import {
   buildEmployeeCode,
   buildRandomPassword,
 } from '@modules/staff/utils/staffCredentialGenerator';
-import { getStaffMutationErrorMessage } from '@modules/staff/utils/getStaffMutationErrorMessage';
+import {
+  getStaffMutationErrorField,
+  getStaffMutationErrorMessage,
+} from '@modules/staff/utils/getStaffMutationErrorMessage';
 import { ROUTES } from '@shared/constants/routes';
 import { useToast } from '@shared/hooks/useToast';
 
@@ -41,6 +44,9 @@ export interface CreateStaffFormValues {
 
 type CreateStaffFormErrorField = keyof CreateStaffFormValues | 'employeeCode';
 type CreateStaffFormErrors = Partial<Record<CreateStaffFormErrorField, string>>;
+
+// Tuổi tối thiểu theo chính sách tuyển nhân viên vận hành.
+const MIN_STAFF_AGE = 18;
 
 const getDefaultValues = (branchId = ''): CreateStaffFormValues => ({
   branchId,
@@ -74,6 +80,43 @@ const resolveDefaultBranchId = (
   }
 
   return '';
+};
+
+const parseDateOnly = (value: string): Date | null => {
+  const [year, month, day] = value.split('-').map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsedDate;
+};
+
+const isOlderThanMinimumAge = (dateOfBirth: string): boolean => {
+  const birthDate = parseDateOnly(dateOfBirth);
+
+  if (!birthDate) {
+    return false;
+  }
+
+  const today = new Date();
+  const minimumBirthDate = new Date(
+    today.getFullYear() - MIN_STAFF_AGE,
+    today.getMonth(),
+    today.getDate()
+  );
+
+  return birthDate.getTime() < minimumBirthDate.getTime();
 };
 
 /**
@@ -198,10 +241,16 @@ export const useCreateStaffForm = () => {
       nextErrors.fullName = 'Họ tên là bắt buộc';
     }
 
-    if (!values.phone.trim()) {
+    const normalizedPhone = values.phone.trim();
+
+    if (!normalizedPhone) {
       nextErrors.phone = 'Số điện thoại là bắt buộc';
-    } else if (!/^(0[1-9][0-9]{8,9})$/.test(values.phone)) {
+    } else if (!/^(0[1-9][0-9]{8,9})$/.test(normalizedPhone)) {
       nextErrors.phone = 'Số điện thoại phải có 9-11 số và bắt đầu bằng 0';
+    }
+
+    if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+      nextErrors.email = 'Email không đúng định dạng';
     }
 
     if (!generatedEmployeeCode.trim()) {
@@ -212,7 +261,25 @@ export const useCreateStaffForm = () => {
       nextErrors.hireDate = 'Ngày vào làm là bắt buộc';
     }
 
-    if (values.password && values.password.trim().length < 8) {
+    if (positions.length === 0) {
+      nextErrors.positionId = 'Chưa có chức vụ đang hoạt động để gán cho nhân viên';
+    } else if (!values.positionId.trim()) {
+      nextErrors.positionId = 'Chức vụ là bắt buộc';
+    } else if (!positions.some((position) => position.id === values.positionId)) {
+      nextErrors.positionId = 'Chức vụ đã chọn không hợp lệ, vui lòng chọn lại';
+    }
+
+    if (!values.dateOfBirth) {
+      nextErrors.dateOfBirth = 'Ngày sinh là bắt buộc';
+    } else if (!parseDateOnly(values.dateOfBirth)) {
+      nextErrors.dateOfBirth = 'Ngày sinh không hợp lệ';
+    } else if (!isOlderThanMinimumAge(values.dateOfBirth)) {
+      nextErrors.dateOfBirth = 'Nhân viên phải trên 18 tuổi';
+    }
+
+    if (!values.password.trim()) {
+      nextErrors.password = 'Mật khẩu đăng nhập là bắt buộc';
+    } else if (values.password.trim().length < 8) {
       nextErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
     }
 
@@ -226,12 +293,12 @@ export const useCreateStaffForm = () => {
 
   const buildPayload = (): CreateStaffRequest => {
     const payload: CreateStaffRequest = {
-      fullName: values.fullName,
-      phone: values.phone,
+      fullName: values.fullName.trim(),
+      phone: values.phone.trim(),
     };
 
     if (values.email && values.email.trim()) {
-      payload.email = values.email;
+      payload.email = values.email.trim();
     }
     if (generatedEmployeeCode.trim()) {
       payload.employeeCode = generatedEmployeeCode;
@@ -323,10 +390,16 @@ export const useCreateStaffForm = () => {
 
       navigate(ROUTES.OWNER.STAFF);
     } catch (err: unknown) {
+      const errorMessage = getStaffMutationErrorMessage(err);
+      const errorField = getStaffMutationErrorField(err);
+
+      if (errorField) {
+        setFormErrors((prev) => ({ ...prev, [errorField]: errorMessage }));
+      }
+
       error(
         'Có lỗi xảy ra',
-        getStaffMutationErrorMessage(err) ||
-          'Không thể xử lý thông tin nhân viên, vui lòng thử lại sau'
+        errorMessage || 'Không thể xử lý thông tin nhân viên, vui lòng thử lại sau'
       );
     }
   };

@@ -1,8 +1,4 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { orderService } from '@modules/order/services/orderService';
 import type { OrderListItemResponse, OrderStatus } from '@modules/order/types/order.types';
-import { queryKeys } from '@shared/constants/queryKeys';
 
 // Các trạng thái này xem như order đã kết thúc, không được mở lại từ màn thẻ.
 const CLOSED_ORDER_STATUSES: readonly OrderStatus[] = ['COMPLETED', 'CANCELLED'];
@@ -49,28 +45,4 @@ export const buildOpenOrdersByTableMap = (
 
     return accumulator;
   }, new Map<string, OrderListItemResponse>());
-};
-
-/**
- * Hook trả về map `tableId -> order đang mở` để màn thẻ mở tiếp đúng đơn hiện tại.
- */
-export const useOpenOrdersByTable = () => {
-  const query = useQuery<OrderListItemResponse[]>({
-    queryKey: queryKeys.orders.active,
-    queryFn: async () => {
-      const response = await orderService.getOrders();
-      return filterOpenOrders(response.data);
-    },
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
-
-  const openOrdersByTable = useMemo(() => {
-    return buildOpenOrdersByTableMap(query.data ?? []);
-  }, [query.data]);
-
-  return {
-    ...query,
-    openOrdersByTable,
-  };
 };

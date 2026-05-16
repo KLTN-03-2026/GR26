@@ -48,6 +48,8 @@ public class PaymentController {
     private final ConfirmQRPaymentCommandHandler confirmQRPaymentHandler;
     private final SyncQRPaymentStatusCommandHandler syncQRPaymentStatusHandler;
     private final ManualConfirmQRPaymentCommandHandler manualConfirmQRPaymentHandler;
+    // author: Hoàng | date: 2026-05-16 | note: Hủy QR payment pending để nhân viên quay lại sửa đơn.
+    private final CancelPaymentCommandHandler cancelPaymentCommandHandler;
     private final SearchInvoiceQueryHandler searchInvoiceHandler;
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
@@ -174,6 +176,22 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail("MANUAL_CONFIRM_ERROR", e.getMessage()));
         }
+    }
+
+    /**
+     * API hủy thanh toán QR đang chờ xử lý.
+     * Dùng khi thu ngân đã tạo QR nhưng khách muốn thêm món, hủy món hoặc sửa đơn.
+     *
+     * author: Hoàng | date: 2026-05-16 | note: Không yêu cầu lý do hủy vì đây là thao tác kỹ thuật trước khi sửa đơn.
+     *
+     * POST /api/v1/payments/{paymentId}/cancel
+     */
+    @PostMapping("/{paymentId}/cancel")
+    @PreAuthorize("hasPermission(null, 'PAYMENT_CREATE') or hasRole('CASHIER') or hasRole('BRANCH_MANAGER') or hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<PaymentResponse>> cancelPendingPayment(@PathVariable UUID paymentId) {
+        log.info("Yêu cầu hủy QR payment pending: paymentId={}", paymentId);
+        Payment payment = cancelPaymentCommandHandler.handle(new CancelPaymentCommand(paymentId));
+        return ResponseEntity.ok(ApiResponse.ok(mapToPaymentResponse(payment)));
     }
 
     /**

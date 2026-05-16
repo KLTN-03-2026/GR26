@@ -42,10 +42,10 @@ public class PaymentJpaEntity {
     private BigDecimal amount;
 
     @Column(nullable = false, length = 20)
-    private String method;     // CASH, VIETQR, MOMO, ZALOPAY
+    private String method;     // CASH, VIETQR, MOMO, ZALOPAY, PAYOS
 
     @Column(nullable = false, length = 20)
-    private String status;     // PENDING, COMPLETED, FAILED, REFUNDED
+    private String status;     // PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
 
     @Column(length = 255)
     private String transactionId;

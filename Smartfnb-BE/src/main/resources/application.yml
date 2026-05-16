@@ -142,7 +142,14 @@ ai:
 ##       PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY: lấy từ dashboard.payos.vn
 ##       PAYOS_ENCRYPTION_KEY: Base64 của 32 bytes ngẫu nhiên (openssl rand -base64 32)
 ##         → dùng để mã hoá apiKey + checksumKey trong bảng branch_payment_configs
-##       PAYOS_RETURN_URL / PAYOS_CANCEL_URL: trang FE nhận kết quả sau khi thanh toán
+##       PAYOS_RETURN_URL / PAYOS_CANCEL_URL: trang FE nhận kết quả sau khi thanh toán (POS)
+## author: Hoàng | date: 2026-05-16
+## note: Thêm payos.billing.* — credentials platform-level cho thanh toán gói subscription.
+##       Tách biệt hoàn toàn với payos.* POS (per-branch), không dùng branchId.
+##       PAYOS_BILLING_CLIENT_ID / PAYOS_BILLING_API_KEY / PAYOS_BILLING_CHECKSUM_KEY:
+##         lấy từ dashboard.payos.vn (có thể dùng chung account hoặc tách account riêng).
+##       PAYOS_BILLING_RETURN_URL: route FE đang nhúng PayOS Embedded Form.
+##       PAYOS_BILLING_CANCEL_URL: route FE đang nhúng PayOS Embedded Form sau khi user huỷ.
 payos:
   client-id: ${PAYOS_CLIENT_ID:your-client-id}
   api-key: ${PAYOS_API_KEY:your-api-key}
@@ -152,3 +159,10 @@ payos:
     secret-key: ${PAYOS_ENCRYPTION_KEY:c21hcnRmbmItZGV2LXBheW9zLWtleS0yMDI2ISEhISE=}
   return-url: ${PAYOS_RETURN_URL:http://localhost:5173/pos/payment?result=success}
   cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/pos/payment?result=cancel}
+  ## author: Hoàng | date: 2026-05-16 | note: Billing PayOS — platform/SaaS level, không dùng branchId.
+  billing:
+    client-id: ${PAYOS_BILLING_CLIENT_ID:${PAYOS_CLIENT_ID:ea46c4c0-9f93-45da-a873-5d1f8af89fed}}
+    api-key: ${PAYOS_BILLING_API_KEY:${PAYOS_API_KEY:61727006-5c23-4d3a-b7bf-c3361d43dc13}}
+    checksum-key: ${PAYOS_BILLING_CHECKSUM_KEY:${PAYOS_CHECKSUM_KEY:0e4c23e2284d58bfdec08cfa58b58fffbb8c324cb4918f25b19051cc3e7c3908}}
+    return-url: ${PAYOS_BILLING_RETURN_URL:http://localhost:5173/owner/packages}
+    cancel-url: ${PAYOS_BILLING_CANCEL_URL:http://localhost:5173/owner/packages}

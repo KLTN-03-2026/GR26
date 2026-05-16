@@ -9,7 +9,6 @@ export {
   OrderPageToolbar,
 } from './order-page';
 export {
-  OrderManagementDetailPanel,
   OrderManagementHeader,
   OrderManagementList,
   OrderStatusBadge,

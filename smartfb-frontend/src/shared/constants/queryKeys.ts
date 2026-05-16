@@ -32,6 +32,8 @@ export const queryKeys = {
     list: (filters?: Record<string, unknown>) => ['branches', 'list', filters] as const,
     detail: (id: string) => ['branches', 'detail', id] as const,
     paymentConfig: (id: string) => ['branches', 'payment-config', id] as const,
+    // Cache gợi ý địa chỉ Geoapify theo text user nhập ở form chi nhánh.
+    addressAutocomplete: (text: string) => ['branches', 'address-autocomplete', text] as const,
   },
 
   // Tables

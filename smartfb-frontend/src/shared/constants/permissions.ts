@@ -18,7 +18,7 @@ export const PERMISSIONS = {
   // Quyền menu và công thức
   MENU_VIEW: 'MENU_VIEW',
   MENU_EDIT: 'MENU_EDIT',
-  // Quyền thẻ gọi khách và máy gọi thẻ
+  // Quyền thẻ và máy gọi thẻ
   TABLE_VIEW: 'TABLE_VIEW',
   TABLE_EDIT: 'TABLE_EDIT',
   // Quyền chi nhánh

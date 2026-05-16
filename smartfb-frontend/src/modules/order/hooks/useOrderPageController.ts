@@ -13,6 +13,7 @@ import type {
   MenuCategoryInfo,
   MenuItem,
 } from '@modules/menu/types/menu.types';
+import { compareMenuNewestFirst } from '@modules/menu/utils';
 import {
   calculateLineTotal,
   getSafeAddons,
@@ -28,7 +29,7 @@ import {
 } from '@modules/order/components/order-page/orderPage.utils';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
-import { getStompClient } from '@lib/socket';
+import { getStompClient, onStompConnected } from '@lib/socket';
 import type {
   DraftOrderMeta,
   OrderAddonSelection,
@@ -185,7 +186,8 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       .map((item) => ({
         ...item,
         price: item.effectivePrice ?? item.branchPrice ?? item.price,
-      }));
+      }))
+      .sort(compareMenuNewestFirst);
   }, [menuQuery.data?.data]);
 
   const menuItemsById = useMemo(() => {
@@ -302,6 +304,10 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   draftOrderRef.current = draftOrder;
   const isSyncingDraftRef = useRef(isSyncingDraft);
   isSyncingDraftRef.current = isSyncingDraft;
+  const tableContextRef = useRef<OrderTableContext | null>(tableContext);
+  tableContextRef.current = tableContext;
+  const nextTableContextRef = useRef(nextTableContext);
+  nextTableContextRef.current = nextTableContext;
   // Ref trỏ tới applySyncedOrder mới nhất — tránh stale closure cho menuItemsById và draftOrder
   const applySyncedOrderRef = useRef(applySyncedOrder);
   applySyncedOrderRef.current = applySyncedOrder;
@@ -336,10 +342,21 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
 
   /**
    * Subscribe WS topic order để đồng bộ cart khi người dùng khác cập nhật cùng đơn hàng.
-   * Chỉ sync khi: WS message có orderId khớp với draftOrder.orderId hiện tại
-   * và user không đang trong quá trình tự sync (tránh race condition ghi đè lẫn nhau).
+   * Chỉ sync khi WS message cùng order đang mở hoặc cùng thẻ đang thao tác.
+   * Trường hợp cùng thẻ rất quan trọng khi user B đã mở bàn trước lúc user A tạo order:
+   * B chưa có draftOrder.orderId nên phải bám theo tableId để nhận order mới.
    *
    * Phụ thuộc vào BE fix: OrderWebSocketEventHandler phải có @EventListener cho OrderUpdatedEvent.
+   */
+  /**
+   * Subscribe WS topic order để đồng bộ cart khi người dùng khác cập nhật cùng đơn hàng.
+   * Chỉ sync khi WS message cùng order đang mở hoặc cùng thẻ đang thao tác.
+   *
+   * FIX: Dùng onStompConnected registry thay vì ghi đè client.onConnect trực tiếp.
+   * Pattern cũ: mỗi hook ghi đè client.onConnect → chỉ hook cuối mount giữ được
+   * callback → User B mở cùng bàn không nhận WS message → giỏ hàng đứng yên.
+   * Pattern mới: onStompConnected cho phép nhiều hook đăng ký song song, tất cả
+   * đều được gọi khi STOMP connect/reconnect thành công.
    */
   useEffect(() => {
     if (!currentBranchId) return;
@@ -351,8 +368,19 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     const handleMessage = (payload: unknown) => {
       const wsOrder = payload as OrderResponse;
 
-      // Chỉ sync khi WS order khớp với order đang mở và không đang trong quá trình tự sync
-      if (!wsOrder?.id || wsOrder.id !== draftOrderRef.current.orderId) return;
+      if (!wsOrder?.id) return;
+
+      const currentOrderId = draftOrderRef.current.orderId;
+      const currentTableId =
+        tableContextRef.current?.tableId?.trim() ||
+        nextTableContextRef.current.tableId?.trim() ||
+        '';
+      const wsTableId = wsOrder.tableId?.trim() ?? '';
+      const isSameOrder = Boolean(currentOrderId && wsOrder.id === currentOrderId);
+      const isSameTable = Boolean(currentTableId && wsTableId && currentTableId === wsTableId);
+
+      // Chỉ sync order liên quan tới màn POS hiện tại và không đang tự gửi request.
+      if (!isSameOrder && !isSameTable) return;
       if (isSyncingDraftRef.current) return;
 
       // Đơn bị huỷ hoặc hoàn tất từ thiết bị khác → xoá cart, không giữ lại items
@@ -367,23 +395,26 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       applySyncedOrderRef.current(wsOrder);
     };
 
-    if (client.connected) {
+    const doSubscribe = () => {
+      subscription?.unsubscribe();
       subscription = client.subscribe(topic, (message) => {
         try { handleMessage(JSON.parse(message.body)); }
         catch { /* bỏ qua parse lỗi */ }
       });
-    } else {
-      const prevOnConnect = client.onConnect;
-      client.onConnect = (frame) => {
-        prevOnConnect?.(frame);
-        subscription = client.subscribe(topic, (message) => {
-          try { handleMessage(JSON.parse(message.body)); }
-          catch { /* bỏ qua parse lỗi */ }
-        });
-      };
+    };
+
+    // Subscribe ngay nếu đã connected
+    if (client.connected) {
+      doSubscribe();
     }
 
-    return () => { subscription?.unsubscribe(); };
+    // Đăng ký để (re)subscribe khi connect/reconnect thành công
+    const unregisterConnect = onStompConnected(doSubscribe);
+
+    return () => {
+      subscription?.unsubscribe();
+      unregisterConnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBranchId]);
 
@@ -401,6 +432,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       // Đọc draftOrder mới nhất từ store khi bắt đầu gửi request,
       // tránh dùng orderId stale nếu WS vừa cập nhật draftOrder trước khi re-render
       const currentOrderId = useOrderStore.getState().draftOrder.orderId;
+      const shouldReplaceRouteWithOrderId = !currentOrderId;
       const response = currentOrderId
         ? await orderService.updateOrder(currentOrderId, {
             tableId,
@@ -418,6 +450,13 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       }
 
       applySyncedOrder(response.data);
+
+      if (shouldReplaceRouteWithOrderId) {
+        // Sau khi tạo order đầu tiên từ bàn trống, đưa orderId lên URL để refresh vẫn restore đúng đơn.
+        const orderSearchParams = buildOrderRouteSearchParams(activeContext, response.data.id);
+        navigate(`${ROUTES.POS_ORDER}?${orderSearchParams.toString()}`, { replace: true });
+      }
+
       toast.success(successMessage);
     } catch {
       toast.error('Không thể đồng bộ đơn hàng sau khi cập nhật món');

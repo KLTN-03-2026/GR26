@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartF&B - Kịch Bản Bảo Vệ Đồ Án</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-sidebar: #1e293b;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            
+            --owner: #22c55e;
+            --owner-bg: rgba(34, 197, 94, 0.1);
+            --staff: #3b82f6;
+            --staff-bg: rgba(59, 130, 246, 0.1);
+            --admin: #a855f7;
+            --admin-bg: rgba(168, 85, 247, 0.1);
+            
+            --code: #f97316;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            height: 60px;
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        #timer {
+            font-variant-numeric: tabular-nums;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success);
+            transition: color 0.3s;
+        }
+
+        .btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover { background: #475569; }
+        .btn-primary { background: var(--staff); }
+        .btn-primary:hover { background: #2563eb; }
+
+        /* PROGRESS BAR */
+        #main-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background: var(--border);
+        }
+        #main-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--owner) 0%, var(--owner) 50%, var(--staff) 50%, var(--staff) 80%, var(--admin) 80%, var(--admin) 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* MAIN LAYOUT */
+        .layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 300px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-search {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-search input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            outline: none;
+        }
+        .sidebar-search input:focus {
+            border-color: var(--staff);
+        }
+
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-card-hover);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--staff-bg);
+            color: var(--staff);
+            border-left: 3px solid var(--staff);
+        }
+
+        .step-link {
+            padding: 8px 15px 8px 30px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+        .step-link:hover { background: var(--bg-card); color: white; }
+        .step-link.active { background: rgba(255,255,255,0.05); color: white; font-weight: 600; }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .badge-owner { background: var(--owner-bg); color: var(--owner); }
+        .badge-staff { background: var(--staff-bg); color: var(--staff); }
+        .badge-admin { background: var(--admin-bg); color: var(--admin); }
+        .badge-core { border: 1px solid var(--danger); color: var(--danger); }
+        .badge-opt { border: 1px solid var(--text-muted); color: var(--text-muted); }
+
+        /* CONTENT AREA */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .tab-content.active { display: block; }
+
+        /* TYPOGRAPHY & CARDS */
+        h1 { font-size: 2rem; margin-bottom: 20px; color: white; }
+        h2 { font-size: 1.5rem; margin-bottom: 15px; margin-top: 30px; color: white; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        h3 { font-size: 1.2rem; margin-bottom: 10px; color: var(--staff); }
+        p { line-height: 1.6; margin-bottom: 15px; color: #cbd5e1; }
+        ul, ol { margin-bottom: 15px; padding-left: 20px; line-height: 1.6; color: #cbd5e1; }
+        li { margin-bottom: 8px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .step-card {
+            position: relative;
+            border-left: 4px solid var(--border);
+        }
+        .step-card.owner-step { border-left-color: var(--owner); }
+        .step-card.staff-step { border-left-color: var(--staff); }
+        .step-card.admin-step { border-left-color: var(--admin); }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .step-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-meta {
+            display: flex;
+            gap: 10px;
+        }
+
+        .step-detail {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        .step-detail-label { color: var(--text-muted); font-weight: 600; }
+        .step-detail-value { color: white; }
+        .step-detail-value code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--code);
+            font-family: monospace;
+        }
+
+        .speech-bubble {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--staff);
+            padding: 12px 15px;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            color: #93c5fd;
+        }
+
+        /* DATA TABLES */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background: rgba(0,0,0,0.2); font-weight: 600; color: white; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .copy-btn:hover { background: var(--bg-card-hover); color: white; }
+
+        /* CHECKLIST */
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .check-item:hover { background: rgba(255,255,255,0.05); }
+        .check-item.done { opacity: 0.7; }
+        .check-item.done span { text-decoration: line-through; color: var(--text-muted); }
+        input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; cursor: pointer; }
+
+        /* PRESENTER MODE */
+        body.presenter-mode aside {
+            transform: translateX(-100%);
+            position: absolute;
+        }
+        body.presenter-mode main {
+            padding: 40px 10vw;
+        }
+        body.presenter-mode .step-card {
+            font-size: 1.2rem;
+            padding: 40px;
+        }
+        body.presenter-mode h1, body.presenter-mode h2 { display: none; }
+        body.presenter-mode .step-detail { grid-template-columns: 150px 1fr; font-size: 1.2rem; line-height: 1.8; gap: 20px; }
+        body.presenter-mode .speech-bubble { font-size: 1.3rem; padding: 20px; margin-top: 30px; }
+        
+        .presenter-nav {
+            display: none;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        body.presenter-mode .presenter-nav { display: flex; }
+
+        /* TOAST */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 9999;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.danger { border-left: 4px solid var(--danger); }
+        .toast.success { border-left: 4px solid var(--success); }
+
+        .hidden { display: none !important; }
+        
+        /* Status button inside step card */
+        .status-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+        .status-btn.done { background: rgba(16, 185, 129, 0.2); color: var(--success); border-color: var(--success); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <span>🚀 SmartF&B</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted)">Demo Script</span>
+        </div>
+        
+        <div class="timer-container">
+            <span id="timer">00:00</span>
+            <button class="btn" onclick="toggleTimer()" id="btn-timer-toggle">▶ Bắt đầu</button>
+            <button class="btn" onclick="resetTimer()">🔄</button>
+        </div>
+
+        <div>
+            <button class="btn btn-primary" onclick="togglePresenterMode()" id="btn-presenter">
+                📺 Chế độ Trình Chiếu (P)
+            </button>
+        </div>
+        <div id="main-progress"><div id="main-progress-bar"></div></div>
+    </header>
+
+    <div class="layout">
+        <aside id="sidebar">
+            <div class="sidebar-search">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm bước..." onkeyup="searchSteps()">
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="switchTab('tab-story')">📖 Câu chuyện dẫn dắt</div>
+                <div class="nav-item" onclick="switchTab('tab-data')">🔑 Data & Tài khoản</div>
+                
+                <div class="nav-item active" onclick="switchTab('tab-script')">📝 Kịch bản Demo</div>
+                <div id="step-links-container">
+                    <!-- JS sẽ render link tới từng bước ở đây -->
+                </div>
+
+                <div class="nav-item" onclick="switchTab('tab-checklist')">✅ Checklist chuẩn bị</div>
+                <div class="nav-item" onclick="switchTab('tab-troubleshoot')">🚑 Xử lý sự cố</div>
+            </div>
+        </aside>
+
+        <main id="main-content">
+            
+            <!-- TAB: CÂU CHUYỆN -->
+            <div id="tab-story" class="tab-content">
+                <h1>📖 Câu chuyện dẫn dắt Demo</h1>
+                <div class="card">
+                    <p>Để buổi bảo vệ không bị khô khan và mang tính "show API", chúng ta sẽ kể một câu chuyện xuyên suốt về quá trình khởi nghiệp của anh Lee Sang-hyeok (Faker).</p>
+                    <p><strong>Bối cảnh:</strong> Sau khi giải nghệ, anh Lee quyết định mở chuỗi cà phê mang tên <strong>Coffee House</strong>. Anh đã tìm hiểu và quyết định mua giải pháp SaaS SmartF&B để quản lý toàn diện.</p>
+                    <hr style="border:0; border-top: 1px solid var(--border); margin: 15px 0;">
+                    <ul>
+                        <li><span class="badge badge-owner">Phần 1 - Anh Lee (OWNER):</span> Anh Lee đăng nhập hệ thống để thiết lập cơ ngơi. Anh vào xem tổng quan các chi nhánh (SKT T1, GENG, HLE), thêm món đồ uống anh yêu thích "Cà phê sữa đá" vào thực đơn. Cuối cùng, anh tuyển dụng Oner làm Thu ngân và Peyz làm Barista, tiến hành cấp quyền trên hệ thống.</li>
+                        <li><span class="badge badge-staff">Phần 2 - Oner & Peyz (STAFF):</span> Oner (Thu ngân) đăng nhập, với quyền được cấp, cậu mở màn hình POS, nhận khách ở Bàn 4, order ly Cà phê sữa đá và thanh toán cực mượt mà. Trong khi đó, Peyz (Barista) thử tò mò vào xem màn hình POS nhưng lập tức bị chặn do RBAC, hệ thống chỉ cho phép Peyz xem danh sách Order để pha chế.</li>
+                        <li><span class="badge badge-admin">Phần 3 - Nền tảng (ADMIN):</span> Hệ thống chuyển góc nhìn về phía công ty cung cấp phần mềm. Admin hệ thống kiểm tra danh sách khách hàng, thấy Coffee House đang hoạt động tốt và kiểm tra trạng thái gói dịch vụ của anh Lee.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TAB: DATA & ACCOUNT -->
+            <div id="tab-data" class="tab-content">
+                <h1>🔑 Tài khoản & Dữ liệu Demo</h1>
+                
+                <h2>1. Tài khoản (Login)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Actor</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-owner">OWNER</span></td>
+                            <td><code>hoang2312004@gmail.com</code> <button class="copy-btn" onclick="copyToClipboard('hoang2312004@gmail.com')">Copy</button></td>
+                            <td><code>12345678</code> <button class="copy-btn" onclick="copyToClipboard('12345678')">Copy</button></td>
+                            <td>Lee Sang-hyeok - Chủ chuỗi Coffee House</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-staff">STAFF (Full)</span></td>
+                            <td><code>onert1@gmail.com</code> <button class="copy-btn" onclick="copyToClipboard('onert1@gmail.com')">Copy</button></td>
+                            <td><code>12345678</code> <button class="copy-btn" onclick="copyToClipboard('12345678')">Copy</button></td>
+                            <td>Oner - Thu ngân (CASHIER), có quyền POS</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-staff">STAFF (Hạn chế)</span></td>
+                            <td><code>peyzt1@gmail.com</code> <button class="copy-btn" onclick="copyToClipboard('peyzt1@gmail.com')">Copy</button></td>
+                            <td><code>12345678</code> <button class="copy-btn" onclick="copyToClipboard('12345678')">Copy</button></td>
+                            <td>Peyz - Barista (BARISTA), Không có quyền tạo/thanh toán đơn</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-admin">ADMIN</span></td>
+                            <td><code>admin@smartfnb.com</code> <button class="copy-btn" onclick="copyToClipboard('admin@smartfnb.com')">Copy</button></td>
+                            <td><code>12345678</code> <button class="copy-btn" onclick="copyToClipboard('12345678')">Copy</button></td>
+                            <td>System Admin quản lý nền tảng</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>2. Dữ liệu sẽ thao tác</h2>
+                <div class="card">
+                    <ul>
+                        <li><strong>Chi nhánh thao tác chính:</strong> SKT T1</li>
+                        <li><strong>Bàn sẽ nhận khách:</strong> Bàn4 hoặc Bàn6 (Trạng thái đang AVAILABLE)</li>
+                        <li><strong>Món sẽ order:</strong> Cà phê sữa đá (35,000 VND), Đen đá (29,000 VND)</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-left: 4px solid var(--warning)">
+                    <h3 style="color: var(--warning)">⚠️ Lưu ý Dữ liệu:</h3>
+                    <p>Dữ liệu này được lấy trực tiếp từ Database hiện tại. Đã kiểm tra tính toàn vẹn (Có đủ Owner, Staff, Menu, Bàn). Không cần chạy thêm Script SQL nào.</p>
+                </div>
+            </div>
+
+            <!-- TAB: SCRIPT DEMO -->
+            <div id="tab-script" class="tab-content active">
+                <h1>📝 Kịch bản Demo Chi Tiết</h1>
+                <div id="steps-container">
+                    <!-- Script Steps will be injected here by JS -->
+                </div>
+            </div>
+
+            <!-- TAB: CHECKLIST -->
+            <div id="tab-checklist" class="tab-content">
+                <h1>✅ Checklist trước khi lên bảng</h1>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span id="checklist-progress" style="font-weight: bold; color: var(--success);">0/8 hoàn thành</span>
+                        <button class="btn" onclick="resetChecklist()">Reset</button>
+                    </div>
+                    
+                    <div class="check-item" onclick="toggleCheck(this, 'chk1')">
+                        <input type="checkbox" id="chk1">
+                        <div>
+                            <strong>Backend Server đang chạy:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Kiểm tra port 8080. Đảm bảo DB Postgres và Redis (Docker) đang up.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="check-item" onclick="toggleCheck(this, 'chk2')">
+                        <input type="checkbox" id="chk2">
+                        <div>
+                            <strong>Frontend Server đang chạy:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Chạy lệnh <code>npm run dev</code>, mở URL ở chế độ Fullscreen F11.</p>
+                        </div>
+                    </div>
+
+                    <div class="check-item" onclick="toggleCheck(this, 'chk3')">
+                        <input type="checkbox" id="chk3">
+                        <div>
+                            <strong>Chuẩn bị sẵn 3 Trình duyệt / Profile:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Dùng Chrome (Owner), Firefox (Staff Oner), Edge (Staff Peyz) để không bị đụng JWT Session giữa chừng.</p>
+                        </div>
+                    </div>
+
+                    <div class="check-item" onclick="toggleCheck(this, 'chk4')">
+                        <input type="checkbox" id="chk4">
+                        <div>
+                            <strong>Đăng nhập sẵn tài khoản (Tuỳ chọn nhưng khuyên dùng):</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Log in sẵn các tab và để nguyên, lúc demo chỉ việc switch tab để tiết kiệm thời gian gõ pass.</p>
+                        </div>
+                    </div>
+
+                    <div class="check-item" onclick="toggleCheck(this, 'chk5')">
+                        <input type="checkbox" id="chk5">
+                        <div>
+                            <strong>Kiểm tra Bàn4 ở nhánh SKT T1 đang trống:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Nếu bàn đang đỏ (Occupied), thanh toán dứt điểm đơn cũ cho trống bàn.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="check-item" onclick="toggleCheck(this, 'chk6')">
+                        <input type="checkbox" id="chk6">
+                        <div>
+                            <strong>Kiểm tra Tồn kho món Cà phê sữa đá:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Vào mục Inventory, đảm bảo nguyên liệu pha cà phê chưa bị âm/hết hạn để order không bị throw exception "Hết hàng".</p>
+                        </div>
+                    </div>
+
+                    <div class="check-item" onclick="toggleCheck(this, 'chk7')">
+                        <input type="checkbox" id="chk7">
+                        <div>
+                            <strong>Kiểm tra Gói dịch vụ Tenant Coffee House:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Đảm bảo trạng thái đang ACTIVE, nếu đang bị PENDING_PAYMENT màn hình Staff sẽ bị lock bởi <code>SubscriptionGate</code>.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="check-item" onclick="toggleCheck(this, 'chk8')">
+                        <input type="checkbox" id="chk8">
+                        <div>
+                            <strong>Tắt Zalo, Slack, Thông báo hệ thống:</strong>
+                            <p style="font-size: 0.9rem; margin-top: 5px; margin-bottom: 0;">Tránh tin nhắn nhảy lên màn hình khi đang trình chiếu.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: TROUBLESHOOT -->
+            <div id="tab-troubleshoot" class="tab-content">
+                <h1>🚑 Xử lý tình huống bất ngờ</h1>
+                <div class="card">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%">Tình huống</th>
+                                <th style="width: 30%">Dấu hiệu nhận ra</th>
+                                <th style="width: 45%">Cách xử lý (&lt; 15s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>1. Quên mật khẩu / Sai acc</strong></td>
+                                <td>Báo Invalid credentials</td>
+                                <td>Không cố gõ lại nhiều lần. Copy trực tiếp từ Tab "Data" của file này paste vào.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2. Order báo lỗi "Hết hàng"</strong></td>
+                                <td>Toast hiện lỗi InsufficientStockException</td>
+                                <td>Mỉm cười: <em>"Hệ thống báo nguyên liệu món này đã hết, đây chính là tính năng chống xuất kho khống. Em xin đổi sang món Đen đá."</em></td>
+                            </tr>
+                            <tr>
+                                <td><strong>3. Staff bị khoá toàn màn hình</strong></td>
+                                <td>Thấy modal "Vui lòng gia hạn gói"</td>
+                                <td>Đó là SubscriptionGate. Mở nhanh tab Admin -> Set Tenant về ACTIVE hoặc nói: <em>"Đây là tính năng khóa SaaS tự động khi hết hạn."</em></td>
+                            </tr>
+                            <tr>
+                                <td><strong>4. Lố giờ (báo động đỏ)</strong></td>
+                                <td>Timer góc nhấp nháy đỏ (>10 phút)</td>
+                                <td>Nhảy cóc (Skip) các bước dán nhãn [OPTIONAL]. Chuyển thẳng sang kết luận.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>5. Thầy cô hỏi ngang</strong></td>
+                                <td>Hội đồng ngắt lời yêu cầu xem code</td>
+                                <td>Bấm "Pause timer". Thưa thầy cô chờ em chiếu file, sau đó quay lại. (File này giữ state).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>6. Màn hình trắng / BE chết</strong></td>
+                                <td>Network Error / Trắng trơn</td>
+                                <td>Bấm F5. Nếu vẫn lỗi, nói: <em>"Môi trường local Docker vừa bị sleep, xin thầy cô 5s."</em> Bấm lệnh <code>docker restart smartfnb-app</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>7. Peyz (Barista) lại ấn được Order</strong></td>
+                                <td>Lỗi hiển thị button không bị ẩn</td>
+                                <td>Nhanh trí giải thích: <em>"Button hiện nhưng khi click BE sẽ chặn."</em> Click vào để show lỗi HTTP 403 Forbidden của CustomPermissionEvaluator.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // DATA KỊCH BẢN
+        const SCRIPT_DATA = [
+            {
+                id: "step-1",
+                actor: "OWNER",
+                title: "Đăng nhập & Xem Dashboard",
+                type: "CORE",
+                time: "~30s",
+                screen: "/login -> /owner/dashboard",
+                action: "Đăng nhập với email hoang2312004@gmail.com, mật khẩu 12345678. Chờ redirect vào Dashboard Chủ quán.",
+                data: "Tenant: Coffee House, User: Lee Sang-hyeok",
+                result: "Hiển thị biểu đồ doanh thu tổng quan của tất cả chi nhánh.",
+                speech: "Dạ em xin bắt đầu với luồng Chủ nhà hàng. Anh Lee mở chuỗi Coffee House, khi đăng nhập vào hệ thống SaaS, đập vào mắt là Dashboard tổng quan hiển thị doanh thu đa chi nhánh hoàn toàn realtime."
+            },
+            {
+                id: "step-2",
+                actor: "OWNER",
+                title: "Kiểm tra hệ thống chi nhánh",
+                type: "CORE",
+                time: "~45s",
+                screen: "Menu trái -> Quản lý chi nhánh",
+                action: "Click vào danh sách chi nhánh, hệ thống liệt kê các chi nhánh hiện tại.",
+                data: "Chi nhánh: SKT T1, GENG, HLE.",
+                result: "List 3 chi nhánh đang hoạt động. Có thể click vào SKT T1 để xem bản đồ/địa chỉ.",
+                speech: "Vì là hệ thống Multi-tenant, một chủ có thể sở hữu nhiều chi nhánh. Ở đây anh Lee đang quản lý 3 cơ sở là SKT T1, GENG và HLE. Mọi data lát nữa sẽ được tách biệt theo từng chi nhánh."
+            },
+            {
+                id: "step-3",
+                actor: "OWNER",
+                title: "Thêm món ăn / Ghi đè giá",
+                type: "OPTIONAL",
+                time: "~45s",
+                screen: "Quản lý thực đơn",
+                action: "Vào thực đơn, chọn món 'Cà phê sữa đá'.",
+                data: "Món: Cà phê sữa đá - Giá gốc 35,000.",
+                result: "Show UI quản lý món ăn (ảnh, giá, phân loại SELLABLE).",
+                speech: "Để phục vụ kinh doanh, dữ liệu Menu được quản lý tập trung ở cấp độ Chuỗi, nhưng vẫn cho phép các chi nhánh ghi đè giá riêng biệt tùy theo khu vực."
+            },
+            {
+                id: "step-4",
+                actor: "OWNER",
+                title: "Tuyển dụng & Phân quyền RBAC",
+                type: "CORE",
+                time: "~60s",
+                screen: "Quản lý nhân viên -> Chức vụ",
+                action: "Mở danh sách nhân sự, chỉ ra 2 nhân viên Oner (Cashier) và Peyz (Barista). Mở sang bảng Role/Permission để show ma trận quyền.",
+                data: "Role: CASHIER (có quyền ORDER_CREATE), BARISTA (không có quyền).",
+                result: "Hiển thị màn hình checkbox cấp quyền cho từng Role.",
+                speech: "Đây là điểm nhấn về bảo mật của dự án. Hệ thống áp dụng Dynamic RBAC. Anh Lee phân quyền cho Oner làm Thu ngân được phép tạo đơn, nhưng Peyz làm Barista thì chỉ được phép xem để pha chế."
+            },
+            {
+                id: "step-5",
+                actor: "STAFF",
+                title: "Thu ngân đăng nhập & Nhận khách",
+                type: "CORE",
+                time: "~60s",
+                screen: "Browser khác -> /login -> Màn hình POS",
+                action: "Đăng nhập bằng onert1@gmail.com (CASHIER). Bấm vào mục POS Order, chọn Bàn4.",
+                data: "Bàn4 - Trạng thái: Trống (AVAILABLE)",
+                result: "Bàn đổi màu thành Đang sử dụng (OCCUPIED), nhảy sang giao diện chọn món.",
+                speech: "Bây giờ chuyển góc nhìn sang máy tính tại quầy. Bạn Oner đăng nhập vào, do là Thu Ngân nên được mở cổng POS. Có khách vào Bàn 4, Oner lập tức tạo đơn."
+            },
+            {
+                id: "step-6",
+                actor: "STAFF",
+                title: "Thu ngân tạo đơn & Thanh toán",
+                type: "CORE",
+                time: "~45s",
+                screen: "POS Order -> Thanh toán",
+                action: "Add món Cà phê sữa đá (35k). Bấm 'Thanh toán' -> Chọn phương thức Tiền mặt -> Xác nhận.",
+                data: "Total: 35,000 VND. Trạng thái sau cùng: COMPLETED.",
+                result: "Đơn hàng chuyển COMPLETED. Bàn 4 được giải phóng lại thành Trống.",
+                speech: "Bạn Oner order 1 ly Cà phê sữa đá. Ở dưới BE, hệ thống đang kiểm tra tự động xem tồn kho nguyên liệu có đủ không. Khi ấn thanh toán, hệ thống chốt Snapshot hóa đơn bất biến và kích hoạt thuật toán trừ kho FIFO."
+            },
+            {
+                id: "step-7",
+                actor: "STAFF",
+                title: "Barista kiểm tra hạn chế quyền",
+                type: "CORE",
+                time: "~30s",
+                screen: "Tab Ẩn danh -> /login",
+                action: "Đăng nhập acc peyzt1@gmail.com (BARISTA).",
+                data: "Role: BARISTA",
+                result: "Giao diện thanh điều hướng mất hẳn nút 'Tạo đơn' và 'Thanh toán', chỉ còn 'Quản lý đơn' (View only).",
+                speech: "Đồng thời trong bếp, bạn Peyz đăng nhập. Thầy cô có thể thấy màn hình đã bị giấu toàn bộ nút Tạo đơn do bạn không có quyền. Nếu cố tình gọi API tạo đơn qua Postman, hệ thống Spring Security cũng chặn đứng ở lớp Controller."
+            },
+            {
+                id: "step-8",
+                actor: "OWNER",
+                title: "Xem biến động Báo cáo",
+                type: "OPTIONAL",
+                time: "~30s",
+                screen: "Quay lại Tab Owner -> Báo cáo doanh thu",
+                action: "F5 hoặc mở lại tab Owner, xem Báo cáo doanh thu trong ngày.",
+                data: "+ 35,000 VND từ SKT T1.",
+                result: "Biểu đồ cập nhật thêm doanh thu 35k vừa bán.",
+                speech: "Quay lại máy của Chủ quán ở nhà, báo cáo doanh thu lập tức nhảy thêm 35k. Hệ thống pre-aggregate dữ liệu giúp báo cáo load cực nhanh kể cả khi có hàng triệu đơn."
+            },
+            {
+                id: "step-9",
+                actor: "ADMIN",
+                title: "Admin quản lý Nền tảng",
+                type: "CORE",
+                time: "~45s",
+                screen: "Logout -> Đăng nhập admin@smartfnb.com",
+                action: "Vào Admin Portal -> Mục Quản lý Khách hàng (Tenants).",
+                data: "Tenant Coffee House - Gói Pro - Active.",
+                result: "Hiển thị danh sách các chủ nhà hàng đang xài phần mềm.",
+                speech: "Phần cuối cùng, với tư cách là công ty cung cấp phần mềm, tài khoản Admin đăng nhập sẽ thấy được toàn bộ các Tenant. Nếu Tenant nào chưa đóng tiền, Admin chỉ cần Suspend là toàn bộ nhân viên của họ lập tức bị khóa tính năng."
+            }
+        ];
+
+        // LOGIC & STATE
+        let activeTab = 'tab-script';
+        let isPresenterMode = false;
+        let currentStepIndex = 0;
+        
+        // Timer logic
+        let timerInterval;
+        let seconds = 0;
+        let isRunning = false;
+        let toastShown10m = false;
+        let toastShown13m = false;
+
+        function init() {
+            renderSidebarLinks();
+            renderSteps();
+            updateProgress();
+            
+            // Handle keyboard navigation for presenter mode
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'p' || e.key === 'P') togglePresenterMode();
+                if (isPresenterMode) {
+                    if (e.key === 'ArrowRight' || e.key === ' ') {
+                        e.preventDefault();
+                        nextStep();
+                    }
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        prevStep();
+                    }
+                }
+            });
+
+            // Load checklist states
+            document.querySelectorAll('.check-item input').forEach(input => {
+                let saved = localStorage.getItem('chk_' + input.id);
+                if (saved === 'true') {
+                    input.checked = true;
+                    input.parentElement.classList.add('done');
+                }
+                input.addEventListener('click', (e) => e.stopPropagation());
+                input.addEventListener('change', updateChecklistProgress);
+            });
+            updateChecklistProgress();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item, .step-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            if(tabId.startsWith('tab-')) {
+                let navItem = Array.from(document.querySelectorAll('.nav-item')).find(el => el.getAttribute('onclick') === `switchTab('${tabId}')`);
+                if(navItem) navItem.classList.add('active');
+            }
+            activeTab = tabId;
+        }
+
+        // RENDER STEPS
+        function renderSidebarLinks() {
+            const container = document.getElementById('step-links-container');
+            container.innerHTML = '';
+            SCRIPT_DATA.forEach((step, index) => {
+                let icon = step.actor === 'OWNER' ? '🟢' : (step.actor === 'STAFF' ? '🔵' : '🟣');
+                container.innerHTML += `<div class="step-link" id="link-${index}" onclick="goToStep(${index})">${icon} Bước ${index + 1}: ${step.title}</div>`;
+            });
+        }
+
+        function renderSteps() {
+            const container = document.getElementById('steps-container');
+            container.innerHTML = '';
+            
+            SCRIPT_DATA.forEach((step, index) => {
+                let actorClass = step.actor.toLowerCase() + '-step';
+                let badgeClass = 'badge-' + step.actor.toLowerCase();
+                let typeBadge = step.type === 'CORE' ? 'badge-core' : 'badge-opt';
+                
+                // Get saved status
+                let statusStr = localStorage.getItem('step_status_' + index) || 'Chưa làm';
+                let statusClass = statusStr === 'Đã xong' ? 'done' : '';
+
+                let html = `
+                    <div class="card step-card ${actorClass}" id="step-card-${index}">
+                        <div class="step-header">
+                            <div class="step-title">
+                                Bước ${index + 1}: ${step.title}
+                                <button class="status-btn ${statusClass}" onclick="toggleStatus(this, ${index})">${statusStr}</button>
+                            </div>
+                            <div class="step-meta">
+                                <span class="badge ${badgeClass}">${step.actor}</span>
+                                <span class="badge ${typeBadge}">${step.type}</span>
+                                <span class="badge" style="background:#475569; color:white;">${step.time}</span>
+                            </div>
+                        </div>
+
+                        <div class="step-detail">
+                            <div class="step-detail-label">Màn hình:</div>
+                            <div class="step-detail-value"><code>${step.screen}</code></div>
+                            
+                            <div class="step-detail-label">Hành động:</div>
+                            <div class="step-detail-value">${step.action}</div>
+                            
+                            <div class="step-detail-label">Dữ liệu:</div>
+                            <div class="step-detail-value"><strong style="color:var(--success)">${step.data}</strong></div>
+                            
+                            <div class="step-detail-label">Kết quả:</div>
+                            <div class="step-detail-value">${step.result}</div>
+                        </div>
+
+                        <div class="speech-bubble">
+                            " ${step.speech} "
+                        </div>
+                        
+                        <div class="presenter-nav">
+                            <button class="btn" onclick="prevStep()" ${index === 0 ? 'disabled' : ''}>← Bước trước</button>
+                            <span style="color:var(--text-muted)">Bước ${index + 1} / ${SCRIPT_DATA.length}</span>
+                            <button class="btn btn-primary" onclick="nextStep()" ${index === SCRIPT_DATA.length - 1 ? 'disabled' : ''}>Bước tiếp theo →</button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // NAVIGATION
+        function goToStep(index) {
+            switchTab('tab-script');
+            currentStepIndex = index;
+            
+            // Highlight link
+            document.querySelectorAll('.step-link').forEach(el => el.classList.remove('active'));
+            document.getElementById('link-' + index).classList.add('active');
+            
+            // Scroll to card
+            if(!isPresenterMode) {
+                document.getElementById('step-card-' + index).scrollIntoView({behavior: 'smooth', block: 'center'});
+            } else {
+                // In presenter mode, hide all cards except current
+                document.querySelectorAll('.step-card').forEach((el, i) => {
+                    el.classList.toggle('hidden', i !== index);
+                });
+            }
+            updateProgress();
+        }
+
+        function nextStep() {
+            if(currentStepIndex < SCRIPT_DATA.length - 1) {
+                // Auto mark current as done if not already
+                let btn = document.querySelector(`#step-card-${currentStepIndex} .status-btn`);
+                if(btn && btn.innerText === 'Chưa làm') toggleStatus(btn, currentStepIndex);
+                goToStep(currentStepIndex + 1);
+            }
+        }
+
+        function prevStep() {
+            if(currentStepIndex > 0) goToStep(currentStepIndex - 1);
+        }
+
+        function togglePresenterMode() {
+            isPresenterMode = !isPresenterMode;
+            if(isPresenterMode) {
+                document.body.classList.add('presenter-mode');
+                document.getElementById('btn-presenter').innerHTML = '❌ Thoát Trình Chiếu (P)';
+                switchTab('tab-script');
+                goToStep(currentStepIndex); // Force hide other cards
+            } else {
+                document.body.classList.remove('presenter-mode');
+                document.getElementById('btn-presenter').innerHTML = '📺 Chế độ Trình Chiếu (P)';
+                document.querySelectorAll('.step-card').forEach(el => el.classList.remove('hidden'));
+                goToStep(currentStepIndex); // Scroll back to it
+            }
+        }
+
+        // TIMER
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer-toggle');
+            if(isRunning) {
+                clearInterval(timerInterval);
+                btn.innerHTML = '▶ Bắt đầu';
+            } else {
+                timerInterval = setInterval(updateTimerDisplay, 1000);
+                btn.innerHTML = '⏸ Tạm dừng';
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            seconds = 0;
+            isRunning = false;
+            toastShown10m = false;
+            toastShown13m = false;
+            document.getElementById('btn-timer-toggle').innerHTML = '▶ Bắt đầu';
+            document.getElementById('timer').style.color = 'var(--success)';
+            document.getElementById('timer').innerText = '00:00';
+        }
+
+        function updateTimerDisplay() {
+            seconds++;
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            let timerEl = document.getElementById('timer');
+            timerEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            
+            if (seconds >= 480 && seconds < 600) { // 8-10 mins
+                timerEl.style.color = 'var(--warning)';
+            } else if (seconds >= 600) { // > 10 mins
+                timerEl.style.color = 'var(--danger)';
+                if (seconds % 2 === 0) timerEl.style.opacity = '0.7';
+                else timerEl.style.opacity = '1';
+                
+                if(!toastShown10m) {
+                    showToast("⚠️ Đã dùng 10 phút — bạn đang dùng thời gian buffer!", "warning");
+                    toastShown10m = true;
+                }
+                
+                if(seconds >= 780 && !toastShown13m) { // 13 mins
+                    showToast("🚨 CẢNH BÁO: Còn 2 phút là kết thúc hoàn toàn!", "danger");
+                    toastShown13m = true;
+                }
+            }
+        }
+
+        // UTILS
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showToast("Đã copy: " + text, "success");
+        }
+
+        function showToast(msg, type="success") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = msg;
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleStatus(btn, index) {
+            let states = ['Chưa làm', 'Đã xong', 'Bỏ qua'];
+            let current = btn.innerText;
+            let next = states[(states.indexOf(current) + 1) % states.length];
+            
+            btn.innerText = next;
+            if(next === 'Đã xong') {
+                btn.className = 'status-btn done';
+            } else {
+                btn.className = 'status-btn';
+            }
+            localStorage.setItem('step_status_' + index, next);
+        }
+
+        function updateProgress() {
+            let total = SCRIPT_DATA.length;
+            let pct = ((currentStepIndex + 1) / total) * 100;
+            document.getElementById('main-progress-bar').style.width = pct + '%';
+        }
+
+        function searchSteps() {
+            let q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.step-link').forEach((el, index) => {
+                if(SCRIPT_DATA[index].title.toLowerCase().includes(q)) {
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
+        // CHECKLIST
+        function toggleCheck(div, id) {
+            let chk = document.getElementById(id);
+            chk.checked = !chk.checked;
+            if(chk.checked) div.classList.add('done');
+            else div.classList.remove('done');
+            
+            localStorage.setItem('chk_' + id, chk.checked);
+            updateChecklistProgress();
+        }
+        
+        function updateChecklistProgress() {
+            let total = document.querySelectorAll('.check-item').length;
+            let checked = document.querySelectorAll('.check-item input:checked').length;
+            document.getElementById('checklist-progress').innerText = `${checked}/${total} hoàn thành`;
+        }
+        
+        function resetChecklist() {
+            document.querySelectorAll('.check-item input').forEach(chk => {
+                chk.checked = false;
+                chk.parentElement.classList.remove('done');
+                localStorage.removeItem('chk_' + chk.id);
+            });
+            updateChecklistProgress();
+            showToast("Đã reset checklist", "success");
+        }
+
+        // Initialize
+        init();
+        goToStep(0); // Start at step 1
+    </script>
+</body>
+</html>

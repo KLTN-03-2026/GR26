@@ -23,6 +23,7 @@ interface InventoryToolbarProps {
   canWaste: boolean;
   canRecordProduction?: boolean;
   canCreateItem: boolean;
+  showImportAction?: boolean;
   createItemLabel: string;
   importActionLabel?: string;
   productionActionLabel?: string;
@@ -54,6 +55,7 @@ export const InventoryToolbar = ({
   canWaste,
   canRecordProduction = false,
   canCreateItem,
+  showImportAction = true,
   createItemLabel,
   importActionLabel = 'Nhập kho',
   productionActionLabel = 'Ghi nhận sản xuất',
@@ -68,6 +70,11 @@ export const InventoryToolbar = ({
   onOpenProduction,
   onOpenCreateIngredient,
 }: InventoryToolbarProps) => {
+  const canShowImportAction = canImport && showImportAction;
+  const canShowProductionAction = canImport && canRecordProduction && Boolean(onOpenProduction);
+  const hasVisibleToolbarAction =
+    canCreateItem || canWaste || canShowImportAction || canShowProductionAction;
+
   return (
     <div className="space-y-4 rounded-card border border-border bg-card p-4 shadow-card">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -145,30 +152,28 @@ export const InventoryToolbar = ({
             </Button>
           )}
 
-          {canImport && (
-            <>
-              {canRecordProduction && onOpenProduction ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onOpenProduction}
-                  disabled={isActionLocked || isSwitchingBranch}
-                >
-                  <Hammer className="h-4 w-4" />
-                  {productionActionLabel}
-                </Button>
-              ) : null}
+          {canShowProductionAction ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenProduction?.()}
+              disabled={isActionLocked || isSwitchingBranch}
+            >
+              <Hammer className="h-4 w-4" />
+              {productionActionLabel}
+            </Button>
+          ) : null}
 
-              <Button
-                type="button"
-                onClick={onOpenImport}
-                disabled={isActionLocked || isSwitchingBranch}
-              >
-                <PackagePlus className="h-4 w-4" />
-                {importActionLabel}
-              </Button>
-            </>
-          )}
+          {canShowImportAction ? (
+            <Button
+              type="button"
+              onClick={onOpenImport}
+              disabled={isActionLocked || isSwitchingBranch}
+            >
+              <PackagePlus className="h-4 w-4" />
+              {importActionLabel}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -178,7 +183,7 @@ export const InventoryToolbar = ({
         </div>
       ) : null}
 
-      {!canImport && !canAdjust && !canWaste && (
+      {!canAdjust && !hasVisibleToolbarAction && (
         <div className="rounded-card border border-border bg-cream px-3 py-2 text-sm text-text-secondary">
           Tài khoản hiện tại chỉ có quyền xem tồn kho.
         </div>

@@ -28,6 +28,12 @@ public interface InvoiceRepository {
     Optional<Invoice> findByOrderId(UUID orderId);
 
     /**
+     * Kiểm tra Payment đã tạo hóa đơn chưa.
+     * author: Hoàng | date: 2026-05-16 | note: Chặn hủy payment đã hoàn tất và sinh invoice.
+     */
+    boolean existsByPaymentId(UUID paymentId);
+
+    /**
      * Tìm Invoice theo invoice number (unique).
      */
     Optional<Invoice> findByInvoiceNumber(String invoiceNumber);

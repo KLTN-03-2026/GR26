@@ -73,11 +73,19 @@ export interface TenantRenewPayload {
   note?: string;
 }
 
-export type PlanPaymentMethod = 'VIETQR' | 'MOMO';
+export type PlanPaymentMethod = 'VIETQR' | 'MOMO' | 'PAYOS';
 
 export interface GeneratePlanPaymentQRPayload {
   invoiceId: string;
   method: PlanPaymentMethod;
+}
+
+export interface CancelTenantInvoiceResponse {
+  invoiceId: string;
+  invoiceNumber: string;
+  status: TenantInvoiceStatus;
+  cancelledAttemptId?: string | null;
+  message: string;
 }
 
 export interface PlanQRPayment {
@@ -88,4 +96,28 @@ export interface PlanQRPayment {
   qrCodeData: string;
   paymentMethod: string;
   expiresInSeconds: number;
+  /** paymentLinkId từ PayOS — dùng để polling và tracking */
+  paymentReference?: string | null;
+  /** orderCode PayOS */
+  orderCode?: number | null;
+  /** URL mở trang thanh toán PayOS — dùng cho nút CTA */
+  checkoutUrl?: string | null;
+  /** true khi BE trả link dùng cho PayOS Embedded Form */
+  embedded?: boolean;
 }
+
+/** Label hiển thị thân thiện cho từng phương thức thanh toán */
+export const PAYMENT_METHOD_LABELS: Record<PlanPaymentMethod, { label: string; description: string }> = {
+  VIETQR: {
+    label: 'VietQR',
+    description: '',
+  },
+  MOMO: {
+    label: 'MoMo',
+    description: '',
+  },
+  PAYOS: {
+    label: 'PayOS',
+    description: '',
+  },
+};

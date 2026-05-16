@@ -21,7 +21,7 @@ export interface OrderAddonSelection {
 }
 
 /**
- * Context thẻ gọi khách đang thao tác trên màn tạo đơn.
+ * Context thẻ đang thao tác trên màn tạo đơn.
  * Backend hiện vẫn dùng field tableId/tableName nên FE giữ tên field để không đổi contract.
  */
 export interface OrderTableContext {

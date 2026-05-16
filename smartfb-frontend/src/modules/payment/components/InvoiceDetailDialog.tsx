@@ -144,7 +144,7 @@ export const InvoiceDetailDialog = ({
                     <span className="font-semibold text-text-primary">{mapOrderSourceLabel(orderInfo?.source)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-text-secondary">
-                    <span>Thẻ gọi khách</span>
+                    <span>thẻ</span>
                     <span className="font-semibold text-text-primary">{orderInfo?.tableName ?? 'Không gắn thẻ'}</span>
                   </div>
                 </div>

@@ -37,6 +37,7 @@ export interface MenuItem {
   tags?: MenuTag[];           // Tags: mới, hot, bestseller
   soldCount: number;          // Số lượng đã bán
   createdAt: number;          // Timestamp
+  updatedAt?: number;         // Timestamp cập nhật cuối, ưu tiên khi sắp xếp món mới nhất
   description?: string;
   ingredients?: string[];     // Thành phần
   isAvailable?: boolean;      // Sẵn sàng để bán (toggle)

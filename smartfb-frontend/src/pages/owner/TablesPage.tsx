@@ -106,7 +106,7 @@ export default function TablesPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Đang tải danh sách thẻ gọi khách...</p>
+          <p className="text-gray-500">Đang tải danh sách thẻ...</p>
         </div>
       </div>
     );
@@ -225,7 +225,7 @@ export default function TablesPage() {
           <div className="flex items-center justify-center min-h-[300px]">
             <div className="text-center text-gray-400">
               <p className="text-lg font-medium mb-1">Vui lòng chọn chi nhánh</p>
-              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách thẻ gọi khách.</p>
+              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách thẻ.</p>
             </div>
           </div>
         </div>

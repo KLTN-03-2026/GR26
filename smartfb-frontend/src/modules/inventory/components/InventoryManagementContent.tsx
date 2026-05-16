@@ -269,7 +269,7 @@ export const InventoryManagementContent = () => {
             canImport={canImport}
             canAdjust={canAdjust}
             canWaste={canWaste}
-            canCreateItem={canManageCatalogItems}
+            canCreateItem={false}
             createItemLabel={createItemLabel}
             importActionLabel={importActionLabel}
             isActionLocked={isActionLocked}
@@ -374,6 +374,7 @@ export const InventoryManagementContent = () => {
             canWaste={canWaste}
             canRecordProduction={canRecordProduction}
             canCreateItem={canManageCatalogItems}
+            showImportAction={false}
             createItemLabel={createItemLabel}
             importActionLabel={importActionLabel}
             productionActionLabel="Ghi nhận sản xuất"

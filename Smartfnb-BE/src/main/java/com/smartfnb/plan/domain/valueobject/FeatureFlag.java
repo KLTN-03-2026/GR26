@@ -75,4 +75,19 @@ public record FeatureFlag(
             return "{}";
         }
     }
+
+    /**
+     * Chuyển feature flag về Map để Hibernate lưu đúng kiểu JSONB.
+     *
+     * Author: Hoàng, date: 2026-05-16, note: Tránh bind jsonb thành varchar khi persist Plan.
+     */
+    public Map<String, Boolean> toMap() {
+        return Map.of(
+                "POS", hasPos,
+                "INVENTORY", hasInventory,
+                "PROMOTION", hasPromotion,
+                "AI", hasAi,
+                "ADVANCED_REPORT", hasAdvancedReport
+        );
+    }
 }

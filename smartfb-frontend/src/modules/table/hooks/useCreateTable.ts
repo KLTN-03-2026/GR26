@@ -5,7 +5,7 @@ import { tableService } from '@modules/table/services/tableService';
 import type { CreateTablePayload, TableItem } from '@modules/table/types/table.types';
 
 /**
- * Hook tạo mới một thẻ gọi khách và đồng bộ lại cache liên quan.
+ * Hook tạo mới một thẻ và đồng bộ lại cache liên quan.
  */
 export const useCreateTable = () => {
   const queryClient = useQueryClient();

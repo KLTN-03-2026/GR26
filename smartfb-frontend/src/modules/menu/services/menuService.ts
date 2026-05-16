@@ -35,6 +35,7 @@ interface BackendMenuItemResponse {
   isActive: boolean;
   isSyncDelivery: boolean;
   createdAt: string;
+  updatedAt?: string | null;
 }
 
 interface BackendCategoryResponse {
@@ -110,10 +111,22 @@ const normalizeCategoryId = (categoryId?: string | null): MenuCategory => {
 };
 
 /**
+ * Parse timestamp từ backend, trả về undefined nếu API chưa có trường hoặc dữ liệu không hợp lệ.
+ */
+const parseOptionalTimestamp = (value?: string | null) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? undefined : timestamp;
+};
+
+/**
  * Chuyển response món ăn từ backend sang model UI của frontend.
  */
 const mapMenuItem = (item: BackendMenuItemResponse): MenuItem => {
-  const createdAt = Date.parse(item.createdAt);
+  const createdAt = parseOptionalTimestamp(item.createdAt);
 
   return {
     id: item.id,
@@ -130,7 +143,8 @@ const mapMenuItem = (item: BackendMenuItemResponse): MenuItem => {
     status: item.isActive ? 'selling' : 'hidden',
     tags: [],
     soldCount: 0,
-    createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
+    createdAt: createdAt ?? Date.now(),
+    updatedAt: parseOptionalTimestamp(item.updatedAt),
     description: undefined,
     ingredients: [],
     isAvailable: item.isActive,

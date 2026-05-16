@@ -125,7 +125,7 @@ export const ownerRoutes: RouteConfigItem[] = [
     'Dashboard',
     <DashboardPage />
   ),
-  createRoute(ROUTES.OWNER.TABLES, 'Quản lý thẻ gọi khách', <TablesPage />),
+  createRoute(ROUTES.OWNER.TABLES, 'Quản lý thẻ', <TablesPage />),
   createRoute(
     ROUTES.OWNER.ORDERS,
     'Quản lý đơn hàng',
@@ -205,7 +205,7 @@ export const staffRoutes: RouteConfigItem[] = [
   ),
   createRoute(
     ROUTES.STAFF.TABLES,
-    'Thẻ gọi khách',
+    'thẻ',
     <TablesPage />,
     { requiredPermissions: STAFF_ROUTE_PERMISSIONS.TABLES }
   ),

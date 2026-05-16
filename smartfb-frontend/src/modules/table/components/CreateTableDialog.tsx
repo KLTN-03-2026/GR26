@@ -23,7 +23,7 @@ import {
 import { useCreateTable } from '@modules/table/hooks/useCreateTable';
 import type { TableArea } from '@modules/table/types/table.types';
 
-// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ gọi khách không dùng thông tin này.
+// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ không dùng thông tin này.
 const DEFAULT_PAGER_CARD_CAPACITY = 1;
 
 const createTableSchema = z.object({
@@ -90,7 +90,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Thêm thẻ gọi khách</DialogTitle>
+          <DialogTitle>Thêm thẻ</DialogTitle>
           <DialogDescription>
             Nhập mã thẻ và máy gọi thẻ để thêm vào hệ thống.
           </DialogDescription>

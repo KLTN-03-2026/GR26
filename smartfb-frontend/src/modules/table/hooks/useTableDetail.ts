@@ -4,7 +4,7 @@ import { tableService } from '../services/tableService';
 import type { TableItem } from '../types/table.types'; 
 
 /**
- * Hook lấy chi tiết thẻ gọi khách theo `tableId`.
+ * Hook lấy chi tiết thẻ theo `tableId`.
  *
  * @param tableId - ID thẻ cần tải chi tiết để hiển thị drawer hoặc dialog
  */

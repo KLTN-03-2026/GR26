@@ -23,7 +23,7 @@ const TABLE_STATUS_MESSAGE_MAP: Record<TableUsageStatus, string> = {
 };
 
 /**
- * Hook điều hướng từ màn thẻ gọi khách sang POS hoặc chi tiết order theo đúng quyền của user hiện tại.
+ * Hook điều hướng từ màn thẻ sang POS hoặc chi tiết order theo đúng quyền của user hiện tại.
  */
 export const useTableOrderNavigation = () => {
   const navigate = useNavigate();

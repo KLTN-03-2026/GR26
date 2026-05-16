@@ -1,6 +1,7 @@
 import { axiosInstance as api } from '@lib/axios';
 import type { ApiResponse } from '@shared/types/api.types';
 import type {
+  CancelTenantInvoiceResponse,
   CurrentSubscription,
   GeneratePlanPaymentQRPayload,
   PlanQRPayment,
@@ -51,6 +52,31 @@ export const subscriptionService = {
     const response = await api.post<ApiResponse<PlanQRPayment>>(
       `/tenant/billing/invoices/${invoiceId}/pay-qr`,
       { method }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Hủy hóa đơn gói đang chờ thanh toán để owner chọn lại gói khác.
+   * Backend tự kiểm tra tenant từ JWT và không yêu cầu lý do hủy.
+   */
+  cancelInvoice: async (invoiceId: string): Promise<CancelTenantInvoiceResponse> => {
+    const response = await api.post<ApiResponse<CancelTenantInvoiceResponse>>(
+      `/tenant/billing/invoices/${invoiceId}/cancel`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Đồng bộ trạng thái thanh toán PayOS cho hóa đơn.
+   * Gọi PayOS API để kiểm tra xem payment link đã được thanh toán chưa.
+   * Dùng khi webhook không chạy (dev/local) hoặc user muốn xác nhận ngay.
+   *
+   * @returns { justPaid: boolean } — true nếu vừa đánh PAID thành công
+   */
+  syncPlanPayment: async (invoiceId: string): Promise<{ justPaid: boolean; message: string }> => {
+    const response = await api.post<ApiResponse<{ justPaid: boolean; message: string }>>(
+      `/tenant/billing/invoices/${invoiceId}/sync-payment`
     );
     return response.data.data;
   },

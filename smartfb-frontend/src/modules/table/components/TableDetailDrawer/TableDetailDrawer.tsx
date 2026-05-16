@@ -59,7 +59,7 @@ export const TableDetailDrawer = ({
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Chi tiết thẻ gọi khách</h2>
+          <h2 className="text-xl font-bold text-gray-800">Chi tiết thẻ</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>

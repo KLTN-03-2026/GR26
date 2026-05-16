@@ -23,13 +23,16 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, touchedFields },
+    formState: { errors },
   } = useForm<LoginCredentials>({
     defaultValues: {
       email: '',
       password: '',
     },
   });
+
+  const emailErrorMessage = errors.email?.message;
+  const passwordErrorMessage = errors.password?.message;
 
   const onSubmit = (data: LoginCredentials) => {
     login(data);
@@ -57,7 +60,7 @@ export default function LoginPage() {
 
           {/* Login Form */}
           <div className="rounded-card border border-border bg-card p-8 shadow-card">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
               {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold text-text-primary">
@@ -71,9 +74,11 @@ export default function LoginPage() {
                     id="email"
                     type="email"
                     placeholder="name@example.com"
+                    aria-invalid={Boolean(emailErrorMessage)}
+                    aria-describedby={emailErrorMessage ? 'login-email-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 focus:border-primary',
-                      touchedFields.email && errors.email && 'border-red-500 focus:border-red-500'
+                      emailErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...register('email', {
                       required: 'Email không được để trống',
@@ -84,8 +89,10 @@ export default function LoginPage() {
                     })}
                   />
                 </div>
-                {touchedFields.email && errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                {emailErrorMessage && (
+                  <p id="login-email-error" className="text-sm text-red-600">
+                    {emailErrorMessage}
+                  </p>
                 )}
               </div>
 
@@ -102,9 +109,11 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Nhập mật khẩu"
+                    aria-invalid={Boolean(passwordErrorMessage)}
+                    aria-describedby={passwordErrorMessage ? 'login-password-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 pr-11 focus:border-primary',
-                      touchedFields.password && errors.password && 'border-red-500 focus:border-red-500'
+                      passwordErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...register('password', {
                       required: 'Mật khẩu không được để trống',
@@ -122,8 +131,10 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {touchedFields.password && errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
+                {passwordErrorMessage && (
+                  <p id="login-password-error" className="text-sm text-red-600">
+                    {passwordErrorMessage}
+                  </p>
                 )}
               </div>
 

@@ -12,7 +12,6 @@ import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -67,7 +66,7 @@ export const PositionFormDialog = ({
       name: values.name.trim(),
       description: values.description.trim() || undefined,
     };
-
+    console.log('Submitting position form with values:', payload);
     if (position) {
       updatePosition(
         {
@@ -95,11 +94,7 @@ export const PositionFormDialog = ({
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Chỉnh sửa chức vụ' : 'Tạo chức vụ mới'}</DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? 'Cập nhật tên và mô tả để chức vụ hiển thị rõ ràng hơn trong quản lý nhân sự.'
-              : 'Tạo chức vụ để owner gán cho nhân viên khi lập hồ sơ hoặc rà soát cơ cấu nhân sự.'}
-          </DialogDescription>
+         
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -121,9 +116,7 @@ export const PositionFormDialog = ({
               placeholder="Mô tả ngắn trách nhiệm chính của chức vụ này"
               {...register('description')}
             />
-            <p className="text-xs text-text-secondary">
-              Mô tả này giúp owner phân biệt chức vụ khi gán cho nhân viên mới.
-            </p>
+       
             {errors.description ? (
               <p className="text-xs text-red-500">{errors.description.message}</p>
             ) : null}

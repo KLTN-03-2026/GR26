@@ -21,6 +21,12 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentJpaEntity, UU
     Optional<PaymentJpaEntity> findByOrderId(UUID orderId);
 
     /**
+     * Kiểm tra order đã có payment theo trạng thái cụ thể chưa.
+     * author: Hoàng | date: 2026-05-16 | note: Dùng để chặn thanh toán lại khi đã có payment COMPLETED.
+     */
+    boolean existsByOrderIdAndStatus(UUID orderId, String status);
+
+    /**
      * Tìm Payment theo transaction ID.
      */
     Optional<PaymentJpaEntity> findByTransactionId(String transactionId);

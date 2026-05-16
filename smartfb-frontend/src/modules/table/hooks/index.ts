@@ -7,6 +7,6 @@ export { useEditTable } from './useEditTable';
 export { useEditZone } from './useEditZone';
 export { useTableDetail } from './useTableDetail';
 export { useTableFilters } from './useTableFilters';
-export { useTableList, useTableListWithZones } from './useTableList';
+export { useTableList } from './useTableList';
 export { useTableOrderNavigation } from './useTableOrderNavigation';
 export { useZones } from './useZones';

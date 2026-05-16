@@ -197,18 +197,14 @@ public class PayOSProvider implements QRCodeProvider {
     /**
      * Huỷ payment link PayOS.
      * SDK gọi POST /v2/payment-requests/{orderCode}/cancel.
+     *
+     * author: Hoàng | date: 2026-05-16 | note: Dùng cho API nhân viên hủy QR pending trước khi sửa đơn.
      */
-    // @Override
-    // public void cancelQRCode(UUID paymentId) throws Exception {
-    //     long orderCode = Math.abs(paymentId.getMostSignificantBits() % 10_000_000_000L);
-    //     if (orderCode == 0) orderCode = 1;
-    //     try {
-    //         // author: Hoàng | date: 27-04-2026 | note: Dùng resolvePayOS() để lấy credentials chi nhánh.
-    //         resolvePayOS().paymentRequests().cancel(orderCode, "Cashier huỷ thanh toán");
-    //         log.info("PayOS đã huỷ payment link: orderCode={}", orderCode);
-    //     } catch (Exception e) {
-    //         // Không throw — link có thể đã hết hạn hoặc đã được thanh toán
-    //         log.warn("PayOS cancel thất bại (bỏ qua): orderCode={}, error={}", orderCode, e.getMessage());
-    //     }
-    // }
+    @Override
+    public void cancelQRCode(UUID paymentId) throws Exception {
+        long orderCode = Math.abs(paymentId.getMostSignificantBits() % 10_000_000_000L);
+        if (orderCode == 0) orderCode = 1;
+        resolvePayOS().paymentRequests().cancel(orderCode, "Cashier huy thanh toan");
+        log.info("PayOS đã huỷ payment link: orderCode={}", orderCode);
+    }
 }

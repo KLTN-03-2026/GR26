@@ -42,6 +42,7 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const { mutate: disableBranch, isPending: isDisabling } = useDisableBranch();
   const canDisableBranch = branch.status === 'ACTIVE';
+  const branchAddress = branch.address || 'Chưa cập nhật';
 
   const handleRowClick = () => {
     navigate(`${ROUTES.OWNER.BRANCHES}/${branch.id}`);
@@ -83,8 +84,10 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
         <TableCell className="font-mono text-sm text-gray-600">
           {branch.code}
         </TableCell>
-        <TableCell className="truncate text-sm text-gray-600">
-          {branch.address || 'Chưa cập nhật'}
+        <TableCell className="w-[280px] max-w-[280px] text-sm text-gray-600">
+          <span className="block max-w-[280px] truncate" title={branchAddress}>
+            {branchAddress}
+          </span>
         </TableCell>
         <TableCell className="text-sm text-gray-600">
           {branch.phone || 'Chưa cập nhật'}

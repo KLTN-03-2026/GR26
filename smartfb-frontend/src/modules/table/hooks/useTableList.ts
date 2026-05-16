@@ -1,12 +1,10 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { tableService } from '@modules/table/services/tableService';
-import type { TableArea, TableItem } from '@modules/table/types/table.types';
-import { useZones } from '@modules/table/hooks/useZones';
+import type { TableItem } from '@modules/table/types/table.types';
 
 /**
- * Hook lấy danh sách thẻ gọi khách của chi nhánh hiện tại.
+ * Hook lấy danh sách thẻ của chi nhánh hiện tại.
  */
 export const useTableList = () => {
   return useQuery<TableItem[]>({
@@ -20,34 +18,4 @@ export const useTableList = () => {
     retry: 2,
     retryDelay: 1000,
   });
-};
-
-/**
- * Hook lấy danh sách thẻ và map thêm tên máy gọi thẻ để hiển thị ở UI.
- */
-export const useTableListWithZones = () => {
-  const { data: tables, isLoading: tablesLoading, error: tablesError } = useTableList();
-  const { data: zones, isLoading: zonesLoading } = useZones();
-
-  const isLoading = tablesLoading || zonesLoading;
-
-  // Merge tên máy gọi thẻ vào danh sách thẻ.
-  const tablesWithZoneNames = useMemo(() => {
-    if (!tables || !zones) return [];
-
-    const zoneMap = new Map(
-      zones.map((zone: TableArea) => [zone.id, zone.name])
-    );
-
-    return tables.map((table: TableItem) => ({
-      ...table,
-      zoneName: zoneMap.get(table.zoneId) || 'Không xác định',
-    }));
-  }, [tables, zones]);
-
-  return {
-    data: tablesWithZoneNames,
-    isLoading,
-    error: tablesError,
-  };
 };

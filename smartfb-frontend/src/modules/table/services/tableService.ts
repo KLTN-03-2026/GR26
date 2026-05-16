@@ -45,7 +45,7 @@ interface UpdateTableRequestBody {
 }
 
 /**
- * Chuẩn hóa dữ liệu table từ backend sang model thẻ gọi khách ở FE.
+ * Chuẩn hóa dữ liệu table từ backend sang model thẻ ở FE.
  */
 const mapTableResponse = (item: BackendTableResponse, branchId: string): TableItem => ({
   id: item.id,
@@ -102,7 +102,7 @@ const mapUsageStatus = (backendStatus: string): TableItem['usageStatus'] => {
 
 export const tableService = {
   /**
-   * Lấy danh sách thẻ gọi khách - GET /branches/{branchId}/tables
+   * Lấy danh sách thẻ - GET /branches/{branchId}/tables
    * API trả về ApiResponse<List<TableResponse>>
    */
   getList: async (): Promise<TableItem[]> => {
@@ -112,7 +112,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không thể tải danh sách thẻ gọi khách');
+      throw new Error(response.data.error?.message || 'Không thể tải danh sách thẻ');
     }
 
     return (response.data.data || []).map((item: BackendTableResponse) =>
@@ -121,7 +121,7 @@ export const tableService = {
   },
 
   /**
-   * Lấy chi tiết thẻ gọi khách - GET /branches/{branchId}/tables/{tableId}
+   * Lấy chi tiết thẻ - GET /branches/{branchId}/tables/{tableId}
    */
   getById: async (id: string): Promise<TableItem> => {
     const branchId = getCurrentBranchId();
@@ -130,7 +130,7 @@ export const tableService = {
     );
 
     if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Không tìm thấy thẻ gọi khách');
+      throw new Error(response.data.error?.message || 'Không tìm thấy thẻ');
     }
 
     const item = response.data.data;
@@ -139,7 +139,7 @@ export const tableService = {
   },
 
   /**
-   * Tạo thẻ gọi khách mới - POST /branches/{branchId}/tables
+   * Tạo thẻ mới - POST /branches/{branchId}/tables
    * Body theo CreateTableRequest: { zoneId, name, capacity, shape }
    */
   create: async (payload: CreateTablePayload): Promise<TableItem> => {
@@ -164,7 +164,7 @@ export const tableService = {
   },
 
   /**
-   * Cập nhật thẻ gọi khách - PUT /branches/{branchId}/tables/{tableId}
+   * Cập nhật thẻ - PUT /branches/{branchId}/tables/{tableId}
    * Body theo UpdateTableRequest: { name, zoneId, capacity, shape, isActive }
    */
   update: async (id: string, payload: UpdateTablePayload): Promise<TableItem> => {
@@ -193,7 +193,7 @@ export const tableService = {
   },
 
   /**
-   * Xóa thẻ gọi khách (soft delete) - DELETE /branches/{branchId}/tables/{tableId}
+   * Xóa thẻ (soft delete) - DELETE /branches/{branchId}/tables/{tableId}
    */
   delete: async (id: string): Promise<void> => {
     const branchId = getCurrentBranchId();
