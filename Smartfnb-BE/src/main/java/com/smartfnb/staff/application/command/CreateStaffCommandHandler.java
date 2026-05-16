@@ -2,7 +2,9 @@ package com.smartfnb.staff.application.command;
 
 import com.smartfnb.inventory.infrastructure.persistence.AuditLogJpaEntity;
 import com.smartfnb.staff.domain.exception.DuplicatePhoneException;
+import com.smartfnb.staff.domain.exception.PositionInactiveException;
 import com.smartfnb.staff.domain.exception.PositionNotFoundException;
+import com.smartfnb.staff.infrastructure.persistence.PositionJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.PositionJpaRepository;
 import com.smartfnb.staff.infrastructure.persistence.StaffAuditLogJpaRepository;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaEntity;
@@ -75,8 +77,12 @@ public class CreateStaffCommandHandler {
 
         // 2. Validate positionId tồn tại trong tenant (nếu có)
         if (command.positionId() != null) {
-            positionJpaRepository.findByIdAndTenantId(command.positionId(), command.tenantId())
+            PositionJpaEntity position = positionJpaRepository
+                    .findByIdAndTenantId(command.positionId(), command.tenantId())
                     .orElseThrow(() -> new PositionNotFoundException(command.positionId()));
+            if (!position.isActive()) {
+                throw new PositionInactiveException(command.positionId());
+            }
         }
 
         // 3. Tạo staff entity

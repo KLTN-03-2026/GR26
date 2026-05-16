@@ -1,8 +1,10 @@
 package com.smartfnb.staff.application.command;
 
+import com.smartfnb.staff.domain.exception.PositionInUseException;
 import com.smartfnb.staff.domain.exception.PositionNotFoundException;
 import com.smartfnb.staff.infrastructure.persistence.PositionJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.PositionJpaRepository;
+import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UpdatePositionCommandHandler {
 
     private final PositionJpaRepository positionJpaRepository;
+    private final StaffJpaRepository staffJpaRepository;
 
     /**
      * Cập nhật thông tin chức vụ.
@@ -38,7 +41,13 @@ public class UpdatePositionCommandHandler {
         if (command.name() != null) position.setName(command.name());
         if (command.description() != null) position.setDescription(command.description());
         if (command.baseSalary() != null) position.setBaseSalary(command.baseSalary());
-        if (command.active() != null) position.setActive(command.active());
+        if (command.active() != null) {
+            if (!command.active()
+                    && staffJpaRepository.existsByTenantIdAndPositionId(command.tenantId(), command.positionId())) {
+                throw new PositionInUseException(command.positionId());
+            }
+            position.setActive(command.active());
+        }
 
         positionJpaRepository.save(position);
         log.info("Cập nhật chức vụ thành công: positionId={}", command.positionId());
