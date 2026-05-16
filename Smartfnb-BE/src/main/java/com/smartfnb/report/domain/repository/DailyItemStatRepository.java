@@ -16,6 +16,8 @@ public interface DailyItemStatRepository {
     
     DailyItemStat save(DailyItemStat stat);
     
+    void upsert(DailyItemStat stat);
+    
     Optional<DailyItemStat> findByBranchIdItemIdAndDate(UUID branchId, UUID itemId, LocalDate date);
     
     List<DailyItemStat> findByBranchIdAndDate(UUID branchId, LocalDate date);

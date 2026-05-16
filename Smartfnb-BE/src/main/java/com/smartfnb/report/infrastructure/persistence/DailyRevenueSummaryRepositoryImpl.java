@@ -36,6 +36,17 @@ public class DailyRevenueSummaryRepositoryImpl implements DailyRevenueSummaryRep
     }
     
     @Override
+    public Optional<DailyRevenueSummary> findByBranchIdAndDateForUpdate(UUID branchId, LocalDate date) {
+        return jpaRepository.findByBranchIdAndDateForUpdate(branchId, date)
+            .map(DailyRevenueSummaryJpaEntity::toDomain);
+    }
+    
+    @Override
+    public void initIfNotExists(UUID id, UUID tenantId, UUID branchId, LocalDate date) {
+        jpaRepository.initIfNotExists(id, tenantId, branchId, date);
+    }
+    
+    @Override
     public void delete(DailyRevenueSummary summary) {
         DailyRevenueSummaryJpaEntity entity = DailyRevenueSummaryJpaEntity.fromDomain(summary);
         jpaRepository.delete(entity);
