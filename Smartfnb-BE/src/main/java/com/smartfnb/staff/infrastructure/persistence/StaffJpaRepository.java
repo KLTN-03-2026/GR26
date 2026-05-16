@@ -66,6 +66,8 @@ public interface StaffJpaRepository
      */
     List<StaffJpaEntity> findByTenantIdAndPositionId(UUID tenantId, UUID positionId);
 
+    boolean existsByTenantIdAndPositionId(UUID tenantId, UUID positionId);
+
     /**
      * Lấy nhân viên theo trạng thái trong tenant.
      *

@@ -27,7 +27,9 @@ import java.util.UUID;
 @Slf4j
 public class InvoiceNumberGeneratorImpl implements InvoiceNumberGenerator {
 
+    // 1. Spring tự động Inject (tiêm) cấu hình kết nối Redis vào biến này
     private final RedisTemplate<String, String> redisTemplate;
+    
     private final InvoiceRepository invoiceRepository;
 
     private static final String INVOICE_COUNTER_KEY_PREFIX = "invoice:counter:";
@@ -43,6 +45,7 @@ public class InvoiceNumberGeneratorImpl implements InvoiceNumberGenerator {
         String counterKey = INVOICE_COUNTER_KEY_PREFIX + dateStr + ":" + branchCode;
         
         for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+            // 2. Tương tác với kho dữ liệu RAM của Redis thông qua opsForValue()
             Long counter = redisTemplate.opsForValue().increment(counterKey);
 
             // Set expiry 30 ngày để tránh accumulate counter
