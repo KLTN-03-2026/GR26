@@ -1,7 +1,7 @@
 import { Building2, Phone } from 'lucide-react';
+import { BranchAddressAutocomplete } from '@modules/branch/components/BranchAddressAutocomplete';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
-import { Textarea } from '@shared/components/ui/textarea';
 import { cn } from '@shared/utils/cn';
 import type { CreateBranchFormData } from '@modules/branch/types/branch.types';
 
@@ -83,17 +83,16 @@ export const Step1BasicInfo = ({ data, onChange, errors }: Step1BasicInfoProps) 
           <Label htmlFor="address" className="text-sm font-medium text-gray-700">
             Địa chỉ
           </Label>
-          <Textarea
+          <BranchAddressAutocomplete
             id="address"
-            placeholder="374 Tôn Đản, Phường 4, Quận 4, TP. Hồ Chí Minh"
-            value={data.address}
-            onChange={(event) => handleInputChange('address', event.target.value)}
-            className={cn(
-              'min-h-[96px] focus-visible:border-orange-500 focus-visible:ring-orange-500',
-              errors?.address && 'border-red-500 focus-visible:ring-red-500'
-            )}
+            value={{
+              address: data.address,
+              latitude: data.latitude,
+              longitude: data.longitude,
+            }}
+            error={errors?.address}
+            onChange={(addressData) => onChange(addressData)}
           />
-          <p className="text-xs text-gray-500">Có thể để trống nếu chưa có, nhưng nên nhập để dễ quản lý.</p>
           {errors?.address && <p className="text-sm text-red-600">{errors.address}</p>}
         </div>
 

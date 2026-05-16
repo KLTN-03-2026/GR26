@@ -41,40 +41,6 @@ export const createMenuSchema = z.object({
 });
 
 /**
- * Schema cho việc cập nhật món ăn
- */
-export const updateMenuSchema = createMenuSchema.partial().extend({
-  status: z.enum(['selling', 'hidden'] as const).optional(),
-  isAvailable: z.boolean().optional(),
-  isActive: z.boolean().optional(),
-});
-
-/**
- * Schema cho việc toggle trạng thái bán
- */
-export const toggleMenuStatusSchema = z.object({
-  id: z.string().uuid('ID không hợp lệ'),
-  isAvailable: z.boolean(),
-});
-
-/**
  * Type inference
  */
 export type CreateMenuFormValues = z.infer<typeof createMenuSchema>;
-export type UpdateMenuFormValues = z.infer<typeof updateMenuSchema>;
-
-/**
- * Helper function để tính GP%
- */
-export const calculateGpPercent = (price: number, cost?: number): number => {
-  if (!cost || cost <= 0 || price <= 0) return 0;
-  return Math.round(((price - cost) / price) * 100);
-};
-
-/**
- * Helper function để tính giá vốn từ GP%
- */
-export const calculateCostFromGpPercent = (price: number, gpPercent: number): number => {
-  if (gpPercent <= 0 || price <= 0) return 0;
-  return Math.round(price * (1 - gpPercent / 100));
-};

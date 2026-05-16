@@ -7,7 +7,7 @@ export const positionSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Tên chức vụ phải có ít nhất 2 ký tự')
+    .min(1, 'Không được để trống tên chức vụ')
     .max(100, 'Tên chức vụ không được vượt quá 100 ký tự'),
   description: z
     .string()

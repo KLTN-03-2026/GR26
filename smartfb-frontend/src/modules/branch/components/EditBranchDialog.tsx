@@ -1,4 +1,8 @@
 import { type KeyboardEvent, useState } from 'react';
+import { BranchAddressAutocomplete } from '@modules/branch/components/BranchAddressAutocomplete';
+import { useEditBranch } from '@modules/branch/hooks/useEditBranch';
+import type { Branch, EditBranchFormData } from '@modules/branch/types/branch.types';
+import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,11 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/components/ui/dialog';
-import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
-import { useEditBranch } from '../hooks/useEditBranch';
-import type { Branch, EditBranchFormData } from '../types/branch.types';
 
 interface EditBranchDialogProps {
   open: boolean;
@@ -21,7 +22,7 @@ interface EditBranchDialogProps {
 
 /**
  * Dialog chỉnh sửa chi nhánh theo đúng contract backend hiện tại.
- * Backend chỉ nhận `name`, `code`, `address`, `phone` nên UI chỉ cho sửa 4 field này.
+ * Backend nhận thông tin cơ bản và tọa độ GPS để phục vụ check-in theo vị trí.
  */
 export const EditBranchDialog = ({
   open,
@@ -35,6 +36,8 @@ export const EditBranchDialog = ({
     code: branch.code,
     address: branch.address ?? '',
     phone: branch.phone ?? '',
+    latitude: branch.latitude ?? null,
+    longitude: branch.longitude ?? null,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof EditBranchFormData, string>>>({});
 
@@ -78,6 +81,8 @@ export const EditBranchDialog = ({
           code: formData.code.trim(),
           address: formData.address.trim(),
           phone: formData.phone.trim(),
+          latitude: formData.latitude,
+          longitude: formData.longitude,
         },
       },
       {
@@ -90,6 +95,10 @@ export const EditBranchDialog = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       handleSubmit();
@@ -140,14 +149,16 @@ export const EditBranchDialog = ({
 
           <div className="grid gap-2">
             <Label htmlFor="edit-address">Địa chỉ</Label>
-            <Input
+            <BranchAddressAutocomplete
               id="edit-address"
-              value={formData.address}
-              onChange={(event) =>
-                setFormData({ ...formData, address: event.target.value })
-              }
-              className={errors.address ? 'border-red-500' : ''}
+              value={{
+                address: formData.address,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+              }}
+              error={errors.address}
               placeholder="Nhập địa chỉ chi tiết"
+              onChange={(addressData) => setFormData({ ...formData, ...addressData })}
             />
             {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
           </div>

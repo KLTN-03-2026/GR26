@@ -17,6 +17,7 @@ import { useOrderPricing } from '@modules/order/hooks/useOrderPricing';
 import { orderService } from '@modules/order/services/orderService';
 import { useOrderStore } from '@modules/order/stores/orderStore';
 import type { OrderTableContext } from '@modules/order/types/order.types';
+import { useCancelPayment } from '@modules/payment/hooks/useCancelPayment';
 import { useManualConfirmQRPayment } from '@modules/payment/hooks/useManualConfirmQRPayment';
 import { useProcessCashPayment } from '@modules/payment/hooks/useProcessCashPayment';
 import { useProcessQRPayment } from '@modules/payment/hooks/useProcessQRPayment';
@@ -25,6 +26,15 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
+import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { usePermission } from '@shared/hooks/usePermission';
 import { getApiErrorMessage } from '@shared/utils/getApiErrorMessage';
 interface PaymentResultState {
@@ -117,6 +127,7 @@ export default function PaymentPage() {
   const [qrData, setQRData] = useState<QRData | null>(null);
   const [qrTimeLeft, setQRTimeLeft] = useState(0);
   const [qrPollingMessage, setQRPollingMessage] = useState<string | null>(null);
+  const [isCancelQRDialogOpen, setIsCancelQRDialogOpen] = useState(false);
   const isPayOSEnabled = canReadPaymentConfig ? Boolean(paymentConfig?.isConfigured) : true;
   const payOSDisabledMessage = isPaymentConfigLoading
     ? 'Đang kiểm tra cấu hình PayOS của chi nhánh hiện tại...'
@@ -129,6 +140,7 @@ export default function PaymentPage() {
 
   const processCashPaymentMutation = useProcessCashPayment();
   const processQRPaymentMutation = useProcessQRPayment();
+  const cancelPaymentMutation = useCancelPayment();
   const manualConfirmMutation = useManualConfirmQRPayment();
 
   const amountReceived = amountReceivedDraft ?? (totalAmount > 0 ? String(totalAmount) : '');
@@ -137,7 +149,8 @@ export default function PaymentPage() {
 
   const isProcessing =
     processCashPaymentMutation.isPending ||
-    processQRPaymentMutation.isPending;
+    processQRPaymentMutation.isPending ||
+    cancelPaymentMutation.isPending;
 
   const tableManagementRoute =
     currentRole === ROLES.OWNER ? ROUTES.OWNER.TABLES : ROUTES.STAFF.TABLES;
@@ -435,6 +448,52 @@ export default function PaymentPage() {
   };
 
   /**
+   * Hủy QR payment pending khi khách muốn sửa món trước khi thanh toán.
+   */
+  const handleCancelQRPayment = () => {
+    if (!qrData || cancelPaymentMutation.isPending) return;
+
+    cancelPaymentMutation.mutate(qrData.paymentId, {
+      onSuccess: (response) => {
+        if (!response.success) {
+          showPaymentResult({
+            status: 'error',
+            title: 'Không thể hủy thanh toán',
+            description: response.error?.message ?? 'Không thể hủy mã QR hiện tại.',
+            shouldClearDraft: false,
+          });
+          return;
+        }
+
+        setIsCancelQRDialogOpen(false);
+        if (response.data?.status === 'COMPLETED') {
+          handlePaymentSuccess();
+          return;
+        }
+
+        setQRState('idle');
+        setQRData(null);
+        setQRTimeLeft(0);
+        setQRPollingMessage(null);
+        qrPollingErrorCountRef.current = 0;
+        invalidateOrderAndTableQueries(displayOrderId, displayTableContext.tableId);
+      },
+      onError: (error) => {
+        setIsCancelQRDialogOpen(false);
+        showPaymentResult({
+          status: 'error',
+          title: 'Không thể hủy thanh toán',
+          description: getApiErrorMessage(
+            error,
+            'Không thể hủy mã QR hiện tại. Vui lòng kiểm tra lại trạng thái thanh toán.'
+          ),
+          shouldClearDraft: false,
+        });
+      },
+    });
+  };
+
+  /**
    * Reset QR state về idle để tạo lại khi hết hạn.
    */
   const handleRegenerateQR = () => {
@@ -487,41 +546,80 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-10rem)] grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <PaymentOrderSummary
-        cart={displayCart}
-        tableContext={displayTableContext}
-        orderNumber={displayOrderNumber}
-        createdAt={displayCreatedAt}
-        onBack={() => navigate(-1)}
-      />
+    <>
+      <div className="grid min-h-[calc(100vh-10rem)] grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <PaymentOrderSummary
+          cart={displayCart}
+          tableContext={displayTableContext}
+          orderNumber={displayOrderNumber}
+          createdAt={displayCreatedAt}
+          onBack={() => navigate(-1)}
+        />
 
-      <PaymentSidebar
-        selectedMethod={selectedMethod}
-        amountReceived={amountReceived}
-        orderNumber={displayOrderNumber}
-        totalAmount={totalAmount}
-        subtotal={subtotal}
-        vatAmount={vatAmount}
-        changeAmount={changeAmount}
-        canConfirmPayment={canConfirmPayment}
-        isProcessing={isProcessing}
-        onSelectMethod={handleSelectMethod}
-        onAmountReceivedChange={(value) => setAmountReceivedDraft(value)}
-        onConfirmPayment={handleConfirmPayment}
-        qrSubMethod={qrSubMethod}
-        qrState={qrState}
-        qrCodeUrl={qrData?.qrCodeUrl ?? null}
-        qrCodeData={qrData?.qrCodeData ?? null}
-        qrTimeLeft={qrTimeLeft}
-        qrPollingMessage={qrPollingMessage}
-        isPayOSEnabled={isPayOSEnabled}
-        payOSDisabledMessage={payOSDisabledMessage}
-        isManualConfirming={manualConfirmMutation.isPending}
-        onSelectQRSubMethod={setQRSubMethod}
-        onManualConfirmQR={handleManualConfirmQR}
-        onRegenerateQR={handleRegenerateQR}
-      />
-    </div>
+        <PaymentSidebar
+          selectedMethod={selectedMethod}
+          amountReceived={amountReceived}
+          orderNumber={displayOrderNumber}
+          totalAmount={totalAmount}
+          subtotal={subtotal}
+          vatAmount={vatAmount}
+          changeAmount={changeAmount}
+          canConfirmPayment={canConfirmPayment}
+          isProcessing={isProcessing}
+          onSelectMethod={handleSelectMethod}
+          onAmountReceivedChange={(value) => setAmountReceivedDraft(value)}
+          onConfirmPayment={handleConfirmPayment}
+          qrSubMethod={qrSubMethod}
+          qrState={qrState}
+          qrCodeUrl={qrData?.qrCodeUrl ?? null}
+          qrCodeData={qrData?.qrCodeData ?? null}
+          qrTimeLeft={qrTimeLeft}
+          qrPollingMessage={qrPollingMessage}
+          isPayOSEnabled={isPayOSEnabled}
+          payOSDisabledMessage={payOSDisabledMessage}
+          isManualConfirming={manualConfirmMutation.isPending}
+          isCancelingQR={cancelPaymentMutation.isPending}
+          onSelectQRSubMethod={setQRSubMethod}
+          onManualConfirmQR={handleManualConfirmQR}
+          onCancelQR={() => setIsCancelQRDialogOpen(true)}
+          onRegenerateQR={handleRegenerateQR}
+        />
+      </div>
+
+      <Dialog
+        open={isCancelQRDialogOpen}
+        onOpenChange={(open) => {
+          if (!cancelPaymentMutation.isPending) setIsCancelQRDialogOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hủy QR thanh toán</DialogTitle>
+            <DialogDescription>
+              Mã QR hiện tại sẽ bị hủy và không dùng để thanh toán nữa. Đơn hàng vẫn giữ nguyên để tiếp tục thanh toán hoặc tạo QR mới.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={cancelPaymentMutation.isPending}
+              onClick={() => setIsCancelQRDialogOpen(false)}
+            >
+              Quay lại
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!qrData || cancelPaymentMutation.isPending}
+              onClick={handleCancelQRPayment}
+            >
+              {cancelPaymentMutation.isPending ? 'Đang hủy...' : 'Xác nhận hủy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

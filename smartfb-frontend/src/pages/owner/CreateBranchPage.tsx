@@ -22,6 +22,8 @@ const INITIAL_FORM_DATA: CreateBranchFormData = {
   code: '',
   address: '',
   phone: '',
+  latitude: null,
+  longitude: null,
 };
 
 /**
@@ -61,6 +63,8 @@ const toCreateBranchPayload = (formData: CreateBranchFormData): CreateBranchPayl
     code: formData.code.trim(),
     address: formData.address.trim(),
     phone: formData.phone.trim(),
+    latitude: formData.latitude,
+    longitude: formData.longitude,
   };
 };
 
@@ -77,7 +81,13 @@ export default function CreateBranchPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
-  const isFormDirty = Object.values(formData).some((value) => value.trim() !== '');
+  const isFormDirty =
+    formData.name.trim() !== '' ||
+    formData.code.trim() !== '' ||
+    formData.address.trim() !== '' ||
+    formData.phone.trim() !== '' ||
+    formData.latitude !== null ||
+    formData.longitude !== null;
 
   const handleCancel = () => {
     if (hasUnsavedChanges && isFormDirty) {

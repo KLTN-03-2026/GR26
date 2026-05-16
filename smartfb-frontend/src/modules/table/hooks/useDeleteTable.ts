@@ -4,7 +4,7 @@ import { useToast } from '@shared/hooks/useToast';
 import { tableService } from '../services/tableService';
 
 /**
- * Hook xóa một thẻ gọi khách khỏi hệ thống.
+ * Hook xóa một thẻ khỏi hệ thống.
  * Thành công sẽ refresh cache danh sách thẻ để màn quản lý đồng bộ ngay.
  */
 export const useDeleteTable = () => {

@@ -32,7 +32,8 @@ public record PlanResponse(
                 entity.getMaxBranches(),
                 entity.getMaxStaff(),
                 entity.getMaxMenuItems(),
-                FeatureFlag.fromJson(entity.getFeatures()),
+                // Author: Hoàng, date: 2026-05-16, note: Entity features đã là Map JSONB.
+                FeatureFlag.fromMap(entity.getFeatures()),
                 entity.isActive()
         );
     }

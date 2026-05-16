@@ -2,6 +2,7 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import type { AuthResponseContext, BackendAuthResponse } from '@modules/auth/types/auth.types';
 import { ROUTES } from '@shared/constants/routes';
 import type { ApiResponse } from '@shared/types/api.types';
+import { normalizeApiErrorMessage } from '@shared/utils/normalizeApiErrorMessage';
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 
@@ -104,7 +105,7 @@ const refreshAccessToken = async (): Promise<BackendAuthResponse> => {
  * @returns Message lỗi ưu tiên từ `error.message`
  */
 const getApiErrorMessage = (responseData?: ApiResponse<unknown>): string | undefined => {
-  return responseData?.error?.message ?? responseData?.message;
+  return normalizeApiErrorMessage(responseData?.error?.message ?? responseData?.message);
 };
 
 /**

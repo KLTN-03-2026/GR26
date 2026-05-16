@@ -148,6 +148,21 @@ public class Payment {
     }
 
     /**
+     * Hủy Payment đang chờ xử lý.
+     * author: Hoàng | date: 2026-05-16 | note: Cho phép bỏ QR cũ khi khách muốn sửa món trước lúc thanh toán.
+     */
+    public void markCancelled() {
+        if (this.status == PaymentStatus.CANCELLED) {
+            return;
+        }
+        if (this.status != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                    String.format("Chỉ có thể hủy Payment PENDING, hiện tại là %s", this.status));
+        }
+        this.status = PaymentStatus.CANCELLED;
+    }
+
+    /**
      * Hoàn tiền Payment.
      */
     public void markRefunded() {
@@ -170,6 +185,14 @@ public class Payment {
      */
     public boolean isCompleted() {
         return this.status == PaymentStatus.COMPLETED;
+    }
+
+    /**
+     * Kiểm tra Payment đã bị hủy trước khi thanh toán chưa.
+     * author: Hoàng | date: 2026-05-16 | note: Dùng để endpoint cancel idempotent khi FE bấm lại.
+     */
+    public boolean isCancelled() {
+        return this.status == PaymentStatus.CANCELLED;
     }
 
     /**

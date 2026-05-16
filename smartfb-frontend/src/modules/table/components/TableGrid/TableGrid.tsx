@@ -34,7 +34,7 @@ export const TableGrid = ({
           <LayoutGrid className="w-10 h-10 text-gray-400" />
         </div>
         <div className="text-center">
-          <p className="text-gray-500 text-lg font-medium">Không có thẻ gọi khách nào</p>
+          <p className="text-gray-500 text-lg font-medium">Không có thẻ nào</p>
           <p className="text-sm text-gray-400 mt-1">Hãy thêm thẻ mới để bắt đầu</p>
           {onAddTable && (
             <Button

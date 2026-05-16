@@ -27,6 +27,12 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceJpaEntity, UU
     Optional<InvoiceJpaEntity> findByOrderId(UUID orderId);
 
     /**
+     * Kiểm tra invoice đã được tạo từ Payment chưa.
+     * author: Hoàng | date: 2026-05-16 | note: Hỗ trợ guard cho API hủy thanh toán pending.
+     */
+    boolean existsByPaymentId(UUID paymentId);
+
+    /**
      * Tìm Invoice theo invoice_number (unique).
      */
     @EntityGraph(attributePaths = {"items"})
@@ -37,4 +43,3 @@ public interface InvoiceJpaRepository extends JpaRepository<InvoiceJpaEntity, UU
      */
     boolean existsByInvoiceNumber(String invoiceNumber);
 }
-

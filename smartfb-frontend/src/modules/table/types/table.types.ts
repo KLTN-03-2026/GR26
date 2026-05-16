@@ -1,18 +1,18 @@
 /**
  * Module Table - Định nghĩa kiểu dữ liệu
- * Backend vẫn dùng contract table, FE hiển thị nghiệp vụ là thẻ gọi khách.
+ * Backend vẫn dùng contract table, FE hiển thị nghiệp vụ là thẻ.
  */
 
 // Sử dụng union type thay vì enum (do cấu hình TypeScript)
 export type TableStatus = 'active' | 'inactive';
 
-// Trạng thái sử dụng thẻ gọi khách (backend: OCCUPIED, RESERVED, UNPAID, FREE)
+// Trạng thái sử dụng thẻ (backend: OCCUPIED, RESERVED, UNPAID, FREE)
 export type TableUsageStatus = 'available' | 'occupied' | 'unpaid' | 'reserved';
 
 // Trạng thái tổng hợp dùng cho toolbar quản lý thẻ
 export type TableFilterState = 'all' | 'active' | 'occupied' | 'inactive';
 
-// Shape table do backend yêu cầu, FE thẻ gọi khách không hiển thị field này
+// Shape table do backend yêu cầu, FE thẻ không hiển thị field này
 export type TableShape = 'square' | 'round';
 
 // Thông tin máy gọi thẻ, backend vẫn trả qua entity zone
@@ -29,7 +29,7 @@ export interface BranchInfo {
   name: string;
 }
 
-// Kiểu dữ liệu cho 1 thẻ gọi khách, map từ response table của backend
+// Kiểu dữ liệu cho 1 thẻ, map từ response table của backend
 export interface TableItem {
   id: string;
   name: string;
@@ -57,10 +57,10 @@ export interface TableDisplayItem extends TableItem {
   branchName: string;
 }
 
-// Kiểu dữ liệu chi tiết thẻ gọi khách
+// Kiểu dữ liệu chi tiết thẻ
 export type TableDetail = TableItem;
 
-// Filters cho danh sách thẻ gọi khách
+// Filters cho danh sách thẻ
 export interface TableFilters {
   search: string;
   state: TableFilterState;
@@ -87,7 +87,7 @@ export interface UpdateZonePayload {
   floorNumber: number;
 }
 
-// Payload cho cập nhật thẻ gọi khách
+// Payload cho cập nhật thẻ
 export interface UpdateTablePayload {
   name: string;
   zoneId: string;
@@ -134,21 +134,3 @@ export interface PaginationState {
   pageSize: number;
   total: number;
 }
-
-// Helper constants
-export const TableStatusValues = {
-  ACTIVE: 'active' as const,
-  INACTIVE: 'inactive' as const,
-} as const;
-
-export const TableUsageStatusValues = {
-  AVAILABLE: 'available' as const,
-  OCCUPIED: 'occupied' as const,
-  UNPAID: 'unpaid' as const,
-  RESERVED: 'reserved' as const,
-} as const;
-
-export const TableShapeValues = {
-  SQUARE: 'square' as const,
-  ROUND: 'round' as const,
-} as const;

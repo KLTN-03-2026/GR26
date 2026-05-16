@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartF&B Demo Script</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --line: rgba(148, 163, 184, .22);
+      --owner: #22c55e;
+      --staff: #3b82f6;
+      --admin: #a855f7;
+      --code: #f97316;
+      --warning: #eab308;
+      --danger: #ef4444;
+      --ok: #16a34a;
+      --card: rgba(30, 41, 59, .82);
+      --shadow: 0 22px 60px rgba(0,0,0,.32);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
+    body { overflow: hidden; }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    .app { height: 100vh; display: grid; grid-template-rows: 78px 1fr; }
+    .topbar {
+      display: grid; grid-template-columns: minmax(240px, 1fr) auto minmax(260px, 420px);
+      align-items: center; gap: 18px; padding: 14px 18px; background: rgba(15, 23, 42, .96);
+      border-bottom: 1px solid var(--line); backdrop-filter: blur(16px); z-index: 20;
+    }
+    .brand h1 { margin: 0; font-size: 19px; letter-spacing: 0; }
+    .brand p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .timerBox { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); padding: 8px; border-radius: 14px; }
+    .timerValue { min-width: 82px; text-align: center; font-size: 24px; font-weight: 800; color: var(--owner); }
+    .timerValue.warn { color: var(--warning); }
+    .timerValue.danger { color: var(--danger); animation: pulseRed 1.2s infinite; }
+    @keyframes pulseRed { 50% { text-shadow: 0 0 18px rgba(239,68,68,.8); } }
+    .btn { color: var(--text); background: #334155; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font-weight: 700; transition: .18s ease; }
+    .btn:hover { transform: translateY(-1px); background: #475569; }
+    .btn.primary { background: #2563eb; border-color: #3b82f6; }
+    .btn.ghost { background: transparent; }
+    .btn.big { font-size: 18px; padding: 14px 22px; }
+    .progressWrap { display: grid; gap: 8px; }
+    .progressMeta { display:flex; align-items:center; justify-content:space-between; color: var(--muted); font-size: 12px; }
+    .progressBar { height: 13px; background: #020617; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; display: flex; }
+    .progressSeg { height: 100%; width: 0; transition: width .25s ease; }
+    .ownerBg { background: var(--owner); }
+    .staffBg { background: var(--staff); }
+    .adminBg { background: var(--admin); }
+
+    .layout { min-height: 0; display: grid; grid-template-columns: 320px 1fr; }
+    .sidebar { min-height: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line); padding: 16px; }
+    .main { min-height: 0; overflow: auto; padding: 22px; }
+    .tabList { display: grid; gap: 8px; margin-bottom: 16px; }
+    .tabBtn { text-align: left; color: #cbd5e1; background: rgba(15,23,42,.52); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; font-weight: 800; }
+    .tabBtn.active { background: #0f172a; color: #fff; border-color: #60a5fa; }
+    .search { width: 100%; background: #0f172a; color: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; outline: 0; margin: 8px 0 16px; }
+    .sideTitle { color: var(--muted); font-size: 12px; text-transform: uppercase; font-weight: 800; letter-spacing: .08em; margin: 16px 0 8px; }
+    .stepNav { display: grid; gap: 7px; }
+    .stepLink { text-align: left; display: grid; gap: 5px; background: rgba(15,23,42,.55); color: #dbeafe; border: 1px solid transparent; border-radius: 12px; padding: 10px; }
+    .stepLink.active { border-color: #fff; box-shadow: inset 4px 0 0 var(--actor-color); background: rgba(15,23,42,.95); }
+    .stepLink small { color: var(--muted); }
+    mark { color: #0f172a; background: #fde047; border-radius: 4px; padding: 0 2px; }
+
+    .section { display: none; max-width: 1180px; margin: 0 auto; }
+    .section.active { display: block; }
+    .hero { background: linear-gradient(135deg, rgba(34,197,94,.16), rgba(59,130,246,.12)); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 18px; }
+    .hero h2 { margin: 0 0 8px; font-size: 26px; }
+    .hero p { margin: 0; color: #cbd5e1; line-height: 1.65; }
+    .grid { display: grid; gap: 16px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: 0 14px 36px rgba(0,0,0,.20); }
+    .card h3 { margin: 0 0 12px; font-size: 18px; }
+    .muted { color: var(--muted); }
+    .kpi { display:flex; gap: 10px; flex-wrap: wrap; }
+    .pill, .badge { display:inline-flex; align-items:center; gap: 6px; border-radius: 999px; padding: 5px 9px; font-size: 12px; font-weight: 800; border: 1px solid var(--line); color: #fff; }
+    .badge.owner { background: rgba(34,197,94,.18); color: #86efac; border-color: rgba(34,197,94,.35); }
+    .badge.staff { background: rgba(59,130,246,.18); color: #93c5fd; border-color: rgba(59,130,246,.35); }
+    .badge.admin { background: rgba(168,85,247,.18); color: #d8b4fe; border-color: rgba(168,85,247,.35); }
+    .badge.core { background: rgba(239,68,68,.17); color: #fecaca; border-color: rgba(239,68,68,.35); }
+    .badge.optional { background: rgba(148,163,184,.15); color: #cbd5e1; }
+    .badge.time { background: rgba(249,115,22,.15); color: #fdba74; border-color: rgba(249,115,22,.35); }
+    .badge.kind { background: rgba(15,23,42,.92); color: #e2e8f0; }
+    .tableWrap { overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: #cbd5e1; background: rgba(15,23,42,.72); font-size: 12px; text-transform: uppercase; }
+    td { color: #e5e7eb; font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { white-space: pre-wrap; background: #020617; color: #fed7aa; border: 1px solid rgba(249,115,22,.35); border-radius: 14px; padding: 16px; overflow: auto; }
+
+    .account { border-top: 4px solid var(--actor-color); }
+    .accountHead { display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; }
+    .copyRow { display:grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items:center; margin-top: 10px; }
+    .copyValue { background: #0f172a; border: 1px solid var(--line); padding: 10px; border-radius: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .miniBtn { padding: 8px 10px; border-radius: 9px; background: #334155; color: white; font-weight: 800; border: 1px solid var(--line); }
+
+    .stepCard { border-left: 5px solid var(--actor-color); }
+    .stepHeader { display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; margin-bottom: 14px; }
+    .stepHeader h2 { margin: 8px 0 0; font-size: 25px; }
+    .statusBtn { min-width: 148px; border-radius: 999px; color: #fff; padding: 9px 12px; font-weight: 800; background: #334155; border: 1px solid var(--line); }
+    .status-done { background: rgba(34,197,94,.22); color: #bbf7d0; border-color: rgba(34,197,94,.4); }
+    .status-skip { background: rgba(148,163,184,.18); color: #cbd5e1; }
+    .status-review { background: rgba(234,179,8,.22); color: #fef08a; border-color: rgba(234,179,8,.4); }
+    .fieldList { display:grid; gap: 10px; margin-top: 12px; }
+    .field { display:grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(15,23,42,.45); }
+    .field b { color: #bfdbfe; }
+    .say { border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
+    .stepControls { display:flex; justify-content:space-between; gap: 12px; margin-top: 18px; }
+    .actorSummary { margin: 16px 0 28px; padding: 14px 16px; border-radius: 14px; background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.25); font-weight: 800; }
+    .miniProgress { margin: 12px 0 0; height: 8px; background: #020617; border-radius: 999px; overflow:hidden; border:1px solid var(--line); }
+    .miniProgress span { display:block; height:100%; width: 0; background: var(--actor-color); transition: width .25s ease; }
+    .checkGroup { margin-bottom: 16px; }
+    .checkItem { display:flex; gap: 10px; align-items:flex-start; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: rgba(15,23,42,.44); margin: 8px 0; }
+    .checkItem input { width: 19px; height: 19px; accent-color: var(--owner); margin-top: 2px; }
+    .checkItem.checked { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.10); }
+    .incident { display:grid; gap: 9px; border-left: 4px solid var(--warning); }
+    .incident strong { color: #fde68a; }
+
+    .presenter { position: fixed; inset: 0; background: #020617; z-index: 100; display: none; padding: 26px; }
+    .presenter.active { display: grid; grid-template-rows: auto 1fr auto; gap: 18px; }
+    .presenterTop { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .presenterStep { border-left: 8px solid var(--actor-color); background: #0f172a; border-radius: 22px; padding: 28px; overflow:auto; box-shadow: var(--shadow); }
+    .presenterStep h2 { font-size: clamp(30px, 4vw, 56px); margin: 10px 0 16px; }
+    .presenterStep .field { grid-template-columns: 170px 1fr; font-size: clamp(18px, 2vw, 27px); }
+    .presenterStep .badge { font-size: 16px; padding: 8px 12px; }
+    .presenterControls { display:flex; justify-content:center; gap: 18px; }
+    .toastBox { position: fixed; right: 18px; bottom: 18px; display:grid; gap: 10px; z-index: 200; }
+    .toast { background: #111827; color: #fff; border: 1px solid var(--line); border-left: 5px solid var(--warning); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); max-width: 360px; }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app { min-height: 100vh; height: auto; }
+      .topbar { grid-template-columns: 1fr; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+      .grid.two, .grid.three { grid-template-columns: 1fr; }
+      .field { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>SmartF&amp;B POS SaaS — Demo Script bảo vệ đồ án</h1>
+        <p>Thứ tự: Owner → Staff → Admin | Mục tiêu 8–10 phút, buffer tối đa 15 phút</p>
+      </div>
+      <div class="timerBox">
+        <span id="timerValue" class="timerValue">0:00</span>
+        <button class="btn primary" id="timerStart">Start</button>
+        <button class="btn" id="timerPause">Pause</button>
+        <button class="btn ghost" id="timerReset">Reset</button>
+        <button class="btn" id="presenterToggle">Presenter (P)</button>
+      </div>
+      <div class="progressWrap">
+        <div class="progressMeta"><span id="overallLabel">0/10 bước</span><span id="overallPct">0%</span></div>
+        <div class="progressBar" id="overallBar"></div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="tabList" id="tabs"></div>
+        <input class="search" id="searchInput" placeholder="Tìm nhanh bước demo..." />
+        <div class="sideTitle">Demo Steps</div>
+        <div class="stepNav" id="stepNav"></div>
+      </aside>
+      <main class="main">
+        <section id="story" class="section active"></section>
+        <section id="accounts" class="section"></section>
+        <section id="steps" class="section"></section>
+        <section id="checklist" class="section"></section>
+        <section id="incidents" class="section"></section>
+      </main>
+    </div>
+  </div>
+
+  <div class="presenter" id="presenter">
+    <div class="presenterTop">
+      <div>
+        <span class="badge kind" id="presenterCount"></span>
+        <span class="badge time" id="presenterTimer">0:00</span>
+      </div>
+      <button class="btn big" id="presenterClose">Thoát Presenter (P)</button>
+    </div>
+    <div class="presenterStep" id="presenterStep"></div>
+    <div class="presenterControls">
+      <button class="btn big" id="presenterPrev">← Prev</button>
+      <button class="btn big primary" id="presenterNext">Next →</button>
+    </div>
+  </div>
+
+  <div class="toastBox" id="toastBox"></div>
+
+  <script>
+    const DATA = {
+      tabs: [
+        { id: "story", label: "Kịch bản" },
+        { id: "accounts", label: "Tài khoản & Data" },
+        { id: "steps", label: "Demo Steps" },
+        { id: "checklist", label: "Checklist" },
+        { id: "incidents", label: "Tình huống" }
+      ],
+      story: {
+        title: "Câu chuyện demo: Coffee House mở rộng chuỗi đa chi nhánh",
+        text: "Anh Minh là chủ chuỗi Coffee House tại Đà Nẵng. Quán đã có chi nhánh SKT T1 và GENG, menu đồ uống phong phú, nhân viên vận hành theo từng vai trò. Trong buổi demo, anh Minh đăng nhập với vai trò Owner để chứng minh hệ thống quản lý được chi nhánh, menu, nhân sự và báo cáo. Sau đó nhân viên Marin đăng nhập để xử lý ca bán hàng tại bàn, còn Doran là nhân viên bị giới hạn quyền để hội đồng thấy RBAC hoạt động thực tế. Cuối cùng System Admin đăng nhập portal riêng để quản trị khách hàng SaaS và gói subscription.",
+        highlights: [
+          "Multi-branch: Owner có nhiều chi nhánh, Staff chỉ thấy chi nhánh được gán.",
+          "RBAC: Owner cấp quyền theo role, Staff giao diện bị giới hạn theo permission trong JWT.",
+          "Subscription: Admin quản lý plan, tenant; Owner bị gate bởi trạng thái subscription.",
+          "Realtime/POS: Bàn, order và thanh toán chạy theo branch context và POS session."
+        ]
+      },
+      accounts: [
+        { actor: "Owner", color: "owner", email: "hoang2312004@gmail.com", password: "Demo@12345", name: "Lee Sang-hyeok", note: "Owner tenant Coffee House, subscription Standard ACTIVE, có quyền quản lý chi nhánh, menu, staff, báo cáo.", permissions: ["OWNER", "BRANCH_EDIT", "MENU_EDIT", "STAFF_EDIT", "ROLE_EDIT", "REPORT_REVENUE"] },
+        { actor: "Staff", color: "staff", email: "marin@gmail.com", password: "Demo@12345", name: "Marin", note: "Staff vận hành role CASHIER, chi nhánh SKT T1, có ORDER_CREATE và PAYMENT_CREATE để tạo order/thanh toán.", permissions: ["CASHIER", "ORDER_CREATE", "ORDER_VIEW", "ORDER_UPDATE", "ORDER_CANCEL", "PAYMENT_CREATE", "TABLE_VIEW"] },
+        { actor: "Staff giới hạn", color: "staff", email: "doran@gmail.com", password: "Demo@12345", name: "Doran", note: "Role BARISTA, chi nhánh SKT T1, không có ORDER_CREATE/PAYMENT_CREATE; dùng để contrast RBAC.", permissions: ["BARISTA", "ORDER_VIEW", "MENU_VIEW", "TABLE_VIEW", "INVENTORY_VIEW"] },
+        { actor: "Admin", color: "admin", email: "admin@smartfnb.com", password: "Demo@12345", name: "System Admin", note: "SYSTEM_ADMIN tenant SmartFNB Platform, portal /admin riêng.", permissions: ["SYSTEM_ADMIN", "TENANT_VIEW", "TENANT_MANAGE", "BILLING_MANAGE"] }
+      ],
+      demoRows: [
+        { branch: "SKT T1", table: "Bàn1", item: "Bạc xỉu (máy) — 49.000đ; Cappuccino — 52.000đ; Cold Brew Sữa Tươi — 63.000đ", order: "ORD-A7FC-260515114027 — COMPLETED — 49.000đ, dùng cho báo cáo doanh thu" },
+        { branch: "GENG", table: "Bàn1", item: "Có 10 bàn AVAILABLE; dùng để nói về multi-branch nếu còn thời gian", order: "Có 10.591 order trong DB theo khảo sát" }
+      ],
+      survey: [
+        "Database đang dùng: PostgreSQL localhost:5433, database smartfnb.",
+        "Tenant phù hợp nhất: Coffee House — plan Standard — subscription ACTIVE.",
+        "Chi nhánh active: SKT T1 có 9 bàn, GENG có 10 bàn; HLE đang INACTIVE.",
+        "Menu có 95 item Coffee House, 25 món SELLABLE available tại SKT T1.",
+        "Order/payment/report có nhiều dữ liệu: CASH, MOMO, PAYOS, VIETQR đều có payment COMPLETED.",
+        "POS session SKT T1 đang OPEN từ 2026-05-15 11:39:17."
+      ],
+      missing: "THIẾU: database/source chỉ lưu bcrypt hash, không có plaintext password. Trước demo nên reset 4 tài khoản được chọn về cùng mật khẩu Demo@12345. Không cần insert thêm branch/menu/order.",
+      sql: "UPDATE users\nSET password_hash = '$2a$12$IxrYaM71f97UP.8dzGHCIOwiPtoh4NNWcFxnN0q3ErwZNsPCE9/Vq',\n    failed_login_count = 0,\n    locked_until = NULL,\n    status = 'ACTIVE'\nWHERE email IN (\n  'hoang2312004@gmail.com',\n  'marin@gmail.com',\n  'doran@gmail.com',\n  'admin@smartfnb.com'\n);\n\nUPDATE tables\nSET status = 'AVAILABLE'\nWHERE branch_id = 'a7fc4472-d5c0-432d-b951-5c78e30fd905'\n  AND name = 'Bàn1'\n  AND deleted_at IS NULL;",
+      steps: [
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Đăng nhập Owner và xem dashboard tổng quan", time: 30, priority: "CORE", kind: "ĐĂNG NHẬP", screen: "/login → /dashboard", action: "Nhập email hoang2312004@gmail.com, password Demo@12345. Sau khi vào dashboard, chỉ vào các số liệu tổng quan và branch selector trên header.", data: "Owner Lee Sang-hyeok, tenant Coffee House, subscription Standard ACTIVE.", result: "Dashboard Owner hiển thị shell vận hành quán, không phải portal admin. Header có context chi nhánh và sidebar đầy đủ module.", say: "Đầu tiên em đăng nhập vai trò chủ quán. Điểm quan trọng là Owner vào workspace vận hành riêng, có toàn quyền theo tenant Coffee House và có thể quản lý nhiều chi nhánh." },
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Xem chi nhánh SKT T1 và GENG", time: 45, priority: "CORE", kind: "CẤU HÌNH", screen: "/branches", action: "Click menu Chi nhánh. Mở danh sách, chỉ vào SKT T1 và GENG. Nếu cần, mở chi tiết SKT T1 để show địa chỉ và cấu hình chi nhánh.", data: "SKT T1 ACTIVE, 9 bàn; GENG ACTIVE, 10 bàn; HLE INACTIVE.", result: "Owner thấy toàn bộ chi nhánh trong tenant; các branch có trạng thái và dữ liệu riêng.", say: "Đây là phần multi-branch. Chủ quán quản lý nhiều điểm bán, còn dữ liệu bàn, order và báo cáo đều được tách theo chi nhánh." },
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Quản lý menu và giá theo chi nhánh", time: 45, priority: "CORE", kind: "THAO TÁC", screen: "/menu", action: "Click Thực đơn. Tìm hoặc chỉ các món Bạc xỉu (máy), Cappuccino, Cold Brew Sữa Tươi. Nhấn nhanh vào phần giá/availability chi nhánh nếu màn hình có sẵn.", data: "Bạc xỉu (máy) 49.000đ tại SKT T1; Cappuccino 52.000đ; Cold Brew Sữa Tươi 63.000đ.", result: "Menu có món SELLABLE, nguyên liệu/sub-assembly; giá branch có thể khác base price.", say: "Menu không chỉ là CRUD món ăn. Hệ thống lưu giá theo chi nhánh và còn liên kết công thức/kho để phục vụ trừ tồn sau thanh toán." },
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Tạo staff và cấp quyền để highlight RBAC", time: 60, priority: "CORE", kind: "CẤP QUYỀN", screen: "/staff và /staff/positions", action: "Vào Nhân viên, chỉ Marin role CASHIER và Doran role BARISTA. Mở Chức vụ/ma trận quyền, chỉ quyền CASHIER có ORDER_CREATE/PAYMENT_CREATE còn BARISTA chỉ xem order/menu/kho.", data: "Marin: CASHIER, ORDER_CREATE, PAYMENT_CREATE. Doran: BARISTA, không có ORDER_CREATE/PAYMENT_CREATE.", result: "Owner quản lý role/permission; Staff UI về sau bị giới hạn theo permission trong token.", say: "Đây là RBAC thực tế: không hardcode theo tên nhân viên. Owner cấp role, backend nhúng permission vào JWT, frontend dùng permission đó để mở hoặc ẩn chức năng." },
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Xem báo cáo doanh thu", time: 45, priority: "CORE", kind: "BÁO CÁO", screen: "/reports/revenue", action: "Click Báo cáo doanh thu. Chọn hoặc giữ chi nhánh SKT T1, chỉ vào doanh thu và order completed gần nhất.", data: "Order ORD-A7FC-260515114027 — COMPLETED — Bạc xỉu (máy) — 49.000đ; payment có nhiều phương thức CASH/MOMO/PAYOS/VIETQR.", result: "Báo cáo tổng hợp doanh thu theo dữ liệu order/payment thật.", say: "Sau vận hành bán hàng, Owner không cần xuất Excel thủ công. Báo cáo lấy từ order và payment, có thể lọc theo chi nhánh để quản trị chuỗi." },
+        { actor: "OWNER", color: "owner", part: "Phần 1", title: "Nếu còn thời gian: mở trang gói dịch vụ", time: 35, priority: "OPTIONAL", kind: "CẤU HÌNH", screen: "/packages", action: "Nếu còn thời gian mới thực hiện bước này. Mở Gói dịch vụ và chỉ trạng thái subscription hiện tại.", data: "Coffee House đang dùng Standard, subscription ACTIVE.", result: "Owner thấy gói hiện tại và luồng gia hạn/thanh toán.", say: "Phần này thể hiện SaaS subscription: tenant chỉ dùng module vận hành khi subscription còn hiệu lực." },
+        { actor: "STAFF", color: "staff", part: "Phần 2", title: "Đăng nhập Staff và thấy giao diện bị giới hạn", time: 30, priority: "CORE", kind: "ĐĂNG NHẬP", screen: "/login → /pos/tables hoặc /pos/management", action: "Logout Owner. Đăng nhập marin@gmail.com / Demo@12345. Quan sát sidebar staff: không có Chi nhánh/Gói dịch vụ/Admin, chỉ có các mục theo quyền vận hành.", data: "Marin role CASHIER, chi nhánh SKT T1.", result: "FE tự chọn branch SKT T1 nếu token chưa có branchId; menu staff chỉ hiện quyền phù hợp.", say: "Cùng một hệ thống nhưng Staff không nhìn thấy phần quản trị của chủ quán. Đây là kết quả của permission trong JWT và route guard ở frontend." },
+        { actor: "STAFF", color: "staff", part: "Phần 2", title: "Tạo order/gọi món cho Bàn1", time: 60, priority: "CORE", kind: "TẠO MỚI", screen: "/pos/tables → /pos/order", action: "Chọn Bàn1 tại SKT T1. Thêm Bạc xỉu (máy) x1 và Cappuccino x1. Kiểm tra tổng tiền rồi bấm Tạo đơn/Gửi bếp.", data: "Bàn1 AVAILABLE; Bạc xỉu (máy) 49.000đ; Cappuccino 52.000đ; tổng dự kiến 101.000đ.", result: "Order mới được tạo, bàn chuyển trạng thái bận nếu backend xử lý thành công; order xuất hiện ở quản lý đơn.", say: "Flow này chứng minh POS branch context: đơn hàng gắn với chi nhánh, bàn, nhân viên tạo đơn và menu giá theo chi nhánh." },
+        { actor: "STAFF", color: "staff", part: "Phần 2", title: "Thanh toán đơn hàng", time: 45, priority: "CORE", kind: "THANH TOÁN", screen: "/pos/payment", action: "Mở đơn vừa tạo hoặc vào Thanh toán. Chọn tiền mặt CASH, nhập đúng số tiền, xác nhận thanh toán.", data: "Order vừa tạo cho Bàn1, tổng khoảng 101.000đ; POS session SKT T1 đang OPEN.", result: "Payment COMPLETED, invoice được tạo, order chuyển COMPLETED; dữ liệu sẽ cộng vào báo cáo doanh thu.", say: "Thanh toán không chỉ đổi trạng thái. Backend tạo payment, invoice, hoàn tất order và phát event để phục vụ báo cáo và trừ kho." },
+        { actor: "STAFF", color: "staff", part: "Phần 2", title: "Nếu còn thời gian: đăng nhập Staff bị giới hạn", time: 35, priority: "OPTIONAL", kind: "CẤP QUYỀN", screen: "/login → /pos", action: "Nếu còn thời gian mới thực hiện bước này. Logout Marin, đăng nhập doran@gmail.com / Demo@12345. So sánh menu không có chức năng tạo order/thanh toán.", data: "Doran role BARISTA, có ORDER_VIEW/MENU_VIEW/TABLE_VIEW, không có ORDER_CREATE/PAYMENT_CREATE.", result: "Các route/nút liên quan tạo order và thanh toán bị ẩn hoặc bị guard chặn.", say: "Đây là phần contrast RBAC: cùng là Staff nhưng quyền khác nhau thì giao diện và thao tác khác nhau." },
+        { actor: "ADMIN", color: "admin", part: "Phần 3", title: "Đăng nhập portal Admin riêng và xem Owner list", time: 30, priority: "CORE", kind: "ĐĂNG NHẬP", screen: "/login → /admin/tenants", action: "Logout Staff. Đăng nhập admin@smartfnb.com / Demo@12345. Mở Khách hàng trong admin sidebar.", data: "System Admin role SYSTEM_ADMIN. Tenant có Coffee House, Levi Store, LeviCaptain Store, king king Store.", result: "Admin vào layout riêng màu/điều hướng riêng, không lẫn với giao diện vận hành quán.", say: "Admin là actor SaaS, không bán hàng. Vai trò này quản trị khách hàng thuê bao, trạng thái tenant và không dùng sidebar vận hành của Owner." },
+        { actor: "ADMIN", color: "admin", part: "Phần 3", title: "Xem/quản lý gói subscription", time: 45, priority: "CORE", kind: "CẤU HÌNH", screen: "/admin/plans", action: "Click Gói dịch vụ. Chỉ các plan Basic/Standard/Premium/Free nếu hiện trên màn hình, nêu giới hạn branch/staff/menu.", data: "Coffee House dùng Standard ACTIVE; king king Store đang PENDING_PAYMENT theo DB.", result: "Admin quản lý plan, giới hạn gói và billing/subscription toàn hệ thống.", say: "Phần cuối thể hiện mô hình SaaS: Admin kiểm soát gói, giới hạn và khách hàng; Owner chỉ vận hành trong tenant của mình." },
+        { actor: "ADMIN", color: "admin", part: "Phần 3", title: "Nếu còn thời gian: xem Billing", time: 35, priority: "OPTIONAL", kind: "BÁO CÁO", screen: "/admin/billing", action: "Nếu còn thời gian mới thực hiện bước này. Mở Billing để chỉ invoice subscription.", data: "Admin billing endpoints có list, unpaid, mark paid, cancel invoice.", result: "Hội đồng thấy vòng đời subscription invoice ở tầng SaaS.", say: "Billing tách khỏi payment POS: một bên là khách trả tiền tại quán, một bên là Owner trả phí thuê bao cho nền tảng." }
+      ],
+      summaries: {
+        OWNER: "✅ Kết thúc phần Owner — đã dùng ~4 phút, còn ~1 phút buffer trong phần Owner.",
+        STAFF: "✅ Kết thúc phần Staff — đã dùng ~2 phút 15 giây, còn ~45 giây buffer trong phần Staff.",
+        ADMIN: "✅ Kết thúc phần Admin — đã dùng ~1 phút 15 giây, còn ~45 giây buffer trong phần Admin."
+      },
+      checklist: [
+        { group: "Account", items: [
+          "Đã chạy SQL reset password Demo@12345 cho 4 tài khoản demo.",
+          "Đăng nhập thử Owner hoang2312004@gmail.com / Demo@12345.",
+          "Đăng nhập thử Staff Marin marin@gmail.com / Demo@12345.",
+          "Đăng nhập thử Staff giới hạn doran@gmail.com / Demo@12345.",
+          "Đăng nhập thử Admin admin@smartfnb.com / Demo@12345."
+        ]},
+        { group: "Server & Config", items: [
+          "PostgreSQL chạy ở localhost:5433, DB smartfnb, user smartfnb.",
+          "Backend chạy port 8080. Docker: cd ../Smartfnb-BE && docker compose up -d postgres redis app. Local IDE: dùng .env.local nhưng chỉnh DB_PORT=5433 nếu dùng DB Docker.",
+          "Frontend chạy port 5173: npm run dev.",
+          "FE .env có VITE_WS_URL=/ws và VITE_AI_SERVICE_URL=http://localhost:8001.",
+          "Vite proxy /api và /ws đang trỏ http://localhost:8080."
+        ]},
+        { group: "Nghiệp vụ", items: [
+          "Tenant Coffee House subscription ACTIVE.",
+          "Chi nhánh SKT T1 ACTIVE và Bàn1 AVAILABLE trước khi demo.",
+          "POS session SKT T1 đang OPEN; nếu bị đóng thì mở ca trước khi tạo order.",
+          "Menu SKT T1 có Bạc xỉu (máy), Cappuccino, Cold Brew Sữa Tươi available.",
+          "Báo cáo doanh thu có order completed, ví dụ ORD-A7FC-260515114027."
+        ]},
+        { group: "Trình duyệt & trình chiếu", items: [
+          "Chuẩn bị 3 tab: FE http://localhost:5173, DB/report dự phòng, HTML demo-script.",
+          "Zoom trình duyệt 90% hoặc 100%, màn hình 1440px trở lên nếu có.",
+          "Xóa localStorage auth hoặc logout sạch trước khi bắt đầu.",
+          "Bật timer trong file demo-script khi bắt đầu nói.",
+          "Dùng Presenter Mode bằng phím P nếu cần đọc cue lớn trên màn chiếu."
+        ]}
+      ],
+      incidents: [
+        { title: "Lỗi đăng nhập / sai tài khoản", sign: "Toast báo sai email/password hoặc quay lại màn login.", fix: "Dùng nút copy trong tab Tài khoản; nếu vẫn lỗi, chạy lại SQL reset password rồi login lại." },
+        { title: "Dữ liệu không hiển thị", sign: "Trang branch/menu/report trống hoặc loading lâu.", fix: "Refresh trang, kiểm tra branch selector đang là SKT T1; nếu là staff chờ auto-select branch." },
+        { title: "RBAC không đúng như mong đợi", sign: "Doran thấy nút tạo order/thanh toán hoặc Marin bị thiếu quyền.", fix: "Nói ngắn: quyền lấy từ role hiện tại trong DB; mở tab Staff/Positions của Owner để chỉ ma trận quyền thay vì sửa tại chỗ." },
+        { title: "Lố giờ", sign: "Timer qua 8 phút hoặc vào vùng vàng/đỏ.", fix: "Bỏ toàn bộ bước OPTIONAL, chuyển thẳng sang Admin Plans và câu tổng kết." },
+        { title: "Hội đồng hỏi tính năng ngoài script", sign: "Câu hỏi về AI forecast, kho, payroll, supplier.", fix: "Trả lời bằng vị trí module trong sidebar và nói đã có trong kiến trúc; chỉ mở nếu còn buffer, không đi sâu thao tác." },
+        { title: "Server lỗi / trắng màn hình", sign: "FE trắng, console/network 500/connection refused.", fix: "Refresh một lần; nếu không được, chuyển sang file HTML này và trình bày flow bằng dữ liệu đã khảo sát." },
+        { title: "Mất kết nối database", sign: "Backend log DB connection refused hoặc API 500 hàng loạt.", fix: "Chạy docker compose up -d postgres, kiểm tra port 5433; trong lúc chờ, dùng bảng dữ liệu demo trong HTML để nói tiếp." }
+      ]
+    };
+
+    const STORAGE = {
+      step: "smartfnb-demo-step-status",
+      check: "smartfnb-demo-checklist",
+      timer: "smartfnb-demo-timer"
+    };
+    const statusCycle = ["todo", "done", "skip", "review"];
+    const statusLabel = {
+      todo: "⬜ Chưa làm",
+      done: "✅ Đã xong",
+      skip: "⏭️ Bỏ qua",
+      review: "🔄 Cần xem lại"
+    };
+    let activeTab = "story";
+    let currentStep = 0;
+    let elapsed = Number(localStorage.getItem(STORAGE.timer) || 0);
+    let timerId = null;
+    let tenToast = false;
+    let thirteenToast = false;
+    let stepStatus = readJson(STORAGE.step, {});
+    let checklistState = readJson(STORAGE.check, {});
+
+    function readJson(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
+    }
+    function saveJson(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function formatTime(sec) { return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
+    function actorColor(actor) { return actor === "OWNER" ? "owner" : actor === "STAFF" ? "staff" : "admin"; }
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+    function toast(message) {
+      const box = document.getElementById("toastBox");
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.textContent = message;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+    function copyText(text) {
+      navigator.clipboard?.writeText(text).then(() => toast("Đã copy")).catch(() => toast("Không copy được, hãy copy thủ công"));
+    }
+
+    function init() {
+      renderTabs();
+      renderStory();
+      renderAccounts();
+      renderSteps();
+      renderChecklist();
+      renderIncidents();
+      updateTimer();
+      updateProgress();
+      bindEvents();
+      showTab("story");
+    }
+
+    function renderTabs() {
+      document.getElementById("tabs").innerHTML = DATA.tabs.map(t => `<button class="tabBtn" data-tab="${t.id}">${t.label}</button>`).join("");
+    }
+
+    function renderStory() {
+      document.getElementById("story").innerHTML = `
+        <div class="hero">
+          <h2>${DATA.story.title}</h2>
+          <p>${DATA.story.text}</p>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <h3>Điểm kỹ thuật cần nhấn</h3>
+            <div class="fieldList">${DATA.story.highlights.map(x => `<div class="field"><b>Highlight</b><span>${x}</span></div>`).join("")}</div>
+          </div>
+          <div class="card">
+            <h3>Khảo sát data có sẵn</h3>
+            <div class="fieldList">${DATA.survey.map(x => `<div class="field"><b>DB</b><span>${x}</span></div>`).join("")}</div>
+          </div>
+        </div>`;
+    }
+
+    function renderAccounts() {
+      const cards = DATA.accounts.map(acc => `
+        <div class="card account" style="--actor-color: var(--${acc.color})">
+          <div class="accountHead">
+            <div><span class="badge ${acc.color}">${acc.actor}</span><h3>${acc.name}</h3><p class="muted">${acc.note}</p></div>
+          </div>
+          <div class="copyRow"><div class="copyValue">${acc.email}</div><button class="miniBtn" data-copy="${acc.email}">Copy</button><span></span></div>
+          <div class="copyRow"><div class="copyValue pass" data-pass="${acc.password}">••••••••••</div><button class="miniBtn togglePass">👁️</button><button class="miniBtn" data-copy="${acc.password}">Copy</button></div>
+          <div class="kpi" style="margin-top:12px">${acc.permissions.map(p => `<span class="pill">${p}</span>`).join("")}</div>
+        </div>`).join("");
+      const rows = DATA.demoRows.map(r => `<tr><td>${r.branch}</td><td>${r.table}</td><td>${r.item}</td><td>${r.order}</td></tr>`).join("");
+      document.getElementById("accounts").innerHTML = `
+        <div class="hero"><h2>Tài khoản và dữ liệu demo</h2><p>${DATA.missing}</p></div>
+        <h3>BẢNG 1 — TÀI KHOẢN DEMO</h3>
+        <div class="grid two">${cards}</div>
+        <h3 style="margin-top:22px">BẢNG 2 — DỮ LIỆU SẼ DÙNG TRONG DEMO</h3>
+        <div class="tableWrap"><table><thead><tr><th>Chi nhánh</th><th>Bàn</th><th>Món sẽ gọi</th><th>Order có sẵn dùng cho báo cáo</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="card" style="margin-top:18px">
+          <h3>⚠️ Chạy trước khi demo</h3>
+          <p class="muted">SQL này chỉ reset password demo và đảm bảo Bàn1 ở SKT T1 trống. Không insert thêm dữ liệu.</p>
+          <pre id="sqlBlock">${esc(DATA.sql)}</pre>
+          <button class="btn" data-copy="${esc(DATA.sql)}">Copy SQL</button>
+        </div>`;
+    }
+
+    function stepBadges(step) {
+      return `<div class="kpi">
+        <span class="badge ${step.color}">${step.actor}</span>
+        <span class="badge kind">[${step.kind}]</span>
+        <span class="badge ${step.priority.toLowerCase()}">[${step.priority}]</span>
+        <span class="badge time">~${step.time}s</span>
+      </div>`;
+    }
+
+    function renderSteps() {
+      const html = DATA.steps.map((s, i) => `
+        <article class="card stepCard" id="step-${i}" style="--actor-color: var(--${s.color})">
+          <div class="stepHeader">
+            <div>${stepBadges(s)}<h2>${s.actor} — ${s.part}: ${s.title}</h2><p class="muted">Thời lượng dự kiến: ${s.time} giây. Mục tiêu: chứng minh ${goalFor(s)}.</p></div>
+            <button class="statusBtn ${statusClass(i)}" data-status="${i}">${statusLabel[stepStatus[i] || "todo"]}</button>
+          </div>
+          <div class="fieldList">
+            <div class="field"><b>Màn hình</b><span>${s.screen}</span></div>
+            <div class="field"><b>Hành động</b><span>${s.action}</span></div>
+            <div class="field"><b>Dữ liệu</b><span>${s.data}</span></div>
+            <div class="field"><b>Kết quả</b><span>${s.result}</span></div>
+            <div class="field say"><b>Nói với HĐ</b><span>"${s.say}"</span></div>
+          </div>
+          <div class="stepControls">
+            <button class="btn" data-prev="${i}">← Bước trước</button>
+            <button class="btn primary" data-next="${i}">Bước tiếp →</button>
+          </div>
+        </article>
+        ${summaryAfter(i) ? `<div class="actorSummary">${summaryAfter(i)}</div>` : ""}`).join("");
+      document.getElementById("steps").innerHTML = `<div class="hero"><h2>Demo script chi tiết từng bước</h2><p>Mỗi bước đã giới hạn dưới hoặc quanh 45 giây; các bước OPTIONAL chỉ thực hiện nếu còn thời gian.</p></div>${html}`;
+      renderStepNav();
+    }
+
+    function goalFor(step) {
+      if (step.actor === "OWNER") return "Owner quản trị chuỗi, dữ liệu và RBAC";
+      if (step.actor === "STAFF") return "Staff vận hành đúng quyền được cấp";
+      return "Admin quản trị SaaS, tenant và subscription";
+    }
+    function statusClass(i) { return "status-" + (stepStatus[i] || "todo"); }
+    function summaryAfter(i) {
+      const current = DATA.steps[i], next = DATA.steps[i + 1];
+      return next && next.actor === current.actor ? "" : DATA.summaries[current.actor];
+    }
+
+    function renderStepNav() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      document.getElementById("stepNav").innerHTML = DATA.steps.map((s, i) => {
+        const hay = `${s.actor} ${s.title} ${s.screen} ${s.kind}`.toLowerCase();
+        if (q && !hay.includes(q)) return "";
+        const title = q ? esc(s.title).replace(new RegExp(`(${escapeReg(q)})`, "ig"), "<mark>$1</mark>") : esc(s.title);
+        return `<button class="stepLink ${i === currentStep ? "active" : ""}" style="--actor-color: var(--${s.color})" data-jump="${i}">
+          <span>${i + 1}. ${title}</span><small>${s.actor} • ${s.priority} • ~${s.time}s</small>
+          <div class="miniProgress"><span style="width:${actorMiniProgress(s.actor)}%"></span></div>
+        </button>`;
+      }).join("");
+    }
+    function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    function actorMiniProgress(actor) {
+      const list = DATA.steps.map((s, i) => ({...s, i})).filter(s => s.actor === actor);
+      const passed = list.filter(s => s.i <= currentStep).length;
+      return Math.round((passed / list.length) * 100);
+    }
+
+    function renderChecklist() {
+      let counter = 0;
+      const groups = DATA.checklist.map(group => {
+        const items = group.items.map(item => {
+          const id = "c" + counter++;
+          const checked = checklistState[id] === true;
+          return `<label class="checkItem ${checked ? "checked" : ""}"><input type="checkbox" data-check="${id}" ${checked ? "checked" : ""}><span>${item}</span></label>`;
+        }).join("");
+        return `<div class="card checkGroup"><h3>${group.group}</h3>${items}</div>`;
+      }).join("");
+      document.getElementById("checklist").innerHTML = `<div class="hero"><h2>Checklist trước demo</h2><p id="checkProgress"></p><div class="progressBar"><div id="checkBar" class="progressSeg ownerBg"></div></div><br><button class="btn" id="resetChecklist">Reset tất cả</button></div>${groups}`;
+      updateChecklistProgress();
+    }
+
+    function updateChecklistProgress() {
+      const total = document.querySelectorAll("[data-check]").length;
+      const done = document.querySelectorAll("[data-check]:checked").length;
+      const pct = total ? Math.round(done / total * 100) : 0;
+      document.getElementById("checkProgress").textContent = `${done}/${total} mục đã kiểm tra`;
+      document.getElementById("checkBar").style.width = pct + "%";
+    }
+
+    function renderIncidents() {
+      document.getElementById("incidents").innerHTML = `<div class="hero"><h2>Xử lý tình huống bất ngờ</h2><p>Quy tắc chung: không debug dài trên sân khấu; chuyển sang dữ liệu đã khảo sát hoặc bước kế tiếp trong dưới 15 giây.</p></div><div class="grid two">${DATA.incidents.map(x => `<div class="card incident"><h3>${x.title}</h3><div><strong>Dấu hiệu:</strong> ${x.sign}</div><div><strong>Xử lý &lt;15s:</strong> ${x.fix}</div></div>`).join("")}</div>`;
+    }
+
+    function bindEvents() {
+      document.addEventListener("click", e => {
+        const tab = e.target.closest("[data-tab]"); if (tab) showTab(tab.dataset.tab);
+        const copy = e.target.closest("[data-copy]"); if (copy) copyText(copy.dataset.copy);
+        const jump = e.target.closest("[data-jump]"); if (jump) goStep(Number(jump.dataset.jump), true);
+        const status = e.target.closest("[data-status]"); if (status) cycleStatus(Number(status.dataset.status));
+        const prev = e.target.closest("[data-prev]"); if (prev) goStep(Math.max(0, Number(prev.dataset.prev) - 1), true);
+        const next = e.target.closest("[data-next]"); if (next) goStep(Math.min(DATA.steps.length - 1, Number(next.dataset.next) + 1), true);
+        if (e.target.closest(".togglePass")) togglePassword(e.target.closest(".copyRow"));
+      });
+      document.addEventListener("change", e => {
+        const cb = e.target.closest("[data-check]");
+        if (!cb) return;
+        checklistState[cb.dataset.check] = cb.checked;
+        saveJson(STORAGE.check, checklistState);
+        cb.closest(".checkItem").classList.toggle("checked", cb.checked);
+        updateChecklistProgress();
+      });
+      document.getElementById("searchInput").addEventListener("input", renderStepNav);
+      document.getElementById("timerStart").onclick = startTimer;
+      document.getElementById("timerPause").onclick = pauseTimer;
+      document.getElementById("timerReset").onclick = resetTimer;
+      document.getElementById("presenterToggle").onclick = togglePresenter;
+      document.getElementById("presenterClose").onclick = togglePresenter;
+      document.getElementById("presenterPrev").onclick = () => goStep(Math.max(0, currentStep - 1), false);
+      document.getElementById("presenterNext").onclick = () => goStep(Math.min(DATA.steps.length - 1, currentStep + 1), false);
+      document.addEventListener("keydown", e => {
+        if (e.key.toLowerCase() === "p") togglePresenter();
+        if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goStep(Math.min(DATA.steps.length - 1, currentStep + 1), false); }
+        if (e.key === "ArrowLeft") goStep(Math.max(0, currentStep - 1), false);
+      });
+      document.addEventListener("click", e => {
+        if (e.target.id === "resetChecklist") {
+          checklistState = {};
+          saveJson(STORAGE.check, checklistState);
+          renderChecklist();
+          toast("Đã reset checklist");
+        }
+      });
+    }
+
+    function showTab(id) {
+      activeTab = id;
+      document.querySelectorAll(".section").forEach(s => s.classList.toggle("active", s.id === id));
+      document.querySelectorAll(".tabBtn").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
+      if (id === "steps") goStep(currentStep, false);
+    }
+    function goStep(index, openStepsTab) {
+      currentStep = index;
+      if (openStepsTab) showTab("steps");
+      renderStepNav();
+      updateProgress();
+      renderPresenter();
+      const el = document.getElementById("step-" + index);
+      if (el && activeTab === "steps") el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function cycleStatus(i) {
+      const current = stepStatus[i] || "todo";
+      const next = statusCycle[(statusCycle.indexOf(current) + 1) % statusCycle.length];
+      stepStatus[i] = next;
+      saveJson(STORAGE.step, stepStatus);
+      renderSteps();
+      updateProgress();
+    }
+    function togglePassword(row) {
+      const el = row.querySelector(".pass");
+      const hidden = el.textContent.includes("•");
+      el.textContent = hidden ? el.dataset.pass : "••••••••••";
+    }
+
+    function updateProgress() {
+      const total = DATA.steps.length;
+      const doneCount = Math.max(currentStep + 1, Object.values(stepStatus).filter(v => v === "done" || v === "skip").length);
+      const pct = Math.round((doneCount / total) * 100);
+      document.getElementById("overallLabel").textContent = `${Math.min(doneCount,total)}/${total} bước`;
+      document.getElementById("overallPct").textContent = `${Math.min(pct,100)}%`;
+      const groups = ["OWNER", "STAFF", "ADMIN"].map(actor => {
+        const actorSteps = DATA.steps.filter(s => s.actor === actor).length;
+        const actorPassed = DATA.steps.filter((s, i) => s.actor === actor && i <= currentStep).length;
+        const totalShare = actorSteps / total * 100;
+        const width = totalShare * (actorPassed / actorSteps);
+        return `<div class="progressSeg ${actorColor(actor)}Bg" style="width:${width}%"></div>`;
+      }).join("");
+      document.getElementById("overallBar").innerHTML = groups;
+    }
+
+    function startTimer() {
+      if (timerId) return;
+      timerId = setInterval(() => {
+        elapsed += 1;
+        localStorage.setItem(STORAGE.timer, String(elapsed));
+        updateTimer();
+      }, 1000);
+    }
+    function pauseTimer() { clearInterval(timerId); timerId = null; updateTimer(); }
+    function resetTimer() {
+      pauseTimer();
+      elapsed = 0; tenToast = false; thirteenToast = false;
+      localStorage.setItem(STORAGE.timer, "0");
+      updateTimer();
+      toast("Đã reset timer");
+    }
+    function updateTimer() {
+      const labels = [document.getElementById("timerValue"), document.getElementById("presenterTimer")];
+      labels.forEach(el => { if (el) { el.textContent = formatTime(elapsed); el.classList.toggle("warn", elapsed >= 480 && elapsed < 600); el.classList.toggle("danger", elapsed >= 600); } });
+      if (elapsed >= 600 && !tenToast) { tenToast = true; toast("⚠️ Đã dùng 10 phút — còn 5 phút buffer"); }
+      if (elapsed >= 780 && !thirteenToast) { thirteenToast = true; toast("🚨 Còn 2 phút — kết thúc sớm!"); }
+    }
+    function togglePresenter() {
+      const p = document.getElementById("presenter");
+      p.classList.toggle("active");
+      renderPresenter();
+    }
+    function renderPresenter() {
+      const s = DATA.steps[currentStep];
+      document.getElementById("presenterCount").textContent = `Bước ${currentStep + 1} / ${DATA.steps.length} — ${s.part}`;
+      const box = document.getElementById("presenterStep");
+      box.style.setProperty("--actor-color", `var(--${s.color})`);
+      box.innerHTML = `${stepBadges(s)}<h2>${s.actor} — ${s.title}</h2>
+        <div class="fieldList">
+          <div class="field"><b>Màn hình</b><span>${s.screen}</span></div>
+          <div class="field"><b>Hành động</b><span>${s.action}</span></div>
+          <div class="field"><b>Dữ liệu</b><span>${s.data}</span></div>
+          <div class="field"><b>Kết quả</b><span>${s.result}</span></div>
+          <div class="field say"><b>Nói với HĐ</b><span>"${s.say}"</span></div>
+        </div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

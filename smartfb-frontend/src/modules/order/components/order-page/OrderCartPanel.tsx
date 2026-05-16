@@ -1,8 +1,6 @@
 import {
   ChevronRight,
-  Minus,
   PencilLine,
-  Plus,
   PrinterCheck,
   ReceiptText,
   Trash2,
@@ -16,6 +14,7 @@ import { Button } from "@shared/components/ui/button";
 import { cn } from "@shared/utils/cn";
 import { formatVND } from "@shared/utils/formatCurrency";
 import { formatDateTime } from "@shared/utils/formatDate";
+import { OrderQuantityInput } from "../OrderQuantityInput";
 import { getCartItemSummary } from "./orderPage.utils";
 
 interface OrderCartPanelProps {
@@ -177,27 +176,13 @@ export const OrderCartPanel = ({
                       </div>
 
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 rounded-full border border-[#eadbce] bg-[#fcf7f2] px-3 py-1.5">
-                          <button
-                            type="button"
-                            onClick={() => onChangeItemQuantity(item, -1)}
-                            disabled={isItemActionsDisabled}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <span className="min-w-6 text-center text-[1rem] font-black text-slate-900">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => onChangeItemQuantity(item, 1)}
-                            disabled={isItemActionsDisabled}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#f3e8df] hover:text-slate-800"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <OrderQuantityInput
+                          value={item.quantity}
+                          disabled={isItemActionsDisabled}
+                          onCommit={(quantity) =>
+                            onChangeItemQuantity(item, quantity - item.quantity)
+                          }
+                        />
 
                         <button
                           type="button"

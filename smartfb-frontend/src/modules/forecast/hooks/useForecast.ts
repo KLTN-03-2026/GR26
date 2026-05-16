@@ -40,51 +40,6 @@ export const useForecastSummary = (branchId?: string) => {
 };
 
 /**
- * Lấy dự báo chi tiết cho một nguyên liệu cụ thể.
- */
-export const useIngredientForecast = (branchId: string, ingredientId: string) => {
-  return useQuery({
-    queryKey: queryKeys.forecast.ingredient(branchId, ingredientId),
-    queryFn: () => forecastService.getIngredientForecast(branchId, ingredientId),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-    enabled: !!branchId && !!ingredientId,
-  });
-};
-
-/**
- * Lấy trạng thái train model (thời điểm train, kết quả, số series).
- * Dùng để hiển thị thông tin độ tin cậy dự báo và badge "Cập nhật lúc...".
- */
-export const useTrainStatus = (branchId?: string) => {
-  const currentBranchId = useAuthStore((state) => state.user?.branchId ?? null);
-  const resolvedBranchId = branchId ?? currentBranchId ?? '';
-
-  return useQuery({
-    queryKey: queryKeys.forecast.trainStatus(resolvedBranchId),
-    queryFn: () => forecastService.getTrainStatus(resolvedBranchId),
-    retry: 1,
-    enabled: !!resolvedBranchId,
-  });
-};
-
-/**
- * Kích hoạt train model thủ công.
- * Sau khi train xong, invalidate trainStatus để component cập nhật trạng thái mới.
- */
-export const useTriggerTrain = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => forecastService.triggerTrain(),
-    onSuccess: () => {
-      // Reload train status của tất cả chi nhánh để phản ánh lần train mới nhất.
-      queryClient.invalidateQueries({ queryKey: ['ai-forecast', 'train-status'] });
-    },
-  });
-};
-
-/**
  * Trigger predict thủ công cho 1 chi nhánh — dùng model đã train sẵn, nhanh hơn train.
  * Sau 5 giây (để background job kịp hoàn thành), invalidate forecast để FE tự reload.
  */

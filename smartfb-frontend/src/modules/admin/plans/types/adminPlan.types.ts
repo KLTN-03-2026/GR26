@@ -1,11 +1,33 @@
 export type AdminPlanStatusFilter = 'all' | 'active' | 'inactive';
 
+export type AdminPlanFeatureKey =
+  | 'POS'
+  | 'INVENTORY'
+  | 'PROMOTION'
+  | 'AI'
+  | 'ADVANCED_REPORT';
+
 export interface AdminPlanFeatureFlags {
   POS: boolean;
   INVENTORY: boolean;
   PROMOTION: boolean;
-  REPORT: boolean;
   AI: boolean;
+  ADVANCED_REPORT: boolean;
+}
+
+export interface AdminPlanApiFeatureFlags {
+  POS?: boolean;
+  INVENTORY?: boolean;
+  PROMOTION?: boolean;
+  REPORT?: boolean;
+  AI?: boolean;
+  ADVANCED_REPORT?: boolean;
+  hasPos?: boolean;
+  hasInventory?: boolean;
+  hasPromotion?: boolean;
+  hasAi?: boolean;
+  hasAdvancedReport?: boolean;
+  [key: string]: boolean | undefined;
 }
 
 export interface AdminPlan {
@@ -16,7 +38,7 @@ export interface AdminPlan {
   maxBranches: number | null;
   maxStaff: number | null;
   maxMenuItems: number | null;
-  features: Partial<AdminPlanFeatureFlags> | Record<string, boolean>;
+  features: AdminPlanApiFeatureFlags | null;
   isActive: boolean;
 }
 

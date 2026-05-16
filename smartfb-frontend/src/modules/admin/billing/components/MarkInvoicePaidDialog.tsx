@@ -63,6 +63,7 @@ export const MarkInvoicePaidDialog = ({
             <option value="CASH">Tiền mặt</option>
             <option value="MOMO">MoMo</option>
             <option value="ZALOPAY">ZaloPay</option>
+            <option value="PAYOS">PayOS</option>
           </select>
         </div>
 

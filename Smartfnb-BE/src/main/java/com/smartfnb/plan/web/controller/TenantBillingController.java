@@ -91,6 +91,27 @@ public class TenantBillingController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
+    /**
+     * Hủy hóa đơn gói đang chờ thanh toán để Owner chọn lại gói.
+     * Không nhận body vì đây là thao tác kỹ thuật hủy invoice/QR cũ trước khi đổi gói.
+     *
+     * <p>POST /api/v1/tenant/billing/invoices/{invoiceId}/cancel</p>
+     *
+     * @param invoiceId UUID hóa đơn cần hủy
+     * @return trạng thái hóa đơn sau khi hủy
+     *
+     * author: Hoàng | date: 2026-05-16 | note: Chỉ owner của tenant hiện tại được hủy invoice UNPAID.
+     */
+    @PostMapping("/invoices/{invoiceId}/cancel")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<CancelTenantInvoiceResponse>> cancelInvoice(
+            @PathVariable UUID invoiceId) {
+
+        log.info("Owner yêu cầu hủy hóa đơn gói {}", invoiceId);
+        CancelTenantInvoiceResponse response = tenantBillingService.cancelTenantInvoice(invoiceId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // 3. DANH SÁCH HÓA ĐƠN CỦA TENANT
     // ─────────────────────────────────────────────────────────────────────────
@@ -149,5 +170,76 @@ public class TenantBillingController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.fail("WEBHOOK_PROCESSING_ERROR", e.getMessage()));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. WEBHOOK PAYOS BILLING
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Webhook nhận callback từ PayOS sau khi user thanh toán gói dịch vụ.
+     * Endpoint PUBLIC — PayOS gọi trực tiếp, không cần JWT.
+     * Bảo mật: verify payload qua providerReference (paymentLinkId) khớp với attempt trong DB.
+     *
+     * <p>POST /api/v1/tenant/billing/webhook/payos</p>
+     *
+     * @author Hoàng | date: 2026-05-16
+     */
+    @PostMapping("/webhook/payos")
+    public ResponseEntity<ApiResponse<Void>> handlePayOSWebhook(
+            @RequestBody java.util.Map<String, Object> payload) {
+
+        log.info("Nhận PayOS billing webhook");
+        try {
+            // Trích xuất fields từ payload PayOS
+            // Cấu trúc PayOS webhook: { "code": "00", "data": { "paymentLinkId": "...", "orderCode": ..., "amount": ... } }
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> data = (java.util.Map<String, Object>) payload.get("data");
+            String code = String.valueOf(payload.getOrDefault("code", ""));
+            if (data == null) {
+                log.warn("PayOS billing webhook: thiếu 'data' trong payload");
+                return ResponseEntity.ok(ApiResponse.ok());
+            }
+            String paymentLinkId = String.valueOf(data.getOrDefault("paymentLinkId", ""));
+            long orderCode = Long.parseLong(String.valueOf(data.getOrDefault("orderCode", "0")));
+            java.math.BigDecimal amount = data.get("amount") != null
+                    ? new java.math.BigDecimal(String.valueOf(data.get("amount")))
+                    : null;
+
+            tenantBillingService.processPayOSWebhook(paymentLinkId, orderCode, amount, code);
+            return ResponseEntity.ok(ApiResponse.ok());
+        } catch (Exception e) {
+            log.error("Lỗi xử lý PayOS billing webhook: {}", e.getMessage());
+            // Trả 200 để PayOS không retry liên tục — lỗi đã được log
+            return ResponseEntity.ok(ApiResponse.ok());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. POLLING / SYNC PAYMENT STATUS (dev & fallback)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Owner chủ động kiểm tra trạng thái PayOS qua PayOS API.
+     * Dùng khi webhook không chạy (dev/local) hoặc user muốn xác nhận ngay.
+     * Chỉ Owner của tenant hiện tại mới gọi được.
+     *
+     * <p>POST /api/v1/tenant/billing/invoices/{invoiceId}/sync-payment</p>
+     *
+     * @author Hoàng | date: 2026-05-16
+     */
+    @PostMapping("/invoices/{invoiceId}/sync-payment")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> syncPaymentStatus(
+            @PathVariable UUID invoiceId) {
+
+        log.info("Owner yêu cầu sync PayOS payment status cho invoice {}", invoiceId);
+        boolean justPaid = tenantBillingService.syncPaymentStatus(invoiceId);
+        java.util.Map<String, Object> result = java.util.Map.of(
+                "invoiceId", invoiceId,
+                "justPaid", justPaid,
+                "message", justPaid ? "Thanh toán đã được xác nhận" : "Hóa đơn chưa được thanh toán"
+        );
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

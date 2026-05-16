@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AlertCircle, CheckCircle2, Clock, CreditCard, QrCode, RefreshCw, Wallet } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, CreditCard, QrCode, RefreshCw, Wallet, XCircle } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
 import { formatVND } from '@shared/utils/formatCurrency';
@@ -29,19 +29,19 @@ const PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'cash',
     label: 'Tiền mặt',
-    description: 'Nhập số tiền khách đưa để tính tiền thừa.',
+    description: '',
     icon: <Wallet className="h-5 w-5 text-emerald-500" />,
   },
   {
     id: 'card',
     label: 'Thẻ ngân hàng',
-    description: 'Dùng POS hoặc máy quẹt thẻ tại quầy.',
+    description: '',
     icon: <CreditCard className="h-5 w-5 text-blue-500" />,
   },
   {
     id: 'qr',
     label: 'Chuyển khoản / QR',
-    description: 'Hiển thị mã QR để khách thanh toán nhanh.',
+    description: '',
     icon: <QrCode className="h-5 w-5 text-orange-500" />,
   },
 ];
@@ -75,8 +75,10 @@ interface PaymentSidebarProps {
   isPayOSEnabled: boolean;
   payOSDisabledMessage: string;
   isManualConfirming: boolean;
+  isCancelingQR: boolean;
   onSelectQRSubMethod: (method: QRSubMethod) => void;
   onManualConfirmQR: () => void;
+  onCancelQR: () => void;
   onRegenerateQR: () => void;
 }
 
@@ -111,8 +113,10 @@ export const PaymentSidebar = ({
   isPayOSEnabled,
   payOSDisabledMessage,
   isManualConfirming,
+  isCancelingQR,
   onSelectQRSubMethod,
   onManualConfirmQR,
+  onCancelQR,
   onRegenerateQR,
 }: PaymentSidebarProps) => {
   // Tính label và disabled cho nút chính
@@ -148,7 +152,6 @@ export const PaymentSidebar = ({
     <aside className="space-y-5 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
       <div>
         <h2 className="text-xl font-black text-slate-900">Phương thức thanh toán</h2>
-        <p className="mt-1 text-sm text-slate-500">Chọn cách nhận tiền phù hợp tại quầy.</p>
       </div>
 
       {/* Danh sách phương thức — ẩn khi QR đang hiển thị */}
@@ -228,7 +231,6 @@ export const PaymentSidebar = ({
           </div>
           {isPayOSEnabled ? (
             <p className="text-xs text-slate-400">
-              Bấm "Tạo mã QR" để tạo mã và hiển thị cho khách quét.
             </p>
           ) : (
             <div className="flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -252,9 +254,7 @@ export const PaymentSidebar = ({
         <div className="space-y-4">
           {/* QR image */}
           <div className="flex flex-col items-center gap-3 rounded-[24px] bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-700">
-              Quét mã QR để thanh toán {formatVND(totalAmount)}
-            </p>
+           
             <div className="flex h-48 w-48 items-center justify-center rounded-[24px] bg-white shadow-sm">
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrCodeData || qrCodeUrl)}`}
@@ -276,7 +276,7 @@ export const PaymentSidebar = ({
             <p className="text-xs text-slate-400">
               {qrSubMethod === 'VIETQR' && 'Dùng app ngân hàng bất kỳ (VietQR) để quét'}
               {qrSubMethod === 'MOMO' && 'Dùng app MoMo để quét'}
-              {qrSubMethod === 'PAYOS' && 'Dùng app ngân hàng bất kỳ để quét (qua PayOS)'}
+              {qrSubMethod === 'PAYOS' && ''}
             </p>
           </div>
 
@@ -289,9 +289,9 @@ export const PaymentSidebar = ({
 
           {/* Nút xác nhận thủ công */}
           <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
-            <p className="mb-3 text-xs text-amber-700">
+            {/* <p className="mb-3 text-xs text-amber-700">
               Nếu khách đã thanh toán nhưng hệ thống chưa cập nhật, thu ngân có thể xác nhận thủ công.
-            </p>
+            </p> */}
             <Button
               type="button"
               variant="outline"
@@ -303,6 +303,17 @@ export const PaymentSidebar = ({
               {isManualConfirming ? 'Đang xác nhận...' : 'Xác nhận thủ công'}
             </Button>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50"
+            disabled={isManualConfirming || isCancelingQR}
+            onClick={onCancelQR}
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            {isCancelingQR ? 'Đang hủy thanh toán...' : 'Hủy thanh toán'}
+          </Button>
         </div>
       )}
 
@@ -365,10 +376,7 @@ export const PaymentSidebar = ({
         </div>
       )}
 
-      {/* Ghi chú đơn hàng */}
-      {orderNumber && (
-        <p className="text-center text-xs text-slate-400">Đơn hàng {orderNumber}</p>
-      )}
+     
     </aside>
   );
 };

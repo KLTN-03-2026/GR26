@@ -29,6 +29,12 @@ public interface PaymentRepository {
     Optional<Payment> findByOrderId(UUID orderId);
 
     /**
+     * Kiểm tra đơn hàng đã có payment hoàn tất chưa.
+     * author: Hoàng | date: 2026-05-16 | note: Một order có thể có nhiều payment CANCELLED/FAILED sau khi hủy QR, nên không dùng findByOrderId.
+     */
+    boolean existsCompletedPaymentByOrderId(UUID orderId);
+
+    /**
      * Tìm Payment theo transaction ID (dari payment gateway).
      */
     Optional<Payment> findByTransactionId(String transactionId);

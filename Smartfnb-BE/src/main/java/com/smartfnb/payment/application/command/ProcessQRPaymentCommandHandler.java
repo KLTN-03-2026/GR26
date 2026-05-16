@@ -69,12 +69,11 @@ public class ProcessQRPaymentCommandHandler {
             throw new SmartFnbException("PAYMENT_INVALID_ORDER_STATUS", 
                 "Không thể thanh toán. Đơn hàng đang ở trạng thái: " + order.status(), 400);
         }
-        paymentRepository.findByOrderId(command.orderId()).ifPresent(existingPayment -> {
-            if (existingPayment.isCompleted()) {
-                throw new SmartFnbException("PAYMENT_ALREADY_COMPLETED", 
-                    "Đơn hàng này đã được thanh toán thành công trước đó.", 400);
-            }
-        });
+        // author: Hoàng | date: 2026-05-16 | note: Order có thể có nhiều payment CANCELLED sau khi hủy QR, chỉ chặn khi đã có payment COMPLETED.
+        if (paymentRepository.existsCompletedPaymentByOrderId(command.orderId())) {
+            throw new SmartFnbException("PAYMENT_ALREADY_COMPLETED",
+                "Đơn hàng này đã được thanh toán thành công trước đó.", 400);
+        }
 
         // 4. Lấy active POS session để gắn posSessionId (báo cáo doanh thu theo ca, không tính vào két tiền mặt)
         // author: Hoàng | date: 2026-04-30 | note: QR payment gắn posSessionId để tổng hợp doanh thu theo ca POS.

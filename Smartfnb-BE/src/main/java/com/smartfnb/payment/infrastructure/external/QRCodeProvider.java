@@ -29,7 +29,10 @@ public interface QRCodeProvider {
     /**
      * Hủy QR Code (nếu backend support).
      */
-    // void cancelQRCode(UUID paymentId) throws Exception;
+    // author: Hoàng | date: 2026-05-16 | note: Mặc định no-op cho provider mock/legacy không có API hủy QR.
+    default void cancelQRCode(UUID paymentId) throws Exception {
+        // Provider không hỗ trợ hủy gateway thì backend vẫn có thể hủy payment pending nội bộ.
+    }
 
     /**
      * Response khi QR được tạo thành công.

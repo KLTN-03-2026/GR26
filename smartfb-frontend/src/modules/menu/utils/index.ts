@@ -14,6 +14,7 @@ export {
   buildMenuQueryParams,
   buildMenuStatusCounts,
   buildNextCategoryDisplayOrder,
+  compareMenuNewestFirst,
   countActiveMenuFilters,
   filterAndSortMenus,
   mergeBranchMenuItems,

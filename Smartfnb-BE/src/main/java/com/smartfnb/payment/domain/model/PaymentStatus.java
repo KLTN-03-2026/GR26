@@ -2,7 +2,7 @@ package com.smartfnb.payment.domain.model;
 
 /**
  * Trạng thái giao dịch thanh toán.
- * Luồng: PENDING → COMPLETED hoặc FAILED
+ * Luồng: PENDING → COMPLETED hoặc FAILED/CANCELLED
  * Hoàn tiền: COMPLETED → REFUNDED
  *
  * @author vutq
@@ -23,6 +23,12 @@ public enum PaymentStatus {
      * Thanh toán thất bại.
      */
     FAILED("Thất bại"),
+
+    /**
+     * Đã hủy trước khi khách thanh toán.
+     * author: Hoàng | date: 2026-05-16 | note: Dùng khi nhân viên hủy QR pending để sửa đơn.
+     */
+    CANCELLED("Đã hủy"),
 
     /**
      * Hoàn tiền.

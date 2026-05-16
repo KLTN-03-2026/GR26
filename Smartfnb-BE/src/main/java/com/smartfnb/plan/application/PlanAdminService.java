@@ -97,9 +97,9 @@ public class PlanAdminService {
         entity.setMaxMenuItems(request.maxMenuItems());
         entity.setActive(request.isActive());
 
-        // Cập nhật features: chuyển Map<String,Boolean> → FeatureFlag → JSON
+        // Author: Hoàng, date: 2026-05-16, note: Lưu Map để Hibernate bind đúng cột jsonb.
         FeatureFlag ff = FeatureFlag.fromMap(request.features());
-        entity.setFeatures(ff.toJson());
+        entity.setFeatures(ff.toMap());
 
         PlanJpaEntity saved = planRepository.save(entity);
         log.info("SYSTEM_ADMIN đã cập nhật gói dịch vụ id={}, name={}", planId, request.name());

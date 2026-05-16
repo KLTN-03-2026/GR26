@@ -283,7 +283,7 @@ export const MenuForm: FC<MenuFormProps> = ({
                 )}
               </div>
               <div className="space-y-2 text-xs text-gray-500">
-                <p>Hỗ trợ JPG, PNG, WebP. Ảnh gốc tối đa 15MB và sẽ được tối ưu trên trình duyệt trước khi upload.</p>
+                
                 {selectedImageFile ? (
                   <p>
                     Ảnh đã chọn: <span className="font-medium text-gray-700">{selectedImageFile.name}</span>

@@ -131,10 +131,3 @@ export const buildRandomPassword = ({
 
   return `${nameToken}${birthToken}${randomSuffix}!`;
 };
-
-/**
- * Sinh nhanh POS PIN 4 số khi cần tạo mã tạm cho nhân viên.
- */
-export const buildRandomPosPin = (): string => {
-  return `${Math.floor(1000 + Math.random() * 9000)}`;
-};

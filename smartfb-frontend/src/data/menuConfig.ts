@@ -65,9 +65,9 @@ export const menuConfig: MenuSection[] = [
         title: 'Vận Hành',
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
-          { title: 'Thẻ gọi khách', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER] },
+          { title: 'Thẻ', icon: Table, path: ROUTES.OWNER.TABLES, roles: [ROLES.OWNER] },
           {
-            title: 'Thẻ gọi khách',
+            title: 'Thẻ ',
             icon: Table,
             path: ROUTES.STAFF.TABLES,
             roles: [ROLES.STAFF],

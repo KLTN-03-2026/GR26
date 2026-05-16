@@ -3,9 +3,13 @@ package com.smartfnb.auth.infrastructure.persistence;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -57,10 +61,13 @@ public class PlanJpaEntity {
     /**
      * Feature flags dạng JSON.
      * VD: {"POS": true, "INVENTORY": true, "PROMOTION": false, "AI": false}
+     *
+     * Author: Hoàng, date: 2026-05-16, note: Dùng Map + JSON type để Hibernate bind đúng jsonb.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "features", columnDefinition = "jsonb")
     @Builder.Default
-    private String features = "{}";
+    private Map<String, Boolean> features = new HashMap<>();
 
     /** Gói có đang kích hoạt không */
     @Column(name = "is_active")

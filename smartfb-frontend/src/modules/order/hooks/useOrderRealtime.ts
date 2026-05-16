@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { StompSubscription } from '@stomp/stompjs';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { useAuthStore, selectCurrentBranchId } from '@modules/auth/stores/authStore';
-import { getStompClient } from '@lib/socket';
+import { getStompClient, onStompConnected } from '@lib/socket';
 import type { OrderResponse, OrderStatus } from '../types/order.types';
 
 /**
@@ -92,8 +92,17 @@ export const useOrderRealtime = () => {
       }
     };
 
-    if (client.connected) {
-      // Client đã connected — subscribe ngay
+    /**
+     * Subscribe topic và lưu subscription để cleanup.
+     * Được gọi cả khi connect lần đầu lẫn khi reconnect.
+     *
+     * FIX: Dùng onStompConnected registry thay vì ghi đè client.onConnect.
+     * Pattern cũ ghi đè trực tiếp → khi nhiều hook cùng mount trước khi
+     * client connected, chỉ hook cuối giữ được callback → các hook khác
+     * mất subscription → User B không nhận WS message → giỏ hàng không update.
+     */
+    const doSubscribe = () => {
+      subscription?.unsubscribe();
       subscription = client.subscribe(topic, (message) => {
         try {
           handleMessage(JSON.parse(message.body));
@@ -101,24 +110,20 @@ export const useOrderRealtime = () => {
           console.error('[WS] useOrderRealtime: parse lỗi', message.body);
         }
       });
-    } else {
-      // Client chưa connected — đợi connect xong rồi subscribe
-      const prevOnConnect = client.onConnect;
-      client.onConnect = (frame) => {
-        prevOnConnect?.(frame);
-        subscription = client.subscribe(topic, (message) => {
-          try {
-            handleMessage(JSON.parse(message.body));
-          } catch {
-            console.error('[WS] useOrderRealtime: parse lỗi', message.body);
-          }
-        });
-      };
+    };
+
+    // Subscribe ngay nếu đã connected
+    if (client.connected) {
+      doSubscribe();
     }
 
+    // Đăng ký để (re)subscribe khi connect/reconnect thành công
+    const unregisterConnect = onStompConnected(doSubscribe);
+
     return () => {
-      // Cleanup: hủy subscribe khi unmount hoặc branchId thay đổi
+      // Cleanup: hủy subscribe + hủy đăng ký connect listener
       subscription?.unsubscribe();
+      unregisterConnect();
     };
   }, [branchId, queryClient]);
 };

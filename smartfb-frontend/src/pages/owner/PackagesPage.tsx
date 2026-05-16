@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   AlertCircle,
@@ -11,11 +11,14 @@ import {
   Users2,
   Utensils,
   Warehouse,
+  XCircle,
 } from 'lucide-react';
+import { useCancelTenantInvoice } from '@modules/subscription/hooks/useCancelTenantInvoice';
 import { useCreateTenantRenewalInvoice } from '@modules/subscription/hooks/useCreateTenantRenewalInvoice';
 import { useCurrentSubscription } from '@modules/subscription/hooks/useCurrentSubscription';
 import { useGeneratePlanPaymentQR } from '@modules/subscription/hooks/useGeneratePlanPaymentQR';
 import { useSubscriptionPlans } from '@modules/subscription/hooks/useSubscriptionPlans';
+import { useSyncPlanPaymentStatus } from '@modules/subscription/hooks/useSyncPlanPaymentStatus';
 import { useTenantInvoices } from '@modules/subscription/hooks/useTenantInvoices';
 import type {
   PlanPaymentMethod,
@@ -23,7 +26,16 @@ import type {
   SubscriptionPlan,
   TenantInvoice,
 } from '@modules/subscription/types/subscription.types';
+import { PAYMENT_METHOD_LABELS } from '@modules/subscription/types/subscription.types';
 import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import { formatVND } from '@shared/utils/formatCurrency';
@@ -44,12 +56,25 @@ interface InvoiceStatusBadgeProps {
   status: string;
 }
 
-const MONTH_OPTIONS = [1, 3, 6, 12, 24];
+interface PaymentMethodOption {
+  method: PlanPaymentMethod;
+  enabled: boolean;
+  disabledReason?: string;
+}
 
-const PAYMENT_METHOD_OPTIONS: PlanPaymentMethod[] = ['VIETQR', 'MOMO'];
+const MONTH_OPTIONS = [1, 3, 6, 12, 24];
+const PAYOS_PAYMENT_POLL_INTERVAL_MS = 5000;
+const DEFAULT_PLAN_PAYMENT_METHOD: PlanPaymentMethod = 'PAYOS';
+
+// Hiện luồng thanh toán gói chỉ bật PayOS; VietQR/MoMo giữ lại để user biết các gateway này chưa khả dụng.
+const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [
+  { method: 'VIETQR', enabled: false, disabledReason: 'Tạm tắt' },
+  { method: 'MOMO', enabled: false, disabledReason: 'Tạm tắt' },
+  { method: 'PAYOS', enabled: true },
+];
 
 const getLimitDisplay = (value: number | null): string => {
-  if (value === null || value === 0) {
+  if (value === null) {
     return 'Không giới hạn';
   }
 
@@ -138,10 +163,12 @@ const PlanLimitCard = ({ icon, label, value }: PlanLimitCardProps) => (
  */
 export default function PackagesPage() {
   const [selectedMonths, setSelectedMonths] = useState(3);
-  const [paymentMethod, setPaymentMethod] = useState<PlanPaymentMethod>('VIETQR');
+  const [paymentMethod, setPaymentMethod] = useState<PlanPaymentMethod>(DEFAULT_PLAN_PAYMENT_METHOD);
   const [note, setNote] = useState('');
   const [qrPayment, setQrPayment] = useState<PlanQRPayment | null>(null);
   const [qrInvoice, setQrInvoice] = useState<TenantInvoice | null>(null);
+  const [invoiceToCancel, setInvoiceToCancel] = useState<TenantInvoice | null>(null);
+  const [planToConfirm, setPlanToConfirm] = useState<SubscriptionPlan | null>(null);
 
   const {
     data: subscription,
@@ -163,6 +190,8 @@ export default function PackagesPage() {
 
   const createInvoiceMutation = useCreateTenantRenewalInvoice();
   const generateQRMutation = useGeneratePlanPaymentQR();
+  const syncPaymentMutation = useSyncPlanPaymentStatus();
+  const cancelInvoiceMutation = useCancelTenantInvoice();
 
   const currentPlan = subscription?.plan ?? null;
   const enabledFeatures = currentPlan ? getEnabledFeatures(currentPlan) : [];
@@ -173,13 +202,73 @@ export default function PackagesPage() {
   const recentInvoices = invoicePage?.content ?? [];
   const unpaidInvoice = recentInvoices.find((invoice) => invoice.status === 'UNPAID') ?? null;
   const isInitialLoading = isSubscriptionLoading || isPlansLoading;
-  const isActionPending = createInvoiceMutation.isPending || generateQRMutation.isPending;
+  const isActionPending =
+    createInvoiceMutation.isPending ||
+    generateQRMutation.isPending ||
+    syncPaymentMutation.isPending ||
+    cancelInvoiceMutation.isPending;
+  const isCancelDialogOpen = Boolean(invoiceToCancel);
+  const isPaymentConfirmDialogOpen = Boolean(planToConfirm);
+  const confirmPlanFeatures = planToConfirm ? getEnabledFeatures(planToConfirm) : [];
+  const confirmEstimatedAmount = planToConfirm ? planToConfirm.priceMonthly * selectedMonths : 0;
+  const confirmActionLabel = !planToConfirm
+    ? 'Xác nhận gói'
+    : !currentPlan
+      ? 'Đăng ký gói'
+      : currentPlan.id === planToConfirm.id
+        ? 'Gia hạn gói'
+        : 'Nâng cấp gói';
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     void refetchSubscription();
     void refetchPlans();
     void refetchInvoices();
-  };
+  }, [refetchInvoices, refetchPlans, refetchSubscription]);
+
+  /** Kiểm tra thanh toán thông minh: PAYOS → gọi sync API, còn lại → refetch */
+  const handleCheckPayment = useCallback(() => {
+    if (qrPayment?.paymentMethod === 'PAYOS' && qrInvoice) {
+      syncPaymentMutation.mutate({ invoiceId: qrInvoice.id, showPendingToast: true }, {
+        onSuccess: () => {
+          void refetchInvoices();
+          void refetchSubscription();
+        },
+      });
+    } else {
+      handleRefresh();
+    }
+  }, [handleRefresh, qrInvoice, qrPayment?.paymentMethod, refetchInvoices, refetchSubscription, syncPaymentMutation]);
+
+  useEffect(() => {
+    if (qrPayment?.paymentMethod !== 'PAYOS' || !qrInvoice || qrInvoice.status !== 'UNPAID') {
+      return;
+    }
+
+    const syncSilently = () => {
+      if (syncPaymentMutation.isPending) return;
+
+      syncPaymentMutation.mutate(
+        { invoiceId: qrInvoice.id, showPendingToast: false },
+        {
+          onSuccess: (data) => {
+            if (!data.justPaid) return;
+            setQrPayment(null);
+            setQrInvoice(null);
+            void refetchInvoices();
+            void refetchSubscription();
+          },
+        }
+      );
+    };
+
+    const firstSyncTimer = window.setTimeout(syncSilently, 3000);
+    const intervalId = window.setInterval(syncSilently, PAYOS_PAYMENT_POLL_INTERVAL_MS);
+
+    return () => {
+      window.clearTimeout(firstSyncTimer);
+      window.clearInterval(intervalId);
+    };
+  }, [qrInvoice, qrPayment?.paymentMethod, refetchInvoices, refetchSubscription, syncPaymentMutation]);
 
   const handleCreatePayment = async (plan: SubscriptionPlan) => {
     const invoice = await createInvoiceMutation.mutateAsync({
@@ -199,10 +288,62 @@ export default function PackagesPage() {
   const handlePayInvoice = async (invoice: TenantInvoice) => {
     const qr = await generateQRMutation.mutateAsync({
       invoiceId: invoice.id,
-      method: paymentMethod,
+      method: DEFAULT_PLAN_PAYMENT_METHOD,
     });
     setQrInvoice(invoice);
     setQrPayment(qr);
+  };
+
+  /** Mở dialog xác nhận để owner chọn số tháng và phương thức trước khi tạo invoice. */
+  const handleOpenPaymentConfirmDialog = (plan: SubscriptionPlan) => {
+    setSelectedMonths(3);
+    setPaymentMethod(DEFAULT_PLAN_PAYMENT_METHOD);
+    setNote('');
+    setPlanToConfirm(plan);
+  };
+
+  /** Đóng dialog xác nhận thanh toán, chặn đóng trong lúc đang tạo invoice hoặc sinh QR. */
+  const handlePaymentConfirmDialogOpenChange = (open: boolean) => {
+    if (open || createInvoiceMutation.isPending || generateQRMutation.isPending) return;
+    setPlanToConfirm(null);
+  };
+
+  /** Xác nhận lựa chọn trong modal rồi mới tạo hóa đơn và QR thanh toán. */
+  const handleConfirmCreatePayment = async () => {
+    if (!planToConfirm) return;
+
+    await handleCreatePayment(planToConfirm);
+    setPlanToConfirm(null);
+  };
+
+  /** Mở dialog xác nhận hủy invoice chờ thanh toán, không yêu cầu owner nhập lý do. */
+  const handleOpenCancelInvoiceDialog = (invoice: TenantInvoice) => {
+    setInvoiceToCancel(invoice);
+  };
+
+  /** Đóng dialog hủy invoice, giữ nguyên khi mutation đang chạy để tránh double submit. */
+  const handleCancelInvoiceDialogOpenChange = (open: boolean) => {
+    if (open || cancelInvoiceMutation.isPending) return;
+    setInvoiceToCancel(null);
+  };
+
+  /** Hủy invoice gói đang chờ thanh toán và xóa QR hiện tại nếu QR thuộc invoice đó. */
+  const handleConfirmCancelInvoice = () => {
+    if (!invoiceToCancel) return;
+
+    const cancellingInvoiceId = invoiceToCancel.id;
+    cancelInvoiceMutation.mutate(cancellingInvoiceId, {
+      onSuccess: () => {
+        if (qrInvoice?.id === cancellingInvoiceId || qrPayment?.invoiceId === cancellingInvoiceId) {
+          setQrPayment(null);
+          setQrInvoice(null);
+        }
+
+        setInvoiceToCancel(null);
+        void refetchInvoices();
+        void refetchSubscription();
+      },
+    });
   };
 
   const pageHeader = (
@@ -338,53 +479,12 @@ export default function PackagesPage() {
       )}
 
       <section className="rounded-card border border-border bg-card p-6 shadow-card">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-2">
           <div>
             <h2 className="text-lg font-bold text-text-primary">Chọn gói gia hạn hoặc nâng cấp</h2>
             <p className="mt-1 text-sm text-text-secondary">
-              Hệ thống sẽ tạo hóa đơn chờ thanh toán và sinh QR theo phương thức bạn chọn.
+              Bấm chọn gói để xem lại chi tiết, số tháng đăng ký và phương thức thanh toán trước khi tạo QR.
             </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:w-[560px]">
-            <div className="space-y-2">
-              <Label htmlFor="package-months">Số tháng</Label>
-              <select
-                id="package-months"
-                className="h-10 rounded-md border border-border bg-background px-3 text-sm text-text-primary"
-                value={selectedMonths}
-                onChange={(event) => setSelectedMonths(Number(event.target.value))}
-              >
-                {MONTH_OPTIONS.map((month) => (
-                  <option key={month} value={month}>
-                    {month} tháng
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="package-payment-method">Thanh toán</Label>
-              <select
-                id="package-payment-method"
-                className="h-10 rounded-md border border-border bg-background px-3 text-sm text-text-primary"
-                value={paymentMethod}
-                onChange={(event) => setPaymentMethod(event.target.value as PlanPaymentMethod)}
-              >
-                {PAYMENT_METHOD_OPTIONS.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="package-note">Ghi chú</Label>
-              <Input
-                id="package-note"
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                placeholder="Tùy chọn"
-              />
-            </div>
           </div>
         </div>
 
@@ -399,14 +499,25 @@ export default function PackagesPage() {
                   {unpaidInvoice.planName} - {formatVND(unpaidInvoice.amount)}
                 </p>
               </div>
-              <Button
-                type="button"
-                onClick={() => void handlePayInvoice(unpaidInvoice)}
-                disabled={generateQRMutation.isPending}
-              >
-                <QrCode className="mr-2 h-4 w-4" />
-                Tạo lại QR
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={() => void handlePayInvoice(unpaidInvoice)}
+                  disabled={isActionPending}
+                >
+                  <QrCode className="mr-2 h-4 w-4" />
+                  Tạo lại QR
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleOpenCancelInvoiceDialog(unpaidInvoice)}
+                  disabled={isActionPending}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Hủy thanh toán
+                </Button>
+              </div>
             </div>
           </div>
         ) : null}
@@ -416,14 +527,17 @@ export default function PackagesPage() {
             activePlans.map((plan) => {
               const isCurrentPlan = currentPlan?.id === plan.id;
               const features = getEnabledFeatures(plan);
-              const estimatedAmount = plan.priceMonthly * selectedMonths;
+              const planActionLabel = !currentPlan
+                ? 'Đăng ký gói này'
+                : isCurrentPlan
+                  ? 'Gia hạn gói này'
+                  : 'Nâng cấp gói này';
 
               return (
-                <article key={plan.id} className="rounded-card border border-border bg-background p-5">
+                <article key={plan.id} className="flex flex-col justify-around rounded-card border border-border bg-background p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-bold text-text-primary">{plan.name}</h3>
-                      <p className="mt-1 text-sm text-text-secondary">{plan.slug}</p>
                     </div>
                     {isCurrentPlan ? (
                       <span className="rounded-full bg-primary-light px-2.5 py-1 text-xs font-semibold text-primary">
@@ -432,43 +546,44 @@ export default function PackagesPage() {
                     ) : null}
                   </div>
 
-                  <p className="mt-4 text-2xl font-bold text-text-primary">{formatVND(plan.priceMonthly)}</p>
-                  <p className="text-sm text-text-secondary">mỗi tháng</p>
+                  <p className=" text-2xl font-bold text-text-primary">{formatVND(plan.priceMonthly)} </p>
+                  <p className="text-sm text-text-secondary">/ mỗi tháng</p>
 
-                  <div className="mt-4 space-y-2 text-sm text-text-secondary">
-                    <p>Chi nhánh: {getLimitDisplay(plan.maxBranches)}</p>
-                    <p>Nhân viên: {getLimitDisplay(plan.maxStaff)}</p>
-                    <p>Món: {getLimitDisplay(plan.maxMenuItems)}</p>
+                  <div className="h-full py-4">
+                    <div className="mt-4 space-y-2 text-sm text-text-secondary">
+                      <p>Chi nhánh: {getLimitDisplay(plan.maxBranches)}</p>
+                      <p>Nhân viên: {getLimitDisplay(plan.maxStaff)}</p>
+                      <p>Món: {getLimitDisplay(plan.maxMenuItems)}</p>
+                    </div>
+  
+                    <div className="mt-4 min-h-16">
+                      {features.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {features.slice(0, 4).map((feature) => (
+                            <span key={feature} className="rounded-full bg-muted px-2.5 py-1 text-xs text-text-secondary">
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-text-secondary">Chưa có feature flag.</p>
+                      )}
+                    </div>
+  
                   </div>
-
-                  <div className="mt-4 min-h-16">
-                    {features.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {features.slice(0, 4).map((feature) => (
-                          <span key={feature} className="rounded-full bg-muted px-2.5 py-1 text-xs text-text-secondary">
-                            {feature}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-text-secondary">Chưa có feature flag.</p>
-                    )}
-                  </div>
-
-                  <div className="mt-5 border-t border-border pt-4">
-                    <p className="text-sm text-text-secondary">Tạm tính {selectedMonths} tháng</p>
-                    <p className="mt-1 text-lg font-bold text-text-primary">{formatVND(estimatedAmount)}</p>
+                  <div className=" border-t border-border pt-4">
+                    <p className="mt-1 text-lg font-bold text-text-primary">{formatVND(plan.priceMonthly)} / tháng</p>
                   </div>
 
                   <Button
                     type="button"
                     className="mt-4 w-full"
                     variant={isCurrentPlan ? 'outline' : 'default'}
-                    onClick={() => void handleCreatePayment(plan)}
+                    onClick={() => handleOpenPaymentConfirmDialog(plan)}
                     disabled={isActionPending || Boolean(unpaidInvoice)}
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
-                    {isCurrentPlan ? 'Gia hạn gói này' : 'Nâng cấp gói này'}
+                    {planActionLabel}
                   </Button>
                 </article>
               );
@@ -503,27 +618,65 @@ export default function PackagesPage() {
               <p className="mt-1 text-sm text-text-secondary">
                 QR hết hạn sau khoảng {Math.round(qrPayment.expiresInSeconds / 60)} phút.
               </p>
+              {qrPayment.paymentMethod === 'PAYOS' ? (
+                <p className="mt-2 rounded-md bg-primary-light px-3 py-2 text-xs text-primary">
+                  Dùng app ngân hàng bất kỳ để quét mã QR PayOS. Sau khi thanh toán, bấm kiểm tra để cập nhật hóa đơn.
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-col items-center gap-3">
-              {qrPayment.qrCodeUrl ? (
-                <img
-                  src={qrPayment.qrCodeUrl}
-                  alt={`QR thanh toán ${qrPayment.invoiceNumber}`}
-                  className="h-48 w-48 rounded-card border border-border object-contain"
-                />
-              ) : (
+              {qrPayment.qrCodeUrl || qrPayment.qrCodeData ? (
+                <div className="flex flex-col items-center gap-3 rounded-card bg-muted p-4">
+                  
+                  <div className="flex h-48 w-48 items-center justify-center rounded-card bg-background shadow-sm">
+                    <img
+                      src={
+                        qrPayment.paymentMethod === 'PAYOS'
+                          ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrPayment.qrCodeData || qrPayment.qrCodeUrl)}`
+                          : qrPayment.qrCodeUrl
+                      }
+                      alt={`QR thanh toán ${qrPayment.invoiceNumber}`}
+                      className="h-44 w-44 rounded-md object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-text-secondary">
+                    {qrPayment.paymentMethod === 'PAYOS'
+                      ? ''
+                      : PAYMENT_METHOD_LABELS[qrPayment.paymentMethod as PlanPaymentMethod]?.description ?? 'Quét mã QR để thanh toán'}
+                  </p>
+                </div>
+              ) : null}
+              {!qrPayment.qrCodeUrl && !qrPayment.qrCodeData ? (
                 <div className="flex h-48 w-48 items-center justify-center rounded-card border border-dashed border-border p-4 text-center text-sm text-text-secondary">
                   Gateway không trả URL ảnh QR.
                 </div>
-              )}
-              <Button type="button" variant="outline" onClick={handleRefresh}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Kiểm tra thanh toán
-              </Button>
+              ) : null}
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCheckPayment}
+                  disabled={syncPaymentMutation.isPending || cancelInvoiceMutation.isPending}
+                >
+                  <RefreshCw className={cn('mr-2 h-4 w-4', syncPaymentMutation.isPending && 'animate-spin')} />
+                  Kiểm tra thanh toán
+                </Button>
+                {qrInvoice?.status === 'UNPAID' ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => handleOpenCancelInvoiceDialog(qrInvoice)}
+                    disabled={isActionPending}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Hủy thanh toán
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
 
-          {qrPayment.qrCodeData ? (
+          {qrPayment.paymentMethod !== 'PAYOS' && qrPayment.qrCodeData ? (
             <div className="mt-4 rounded-card bg-muted p-3">
               <p className="mb-1 text-xs font-semibold text-text-secondary">Dữ liệu QR</p>
               <p className="break-all text-xs text-text-secondary">{qrPayment.qrCodeData}</p>
@@ -566,15 +719,26 @@ export default function PackagesPage() {
                       </p>
                     </div>
                     {invoice.status === 'UNPAID' ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void handlePayInvoice(invoice)}
-                        disabled={generateQRMutation.isPending}
-                      >
-                        <QrCode className="mr-2 h-4 w-4" />
-                        QR
-                      </Button>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void handlePayInvoice(invoice)}
+                          disabled={isActionPending}
+                        >
+                          <QrCode className="mr-2 h-4 w-4" />
+                          QR
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => handleOpenCancelInvoiceDialog(invoice)}
+                          disabled={isActionPending}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Hủy
+                        </Button>
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -589,6 +753,209 @@ export default function PackagesPage() {
           )}
         </div>
       </section>
+
+      <Dialog open={isPaymentConfirmDialogOpen} onOpenChange={handlePaymentConfirmDialogOpenChange}>
+        <DialogContent className="sm:max-w-2xl overflow-hidden p-0">
+          {/* Header */}
+          <div className="border-b border-border bg-gradient-to-br from-primary-light to-background px-6 py-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-primary text-white shadow-sm">
+                <QrCode className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold text-text-primary">{confirmActionLabel}</DialogTitle>
+                <DialogDescription className="mt-0.5 text-sm text-text-secondary">
+                  Kiểm tra lại gói, số tháng đăng ký và phương thức thanh toán trước khi tạo hóa đơn QR.
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+
+          {planToConfirm ? (
+            <div className="space-y-5 px-6 py-5">
+              {/* Plan summary card */}
+              <div className="overflow-hidden rounded-card border border-border bg-muted/50">
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-text-primary">{planToConfirm.name}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">{planToConfirm.slug}</p>
+                  </div>
+                  <div className="flex flex-col items-start sm:items-end">
+                    <p className="text-xs text-text-secondary">Giá theo tháng</p>
+                    <p className="mt-0.5 text-2xl font-extrabold text-primary">{formatVND(planToConfirm.priceMonthly)}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+                  <div className="px-4 py-3 text-center">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Chi nhánh</p>
+                    <p className="mt-1 text-xl font-bold text-text-primary">{getLimitDisplay(planToConfirm.maxBranches)}</p>
+                  </div>
+                  <div className="px-4 py-3 text-center">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Nhân viên</p>
+                    <p className="mt-1 text-xl font-bold text-text-primary">{getLimitDisplay(planToConfirm.maxStaff)}</p>
+                  </div>
+                  <div className="px-4 py-3 text-center">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-secondary">Món</p>
+                    <p className="mt-1 text-xl font-bold text-text-primary">{getLimitDisplay(planToConfirm.maxMenuItems)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Features */}
+              {confirmPlanFeatures.length > 0 && (
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-text-primary">Tính năng trong gói</p>
+                  <div className="flex flex-wrap gap-2">
+                    {confirmPlanFeatures.map((feature) => (
+                      <span
+                        key={feature}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-text-secondary"
+                      >
+                        <CheckCircle2 className="h-3 w-3 text-primary" />
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Month selector - chip style */}
+              <div className="space-y-2">
+                <Label>Số tháng đăng ký</Label>
+                <div className="flex flex-wrap gap-2">
+                  {MONTH_OPTIONS.map((month) => (
+                    <button
+                      key={month}
+                      type="button"
+                      onClick={() => setSelectedMonths(month)}
+                      className={cn(
+                        'rounded-card border px-4 py-2 text-sm font-semibold transition-all',
+                        selectedMonths === month
+                          ? 'border-primary bg-primary text-white shadow-sm'
+                          : 'border-border bg-background text-text-secondary hover:border-primary hover:text-primary'
+                      )}
+                    >
+                      {month} tháng
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment method - card style */}
+              <div className="space-y-2">
+                <Label>Phương thức thanh toán</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYMENT_METHOD_OPTIONS.map(({ method, enabled, disabledReason }) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setPaymentMethod(method)}
+                      disabled={!enabled}
+                      className={cn(
+                        'flex flex-col items-center gap-1.5 rounded-card border px-3 py-3 text-xs font-semibold transition-all',
+                        paymentMethod === method
+                          ? 'border-primary bg-primary-light text-primary shadow-sm'
+                          : 'border-border bg-background text-text-secondary hover:border-primary hover:text-primary',
+                        !enabled && 'cursor-not-allowed opacity-50 hover:border-border hover:text-text-secondary'
+                      )}
+                    >
+                      <CreditCard className={cn('h-5 w-5', paymentMethod === method ? 'text-primary' : 'text-text-secondary')} />
+                      <span>{PAYMENT_METHOD_LABELS[method].label}</span>
+                      {!enabled && disabledReason ? (
+                        <span className="text-[10px] font-medium text-text-secondary">{disabledReason}</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Note */}
+              <div className="space-y-2">
+                <Label htmlFor="confirm-package-note">Ghi chú</Label>
+                <Input
+                  id="confirm-package-note"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Tùy chọn"
+                />
+              </div>
+
+              {/* Estimated total */}
+              <div className="overflow-hidden rounded-card border border-primary/30 bg-gradient-to-r from-primary-light to-background">
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div>
+                    <p className="text-sm font-bold text-primary">Tạm tính</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">
+                      {selectedMonths} tháng × {formatVND(planToConfirm.priceMonthly)}
+                    </p>
+                  </div>
+                  <p className="text-3xl font-extrabold text-text-primary">{formatVND(confirmEstimatedAmount)}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 border-t border-border bg-muted/30 px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPlanToConfirm(null)}
+              disabled={createInvoiceMutation.isPending || generateQRMutation.isPending}
+            >
+              Đóng
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleConfirmCreatePayment()}
+              disabled={createInvoiceMutation.isPending || generateQRMutation.isPending}
+              className="gap-2"
+            >
+              <QrCode className="h-4 w-4" />
+              {createInvoiceMutation.isPending || generateQRMutation.isPending ? 'Đang tạo QR...' : 'Xác nhận tạo QR'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCancelDialogOpen} onOpenChange={handleCancelInvoiceDialogOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hủy thanh toán gói</DialogTitle>
+            <DialogDescription>
+              Hóa đơn {invoiceToCancel?.invoiceNumber} sẽ được hủy để bạn chọn lại gói hoặc tạo hóa đơn mới.
+              Thao tác này không cần nhập lý do.
+            </DialogDescription>
+          </DialogHeader>
+
+          {invoiceToCancel ? (
+            <div className="rounded-card border border-border bg-muted p-3 text-sm">
+              <p className="font-semibold text-text-primary">{invoiceToCancel.planName}</p>
+              <p className="mt-1 text-text-secondary">{formatVND(invoiceToCancel.amount)}</p>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setInvoiceToCancel(null)}
+              disabled={cancelInvoiceMutation.isPending}
+            >
+              Giữ lại
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmCancelInvoice}
+              disabled={cancelInvoiceMutation.isPending}
+            >
+              {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy thanh toán'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

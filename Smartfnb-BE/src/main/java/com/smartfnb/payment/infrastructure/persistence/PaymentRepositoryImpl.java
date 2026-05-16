@@ -42,6 +42,12 @@ public class PaymentRepositoryImpl implements PaymentRepository {
         return jpaRepository.findByOrderId(orderId).map(this::toDomainEntity);
     }
 
+    // author: Hoàng | date: 2026-05-16 | note: Chỉ kiểm tra payment COMPLETED để tránh lỗi non-unique khi order có nhiều payment đã hủy.
+    @Override
+    public boolean existsCompletedPaymentByOrderId(UUID orderId) {
+        return jpaRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.COMPLETED.name());
+    }
+
     @Override
     public Optional<Payment> findByTransactionId(String transactionId) {
         return jpaRepository.findByTransactionId(transactionId).map(this::toDomainEntity);
@@ -98,4 +104,3 @@ public class PaymentRepositoryImpl implements PaymentRepository {
         return entity;
     }
 }
-

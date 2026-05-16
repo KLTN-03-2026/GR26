@@ -283,9 +283,7 @@ export const EditStaffDialog = ({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-1 text-xs text-gray-500">
-              Danh sách lấy từ API chức vụ active của tenant hiện tại.
-            </p>
+       
           </div>
 
           <div>

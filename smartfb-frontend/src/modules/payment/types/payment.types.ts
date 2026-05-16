@@ -3,7 +3,7 @@ import type { ApiResponse } from '@shared/types/api.types';
 /**
  * Trạng thái giao dịch thanh toán theo contract backend.
  */
-export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
 
 /**
  * Phương thức thanh toán backend đang hỗ trợ.
@@ -184,6 +184,7 @@ export interface InvoiceOrderSnapshot {
 export type PaymentApiResponse = ApiResponse<PaymentResponse>;
 export type ProcessCashPaymentApiResponse = PaymentApiResponse;
 export type ProcessQRPaymentApiResponse = ApiResponse<ProcessQRPaymentResponse>;
+export type CancelPaymentApiResponse = PaymentApiResponse;
 export type SearchInvoiceApiResponse = ApiResponse<SearchInvoiceResponse>;
 export type InvoiceApiResponse = ApiResponse<InvoiceResponse>;
 export type InvoiceOrderSnapshotApiResponse = ApiResponse<InvoiceOrderSnapshot>;

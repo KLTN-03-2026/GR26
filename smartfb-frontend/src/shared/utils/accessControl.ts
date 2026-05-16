@@ -25,20 +25,6 @@ export const hasAnyPermission = (
 };
 
 /**
- * Kiểm tra user hiện tại có đầy đủ toàn bộ quyền trong danh sách yêu cầu hay không.
- */
-export const hasAllPermissions = (
-  currentPermissions: readonly string[],
-  requiredPermissions?: readonly string[]
-): boolean => {
-  if (!requiredPermissions || requiredPermissions.length === 0) {
-    return true;
-  }
-
-  return requiredPermissions.every((permission) => currentPermissions.includes(permission));
-};
-
-/**
  * Kiểm tra rule truy cập tổng quát cho route hoặc menu item.
  * Nếu có cấu hình `roles` thì vẫn phải đúng vai trò hệ thống trước,
  * sau đó mới xét tiếp lớp permission chi tiết.

@@ -124,6 +124,9 @@ export const CreateStaffForm = () => {
               onChange={(e) => onChange("email", e.target.value)}
               placeholder="nhanvien@example.com"
             />
+            {formErrors.email && (
+              <p className="text-red-600 text-xs mt-1">{formErrors.email}</p>
+            )}
           </div>
 
           <div>
@@ -158,9 +161,11 @@ export const CreateStaffForm = () => {
             <StaffDatePickerField
               id="dateOfBirth"
               label="Ngày sinh"
+              required
               value={values.dateOfBirth}
               onChange={(nextValue) => onChange("dateOfBirth", nextValue)}
               placeholder="dd/mm/yyyy"
+              errorMessage={formErrors.dateOfBirth}
             />
           </div>
 
@@ -231,12 +236,15 @@ export const CreateStaffForm = () => {
           </div>
 
           <div>
-            <Label htmlFor="positionId">Chức vụ</Label>
+            <Label htmlFor="positionId">
+              Chức vụ <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={values.positionId || NO_POSITION_VALUE}
               onValueChange={(value) =>
                 onChange("positionId", value === NO_POSITION_VALUE ? "" : value)
               }
+              disabled={positions.length === 0}
             >
               <SelectTrigger id="positionId">
                 <SelectValue placeholder="Chọn chức vụ" />
@@ -252,11 +260,16 @@ export const CreateStaffForm = () => {
                 ))}
               </SelectContent>
             </Select>
+            {formErrors.positionId && (
+              <p className="text-red-600 text-xs mt-1">{formErrors.positionId}</p>
+            )}
            
           </div>
 
           <div>
-            <Label htmlFor="password">Mật khẩu đăng nhập</Label>
+            <Label htmlFor="password">
+              Mật khẩu đăng nhập <span className="text-red-500">*</span>
+            </Label>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Input

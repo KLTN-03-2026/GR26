@@ -25,6 +25,10 @@ import {
 import type { ComponentType } from 'react';
 import { useAdminPlanDetail } from '../hooks/useAdminPlanDetail';
 import type { AdminPlan } from '../types/adminPlan.types';
+import {
+  ADMIN_PLAN_FEATURE_KEYS,
+  normalizeAdminPlanFeatures,
+} from '../utils/adminPlanFeatureUtils';
 
 interface AdminPlanDetailDrawerProps {
   plan: AdminPlan | null;
@@ -58,7 +62,7 @@ const FEATURE_META: Record<string, FeatureMeta> = {
     Icon: Tag,
     colorClass: 'bg-pink-50 text-pink-600',
   },
-  REPORT: {
+  ADVANCED_REPORT: {
     label: 'Báo cáo nâng cao',
     description: 'Phân tích doanh thu, kho và nhân sự',
     Icon: BarChart3,
@@ -84,7 +88,7 @@ const getFeatureMeta = (key: string): FeatureMeta => {
 };
 
 const getLimitDisplay = (value: number | null): string => {
-  if (value === null || value === 0) return '∞';
+  if (value === null) return '∞';
   return formatNumber(value);
 };
 
@@ -103,7 +107,11 @@ export const AdminPlanDetailDrawer = ({
     refetch,
   } = useAdminPlanDetail(plan?.id ?? null);
 
-  const featureEntries = Object.entries(planDetail?.features ?? {});
+  const normalizedFeatures = normalizeAdminPlanFeatures(planDetail?.features);
+  const featureEntries = ADMIN_PLAN_FEATURE_KEYS.map((key) => [
+    key,
+    normalizedFeatures[key],
+  ] as const);
   const enabledCount = featureEntries.filter(([, enabled]) => enabled).length;
 
   const handleRetry = () => {
