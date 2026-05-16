@@ -47,7 +47,11 @@ public record BranchItemResponse(
     public static BranchItemResponse from(MenuItemJpaEntity item,
                                           BranchItemJpaEntity branchItem,
                                           UUID branchId) {
+        // Lấy giá ghi đè ở chi nhánh (nếu tồn tại dòng cấu hình)
         BigDecimal branchPrice = branchItem != null ? branchItem.getBranchPrice() : null;
+        // LOGIC QUYẾT ĐỊNH GIÁ THỰC TẾ (Effective Price)
+        // Nếu có branchPrice (không null) -> Dùng branchPrice
+        // Nếu không có (null) -> Fallback quay lại dùng basePrice gốc của món ăn
         BigDecimal effectivePrice = (branchPrice != null) ? branchPrice : item.getBasePrice();
         boolean isAvailable = branchItem == null || Boolean.TRUE.equals(branchItem.getIsAvailable());
 

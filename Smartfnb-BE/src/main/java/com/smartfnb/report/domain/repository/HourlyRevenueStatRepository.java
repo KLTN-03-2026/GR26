@@ -16,6 +16,8 @@ public interface HourlyRevenueStatRepository {
     
     HourlyRevenueStat save(HourlyRevenueStat stat);
     
+    void upsert(HourlyRevenueStat stat);
+    
     Optional<HourlyRevenueStat> findByBranchIdDateAndHour(UUID branchId, LocalDate date, int hour);
     
     /**

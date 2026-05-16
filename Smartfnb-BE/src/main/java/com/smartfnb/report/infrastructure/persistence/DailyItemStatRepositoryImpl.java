@@ -30,6 +30,21 @@ public class DailyItemStatRepositoryImpl implements DailyItemStatRepository {
     }
     
     @Override
+    public void upsert(DailyItemStat stat) {
+        jpaRepository.upsertItemStat(
+            stat.id(),
+            stat.tenantId(),
+            stat.branchId(),
+            stat.itemId(),
+            stat.itemName(),
+            stat.date(),
+            stat.qtySold(),
+            stat.revenue() != null ? stat.revenue() : java.math.BigDecimal.ZERO,
+            stat.cost() != null ? stat.cost() : java.math.BigDecimal.ZERO
+        );
+    }
+    
+    @Override
     public Optional<DailyItemStat> findByBranchIdItemIdAndDate(UUID branchId, UUID itemId, LocalDate date) {
         return jpaRepository.findByBranchIdAndItemIdAndDate(branchId, itemId, date)
             .map(DailyItemStatJpaEntity::toDomain);

@@ -60,7 +60,7 @@ public class RevenueReportLogicTest {
                 null, existingCost, existingRevenue.subtract(existingCost)
         );
 
-        when(dailyRevenueSummaryRepo.findByBranchIdAndDate(branchId, date))
+        when(dailyRevenueSummaryRepo.findByBranchIdAndDateForUpdate(branchId, date))
                 .thenReturn(Optional.of(existingSummary));
 
         OrderCostCalculatedEvent event = new OrderCostCalculatedEvent(
@@ -101,10 +101,8 @@ public class RevenueReportLogicTest {
                 date, 1, existingRevenue, BigDecimal.ZERO, new BigDecimal("100.00")
         );
 
-        when(dailyRevenueSummaryRepo.findByBranchIdAndDate(branchId, date))
+        when(dailyRevenueSummaryRepo.findByBranchIdAndDateForUpdate(branchId, date))
                 .thenReturn(Optional.of(existingSummary));
-        when(dailyItemStatRepo.findByBranchIdItemIdAndDate(branchId, itemId, date))
-                .thenReturn(Optional.of(existingItemStat));
 
         OrderCostCalculatedEvent event = new OrderCostCalculatedEvent(
                 tenantId,
@@ -120,12 +118,10 @@ public class RevenueReportLogicTest {
 
         // Assert
         ArgumentCaptor<DailyItemStat> itemCaptor = ArgumentCaptor.forClass(DailyItemStat.class);
-        verify(dailyItemStatRepo).save(itemCaptor.capture());
+        verify(dailyItemStatRepo).upsert(itemCaptor.capture());
 
         DailyItemStat savedItem = itemCaptor.getValue();
-        assertEquals(additionalCost, savedItem.cost(), "Cost theo món phải được cộng vào daily_item_stats");
-        assertTrue(savedItem.grossMargin().compareTo(new BigDecimal("100.00")) < 0,
-                "Gross margin phải nhỏ hơn 100% khi món có giá vốn");
+        assertEquals(additionalCost, savedItem.cost(), "Cost theo món phải được cộng vào daily_item_stats qua upsert");
     }
 
     @Test

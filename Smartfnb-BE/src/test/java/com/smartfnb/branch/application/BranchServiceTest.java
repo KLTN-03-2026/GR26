@@ -50,7 +50,7 @@ class BranchServiceTest {
     @BeforeEach
     void setUp() {
         tenantId = UUID.randomUUID();
-        request = new BranchRequest("Chi Nhánh Tôn Đức Thắng", "Tôn Đức Thắng, Q1", "0987654321", null, null, null);
+        request = new BranchRequest("Chi Nhánh Tôn Đức Thắng", "Tôn Đức Thắng, Q1", "0987654321", null, null, null, null);
     }
 
     @Test
