@@ -30,6 +30,18 @@ public class HourlyRevenueStatRepositoryImpl implements HourlyRevenueStatReposit
     }
     
     @Override
+    public void upsert(HourlyRevenueStat stat) {
+        jpaRepository.upsertHourlyStat(
+            stat.id(),
+            stat.branchId(),
+            stat.date(),
+            stat.hour(),
+            stat.orderCount(),
+            stat.revenue() != null ? stat.revenue() : java.math.BigDecimal.ZERO
+        );
+    }
+    
+    @Override
     public Optional<HourlyRevenueStat> findByBranchIdDateAndHour(UUID branchId, LocalDate date, int hour) {
         return jpaRepository.findByBranchIdAndDateAndHour(branchId, date, hour)
             .map(HourlyRevenueStatJpaEntity::toDomain);

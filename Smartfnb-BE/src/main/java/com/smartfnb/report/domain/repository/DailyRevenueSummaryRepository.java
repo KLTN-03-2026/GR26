@@ -24,6 +24,10 @@ public interface DailyRevenueSummaryRepository {
      */
     Optional<DailyRevenueSummary> findByBranchIdAndDate(UUID branchId, LocalDate date);
     
+    Optional<DailyRevenueSummary> findByBranchIdAndDateForUpdate(UUID branchId, LocalDate date);
+    
+    void initIfNotExists(UUID id, UUID tenantId, UUID branchId, LocalDate date);
+    
     /**
      * Xóa (nếu cần reset).
      */
