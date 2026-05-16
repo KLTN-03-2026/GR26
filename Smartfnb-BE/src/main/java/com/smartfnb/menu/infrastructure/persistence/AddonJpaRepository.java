@@ -61,4 +61,13 @@ public interface AddonJpaRepository extends JpaRepository<AddonJpaEntity, UUID> 
      * @return danh sách addon đang active
      */
     java.util.List<AddonJpaEntity> findByTenantIdAndIsActive(UUID tenantId, Boolean isActive);
+
+    /**
+     * Kiểm tra xem nguyên liệu có đang được dùng làm cấu hình cho một Addon nào không.
+     * Dùng để chặn xoá nguyên liệu.
+     *
+     * @param itemId ID nguyên liệu
+     * @return true nếu đang được dùng
+     */
+    boolean existsByItemId(UUID itemId);
 }

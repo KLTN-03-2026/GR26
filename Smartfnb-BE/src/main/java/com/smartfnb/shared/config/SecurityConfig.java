@@ -79,6 +79,11 @@ public class SecurityConfig {
                 // Actuator health — public
                 .requestMatchers("/actuator/health").permitAll()
 
+                // Author: Hoàng | date: 2026-05-04 | note: cho phép WebSocket handshake đi qua Spring Security
+                // SockJS gửi GET /ws/info (HTTP) trước khi upgrade lên WebSocket — cần permitAll ở tầng HTTP
+                // Auth thực sự được xử lý bên trong STOMP protocol bởi WebSocketAuthInterceptor (tại CONNECT frame)
+                .requestMatchers("/ws/**").permitAll()
+
                 // Payment webhooks — public để gateway ngoài hệ thống callback, gồm PayOS.
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/payments/qr/webhook",

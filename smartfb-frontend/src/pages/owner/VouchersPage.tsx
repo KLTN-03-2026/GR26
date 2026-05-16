@@ -68,7 +68,6 @@ const determineStatus = (status: string, startDate: string, endDate: string): 'A
 
 export default function VouchersPage() {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
     const { data, isLoading, isError, refetch } = useVouchers();
 
     const vouchersData = useMemo<VoucherListItem[]>(() => {
@@ -83,7 +82,7 @@ export default function VouchersPage() {
                 conditionDisplay: formatConditionDisplay(voucher.minOrderValue),
             };
         });
-    }, [data, refreshKey]);
+    }, [data]);
 
     const {
         filters,
@@ -103,7 +102,6 @@ export default function VouchersPage() {
 
     const handleRefresh = () => {
         refetch();
-        setRefreshKey(prev => prev + 1);
     };
 
     if (isLoading) {

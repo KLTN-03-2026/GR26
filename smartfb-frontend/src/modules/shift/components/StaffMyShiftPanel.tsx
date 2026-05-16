@@ -7,15 +7,26 @@ import {
   Clock,
   LogIn,
   LogOut,
+  Pencil,
   Plus,
   RefreshCw,
   TimerReset,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useShiftSchedules } from '@modules/shift/hooks/useShiftSchedules';
 import { useShiftTemplates } from '@modules/shift/hooks/useShiftTemplates';
 import type { LocalTime, RegisterShiftPayload, ShiftSchedule, ShiftTemplate, ShiftStatus } from '@modules/shift/types/shift.types';
 import { Button } from '@shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@shared/components/ui/dialog';
 import { Input } from '@shared/components/ui/input';
 import { Label } from '@shared/components/ui/label';
 import {
@@ -41,8 +52,11 @@ interface StaffShiftCardProps {
   today: string;
   isCheckingIn: boolean;
   isCheckingOut: boolean;
+  isDeleting: boolean;
   onCheckIn: (scheduleId: string) => void;
   onCheckOut: (scheduleId: string) => void;
+  onEdit: (schedule: ShiftSchedule) => void;
+  onDelete: (schedule: ShiftSchedule) => void;
 }
 
 /**
@@ -138,12 +152,16 @@ const StaffShiftCard = ({
   today,
   isCheckingIn,
   isCheckingOut,
+  isDeleting,
   onCheckIn,
   onCheckOut,
+  onEdit,
+  onDelete,
 }: StaffShiftCardProps) => {
   const canCheckIn = schedule.status === 'REGISTERED' && schedule.date === today;
   const canCheckOut = schedule.status === 'CHECKED_IN';
-  const hasAction = canCheckIn || canCheckOut;
+  const canEditSchedule = schedule.status === 'REGISTERED';
+  const hasAction = canCheckIn || canCheckOut || canEditSchedule;
   const templateName = template?.name ?? 'Ca chưa rõ';
   const timeRange = template
     ? `${formatLocalTime(template.startTime)} - ${formatLocalTime(template.endTime)}`
@@ -175,7 +193,7 @@ const StaffShiftCard = ({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {canCheckIn && (
             <Button
               type="button"
@@ -198,6 +216,29 @@ const StaffShiftCard = ({
               Check-out
             </Button>
           )}
+          {canEditSchedule && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onEdit(schedule)}
+                className="h-10"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Sửa
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isDeleting}
+                className="h-10 border-red-200 text-red-600 hover:bg-red-50"
+                onClick={() => onDelete(schedule)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Xóa
+              </Button>
+            </>
+          )}
           {!hasAction && (
             <Button type="button" variant="outline" disabled className="h-10">
               <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -218,14 +259,20 @@ export const StaffMyShiftPanel = () => {
   const [endDate, setEndDate] = useState(initialRange.endDate);
   const [registerDate, setRegisterDate] = useState(today);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [editingSchedule, setEditingSchedule] = useState<ShiftSchedule | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<ShiftSchedule | null>(null);
 
   const { templates, isLoading: isTemplatesLoading, error: templateError, refetch: refetchTemplates } = useShiftTemplates();
   const {
     useMySchedule,
     registerShift,
+    updateShift,
+    deleteShift,
     checkIn,
     checkOut,
     isRegistering,
+    isUpdating,
+    isDeleting,
     isCheckingIn,
     isCheckingOut,
   } = useShiftSchedules();
@@ -241,6 +288,8 @@ export const StaffMyShiftPanel = () => {
   const isLoading = scheduleQuery.isLoading || isTemplatesLoading;
   const isError = scheduleQuery.isError || Boolean(templateError);
   const canRegister = Boolean(currentUser?.id && selectedTemplateId && registerDate);
+  const isSavingSchedule = isRegistering || isUpdating;
+  const isEditingSchedule = Boolean(editingSchedule);
 
   const shiftWeek = (dayCount: number) => {
     setStartDate((current) => addDays(current, dayCount));
@@ -267,8 +316,40 @@ export const StaffMyShiftPanel = () => {
       date: registerDate,
     };
 
-    await registerShift(payload);
+    if (editingSchedule) {
+      await updateShift({ id: editingSchedule.id, payload });
+      setEditingSchedule(null);
+    } else {
+      await registerShift(payload);
+    }
+
     setSelectedTemplateId('');
+    setRegisterDate(today);
+    void scheduleQuery.refetch();
+  };
+
+  const handleStartEdit = (schedule: ShiftSchedule) => {
+    setEditingSchedule(schedule);
+    setRegisterDate(schedule.date);
+    setSelectedTemplateId(schedule.shiftTemplateId);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSchedule(null);
+    setRegisterDate(today);
+    setSelectedTemplateId('');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteCandidate) {
+      return;
+    }
+
+    await deleteShift(deleteCandidate.id);
+    if (editingSchedule?.id === deleteCandidate.id) {
+      handleCancelEdit();
+    }
+    setDeleteCandidate(null);
     void scheduleQuery.refetch();
   };
 
@@ -394,8 +475,11 @@ export const StaffMyShiftPanel = () => {
                   today={today}
                   isCheckingIn={isCheckingIn}
                   isCheckingOut={isCheckingOut}
+                  isDeleting={isDeleting}
                   onCheckIn={(scheduleId) => void checkIn(scheduleId)}
                   onCheckOut={(scheduleId) => void checkOut(scheduleId)}
+                  onEdit={handleStartEdit}
+                  onDelete={setDeleteCandidate}
                 />
               ))
             )}
@@ -404,9 +488,21 @@ export const StaffMyShiftPanel = () => {
 
         <aside className="space-y-4">
           <div className="rounded-card border border-border bg-card p-4 shadow-card">
-            <h2 className="text-lg font-semibold text-text-primary">Đăng ký ca</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold text-text-primary">
+                {isEditingSchedule ? 'Sửa ca đã đăng ký' : 'Đăng ký ca'}
+              </h2>
+              {isEditingSchedule && (
+                <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                  <X className="mr-1 h-4 w-4" />
+                  Hủy sửa
+                </Button>
+              )}
+            </div>
             <p className="mt-1 text-sm text-text-secondary">
-              Chỉ đăng ký cho tài khoản của bạn tại chi nhánh đang làm việc.
+              {isEditingSchedule
+                ? 'Chỉ sửa được ca chưa check-in của tài khoản hiện tại.'
+                : 'Chỉ đăng ký cho tài khoản của bạn tại chi nhánh đang làm việc.'}
             </p>
 
             <div className="mt-4 space-y-4">
@@ -438,10 +534,18 @@ export const StaffMyShiftPanel = () => {
                 type="button"
                 className="w-full"
                 onClick={() => void handleRegister()}
-                disabled={!canRegister || isRegistering || activeTemplates.length === 0}
+                disabled={!canRegister || isSavingSchedule || activeTemplates.length === 0}
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Đăng ký ca
+                {isEditingSchedule ? (
+                  <Pencil className="mr-2 h-4 w-4" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
+                {isSavingSchedule
+                  ? 'Đang lưu...'
+                  : isEditingSchedule
+                    ? 'Lưu thay đổi'
+                    : 'Đăng ký ca'}
               </Button>
               {activeTemplates.length === 0 && (
                 <p className="text-sm text-warning-text">Chi nhánh chưa có ca mẫu đang hoạt động.</p>
@@ -474,6 +578,25 @@ export const StaffMyShiftPanel = () => {
           </div>
         </aside>
       </section>
+
+      <Dialog open={Boolean(deleteCandidate)} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xóa ca đã đăng ký</DialogTitle>
+            <DialogDescription className="leading-6">
+              Bạn có chắc chắn muốn xóa ca này không? Chỉ ca chưa check-in mới có thể xóa.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setDeleteCandidate(null)} disabled={isDeleting}>
+              Hủy
+            </Button>
+            <Button variant="destructive" onClick={() => void handleConfirmDelete()} disabled={isDeleting}>
+              {isDeleting ? 'Đang xóa...' : 'Xóa ca'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

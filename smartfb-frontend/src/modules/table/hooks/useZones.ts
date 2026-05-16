@@ -4,7 +4,7 @@ import { tableService } from '@modules/table/services/tableService';
 import type { TableArea } from '@modules/table/types/table.types';
 
 /**
- * Hook lấy danh sách khu vực của chi nhánh đang thao tác.
+ * Hook lấy danh sách máy gọi thẻ của chi nhánh đang thao tác.
  */
 export const useZones = () => {
   return useQuery<TableArea[]>({

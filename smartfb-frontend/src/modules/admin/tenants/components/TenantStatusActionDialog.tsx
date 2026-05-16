@@ -23,7 +23,7 @@ interface TenantStatusActionDialogProps {
 }
 
 /**
- * Dialog xác nhận tạm khóa hoặc mở khóa tenant.
+ * Dialog xác nhận tạm khóa hoặc mở khóa khách hàng.
  */
 export const TenantStatusActionDialog = ({
   tenant,
@@ -38,7 +38,7 @@ export const TenantStatusActionDialog = ({
 
   const handleConfirm = () => {
     if (isSuspend) {
-      onConfirmSuspend(reason.trim() || 'Admin tạm khóa tenant');
+      onConfirmSuspend(reason.trim() || 'Admin tạm khóa khách hàng');
       return;
     }
 
@@ -50,18 +50,18 @@ export const TenantStatusActionDialog = ({
       <DialogContent className="border-admin-gray-200 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-admin-gray-900">
-            {isSuspend ? 'Tạm khóa tenant' : 'Mở khóa tenant'}
+            {isSuspend ? 'Tạm khóa khách hàng' : 'Mở khóa khách hàng'}
           </DialogTitle>
           <DialogDescription>
             {isSuspend
-              ? 'Tenant bị tạm khóa sẽ không thể sử dụng hệ thống cho đến khi được mở lại.'
-              : 'Tenant sẽ được chuyển về trạng thái hoạt động.'}
+              ? 'Khách hàng bị tạm khóa sẽ không thể sử dụng hệ thống cho đến khi được mở lại.'
+              : 'Khách hàng sẽ được chuyển về trạng thái hoạt động.'}
           </DialogDescription>
         </DialogHeader>
 
         {tenant ? (
           <div className="rounded-lg bg-admin-gray-50 p-4">
-            <p className="text-sm text-admin-gray-500">Tenant</p>
+            <p className="text-sm text-admin-gray-500">Khách hàng</p>
             <p className="mt-1 font-semibold text-admin-gray-900">{tenant.name}</p>
           </div>
         ) : null}

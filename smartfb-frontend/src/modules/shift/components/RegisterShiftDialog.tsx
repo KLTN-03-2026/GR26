@@ -26,8 +26,12 @@ interface RegisterShiftDialogProps {
   staffList: StaffSummary[];
   defaultDate: string;
   defaultShiftTemplateId?: string;
+  defaultUserId?: string;
   isPending: boolean;
   onSubmit: (payload: RegisterShiftPayload) => Promise<unknown>;
+  title?: string;
+  submitLabel?: string;
+  pendingLabel?: string;
 }
 
 const EMPTY_FORM: RegisterShiftPayload = {
@@ -46,11 +50,16 @@ export const RegisterShiftDialog = ({
   staffList,
   defaultDate,
   defaultShiftTemplateId,
+  defaultUserId,
   isPending,
   onSubmit,
+  title = 'Gán ca làm cho nhân viên',
+  submitLabel = 'Gán ca',
+  pendingLabel = 'Đang gán...',
 }: RegisterShiftDialogProps) => {
   const [values, setValues] = useState<RegisterShiftPayload>({
     ...EMPTY_FORM,
+    userId: defaultUserId ?? '',
     date: defaultDate,
     shiftTemplateId: defaultShiftTemplateId ?? '',
   });
@@ -70,7 +79,12 @@ export const RegisterShiftDialog = ({
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      setValues({ ...EMPTY_FORM, date: defaultDate, shiftTemplateId: defaultShiftTemplateId ?? '' });
+      setValues({
+        ...EMPTY_FORM,
+        userId: defaultUserId ?? '',
+        date: defaultDate,
+        shiftTemplateId: defaultShiftTemplateId ?? '',
+      });
       setFormError(null);
     }
 
@@ -91,7 +105,7 @@ export const RegisterShiftDialog = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Gán ca làm cho nhân viên</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -160,7 +174,7 @@ export const RegisterShiftDialog = ({
             Hủy
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={isPending || !canSubmit}>
-            {isPending ? 'Đang gán...' : 'Gán ca'}
+            {isPending ? pendingLabel : submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

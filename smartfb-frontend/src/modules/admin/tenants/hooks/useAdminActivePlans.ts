@@ -3,7 +3,7 @@ import { queryKeys } from '@shared/constants/queryKeys';
 import { adminTenantService } from '../services/adminTenantService';
 
 /**
- * Hook lấy danh sách gói active để form đổi gói tenant sử dụng.
+ * Hook lấy danh sách gói active để form đổi gói khách hàng sử dụng.
  */
 export const useAdminActivePlans = () =>
   useQuery({

@@ -91,6 +91,17 @@ export interface SearchInvoiceResponse {
 }
 
 /**
+ * Topping snapshot lấy từ order để bổ sung vào chi tiết hóa đơn.
+ * Invoice backend hiện chưa trả topping trong `invoice_items`.
+ */
+export interface InvoiceItemAddonResponse {
+  addonId: string;
+  addonName: string;
+  extraPrice: number;
+  quantity: number;
+}
+
+/**
  * Dòng món snapshot trong hóa đơn.
  */
 export interface InvoiceItemResponse {
@@ -98,6 +109,25 @@ export interface InvoiceItemResponse {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  addons?: InvoiceItemAddonResponse[];
+}
+
+/**
+ * Hình thức phục vụ của order gốc.
+ */
+export type InvoiceOrderSource = 'IN_STORE' | 'TAKEAWAY' | 'DELIVERY' | string;
+
+/**
+ * Thông tin order gốc dùng để bổ sung ngữ cảnh cho hóa đơn.
+ */
+export interface InvoiceOrderSummary {
+  id: string;
+  orderNumber?: string | null;
+  tableId?: string | null;
+  tableName?: string | null;
+  userId?: string | null;
+  staffName?: string | null;
+  source?: InvoiceOrderSource | null;
 }
 
 /**
@@ -115,6 +145,7 @@ export interface InvoiceResponse {
   total: number;
   issuedAt: string;
   items: InvoiceItemResponse[];
+  order?: InvoiceOrderSummary;
 }
 
 /**
@@ -125,8 +156,34 @@ export interface OrderInvoiceResponse {
   payment: PaymentResponse | null;
 }
 
+/**
+ * Dòng món tối thiểu từ order detail dùng để enrich topping cho hóa đơn.
+ */
+export interface InvoiceOrderItemSnapshot {
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  addons?: string | InvoiceItemAddonResponse[] | null;
+}
+
+/**
+ * Snapshot tối thiểu của order liên quan đến invoice.
+ */
+export interface InvoiceOrderSnapshot {
+  id: string;
+  orderNumber?: string | null;
+  tableId?: string | null;
+  tableName?: string | null;
+  userId?: string | null;
+  staffName?: string | null;
+  source?: InvoiceOrderSource | null;
+  items: InvoiceOrderItemSnapshot[];
+}
+
 export type PaymentApiResponse = ApiResponse<PaymentResponse>;
 export type ProcessCashPaymentApiResponse = PaymentApiResponse;
 export type ProcessQRPaymentApiResponse = ApiResponse<ProcessQRPaymentResponse>;
 export type SearchInvoiceApiResponse = ApiResponse<SearchInvoiceResponse>;
 export type InvoiceApiResponse = ApiResponse<InvoiceResponse>;
+export type InvoiceOrderSnapshotApiResponse = ApiResponse<InvoiceOrderSnapshot>;

@@ -59,6 +59,7 @@ public class PurchaseOrderController {
     // ── DTOs ─────────────────────────────────────────────────────────
 
     public record CreatePurchaseOrderRequest(
+            UUID branchId,
             @NotNull UUID supplierId,
             String note,
             LocalDate expectedDate,
@@ -70,7 +71,7 @@ public class PurchaseOrderController {
             @NotNull String itemName,
             String unit,
             @NotNull @Positive BigDecimal quantity,
-            @NotNull @PositiveOrZero BigDecimal unitPrice,
+            @PositiveOrZero BigDecimal unitPrice,
             String note
     ) {}
 
@@ -79,7 +80,8 @@ public class PurchaseOrderController {
     // ── Endpoints ─────────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
+    // Author: Hoàng, date: 2026-05-13, note: Mở quyền xem PO cho staff được phân quyền tạo đơn hoặc nhận hàng.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER') or hasAuthority('SUPPLIER_VIEW') or hasAuthority('PURCHASE_ORDER_EDIT') or hasAuthority('INVENTORY_IMPORT')")
     @Operation(summary = "Danh sách đơn mua hàng")
     public ResponseEntity<ApiResponse<Page<PurchaseOrderSummaryResult>>> list(
             @RequestParam(required = false) UUID branchId,
@@ -96,17 +98,32 @@ public class PurchaseOrderController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    // Author: Hoàng, date: 2026-05-13, note: Cho Staff/Owner có quyền PURCHASE_ORDER_EDIT tạo đơn nháp DRAFT.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN') or hasAuthority('PURCHASE_ORDER_EDIT')")
     @Operation(summary = "Tạo đơn mua hàng mới (DRAFT)")
     public ResponseEntity<ApiResponse<UUID>> create(@Valid @RequestBody CreatePurchaseOrderRequest request) {
+        // Author: Hoàng, date: 2026-05-13, note: PO phải có chi nhánh để bước nhận hàng nhập kho đúng branch.
+        UUID resolvedBranchId = request.branchId() != null
+                ? request.branchId()
+                : TenantContext.getCurrentBranchId();
+
+        if (resolvedBranchId == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Vui lòng chọn chi nhánh làm việc trước khi tạo đơn mua hàng"
+            );
+        }
+
         List<CreatePurchaseOrderCommand.PurchaseOrderItemCommand> items = request.items().stream()
                 .map(i -> new CreatePurchaseOrderCommand.PurchaseOrderItemCommand(
-                        i.itemId(), i.itemName(), i.unit(), i.quantity(), i.unitPrice(), i.note()))
+                        i.itemId(), i.itemName(), i.unit(), i.quantity(), 
+                        i.unitPrice() != null ? i.unitPrice() : BigDecimal.ZERO, 
+                        i.note()))
                 .toList();
 
         UUID id = createHandler.handle(new CreatePurchaseOrderCommand(
                 TenantContext.getCurrentTenantId(),
-                TenantContext.getCurrentBranchId(),
+                resolvedBranchId,
                 request.supplierId(),
                 request.note(),
                 request.expectedDate(),
@@ -117,7 +134,8 @@ public class PurchaseOrderController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
+    // Author: Hoàng, date: 2026-05-13, note: Cho staff có quyền supplier/PO/kho xem chi tiết đơn để xử lý nhận hàng.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER') or hasAuthority('SUPPLIER_VIEW') or hasAuthority('PURCHASE_ORDER_EDIT') or hasAuthority('INVENTORY_IMPORT')")
     @Operation(summary = "Chi tiết đơn mua hàng")
     public ResponseEntity<ApiResponse<PurchaseOrderDetailResult>> getDetail(@PathVariable UUID id) {
         PurchaseOrderDetailResult result = detailHandler.handle(id, TenantContext.getCurrentTenantId());
@@ -125,7 +143,8 @@ public class PurchaseOrderController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    // Author: Hoàng, date: 2026-05-13, note: Cho Staff/Owner có quyền PURCHASE_ORDER_EDIT cập nhật đơn khi còn DRAFT.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN') or hasAuthority('PURCHASE_ORDER_EDIT')")
     @Operation(summary = "Cập nhật đơn mua hàng (chỉ khi DRAFT)")
     public ResponseEntity<ApiResponse<Void>> update(
             @PathVariable UUID id,
@@ -133,7 +152,9 @@ public class PurchaseOrderController {
         List<UpdatePurchaseOrderCommand.PurchaseOrderItemCmd> items = request.items() == null ? null :
                 request.items().stream()
                         .map(i -> new UpdatePurchaseOrderCommand.PurchaseOrderItemCmd(
-                                i.itemId(), i.itemName(), i.unit(), i.quantity(), i.unitPrice(), i.note()))
+                                i.itemId(), i.itemName(), i.unit(), i.quantity(), 
+                                i.unitPrice() != null ? i.unitPrice() : BigDecimal.ZERO, 
+                                i.note()))
                         .toList();
         updateHandler.handle(new UpdatePurchaseOrderCommand(
                 id, TenantContext.getCurrentTenantId(),
@@ -143,6 +164,7 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/{id}/send")
+    // Author: Hoàng, date: 2026-05-13, note: Giữ bước xác nhận đã đặt hàng cho Owner/Admin để tránh staff tự chuyển SENT.
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @Operation(summary = "Gửi đơn cho nhà cung cấp (DRAFT → SENT)")
     public ResponseEntity<ApiResponse<Void>> send(@PathVariable UUID id) {
@@ -153,7 +175,8 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/{id}/receive")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    // Author: Hoàng, date: 2026-05-13, note: Cho staff có quyền nhập kho xác nhận nhận hàng và kích hoạt cập nhật tồn kho.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN') or hasAuthority('INVENTORY_IMPORT')")
     @Operation(summary = "Xác nhận nhận hàng (SENT → RECEIVED) — tự động tạo StockBatch")
     public ResponseEntity<ApiResponse<Void>> receive(@PathVariable UUID id) {
         receiveHandler.handle(new ReceivePurchaseOrderCommand(
@@ -163,6 +186,7 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/{id}/cancel")
+    // Author: Hoàng, date: 2026-05-13, note: Giữ quyền hủy PO cho Owner/Admin để tránh staff hủy đơn đã đặt ngoài hệ thống.
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @Operation(summary = "Huỷ đơn mua hàng")
     public ResponseEntity<ApiResponse<Void>> cancel(

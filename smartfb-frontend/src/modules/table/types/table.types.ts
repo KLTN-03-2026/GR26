@@ -1,21 +1,21 @@
 /**
  * Module Table - Định nghĩa kiểu dữ liệu
- * Dùng cho toàn bộ module quản lý bàn
+ * Backend vẫn dùng contract table, FE hiển thị nghiệp vụ là thẻ gọi khách.
  */
 
 // Sử dụng union type thay vì enum (do cấu hình TypeScript)
 export type TableStatus = 'active' | 'inactive';
 
-// Trạng thái sử dụng bàn (backend: OCCUPIED, RESERVED, UNPAID, FREE)
+// Trạng thái sử dụng thẻ gọi khách (backend: OCCUPIED, RESERVED, UNPAID, FREE)
 export type TableUsageStatus = 'available' | 'occupied' | 'unpaid' | 'reserved';
 
-// Trạng thái tổng hợp dùng cho toolbar quản lý bàn
+// Trạng thái tổng hợp dùng cho toolbar quản lý thẻ
 export type TableFilterState = 'all' | 'active' | 'occupied' | 'inactive';
 
-// Shape bàn (backend yêu cầu)
+// Shape table do backend yêu cầu, FE thẻ gọi khách không hiển thị field này
 export type TableShape = 'square' | 'round';
 
-// Thông tin khu vực bàn
+// Thông tin máy gọi thẻ, backend vẫn trả qua entity zone
 export interface TableArea {
   id: string;
   branchId: string;
@@ -29,12 +29,12 @@ export interface BranchInfo {
   name: string;
 }
 
-// Kiểu dữ liệu cho 1 bàn (dùng trong danh sách) 
+// Kiểu dữ liệu cho 1 thẻ gọi khách, map từ response table của backend
 export interface TableItem {
   id: string;
   name: string;
   zoneId: string;        // backend gọi là zoneId, không phải areaId
-  zoneName?: string;      // thêm để lưu tên khu vực sau khi join
+  zoneName?: string;      // thêm để lưu tên máy gọi thẻ sau khi join
   capacity: number;
   branchId: string;
   branchName?: string;
@@ -49,7 +49,7 @@ export interface TableItem {
 }
 
 /**
- * Model hiển thị bàn sau khi đã resolve tên chi nhánh và khu vực từ dữ liệu liên quan.
+ * Model hiển thị thẻ sau khi đã resolve tên chi nhánh và máy gọi thẻ từ dữ liệu liên quan.
  * UI chỉ nên render model này để tránh join dữ liệu lặp lại trong JSX.
  */
 export interface TableDisplayItem extends TableItem {
@@ -57,17 +57,17 @@ export interface TableDisplayItem extends TableItem {
   branchName: string;
 }
 
-// Kiểu dữ liệu chi tiết bàn
+// Kiểu dữ liệu chi tiết thẻ gọi khách
 export type TableDetail = TableItem;
 
-// Filters cho danh sách bàn
+// Filters cho danh sách thẻ gọi khách
 export interface TableFilters {
   search: string;
   state: TableFilterState;
   area: string | 'all';
 }
 
-// Payload cho tạo bàn mới
+// Payload cho tạo thẻ mới, backend vẫn nhận qua API table
 export interface CreateTablePayload {
   name: string;
   zoneId: string;        // backend dùng zoneId
@@ -75,19 +75,19 @@ export interface CreateTablePayload {
   shape?: TableShape;    // optional, default 'square'
 }
 
-// Payload cho tạo khu vực bàn
+// Payload cho tạo máy gọi thẻ, backend vẫn nhận qua API zone
 export interface CreateZonePayload {
   name: string;
   floorNumber: number;
 }
 
-// Payload cho cập nhật khu vực bàn
+// Payload cho cập nhật máy gọi thẻ, backend vẫn nhận qua API zone
 export interface UpdateZonePayload {
   name: string;
   floorNumber: number;
 }
 
-// Payload cho cập nhật bàn
+// Payload cho cập nhật thẻ gọi khách
 export interface UpdateTablePayload {
   name: string;
   zoneId: string;
@@ -107,7 +107,7 @@ export interface BatchUpdatePositionsPayload {
   positions: UpdateTablePositionPayload[];
 }
 
-// Payload cho tạo bàn hàng loạt ở FE
+// Payload cho tạo thẻ hàng loạt ở FE
 export interface CreateBulkTablesPayload {
   zoneId: string;
   namePrefix: string;
@@ -116,13 +116,13 @@ export interface CreateBulkTablesPayload {
   capacity: number;
 }
 
-// Kết quả lỗi của từng bàn khi tạo hàng loạt
+// Kết quả lỗi của từng thẻ khi tạo hàng loạt
 export interface BulkCreateTableFailure {
   name: string;
   message: string;
 }
 
-// Kết quả tổng hợp sau khi FE gọi nhiều request tạo bàn
+// Kết quả tổng hợp sau khi FE gọi nhiều request tạo thẻ
 export interface CreateBulkTablesResult {
   createdTables: TableItem[];
   failedTables: BulkCreateTableFailure[];

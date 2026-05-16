@@ -6,7 +6,7 @@ import type { TableArea, TableItem } from '@modules/table/types/table.types';
 import { useZones } from '@modules/table/hooks/useZones';
 
 /**
- * Hook lấy danh sách bàn của chi nhánh hiện tại.
+ * Hook lấy danh sách thẻ gọi khách của chi nhánh hiện tại.
  */
 export const useTableList = () => {
   return useQuery<TableItem[]>({
@@ -23,7 +23,7 @@ export const useTableList = () => {
 };
 
 /**
- * Hook lấy danh sách bàn và map thêm tên khu vực để hiển thị ở UI.
+ * Hook lấy danh sách thẻ và map thêm tên máy gọi thẻ để hiển thị ở UI.
  */
 export const useTableListWithZones = () => {
   const { data: tables, isLoading: tablesLoading, error: tablesError } = useTableList();
@@ -31,7 +31,7 @@ export const useTableListWithZones = () => {
 
   const isLoading = tablesLoading || zonesLoading;
 
-  // Merge zone name vào tables
+  // Merge tên máy gọi thẻ vào danh sách thẻ.
   const tablesWithZoneNames = useMemo(() => {
     if (!tables || !zones) return [];
 

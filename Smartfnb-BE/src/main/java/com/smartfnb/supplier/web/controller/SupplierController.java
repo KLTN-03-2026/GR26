@@ -70,7 +70,8 @@ public class SupplierController {
     // ── Endpoints ─────────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
+    // Author: Hoàng, date: 2026-05-13, note: Cho staff có quyền PO/kho đọc danh sách NCC để tạo đơn hoặc nhận hàng.
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER') or hasAuthority('SUPPLIER_VIEW') or hasAuthority('PURCHASE_ORDER_EDIT') or hasAuthority('INVENTORY_IMPORT')")
     @Operation(summary = "Danh sách nhà cung cấp")
     public ResponseEntity<ApiResponse<Page<GetSupplierListQueryHandler.SupplierResult>>> list(
             @RequestParam(required = false) String name,
@@ -83,6 +84,7 @@ public class SupplierController {
     }
 
     @PostMapping
+    // Author: Hoàng, date: 2026-05-13, note: Giữ quyền tạo hồ sơ NCC cho Owner/Admin, staff chỉ tạo đơn mua hàng.
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @Operation(summary = "Tạo nhà cung cấp mới")
     public ResponseEntity<ApiResponse<UUID>> create(@Valid @RequestBody CreateSupplierRequest request) {
@@ -96,6 +98,7 @@ public class SupplierController {
     }
 
     @PutMapping("/{id}")
+    // Author: Hoàng, date: 2026-05-13, note: Giữ quyền sửa hồ sơ NCC cho Owner/Admin để không mở rộng scope quản trị NCC.
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @Operation(summary = "Cập nhật nhà cung cấp")
     public ResponseEntity<ApiResponse<Void>> update(
@@ -113,6 +116,7 @@ public class SupplierController {
     }
 
     @DeleteMapping("/{id}")
+    // Author: Hoàng, date: 2026-05-13, note: Giữ quyền vô hiệu hóa NCC cho Owner/Admin để tránh staff xóa dữ liệu nền.
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @Operation(summary = "Vô hiệu hoá nhà cung cấp (soft-delete)")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {

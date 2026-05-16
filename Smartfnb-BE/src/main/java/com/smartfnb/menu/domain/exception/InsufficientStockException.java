@@ -23,8 +23,24 @@ public class InsufficientStockException extends SmartFnbException {
                                       double required,
                                       double available,
                                       String unit) {
-        super("INSUFFICIENT_STOCK",
-              String.format("Nguyên liệu '%s' không đủ. Cần %.4f %s, hiện còn %.4f %s.",
-                      ingredientName, required, unit, available, unit));
+        super("INSUFFICIENT_STOCK", buildMessage(ingredientName, required, available, unit));
+    }
+
+    // Author: Hoàng
+    // Date: 2026-05-09
+    // Note: Không chèn unit rỗng vào message để tránh output dạng "Cần 25.0000 , hiện còn 0.0000 .".
+    private static String buildMessage(String ingredientName,
+                                       double required,
+                                       double available,
+                                       String unit) {
+        String normalizedUnit = unit == null ? "" : unit.trim();
+
+        if (normalizedUnit.isBlank()) {
+            return String.format("Nguyên liệu '%s' không đủ. Cần %.4f, hiện còn %.4f.",
+                    ingredientName, required, available);
+        }
+
+        return String.format("Nguyên liệu '%s' không đủ. Cần %.4f %s, hiện còn %.4f %s.",
+                ingredientName, required, normalizedUnit, available, normalizedUnit);
     }
 }

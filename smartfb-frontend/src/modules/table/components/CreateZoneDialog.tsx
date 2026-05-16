@@ -20,13 +20,13 @@ const createZoneSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Tên khu vực phải có ít nhất 2 ký tự')
-    .max(100, 'Tên khu vực không quá 100 ký tự'),
+    .min(2, 'Tên máy gọi thẻ phải có ít nhất 2 ký tự')
+    .max(100, 'Tên máy gọi thẻ không quá 100 ký tự'),
   floorNumber: z
     .number()
-    .int('Số tầng phải là số nguyên')
-    .min(1, 'Số tầng tối thiểu là 1')
-    .max(99, 'Số tầng tối đa là 99'),
+    .int('Số máy phải là số nguyên')
+    .min(1, 'Số máy tối thiểu là 1')
+    .max(99, 'Số máy tối đa là 99'),
 });
 
 type CreateZoneFormData = z.infer<typeof createZoneSchema>;
@@ -87,21 +87,21 @@ export const CreateZoneDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Tạo khu vực mới</DialogTitle>
+          <DialogTitle>Tạo máy gọi thẻ mới</DialogTitle>
           <DialogDescription>
-            Thêm khu vực để nhóm bàn theo tầng hoặc theo không gian phục vụ.
+            Thêm máy gọi thẻ để gán thẻ và gửi tín hiệu rung/kêu cho khách.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleCreateZone)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="zone-name">Tên khu vực</Label>
-            <Input id="zone-name" {...register('name')} placeholder="Ví dụ: Tầng 1, Sân vườn, VIP" />
+            <Label htmlFor="zone-name">Tên máy gọi thẻ</Label>
+            <Input id="zone-name" {...register('name')} placeholder="Ví dụ: Máy A, Máy B, Máy quầy chính" />
             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="floorNumber">Số tầng</Label>
+            <Label htmlFor="floorNumber">Số máy</Label>
             <NumericInput
               id="floorNumber"
               min={1}
@@ -113,7 +113,7 @@ export const CreateZoneDialog = ({
               }}
             />
             <p className="text-xs text-gray-500">
-              Dùng để sắp xếp khu vực theo tầng trên danh sách.
+              Dùng để sắp xếp máy gọi thẻ trên danh sách.
             </p>
             {errors.floorNumber && (
               <p className="text-xs text-red-500">{errors.floorNumber.message}</p>
@@ -125,7 +125,7 @@ export const CreateZoneDialog = ({
               Hủy
             </Button>
             <Button type="submit" disabled={!isDirty || isPending}>
-              {isPending ? 'Đang tạo...' : 'Tạo khu vực'}
+              {isPending ? 'Đang tạo...' : 'Tạo máy gọi thẻ'}
             </Button>
           </DialogFooter>
         </form>

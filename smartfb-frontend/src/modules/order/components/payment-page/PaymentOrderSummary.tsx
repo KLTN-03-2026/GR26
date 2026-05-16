@@ -48,7 +48,7 @@ export const PaymentOrderSummary = ({
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-[24px] bg-slate-50 p-4">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Bàn</p>
+          <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Thẻ</p>
           <p className="mt-2 text-xl font-black text-slate-900">
             {tableContext?.tableName || 'Mang đi'}
           </p>

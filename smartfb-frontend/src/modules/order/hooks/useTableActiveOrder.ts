@@ -9,10 +9,10 @@ interface UseTableActiveOrderOptions {
 }
 
 /**
- * Hook dò order đang mở của một bàn qua API danh sách đơn hàng.
- * FE dùng hook này để mở lại bàn đang có khách mà không phụ thuộc localStorage.
+ * Hook dò order đang mở của một thẻ qua API danh sách đơn hàng.
+ * FE dùng hook này để mở lại thẻ đang giao khách mà không phụ thuộc localStorage.
  *
- * @param tableId - id bàn cần dò order đang mở
+ * @param tableId - id thẻ cần dò order đang mở
  * @param options - cờ bật/tắt query khi route chưa sẵn sàng
  */
 export const useTableActiveOrder = (

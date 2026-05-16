@@ -37,7 +37,7 @@ export const queryKeys = {
   // Tables
   tables: {
     all: ['tables'] as const,
-    // Prefix danh sách bàn, dùng khi chỉ cần refresh trạng thái bàn mà không đụng khu vực.
+    // Prefix danh sách thẻ, dùng khi chỉ cần refresh trạng thái thẻ mà không đụng máy gọi thẻ.
     lists: ['tables', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['tables', 'list', filters] as const,
     detail: (id: string) => ['tables', 'detail', id] as const,
@@ -49,6 +49,14 @@ export const queryKeys = {
     all: ['staff'] as const,
     list: (filters?: Record<string, unknown>) => ['staff', 'list', filters] as const,
     detail: (id: string) => ['staff', 'detail', id] as const,
+  },
+
+  // Địa giới hành chính Việt Nam, dùng để chuẩn hóa địa chỉ nhân viên.
+  vietnamAddress: {
+    all: ['vietnam-address'] as const,
+    provinces: () => ['vietnam-address', 'provinces'] as const,
+    wards: (provinceCode: number | null) =>
+      ['vietnam-address', 'wards', provinceCode ?? 'no-province'] as const,
   },
 
   // Positions
@@ -89,7 +97,7 @@ export const queryKeys = {
   // Orders
   orders: {
     all: ['orders'] as const,
-    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của bàn.
+    // Prefix danh sách order, dùng để tránh kéo theo detail và active order của thẻ.
     lists: ['orders', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['orders', 'list', filters] as const,
     detail: (id: string) => ['orders', 'detail', id] as const,
@@ -101,7 +109,9 @@ export const queryKeys = {
   posSessions: {
     all: ['pos-sessions'] as const,
     active: (branchId?: string | null) => ['pos-sessions', 'active', branchId ?? 'no-branch'] as const,
-    history: (branchId?: string | null) => ['pos-sessions', 'history', branchId ?? 'no-branch'] as const,
+    // author: Hoàng | date: 2026-05-11 | note: Lịch sử ca POS cache theo page/size để hỗ trợ phân trang server-side.
+    history: (branchId?: string | null, params?: unknown) =>
+      ['pos-sessions', 'history', branchId ?? 'no-branch', params] as const,
     // author: Hoàng | date: 2026-04-30 | note: Breakdown doanh thu theo phương thức — live-query, stale sau 30s.
     revenueBreakdown: (sessionId: string) => ['pos-sessions', 'revenue-breakdown', sessionId] as const,
     // author: Hoàng | date: 2026-05-01 | note: Breakdown chi phí theo phương thức — tổng hợp từ financial invoices API filter theo ngày ca.
@@ -152,6 +162,13 @@ export const queryKeys = {
       all: ['inventory', 'semi-products'] as const,
       list: (filters?: Record<string, unknown>) => ['inventory', 'semi-products', 'list', filters] as const,
       detail: (id: string) => ['inventory', 'semi-products', 'detail', id] as const,
+    },
+    // Lịch sử mẻ sản xuất bán thành phẩm lấy trực tiếp từ bảng production_batches.
+    productionBatches: {
+      all: ['inventory', 'production-batches'] as const,
+      list: (filters?: Record<string, unknown>) =>
+        ['inventory', 'production-batches', 'list', filters] as const,
+      detail: (id: string) => ['inventory', 'production-batches', 'detail', id] as const,
     },
     stockEntries: {
       all: ['inventory', 'stock-entries'] as const,

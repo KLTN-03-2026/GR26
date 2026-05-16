@@ -46,7 +46,7 @@ const getSubscriptionStatusClass = (status: string): string => {
 };
 
 /**
- * Drawer xem chi tiết tenant — bao gồm thông tin, stats sử dụng và lịch sử subscription.
+ * Drawer xem chi tiết khách hàng — bao gồm thông tin, stats sử dụng và lịch sử subscription.
  */
 export const AdminTenantDetailDrawer = ({
   tenant,
@@ -69,7 +69,7 @@ export const AdminTenantDetailDrawer = ({
       <SheetContent className="flex w-full flex-col overflow-hidden border-admin-gray-200 bg-white p-0 sm:max-w-[480px]">
         {/* Header ẩn cho accessibility */}
         <SheetHeader className="sr-only">
-          <SheetTitle>Chi tiết tenant</SheetTitle>
+          <SheetTitle>Chi tiết khách hàng</SheetTitle>
           <SheetDescription>
             Thông tin subscription, gói hiện tại và lịch sử sử dụng dịch vụ.
           </SheetDescription>
@@ -78,7 +78,7 @@ export const AdminTenantDetailDrawer = ({
         {/* Hero header */}
         <div className="relative shrink-0 border-b border-admin-gray-200 bg-gradient-to-br from-violet-50 via-white to-white px-6 pb-6 pt-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-500">
-            Tenant
+            Khách hàng
           </p>
 
           <div className="mt-2 flex items-start justify-between gap-3">
@@ -114,7 +114,7 @@ export const AdminTenantDetailDrawer = ({
               <div className="text-center">
                 <Loader2 className="mx-auto h-8 w-8 animate-spin text-admin-brand-500" />
                 <p className="mt-4 text-sm font-semibold text-admin-gray-900">
-                  Đang tải chi tiết tenant
+                  Đang tải chi tiết khách hàng
                 </p>
                 <p className="mt-1 text-xs text-admin-gray-400">Vui lòng chờ một chút...</p>
               </div>
@@ -126,7 +126,7 @@ export const AdminTenantDetailDrawer = ({
             <div className="m-6 rounded-xl border border-red-100 bg-red-50 p-6 text-center">
               <AlertTriangle className="mx-auto h-8 w-8 text-admin-error" />
               <p className="mt-3 font-semibold text-admin-gray-900">
-                Không thể tải chi tiết tenant
+                Không thể tải chi tiết khách hàng
               </p>
               <p className="mt-1 text-sm text-admin-gray-500">
                 Kiểm tra kết nối hoặc thử tải lại.

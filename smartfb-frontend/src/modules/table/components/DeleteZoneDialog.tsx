@@ -43,24 +43,24 @@ export const DeleteZoneDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Xác nhận xóa khu vực</DialogTitle>
+          <DialogTitle>Xác nhận xóa máy gọi thẻ</DialogTitle>
           <DialogDescription>
-            Bạn đang chuẩn bị xóa khu vực <strong>{zoneName}</strong>.
+            Bạn đang chuẩn bị xóa máy gọi thẻ <strong>{zoneName}</strong>.
           </DialogDescription>
         </DialogHeader>
 
         {canDelete ? (
           <p className="text-sm text-gray-600">
-            Khu vực này hiện không còn bàn nào. Bạn có thể xóa khỏi hệ thống.
+            Máy gọi thẻ này hiện không còn thẻ nào. Bạn có thể xóa khỏi hệ thống.
           </p>
         ) : (
           <p className="text-sm text-amber-600">
-            Khu vực này đang có {tableCount} bàn. Hãy chuyển hoặc xóa các bàn trước khi xóa khu vực.
+            Máy gọi thẻ này đang có {tableCount} thẻ. Hãy chuyển hoặc xóa các thẻ trước khi xóa.
           </p>
         )}
 
         {isError && (
-          <p className="text-sm text-red-600">{errorMessage || 'Xóa khu vực không thành công'}</p>
+          <p className="text-sm text-red-600">{errorMessage || 'Xóa máy gọi thẻ không thành công'}</p>
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
@@ -73,7 +73,7 @@ export const DeleteZoneDialog = ({
             onClick={handleDeleteZone}
             disabled={!canDelete || isPending}
           >
-            {isPending ? 'Đang xóa...' : 'Xóa khu vực'}
+            {isPending ? 'Đang xóa...' : 'Xóa máy gọi thẻ'}
           </Button>
         </DialogFooter>
       </DialogContent>

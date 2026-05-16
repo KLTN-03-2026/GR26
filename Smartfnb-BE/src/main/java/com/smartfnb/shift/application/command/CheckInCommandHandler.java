@@ -6,6 +6,10 @@ import com.smartfnb.shift.infrastructure.persistence.ShiftScheduleJpaEntity;
 import com.smartfnb.shift.infrastructure.persistence.ShiftScheduleJpaRepository;
 import com.smartfnb.shift.infrastructure.persistence.ShiftTemplateJpaEntity;
 import com.smartfnb.shift.infrastructure.persistence.ShiftTemplateJpaRepository;
+import com.smartfnb.branch.application.BranchService;
+import com.smartfnb.branch.application.dto.BranchResponse;
+import com.smartfnb.shift.domain.exception.GpsCheckInException;
+import com.smartfnb.shared.util.GpsDistanceCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,6 +39,7 @@ public class CheckInCommandHandler {
 
     private final ShiftScheduleJpaRepository shiftScheduleJpaRepository;
     private final ShiftTemplateJpaRepository shiftTemplateJpaRepository;
+    private final BranchService branchService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -74,12 +79,33 @@ public class CheckInCommandHandler {
                 .orElse(null);
         String shiftName = template != null ? template.getName() : "Unknown";
 
-        // 5. Thực hiện check-in
+        // 5. GPS Validation
+        BranchResponse branch = branchService.getBranch(command.tenantId(), schedule.getBranchId());
+        Integer distanceMeters = null;
+
+        if (branch.latitude() != null && branch.longitude() != null) {
+            if (command.latitude() == null || command.longitude() == null) {
+                throw new GpsCheckInException("Vui lòng cấp quyền vị trí và cung cấp tọa độ để check-in tại chi nhánh này.");
+            }
+
+            distanceMeters = GpsDistanceCalculator.calculateDistanceMeters(
+                    command.latitude(), command.longitude(),
+                    branch.latitude().doubleValue(), branch.longitude().doubleValue()
+            );
+
+            int allowedRadius = branch.gpsCheckinRadiusMeters() != null ? branch.gpsCheckinRadiusMeters() : 200;
+
+            if (distanceMeters > allowedRadius) {
+                throw new GpsCheckInException(distanceMeters, allowedRadius);
+            }
+        }
+
+        // 6. Thực hiện check-in
         Instant now = Instant.now();
-        schedule.checkIn(now, LocalTime.now());
+        schedule.checkIn(now, LocalTime.now(), command.latitude(), command.longitude(), distanceMeters);
         shiftScheduleJpaRepository.save(schedule);
 
-        // 6. Publish domain event
+        // 7. Publish domain event
         eventPublisher.publishEvent(new StaffCheckedInEvent(
                 command.tenantId(),
                 schedule.getBranchId(),
@@ -88,7 +114,8 @@ public class CheckInCommandHandler {
                 schedule.getShiftTemplateId(),
                 schedule.getDate(),
                 shiftName,
-                now));
+                now,
+                distanceMeters));
 
         log.info("Check-in thành công: scheduleId={}", command.scheduleId());
     }

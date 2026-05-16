@@ -47,14 +47,14 @@ export const DeleteTableDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Xác nhận xóa bàn</DialogTitle>
+          <DialogTitle>Xác nhận xóa thẻ</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa bàn <strong>{tableName}</strong>? 
+            Bạn có chắc chắn muốn xóa thẻ <strong>{tableName}</strong>?
           </DialogDescription>
         </DialogHeader>
 
         {isError && (
-          <p className="text-sm text-red-600 mt-2">{errorMessage || 'Xóa bàn không thành công'}</p>
+          <p className="text-sm text-red-600 mt-2">{errorMessage || 'Xóa thẻ không thành công'}</p>
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
@@ -62,7 +62,7 @@ export const DeleteTableDialog = ({
             Hủy
           </Button>
           <Button type="button" variant="destructive" onClick={handleDelete} disabled={isPending}>
-            {isPending ? 'Đang xóa...' : 'Xóa bàn'}
+            {isPending ? 'Đang xóa...' : 'Xóa thẻ'}
           </Button>
         </DialogFooter>
       </DialogContent>

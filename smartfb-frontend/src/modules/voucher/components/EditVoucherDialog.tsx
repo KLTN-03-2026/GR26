@@ -4,7 +4,7 @@
  * @created 2026-04-16
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -30,6 +30,16 @@ interface EditVoucherDialogProps {
     onSuccess?: () => void;
 }
 
+const getInitialFormData = (voucher: VoucherListItem): EditVoucherFormValues => ({
+    code: voucher.code,
+    name: voucher.name,
+    discountType: voucher.discountType,
+    discountValue: voucher.discountValue,
+    minOrderValue: voucher.minOrderValue,
+    startDate: voucher.startDate.split('T')[0],
+    endDate: voucher.endDate.split('T')[0],
+});
+
 export const EditVoucherDialog = ({
     open,
     onOpenChange,
@@ -37,31 +47,16 @@ export const EditVoucherDialog = ({
     onSuccess,
 }: EditVoucherDialogProps) => {
     const { mutate, isPending } = useEditVoucher();
-    const [formData, setFormData] = useState<EditVoucherFormValues>({
-        code: voucher.code,
-        name: voucher.name,
-        discountType: voucher.discountType,
-        discountValue: voucher.discountValue,
-        minOrderValue: voucher.minOrderValue,
-        startDate: voucher.startDate.split('T')[0],
-        endDate: voucher.endDate.split('T')[0],
-    });
+    const [formData, setFormData] = useState<EditVoucherFormValues>(() => getInitialFormData(voucher));
     const [errors, setErrors] = useState<Partial<Record<keyof EditVoucherFormValues, string>>>({});
 
-    useEffect(() => {
-        if (open) {
-            setFormData({
-                code: voucher.code,
-                name: voucher.name,
-                discountType: voucher.discountType,
-                discountValue: voucher.discountValue,
-                minOrderValue: voucher.minOrderValue,
-                startDate: voucher.startDate.split('T')[0],
-                endDate: voucher.endDate.split('T')[0],
-            });
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen) {
+            setFormData(getInitialFormData(voucher));
             setErrors({});
         }
-    }, [open, voucher]);
+        onOpenChange(nextOpen);
+    };
 
     const validate = (): boolean => {
         const result = editVoucherSchema.safeParse(formData);
@@ -88,7 +83,7 @@ export const EditVoucherDialog = ({
             {
                 onSuccess: (response) => {
                     if (response.success) {
-                        onOpenChange(false);
+                        handleOpenChange(false);
                         onSuccess?.();
                     } else {
                         setErrors({ code: response.message });
@@ -109,7 +104,7 @@ export const EditVoucherDialog = ({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-xl">
                 <DialogHeader>
                     <DialogTitle className="text-lg font-semibold text-gray-900">
@@ -223,7 +218,7 @@ export const EditVoucherDialog = ({
                 </div>
 
                 <DialogFooter className="border-t pt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                    <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
                         Huỷ
                     </Button>
                     <Button

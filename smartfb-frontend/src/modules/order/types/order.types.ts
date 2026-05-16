@@ -21,7 +21,8 @@ export interface OrderAddonSelection {
 }
 
 /**
- * Context bàn đang thao tác trên màn tạo đơn.
+ * Context thẻ gọi khách đang thao tác trên màn tạo đơn.
+ * Backend hiện vẫn dùng field tableId/tableName nên FE giữ tên field để không đổi contract.
  */
 export interface OrderTableContext {
   tableId: string | null;
@@ -119,7 +120,7 @@ export interface CancelOrderRequest {
 
 /**
  * Bộ lọc FE dùng khi gọi API danh sách đơn hàng.
- * `tableId` giúp POS dò order đang mở của một bàn trước khi lấy chi tiết đơn.
+ * `tableId` giúp POS dò order đang mở của một thẻ trước khi lấy chi tiết đơn.
  */
 export interface OrderListQueryParams {
   status?: OrderStatus;

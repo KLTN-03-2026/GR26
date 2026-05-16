@@ -108,6 +108,12 @@ export type RegisterShiftPayload = {
 };
 
 /**
+ * Payload gửi lên khi cập nhật lịch ca.
+ * Backend chỉ cho sửa khi ca còn trạng thái SCHEDULED.
+ */
+export type UpdateShiftSchedulePayload = RegisterShiftPayload;
+
+/**
  * Filter cho danh sách ca mẫu
  */
 export type ShiftTemplateFilters = {

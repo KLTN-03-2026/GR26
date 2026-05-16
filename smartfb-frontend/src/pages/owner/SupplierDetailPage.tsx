@@ -3,34 +3,51 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Edit3, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
+import { PERMISSIONS } from '@shared/constants/permissions';
 import { ROUTES } from '@shared/constants/routes';
+import { usePermission } from '@shared/hooks/usePermission';
 import { useSupplierDetail } from '@modules/supplier/hooks/useSupplierDetail';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
+import {
+  useReceivePurchaseOrder,
+  useSendPurchaseOrder,
+} from '@modules/supplier/hooks/usePurchaseOrders';
 import { ProfileTab } from '@modules/supplier/components/SupplierDetail/ProfileTab';
-import { PriceListTab } from '@modules/supplier/components/SupplierDetail/PriceListTab';
-import { DebtTab } from '@modules/supplier/components/SupplierDetail/DebtTab';
 import { PurchaseOrdersTab } from '@modules/supplier/components/SupplierDetail/PurchaseOrdersTab';
+import { PurchaseOrderDetailDialog } from '@modules/supplier/components/SupplierDetail/PurchaseOrderDetailDialog';
 import { CreatePurchaseOrderDialog } from '@modules/supplier/components/SupplierDetail/CreatePurchaseOrderDialog';
+import { DeleteSupplierDialog } from '@modules/supplier/components/DeleteSupplierDialog';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
-import type { CreateSupplierPayload } from '@modules/supplier/types/supplier.types';
+import type { CreateSupplierPayload, SupplierOrder } from '@modules/supplier/types/supplier.types';
 
 export default function SupplierDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { can, isOwner } = usePermission();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isCreatePurchaseOrderOpen, setIsCreatePurchaseOrderOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [viewingOrder, setViewingOrder] = useState<SupplierOrder | null>(null);
 
-  const { supplier, orders, priceList, debt, isLoading } = useSupplierDetail(id);
-  const { updateSupplier, deleteSupplier, isUpdating } = useSuppliers();
+  const { supplier, orders, isLoading } = useSupplierDetail(id);
+  const { updateSupplier, deleteSupplier, isUpdating, isDeleting } = useSuppliers();
+  const sendPurchaseOrder = useSendPurchaseOrder();
+  const receivePurchaseOrder = useReceivePurchaseOrder();
+  const supplierListPath = isOwner ? ROUTES.OWNER.SUPPLIERS : ROUTES.STAFF.SUPPLIERS;
+  const canManageSupplierProfile = isOwner;
+  const canCreatePurchaseOrder = can(PERMISSIONS.PURCHASE_ORDER_EDIT);
+  const canSendPurchaseOrder = isOwner;
+  const canReceivePurchaseOrder = can(PERMISSIONS.INVENTORY_IMPORT);
 
   const handleEdit = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (supplier && window.confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${supplier.name}"?`)) {
+  const handleConfirmDelete = async () => {
+    if (supplier) {
       await deleteSupplier(supplier.id);
-      navigate(ROUTES.OWNER.SUPPLIERS);
+      setIsDeleteDialogOpen(false);
+      navigate(supplierListPath);
     }
   };
 
@@ -53,7 +70,7 @@ export default function SupplierDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 mb-4">Không tìm thấy nhà cung cấp</p>
-        <Button onClick={() => navigate(ROUTES.OWNER.SUPPLIERS)}>Quay lại danh sách</Button>
+        <Button onClick={() => navigate(supplierListPath)}>Quay lại danh sách</Button>
       </div>
     );
   }
@@ -64,7 +81,7 @@ export default function SupplierDetailPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <button
-            onClick={() => navigate(ROUTES.OWNER.SUPPLIERS)}
+            onClick={() => navigate(supplierListPath)}
             className="hover:text-gray-700 flex items-center gap-1 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -75,22 +92,28 @@ export default function SupplierDetailPage() {
         </div>
 
         <div className="flex gap-2 w-full md:w-auto">
-          <Button
-            size="sm"
-            onClick={() => setIsCreatePurchaseOrderOpen(true)}
-            className="flex-1 md:flex-none"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Tạo đơn mua
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleEdit} className="flex-1 md:flex-none">
-            <Edit3 className="w-4 h-4 mr-2" />
-            Chỉnh sửa
-          </Button>
-          <Button variant="destructive" size="sm" onClick={handleDelete} className="flex-1 md:flex-none">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Xóa
-          </Button>
+          {canCreatePurchaseOrder && (
+            <Button
+              size="sm"
+              onClick={() => setIsCreatePurchaseOrderOpen(true)}
+              className="flex-1 md:flex-none"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Tạo đơn mua
+            </Button>
+          )}
+          {canManageSupplierProfile && (
+            <>
+              <Button variant="outline" size="sm" onClick={handleEdit} className="flex-1 md:flex-none">
+                <Edit3 className="w-4 h-4 mr-2" />
+                Chỉnh sửa
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setIsDeleteDialogOpen(true)} className="flex-1 md:flex-none">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Xóa
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -124,45 +147,61 @@ export default function SupplierDetailPage() {
           <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             Hồ sơ nhà cung cấp
           </TabsTrigger>
-          <TabsTrigger value="pricelist" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-            Bảng giá nguyên liệu
-          </TabsTrigger>
           <TabsTrigger value="orders" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             Đơn mua hàng
-          </TabsTrigger>
-          <TabsTrigger value="debt" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-            Công nợ & Thanh toán
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-0 focus-visible:outline-none">
           <ProfileTab supplier={supplier} />
         </TabsContent>
-        <TabsContent value="pricelist" className="mt-0 focus-visible:outline-none">
-          <PriceListTab ingredients={priceList} />
-        </TabsContent>
         <TabsContent value="orders" className="mt-0 focus-visible:outline-none">
-          <PurchaseOrdersTab orders={orders} />
-        </TabsContent>
-        <TabsContent value="debt" className="mt-0 focus-visible:outline-none">
-          <DebtTab debt={debt} />
+          <PurchaseOrdersTab
+            orders={orders}
+            canSendOrder={canSendPurchaseOrder}
+            canReceiveOrder={canReceivePurchaseOrder}
+            isActionPending={sendPurchaseOrder.isPending || receivePurchaseOrder.isPending}
+            onViewOrder={setViewingOrder}
+            onSendOrder={(order) =>
+              sendPurchaseOrder.mutate({ id: order.id, supplierId: supplier.id })
+            }
+            onReceiveOrder={(order) =>
+              receivePurchaseOrder.mutate({ id: order.id, supplierId: supplier.id })
+            }
+          />
         </TabsContent>
       </Tabs>
 
       {/* Edit Form Dialog */}
       <SupplierFormDialog
         key={supplier.id}
-        open={isFormOpen}
+        open={canManageSupplierProfile && isFormOpen}
         onOpenChange={setIsFormOpen}
         supplier={supplier}
         onSubmit={handleSubmitEdit}
         isLoading={isUpdating}
       />
       <CreatePurchaseOrderDialog
-        open={isCreatePurchaseOrderOpen}
+        open={canCreatePurchaseOrder && isCreatePurchaseOrderOpen}
         onOpenChange={setIsCreatePurchaseOrderOpen}
         supplierId={supplier.id}
         supplierName={supplier.name}
+      />
+      <DeleteSupplierDialog
+        open={canManageSupplierProfile && isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        supplier={supplier}
+        isPending={isDeleting}
+        onConfirm={() => void handleConfirmDelete()}
+      />
+      <PurchaseOrderDetailDialog
+        open={Boolean(viewingOrder)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingOrder(null);
+          }
+        }}
+        orderId={viewingOrder?.id}
       />
     </div>
   );

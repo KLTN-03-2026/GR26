@@ -8,7 +8,7 @@ interface AdminTenantInvoiceListParams {
 }
 
 /**
- * Hook lấy danh sách hóa đơn subscription của một tenant cụ thể.
+ * Hook lấy danh sách hóa đơn subscription của một khách hàng cụ thể.
  */
 export const useAdminTenantInvoices = (
   tenantId: string,

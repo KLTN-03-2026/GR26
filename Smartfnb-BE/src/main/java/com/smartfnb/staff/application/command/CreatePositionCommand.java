@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 
 /**
  * Lệnh tạo chức vụ mới trong tenant.
@@ -20,5 +21,8 @@ public record CreatePositionCommand(
         String name,
         /** Mô tả chức vụ (nullable) */
         @Size(max = 255)
-        String description
+        String description,
+        
+        /** Lương cơ bản */
+        BigDecimal baseSalary
 ) {}

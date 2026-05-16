@@ -30,6 +30,11 @@ public interface ShiftScheduleJpaRepository
     boolean existsByUserIdAndShiftTemplateIdAndDate(UUID userId, UUID shiftTemplateId, LocalDate date);
 
     /**
+     * Kiểm tra conflict khi update — loại trừ bản ghi hiện tại.
+     */
+    boolean existsByUserIdAndShiftTemplateIdAndDateAndIdNot(UUID userId, UUID shiftTemplateId, LocalDate date, UUID excludeId);
+
+    /**
      * Lấy toàn bộ lịch ca của branch trong một khoảng ngày.
      *
      * @param branchId  UUID chi nhánh

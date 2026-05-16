@@ -88,7 +88,7 @@ const resolveZoneName = (
   zoneNameMap: Map<string, string>,
   fallbackZoneName?: string
 ) => {
-  return zoneNameMap.get(table.zoneId) ?? fallbackZoneName ?? table.zoneName ?? 'Chưa có khu vực';
+  return zoneNameMap.get(table.zoneId) ?? fallbackZoneName ?? table.zoneName ?? 'Chưa có máy gọi thẻ';
 };
 
 const isOccupiedTable = (usageStatus: TableUsageStatus) => {
@@ -96,7 +96,7 @@ const isOccupiedTable = (usageStatus: TableUsageStatus) => {
 };
 
 /**
- * Gom toàn bộ dữ liệu trình bày của màn quản lý bàn về một chỗ để page chỉ còn làm nhiệm vụ compose.
+ * Gom toàn bộ dữ liệu trình bày của màn quản lý thẻ về một chỗ để page chỉ còn làm nhiệm vụ compose.
  */
 export const buildTablePresentationData = ({
   branches,
@@ -159,7 +159,7 @@ export const buildTablePresentationData = ({
 };
 
 /**
- * Resolve dữ liệu drawer ưu tiên bản chi tiết mới nhất nhưng vẫn giữ tên chi nhánh và khu vực đã join ở UI.
+ * Resolve dữ liệu drawer ưu tiên bản chi tiết mới nhất nhưng vẫn giữ tên chi nhánh và máy gọi thẻ đã join ở UI.
  */
 export const resolveDrawerTable = ({
   branches,

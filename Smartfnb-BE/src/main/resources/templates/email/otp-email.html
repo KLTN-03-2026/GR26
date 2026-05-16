@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mã xác nhận SmartF&B</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+        .otp-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #007bff;
+            padding: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #007bff;
+            margin: 20px auto;
+            width: fit-content;
+            border-radius: 8px;
+        }
+        .warning {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${appName}">SmartF&B</h1>
+        </div>
+        <div class="content">
+            <h2>Mã Xác Nhận Của Bạn</h2>
+            <p>Xin chào,</p>
+            <p>Bạn vừa yêu cầu lấy lại mật khẩu cho tài khoản của mình. Vui lòng sử dụng mã OTP dưới đây để hoàn tất quá trình xác thực:</p>
+            
+            <div class="otp-box" th:text="${otp}">123456</div>
+            
+            <p>Mã này sẽ hết hạn sau <strong>10 phút</strong>.</p>
+            
+            <p class="warning">
+                ⚠️ KHÔNG chia sẻ mã này cho bất kỳ ai, bao gồm cả nhân viên hỗ trợ của hệ thống.
+            </p>
+        </div>
+        <div class="footer">
+            <p>Email này được gửi tự động từ hệ thống <span th:text="${appName}">SmartF&B</span>. Vui lòng không trả lời email này.</p>
+            <p>&copy; 2026 SmartF&B. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+- Xem được danh sách thẻ  dạng lưới kèm ba chỉ số thống kê: tổng số thẻ, thẻ sẵn sàng sử dụng, thẻ đang gắn với order/chưa trả.
+  - Tìm kiếm thẻ theo tên hoặc mã thẻ, lọc theo máy gọi thẻ hoặc trạng thái: sẵn sàng, đang sử dụng, chờ trả thẻ, ngưng hoạt động.
+  - Thêm thẻ gọi khách mới, từng thẻ hoặc hàng loạt, với các thông tin: tên/mã thẻ, máy gọi thẻ, mã thiết bị rung/kêu nếu có.
+  - Xem được chi tiết đầy đủ của một thẻ: mã thẻ,  máy gọi thẻ, trạng thái hoạt động, trạng thái sử dụng, order hiện tại nếu đang được giao cho khách, thời điểm gọi gần nhất.
+  - Sửa được thông tin thẻ: tên/mã thẻ, máy gọi thẻ, mã thiết bị, trạng thái hoạt động.
+  - Xóa được thẻ, chỉ khi thẻ không đang gắn với order đang phục vụ hoặc order chưa thanh toán.
+  - Tạm ngưng hoặc kích hoạt lại thẻ. Không cho tạm ngưng nếu thẻ đang được giao cho khách trong một order chưa hoàn tất.

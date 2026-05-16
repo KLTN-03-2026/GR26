@@ -72,14 +72,17 @@ export const useSendPurchaseOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => supplierService.sendPurchaseOrder(id),
-    onSuccess: (_result, id) => {
+    mutationFn: ({ id }: { id: string; supplierId?: string }) => supplierService.sendPurchaseOrder(id),
+    onSuccess: (_result, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.detail(id) });
-      toast.success('Đã gửi đơn mua hàng');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.detail(variables.id) });
+      if (variables.supplierId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.orders(variables.supplierId) });
+      }
+      toast.success('Đã xác nhận đã đặt hàng với nhà cung cấp');
     },
     onError: (err: unknown) => {
-      toast.error(getApiErrorMessage(err, 'Không thể gửi đơn mua hàng'));
+      toast.error(getApiErrorMessage(err, 'Không thể xác nhận đã đặt hàng'));
     },
   });
 };
@@ -88,13 +91,16 @@ export const useReceivePurchaseOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => supplierService.receivePurchaseOrder(id),
-    onSuccess: (_result, id) => {
+    mutationFn: ({ id }: { id: string; supplierId?: string }) => supplierService.receivePurchaseOrder(id),
+    onSuccess: (_result, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.all });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.detail(id) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.purchaseOrders.detail(variables.id) });
+      if (variables.supplierId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.suppliers.orders(variables.supplierId) });
+      }
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.balances.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.transactions.all });
-      toast.success('Đã xác nhận nhận hàng');
+      toast.success('Đã nhận hàng và cập nhật tồn kho');
     },
     onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, 'Không thể xác nhận nhận hàng'));

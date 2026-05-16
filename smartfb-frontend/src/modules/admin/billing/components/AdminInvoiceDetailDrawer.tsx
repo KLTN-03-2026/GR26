@@ -42,7 +42,7 @@ const getPaymentMethodLabel = (method: string | null | undefined): string => {
 };
 
 /**
- * Drawer xem chi tiết hóa đơn subscription — bao gồm tenant, gói dịch vụ, chu kỳ và thanh toán.
+ * Drawer xem chi tiết hóa đơn subscription — bao gồm khách hàng, gói dịch vụ, chu kỳ và thanh toán.
  */
 export const AdminInvoiceDetailDrawer = ({
   invoice,
@@ -67,7 +67,7 @@ export const AdminInvoiceDetailDrawer = ({
         <SheetHeader className="sr-only">
           <SheetTitle>Chi tiết hóa đơn</SheetTitle>
           <SheetDescription>
-            Thông tin chu kỳ gia hạn, tenant và trạng thái thanh toán.
+            Thông tin chu kỳ gia hạn, khách hàng và trạng thái thanh toán.
           </SheetDescription>
         </SheetHeader>
 
@@ -152,19 +152,19 @@ export const AdminInvoiceDetailDrawer = ({
 
           {invoiceDetail ? (
             <div className="space-y-6 p-6">
-              {/* Section: Tenant & Gói dịch vụ */}
+              {/* Section: Khách hàng & Gói dịch vụ */}
               <section>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-admin-gray-400">
                   Thông tin
                 </p>
                 <div className="divide-y divide-admin-gray-100 rounded-xl border border-admin-gray-200 bg-white">
-                  {/* Tenant */}
+                  {/* Khách hàng */}
                   <div className="flex items-center gap-3 px-4 py-3">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50">
                       <Building2 className="h-3.5 w-3.5 text-violet-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-admin-gray-400">Tenant</p>
+                      <p className="text-xs text-admin-gray-400">Khách hàng</p>
                       <p className="mt-0.5 truncate text-sm font-semibold text-admin-gray-900">
                         {invoiceDetail.tenantName}
                       </p>

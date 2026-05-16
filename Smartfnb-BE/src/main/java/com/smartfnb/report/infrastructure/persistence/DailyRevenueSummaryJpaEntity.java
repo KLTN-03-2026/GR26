@@ -116,7 +116,7 @@ public class DailyRevenueSummaryJpaEntity {
             .avgOrderValue(domain.avgOrderValue())
             .paymentBreakdown(dto)
             .costOfGoods(domain.costOfGoods())
-            .grossProfit(domain.grossProfit())
+            // gross_profit được DB tự tính (GENERATED ALWAYS AS total_revenue - cost_of_goods) — không cần set
             .updatedAt(Instant.now())
             .build();
     }

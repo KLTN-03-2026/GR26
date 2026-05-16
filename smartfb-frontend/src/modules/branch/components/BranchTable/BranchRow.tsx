@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Eye, Pencil } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, PowerOff } from 'lucide-react';
 import { TableCell, TableRow } from '@shared/components/ui/table';
 import {
   DropdownMenu,
@@ -11,6 +11,8 @@ import type { BranchListItem } from '@modules/branch/types/branch.types';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
 import { EditBranchDialog } from '../EditBranchDialog';
+import { DisableBranchDialog } from '../DisableBranchDialog';
+import { useDisableBranch } from '@modules/branch/hooks/useDisableBranch';
 
 interface BranchRowProps {
   branch: BranchListItem;
@@ -37,6 +39,9 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const { mutate: disableBranch, isPending: isDisabling } = useDisableBranch();
+  const canDisableBranch = branch.status === 'ACTIVE';
 
   const handleRowClick = () => {
     navigate(`${ROUTES.OWNER.BRANCHES}/${branch.id}`);
@@ -50,6 +55,20 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
   const handleEdit = () => {
     setShowEditDialog(true);
     setOpen(false);
+  };
+
+  const handleOpenDisable = () => {
+    setShowDisableDialog(true);
+    setOpen(false);
+  };
+
+  const handleConfirmDisable = () => {
+    disableBranch(
+      { id: branch.id, name: branch.name },
+      {
+        onSuccess: () => setShowDisableDialog(false),
+      },
+    );
   };
 
   return (
@@ -104,6 +123,18 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
                 <Pencil className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </DropdownMenuItem>
+              {canDisableBranch ? (
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    handleOpenDisable();
+                  }}
+                >
+                  <PowerOff className="mr-2 h-4 w-4" />
+                  Vô hiệu hoá
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>
@@ -115,6 +146,13 @@ export const BranchRow = ({ branch }: BranchRowProps) => {
           branch={branch}
         />
       )}
+      <DisableBranchDialog
+        branch={branch}
+        open={showDisableDialog}
+        isPending={isDisabling}
+        onOpenChange={setShowDisableDialog}
+        onConfirm={handleConfirmDisable}
+      />
     </>
   );
 };

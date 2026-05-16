@@ -59,3 +59,13 @@ ai-service/lightning_logs/*
 
 Smartfnb-BE/target/
 *.class
+
+
+ui-screenshots/*
+annotate.ts
+auth-*.json
+generate-doc.js
+screenshot-only.ts
+ui-flow-diagram.png
+ui-*.json
+tsconfig.*.json

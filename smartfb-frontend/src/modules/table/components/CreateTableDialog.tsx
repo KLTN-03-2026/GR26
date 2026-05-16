@@ -12,7 +12,6 @@ import {
 } from '@shared/components/ui/dialog';
 import { Button } from '@shared/components/ui/button';
 import { Input } from '@shared/components/ui/input';
-import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import {
   Select,
@@ -24,10 +23,13 @@ import {
 import { useCreateTable } from '@modules/table/hooks/useCreateTable';
 import type { TableArea } from '@modules/table/types/table.types';
 
+// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ gọi khách không dùng thông tin này.
+const DEFAULT_PAGER_CARD_CAPACITY = 1;
+
 const createTableSchema = z.object({
-  name: z.string().min(2, 'Tên bàn phải có ít nhất 2 ký tự').max(50, 'Tên bàn không quá 50 ký tự'),
-  zoneId: z.string().min(1, 'Vui lòng chọn khu vực'),
-  capacity: z.number().int('Sức chứa phải là số nguyên').min(1, 'Sức chứa tối thiểu 1').max(20, 'Sức chứa tối đa 20'),
+  name: z.string().min(2, 'Mã thẻ phải có ít nhất 2 ký tự').max(50, 'Mã thẻ không quá 50 ký tự'),
+  zoneId: z.string().min(1, 'Vui lòng chọn máy gọi thẻ'),
+  capacity: z.number().int().min(1).max(20),
 });
 
 type CreateTableFormData = z.infer<typeof createTableSchema>;
@@ -55,7 +57,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
     defaultValues: {
       name: '',
       zoneId: '',
-      capacity: 4,
+      capacity: DEFAULT_PAGER_CARD_CAPACITY,
     },
   });
 
@@ -66,14 +68,13 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
   }, [open, reset]);
 
   const selectedZoneId = useWatch({ control, name: 'zoneId' });
-  const selectedCapacity = useWatch({ control, name: 'capacity' });
 
   const onSubmit = (data: CreateTableFormData) => {
     createTable(
       {
         name: data.name,
         zoneId: data.zoneId,
-        capacity: data.capacity,
+        capacity: DEFAULT_PAGER_CARD_CAPACITY,
       },
       {
         onSuccess: () => {
@@ -89,22 +90,22 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Thêm bàn mới</DialogTitle>
+          <DialogTitle>Thêm thẻ gọi khách</DialogTitle>
           <DialogDescription>
-            Nhập thông tin bàn ăn để thêm vào hệ thống
+            Nhập mã thẻ và máy gọi thẻ để thêm vào hệ thống.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="name">Tên bàn</Label>
-              <Input id="name" {...register('name')} />
+              <Label htmlFor="name">Mã/tên thẻ</Label>
+              <Input id="name" {...register('name')} placeholder="Ví dụ: Thẻ 01, A-01" />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-1">
-                <Label htmlFor="zoneId">Khu vực</Label>
+                <Label htmlFor="zoneId">Máy gọi thẻ</Label>
               <Select
                 value={selectedZoneId}
                 onValueChange={(value) => {
@@ -113,12 +114,12 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khu vực" />
+                  <SelectValue placeholder="Chọn máy gọi thẻ" />
                 </SelectTrigger>
                 <SelectContent>
                   {zones.map((zone) => (
                     <SelectItem key={zone.id} value={zone.id}>
-                      {zone.name} {zone.floorNumber ? `(Tầng ${zone.floorNumber})` : ''}
+                      {zone.name} {zone.floorNumber ? `(Máy ${zone.floorNumber})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -126,24 +127,9 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
               {errors.zoneId && <p className="text-xs text-red-500">{errors.zoneId.message}</p>}
               {zones.length === 0 && (
                 <p className="text-xs text-amber-600">
-                  Chưa có khu vực nào. Hãy tạo khu vực trước khi thêm bàn.
+                  Chưa có máy gọi thẻ nào. Hãy tạo máy gọi thẻ trước khi thêm thẻ.
                 </p>
               )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="capacity">Sức chứa</Label>
-              <NumericInput
-                id="capacity"
-                min={1}
-                max={20}
-                value={selectedCapacity}
-                onValueChange={(value) => {
-                  setValue('capacity', value, { shouldDirty: true, shouldValidate: true });
-                  clearErrors('capacity');
-                }}
-              />
-              {errors.capacity && <p className="text-xs text-red-500">{errors.capacity.message}</p>}
             </div>
           </div>
 
@@ -152,7 +138,7 @@ export const CreateTableDialog = ({ open, onOpenChange, onSuccess, zones = [] }:
               Hủy
             </Button>
             <Button type="submit" disabled={!isDirty || isPending || zones.length === 0}>
-              {isPending ? 'Đang tạo...' : 'Thêm bàn'}
+              {isPending ? 'Đang tạo...' : 'Thêm thẻ'}
             </Button>
           </DialogFooter>
         </form>

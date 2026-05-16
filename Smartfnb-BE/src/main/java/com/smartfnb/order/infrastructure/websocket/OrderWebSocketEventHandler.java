@@ -5,6 +5,7 @@ import com.smartfnb.order.domain.event.OrderCancelledEvent;
 import com.smartfnb.order.domain.event.OrderCompletedEvent;
 import com.smartfnb.order.domain.event.OrderCreatedEvent;
 import com.smartfnb.order.domain.event.OrderStatusChangedEvent;
+import com.smartfnb.order.domain.event.OrderUpdatedEvent;
 import com.smartfnb.order.domain.repository.OrderRepository;
 import com.smartfnb.order.domain.model.Order;
 import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
@@ -71,6 +72,20 @@ public class OrderWebSocketEventHandler {
     @Async
     public void handleOrderCancelled(OrderCancelledEvent event) {
         log.info("Nhận sự kiện đơn hàng bị hủy: {}", event.orderId());
+        enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), false);
+    }
+
+    /**
+     * Xử lý sự kiện đơn hàng được cập nhật (thêm/xóa/sửa món, đổi ghi chú, đổi bàn).
+     * Broadcast toàn bộ OrderResponse có items mới nhất để FE đồng bộ cart realtime.
+     *
+     * Author: Hoàng | date: 2026-05-05 | note: fix thiếu broadcast khi update order — các client
+     * khác cùng bàn không nhận được cập nhật món mới
+     */
+    @EventListener
+    @Async
+    public void handleOrderUpdated(OrderUpdatedEvent event) {
+        log.info("Nhận sự kiện cập nhật đơn hàng: {} tại chi nhánh {}", event.orderId(), event.branchId());
         enrichAndBroadcast(event.orderId(), event.tenantId(), event.branchId(), false);
     }
 

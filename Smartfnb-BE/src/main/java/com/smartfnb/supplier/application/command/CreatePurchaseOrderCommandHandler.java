@@ -27,6 +27,11 @@ public class CreatePurchaseOrderCommandHandler {
     public UUID handle(CreatePurchaseOrderCommand command) {
         log.info("Tạo đơn mua hàng: supplierId={}, branch={}", command.supplierId(), command.branchId());
 
+        // Author: Hoàng, date: 2026-05-13, note: Chặn lỗi NPE khi PO không có branch để nhập kho.
+        if (command.branchId() == null) {
+            throw new IllegalArgumentException("Đơn mua hàng phải có chi nhánh nhận hàng");
+        }
+
         // 1. Validate supplier thuộc tenant
         supplierJpaRepository.findByIdAndTenantId(command.supplierId(), command.tenantId())
                 .orElseThrow(() -> new SupplierNotFoundException(command.supplierId()));

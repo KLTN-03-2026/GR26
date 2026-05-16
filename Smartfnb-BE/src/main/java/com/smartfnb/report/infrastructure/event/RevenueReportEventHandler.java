@@ -8,6 +8,7 @@ import com.smartfnb.report.domain.repository.DailyRevenueSummaryRepository;
 import com.smartfnb.report.domain.repository.DailyItemStatRepository;
 import com.smartfnb.report.domain.repository.HourlyRevenueStatRepository;
 import com.smartfnb.payment.domain.event.PaymentCompletedEvent;
+import com.smartfnb.inventory.domain.event.OrderCostCalculatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -111,6 +112,57 @@ public class RevenueReportEventHandler {
                 event.paymentMethod().toLowerCase(), event.amount());
         } catch (Exception e) {
             log.error("✗ Lỗi khi cập nhật payment breakdown: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Lắng nghe sự kiện OrderCostCalculatedEvent từ Inventory Module.
+     * Author: Hoàng
+     * Date: 2026-05-09
+     * Note: Cập nhật COGS bằng listener thường để event phát từ async inventory không bị bỏ qua ở AFTER_COMMIT.
+     */
+    @EventListener
+    public void onOrderCostCalculated(OrderCostCalculatedEvent event) {
+        log.info("Nhận sự kiện OrderCostCalculatedEvent: orderId={}, branch={}, date={}, totalCost={}",
+            event.orderId(), event.branchId(), event.date(), event.totalCost());
+        
+        try {
+            // Author: Hoàng | Date: 2026-05-09 | Note: Cập nhật COGS ngay trong luồng event để tránh bỏ sót giá vốn khi async transaction đã có SALE_DEDUCT.
+            Optional<DailyRevenueSummary> existing = dailyRevenueSummaryRepo.findByBranchIdAndDate(event.branchId(), event.date());
+            DailyRevenueSummary summary;
+            BigDecimal eventTotalCost = event.totalCost() != null ? event.totalCost() : BigDecimal.ZERO;
+            
+            if (existing.isPresent()) {
+                DailyRevenueSummary old = existing.get();
+                BigDecimal oldCostOfGoods = old.costOfGoods() != null ? old.costOfGoods() : BigDecimal.ZERO;
+                BigDecimal oldTotalRevenue = old.totalRevenue() != null ? old.totalRevenue() : BigDecimal.ZERO;
+                BigDecimal newCostOfGoods = oldCostOfGoods.add(eventTotalCost);
+                
+                summary = new DailyRevenueSummary(
+                    old.id(), old.tenantId(), old.branchId(), old.date(),
+                    old.totalRevenue(), old.totalOrders(), old.avgOrderValue(),
+                    old.paymentBreakdown(),
+                    newCostOfGoods,
+                    oldTotalRevenue.subtract(newCostOfGoods)
+                );
+            } else {
+                PaymentBreakdown breakdown = new PaymentBreakdown(
+                    BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO
+                );
+                summary = new DailyRevenueSummary(
+                    UUID.randomUUID(), event.tenantId(), event.branchId(), event.date(),
+                    BigDecimal.ZERO, 0, BigDecimal.ZERO,
+                    breakdown,
+                    eventTotalCost,
+                    BigDecimal.ZERO.subtract(eventTotalCost)
+                );
+            }
+            
+            dailyRevenueSummaryRepo.save(summary);
+            updateDailyItemCosts(event);
+            log.info("Cập nhật cost_of_goods thành công: orderId={}, totalCost={}", event.orderId(), eventTotalCost);
+        } catch (Exception e) {
+            log.error("Lỗi khi cập nhật cost_of_goods: orderId={}, lỗi={}", event.orderId(), e.getMessage(), e);
         }
     }
 
@@ -229,7 +281,7 @@ public class RevenueReportEventHandler {
             DailyItemStat old = existing.get();
             int newQty = old.qtySold() + qtySold;
             BigDecimal newRevenue = old.revenue().add(revenue);
-            BigDecimal newCost = old.cost();  // TODO: Lấy cost từ recipe mapping
+            BigDecimal newCost = old.cost() != null ? old.cost() : BigDecimal.ZERO;
             BigDecimal newMargin = newRevenue.compareTo(BigDecimal.ZERO) > 0 ?
                 newRevenue.subtract(newCost)
                     .divide(newRevenue, 2, java.math.RoundingMode.HALF_UP)
@@ -237,7 +289,7 @@ public class RevenueReportEventHandler {
                 BigDecimal.ZERO;
             
             stat = new DailyItemStat(
-                old.id(), tenantId, branchId, itemId, old.itemName(),
+                old.id(), tenantId, branchId, itemId, resolveItemName(old.itemName(), itemName),
                 date, newQty, newRevenue, newCost, newMargin
             );
         } else {
@@ -248,6 +300,52 @@ public class RevenueReportEventHandler {
         }
         
         dailyItemStatRepo.save(stat);
+    }
+
+    private void updateDailyItemCosts(OrderCostCalculatedEvent event) {
+        if (event.itemCosts() == null || event.itemCosts().isEmpty()) {
+            return;
+        }
+
+        for (OrderCostCalculatedEvent.ItemCost itemCost : event.itemCosts()) {
+            BigDecimal additionalCost = itemCost.cost() != null ? itemCost.cost() : BigDecimal.ZERO;
+            Optional<DailyItemStat> existing = dailyItemStatRepo.findByBranchIdItemIdAndDate(
+                event.branchId(), itemCost.itemId(), event.date()
+            );
+
+            DailyItemStat stat;
+            if (existing.isPresent()) {
+                DailyItemStat old = existing.get();
+                BigDecimal oldCost = old.cost() != null ? old.cost() : BigDecimal.ZERO;
+                BigDecimal revenue = old.revenue() != null ? old.revenue() : BigDecimal.ZERO;
+                BigDecimal newCost = oldCost.add(additionalCost);
+                BigDecimal newMargin = revenue.compareTo(BigDecimal.ZERO) > 0
+                    ? revenue.subtract(newCost)
+                        .divide(revenue, 2, java.math.RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal("100"))
+                    : BigDecimal.ZERO;
+
+                stat = new DailyItemStat(
+                    old.id(), old.tenantId(), old.branchId(), old.itemId(), old.itemName(),
+                    old.date(), old.qtySold(), old.revenue(), newCost, newMargin
+                );
+            } else {
+                // Author: Hoàng | Date: 2026-05-09 | Note: Cost event có thể đến trước revenue stat do Inventory chạy async.
+                stat = new DailyItemStat(
+                    UUID.randomUUID(), event.tenantId(), event.branchId(), itemCost.itemId(), "Chưa xác định",
+                    event.date(), 0, BigDecimal.ZERO, additionalCost, BigDecimal.ZERO
+                );
+            }
+
+            dailyItemStatRepo.save(stat);
+        }
+    }
+
+    private String resolveItemName(String currentName, String fallbackName) {
+        if (currentName == null || currentName.isBlank() || "Chưa xác định".equals(currentName)) {
+            return fallbackName;
+        }
+        return currentName;
     }
     
     private void updateHourlyRevenueStat(UUID branchId, LocalDate date, int hour,

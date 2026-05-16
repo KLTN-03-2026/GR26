@@ -58,6 +58,8 @@ export const ROUTES = {
     EXPENSES: '/pos/expenses',
     MENU: '/pos/menu',
     RECIPES: '/pos/recipes',
+    SUPPLIERS: '/pos/suppliers',
+    SUPPLIERS_DETAIL: '/pos/suppliers/:id',
     INVENTORY: '/pos/inventory',
     AI_FORECAST: '/pos/inventory/ai-forecast',
     MY_SHIFTS: '/pos/my-shifts',

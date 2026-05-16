@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 
 /**
  * Lệnh cập nhật chức vụ.
@@ -16,5 +17,6 @@ public record UpdatePositionCommand(
         UUID positionId,
         @NotBlank @Size(max = 100) String name,
         @Size(max = 255) String description,
+        BigDecimal baseSalary,
         Boolean active
 ) {}

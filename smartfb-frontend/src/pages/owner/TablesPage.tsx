@@ -18,6 +18,8 @@ import {
   useTableOrderNavigation,
   useZones,
 } from '@modules/table/hooks';
+// Author: Hoàng | date: 2026-05-04 | note: subscribe WebSocket để đồng bộ trạng thái thẻ real-time giữa nhiều máy
+import { useTableRealtime } from '@modules/table/hooks/useTableRealtime';
 import type {
   TableDisplayItem,
   TableStatus,
@@ -54,6 +56,9 @@ export default function TablesPage() {
     id: '',
     name: '',
   });
+  // Author: Hoàng | date: 2026-05-04 | note: subscribe WS để máy này tự nhận update thẻ từ máy khác
+  useTableRealtime();
+
   const { error: toastError } = useToast();
   const { handleSelectTable } = useTableOrderNavigation();
 
@@ -101,7 +106,7 @@ export default function TablesPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Đang tải danh sách bàn...</p>
+          <p className="text-gray-500">Đang tải danh sách thẻ gọi khách...</p>
         </div>
       </div>
     );
@@ -156,7 +161,7 @@ export default function TablesPage() {
     const table = tables.find((t) => t.id === id);
     if (!table) return;
 
-    // Chặn inactive nếu bàn đang có đơn
+    // Chặn inactive nếu thẻ đang có đơn
     if (
       currentStatus === 'active' &&
       (table.usageStatus === 'occupied' ||
@@ -164,8 +169,8 @@ export default function TablesPage() {
         table.usageStatus === 'reserved')
     ) {
       toastError(
-        'Không thể vô hiệu hóa bàn',
-        'Bàn đang có đơn hàng. Vui lòng hoàn tất hoặc hủy đơn trước khi đổi trạng thái.'
+        'Không thể vô hiệu hóa thẻ',
+        'Thẻ đang gắn với đơn hàng. Vui lòng hoàn tất hoặc hủy đơn trước khi đổi trạng thái.'
       );
       return;
     }
@@ -220,7 +225,7 @@ export default function TablesPage() {
           <div className="flex items-center justify-center min-h-[300px]">
             <div className="text-center text-gray-400">
               <p className="text-lg font-medium mb-1">Vui lòng chọn chi nhánh</p>
-              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách bàn.</p>
+              <p className="text-sm">Chọn một chi nhánh cụ thể để xem và quản lý danh sách thẻ gọi khách.</p>
             </div>
           </div>
         </div>
@@ -269,7 +274,7 @@ export default function TablesPage() {
           <div className="flex items-center justify-between pt-4">
             <div className="text-sm text-gray-500">
               Hiển thị {(pagination.page - 1) * pagination.pageSize + 1} đến{' '}
-              {Math.min(pagination.page * pagination.pageSize, totalItems)} trên {totalItems} bàn
+              {Math.min(pagination.page * pagination.pageSize, totalItems)} trên {totalItems} thẻ
             </div>
             <div className="flex gap-2">
               <Button

@@ -14,16 +14,16 @@ import { ROUTES } from '@shared/constants/routes';
 import { usePermission } from '@shared/hooks/usePermission';
 
 const TABLE_STATUS_MESSAGE_MAP: Record<TableUsageStatus, string> = {
-  available: 'Bàn này hiện chưa có đơn đang mở.',
+  available: 'Thẻ này hiện chưa có đơn đang mở.',
   occupied:
-    'Không tìm thấy đơn đang mở của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
+    'Không tìm thấy đơn đang mở của thẻ này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
   unpaid:
-    'Không tìm thấy đơn chờ thanh toán của bàn này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
-  reserved: 'Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.',
+    'Không tìm thấy đơn chờ thanh toán của thẻ này. Vui lòng tải lại danh sách order hoặc kiểm tra màn quản lý order.',
+  reserved: 'Thẻ này đang được giữ trước. Không thể mở order mới từ thẻ này.',
 };
 
 /**
- * Hook điều hướng từ màn bàn sang POS hoặc chi tiết order theo đúng quyền của user hiện tại.
+ * Hook điều hướng từ màn thẻ gọi khách sang POS hoặc chi tiết order theo đúng quyền của user hiện tại.
  */
 export const useTableOrderNavigation = () => {
   const navigate = useNavigate();
@@ -61,12 +61,12 @@ export const useTableOrderNavigation = () => {
           return;
         }
 
-        toast.error('Bạn không có quyền mở đơn hàng của bàn này.');
+        toast.error('Bạn không có quyền mở đơn hàng của thẻ này.');
         return;
       }
 
       if (!canCreateOrder) {
-        toast.error('Bạn không có quyền tạo đơn hàng tại bàn này.');
+        toast.error('Bạn không có quyền tạo đơn hàng với thẻ này.');
         return;
       }
 
@@ -78,19 +78,22 @@ export const useTableOrderNavigation = () => {
   const handleSelectTable = useCallback(
     async (table: TableDisplayItem) => {
       if (table.usageStatus === 'reserved') {
-        toast.error('Bàn này đang được đặt trước. Không thể mở order mới từ bàn này.');
+        toast.error('Thẻ này đang được giữ trước. Không thể mở order mới từ thẻ này.');
         return;
       }
 
-      if (canCreateOrder) {
+      // Thẻ sẵn sàng và có quyền tạo order → mở POS trực tiếp, không cần lookup
+      if (table.usageStatus === 'available' && canCreateOrder) {
         handleOpenOrderFromTable(table);
         return;
       }
 
+      // Thẻ đang giao khách (occupied/unpaid) hoặc không có quyền tạo:
+      // luôn lookup orderId trước để POS mở đúng đơn đang có, không tạo đơn mới
       try {
         /**
-         * Chỉ fetch order khi user thật sự click vào bàn và cần mở theo `orderId`.
-         * Màn quản lý bàn không preload list order ngay lúc mount để tránh request thừa.
+         * Chỉ fetch order khi user thật sự click vào thẻ và cần mở theo `orderId`.
+         * Màn quản lý thẻ không preload list order ngay lúc mount để tránh request thừa.
          */
         const response = await orderService.getOrders({ tableId: table.id });
         const resolvedOpenOrder = buildOpenOrdersByTableMap(response.data).get(table.id);
@@ -100,7 +103,13 @@ export const useTableOrderNavigation = () => {
           return;
         }
       } catch {
-        toast.error('Không thể kiểm tra đơn đang mở của bàn này. Vui lòng thử lại.');
+        toast.error('Không thể kiểm tra đơn đang mở của thẻ này. Vui lòng thử lại.');
+        return;
+      }
+
+      // Thẻ occupied nhưng không tìm được đơn mở — trường hợp dữ liệu không đồng bộ
+      if (table.usageStatus === 'available' || canCreateOrder) {
+        handleOpenOrderFromTable(table);
         return;
       }
 

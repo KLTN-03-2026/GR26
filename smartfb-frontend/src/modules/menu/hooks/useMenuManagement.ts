@@ -46,6 +46,7 @@ export const useMenuManagement = () => {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<MenuItem | null>(null);
   const [configuringBranchMenu, setConfiguringBranchMenu] = useState<MenuItem | null>(null);
+  const [deletingMenu, setDeletingMenu] = useState<MenuItem | null>(null);
   const [filters, setFilters] = useState<MenuFilters>(DEFAULT_MENU_FILTERS);
   const [pagination, setPagination] = useState<Pick<MenuPaginationState, 'page' | 'pageSize'>>({
     page: 1,
@@ -78,7 +79,7 @@ export const useMenuManagement = () => {
   } = useCategories();
   const { data: branches = [] } = useBranches();
   const { mutate: toggleMenu } = useToggleMenu();
-  const { mutate: deleteMenu } = useDeleteMenu();
+  const { mutate: deleteMenu, isPending: isDeletingMenu } = useDeleteMenu();
   const { mutate: updateBranchMenuItem, isPending: isUpdatingBranchMenuItem } = useUpdateBranchMenuItem();
 
   const rawMenuItems = useMemo(() => data?.data ?? [], [data?.data]);
@@ -230,9 +231,20 @@ export const useMenuManagement = () => {
   };
 
   const handleDeleteMenu = (menuId: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa món ăn này?')) {
-      deleteMenu(menuId);
+    const menu = globalMenuItems.find((item) => item.id === menuId) ?? null;
+    setDeletingMenu(menu);
+  };
+
+  const handleConfirmDeleteMenu = () => {
+    if (!deletingMenu) {
+      return;
     }
+
+    deleteMenu(deletingMenu.id, {
+      onSuccess: () => {
+        setDeletingMenu(null);
+      },
+    });
   };
 
   const handleEditMenu = (menuId: string) => {
@@ -271,6 +283,7 @@ export const useMenuManagement = () => {
     configuringBranchMenu,
     currentPage,
     debouncedSearch,
+    deletingMenu,
     editingMenu,
     filteredMenuCount: filteredAndSortedMenus.length,
     filters,
@@ -288,6 +301,7 @@ export const useMenuManagement = () => {
     isFetching,
     isFilterSheetOpen,
     isLoading,
+    isDeletingMenu,
     isUpdatingBranchMenuItem,
     nextCategoryDisplayOrder,
     paginatedMenus,
@@ -302,6 +316,8 @@ export const useMenuManagement = () => {
     setShowFilter,
     onApplyFilters: handleApplyFilters,
     onConfigureBranchMenu: handleConfigureBranchMenu,
+    onCancelDeleteMenu: () => setDeletingMenu(null),
+    onConfirmDeleteMenu: handleConfirmDeleteMenu,
     onDeleteMenu: handleDeleteMenu,
     onEditMenu: handleEditMenu,
     onFilterChange: handleFiltersChange,

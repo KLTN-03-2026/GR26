@@ -4,7 +4,7 @@
  * @created 2026-04-16
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -48,12 +48,13 @@ export const CreateVoucherDialog = ({
     const [formData, setFormData] = useState<CreateVoucherFormValues>(initialFormData);
     const [errors, setErrors] = useState<Partial<Record<keyof CreateVoucherFormValues, string>>>({});
 
-    useEffect(() => {
-        if (!open) {
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen) {
             setFormData(initialFormData);
             setErrors({});
         }
-    }, [open]);
+        onOpenChange(nextOpen);
+    };
 
     const validate = (): boolean => {
         const result = createVoucherSchema.safeParse(formData);
@@ -78,7 +79,7 @@ export const CreateVoucherDialog = ({
         mutate(formData, {
             onSuccess: (response) => {
                 if (response.success) {
-                    onOpenChange(false);
+                    handleOpenChange(false);
                     onSuccess?.();
                 } else {
                     setErrors({ code: response.message });
@@ -98,7 +99,7 @@ export const CreateVoucherDialog = ({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-xl">
                 <DialogHeader>
                     <DialogTitle className="text-lg font-semibold text-gray-900">
@@ -214,7 +215,7 @@ export const CreateVoucherDialog = ({
                 </div>
 
                 <DialogFooter className="border-t pt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                    <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
                         Huỷ
                     </Button>
                     <Button

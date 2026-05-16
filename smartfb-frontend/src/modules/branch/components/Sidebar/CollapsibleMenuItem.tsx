@@ -39,7 +39,7 @@ export const CollapsibleMenuItem: FC<CollapsibleItemProps> = ({
 
   const baseClasses = cn(
     'flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-150',
-    'text-sm font-medium tracking-wide hover:',
+    'text-[18px] font-medium tracking-wide hover:',
     !isActive && !isChildActive && 'text-text-secondary hover:bg-hover-light hover:text-primary',
     (isActive || isChildActive) && 'text-primary',
     level > 0 && 'pl-8'

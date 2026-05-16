@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -64,11 +66,22 @@ public class PosSessionController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER','ADMIN','BRANCH_MANAGER')")
-    @Operation(summary = "Lịch sử phiên POS", description = "Xem toàn bộ lịch sử sessions của branch")
-    public ResponseEntity<ApiResponse<List<PosSessionResult>>> getSessionHistory() {
-        List<PosSessionResult> results = getHandler.handleHistory(
+    @Operation(summary = "Lịch sử phiên POS", description = "Xem lịch sử sessions của branch có phân trang")
+    public ResponseEntity<ApiResponse<Page<PosSessionResult>>> getSessionHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        // author: Hoàng | date: 2026-05-11 | note: Phân trang lịch sử ca POS server-side, sort ca mới nhất trước.
+        PageRequest pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.DESC, "startTime")
+        );
+        Page<PosSessionResult> results = getHandler.handleHistory(
                 TenantContext.getCurrentBranchId(),
-                TenantContext.getCurrentTenantId()
+                TenantContext.getCurrentTenantId(),
+                pageable
         );
         return ResponseEntity.ok(ApiResponse.ok(results));
     }

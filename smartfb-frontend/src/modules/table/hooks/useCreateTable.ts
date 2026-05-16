@@ -5,7 +5,7 @@ import { tableService } from '@modules/table/services/tableService';
 import type { CreateTablePayload, TableItem } from '@modules/table/types/table.types';
 
 /**
- * Hook tạo mới một bàn và đồng bộ lại cache liên quan.
+ * Hook tạo mới một thẻ gọi khách và đồng bộ lại cache liên quan.
  */
 export const useCreateTable = () => {
   const queryClient = useQueryClient();
@@ -21,12 +21,11 @@ export const useCreateTable = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.zones });
-      success('Tạo bàn thành công', `Bàn ${data.name} đã được tạo`);
+      success('Tạo thẻ thành công', `Thẻ ${data.name} đã được tạo`);
     },
     onError: (err) => {
-      console.error('Create table failed', err);
       const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
-      error('Tạo bàn thất bại', message);
+      error('Tạo thẻ thất bại', message);
     },
   });
 };

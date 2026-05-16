@@ -40,14 +40,14 @@ export const voucherService = {
     /**
      * Lấy chi tiết voucher theo ID
      */
-    getById: async (id: string): Promise<ApiResponse<Voucher>> => {
+    getById: async (id: string): Promise<ApiResponse<Voucher | null>> => {
         await delay();
         const voucher = getMockVouchers().find(v => v.id === id);
 
         if (!voucher) {
             return {
                 success: false,
-                data: null as any,
+                data: null,
                 message: 'Không tìm thấy voucher',
             };
         }
@@ -62,7 +62,7 @@ export const voucherService = {
     /**
      * Tạo mới voucher
      */
-    create: async (payload: CreateVoucherPayload): Promise<ApiResponse<Voucher>> => {
+    create: async (payload: CreateVoucherPayload): Promise<ApiResponse<Voucher | null>> => {
         await delay();
 
         // Kiểm tra trùng mã voucher
@@ -70,7 +70,7 @@ export const voucherService = {
         if (existingVoucher) {
             return {
                 success: false,
-                data: null as any,
+                data: null,
                 message: 'Mã voucher đã tồn tại',
             };
         }
@@ -96,7 +96,7 @@ export const voucherService = {
     /**
      * Cập nhật thông tin voucher
      */
-    update: async (id: string, payload: UpdateVoucherPayload): Promise<ApiResponse<Voucher>> => {
+    update: async (id: string, payload: UpdateVoucherPayload): Promise<ApiResponse<Voucher | null>> => {
         await delay();
 
         const success = updateMockVoucher(id, payload);
@@ -104,7 +104,7 @@ export const voucherService = {
         if (!success) {
             return {
                 success: false,
-                data: null as any,
+                data: null,
                 message: 'Không tìm thấy voucher',
             };
         }
@@ -121,7 +121,7 @@ export const voucherService = {
     /**
      * Cập nhật trạng thái voucher (kích hoạt/vô hiệu hóa)
      */
-    updateStatus: async (id: string, payload: UpdateVoucherStatusPayload): Promise<ApiResponse<Voucher>> => {
+    updateStatus: async (id: string, payload: UpdateVoucherStatusPayload): Promise<ApiResponse<Voucher | null>> => {
         await delay();
 
         const success = updateMockVoucher(id, { status: payload.status });
@@ -129,7 +129,7 @@ export const voucherService = {
         if (!success) {
             return {
                 success: false,
-                data: null as any,
+                data: null,
                 message: 'Không tìm thấy voucher',
             };
         }
@@ -146,7 +146,7 @@ export const voucherService = {
     /**
      * Xóa voucher
      */
-    delete: async (id: string): Promise<ApiResponse<void>> => {
+    delete: async (id: string): Promise<ApiResponse<null>> => {
         await delay();
 
         const success = deleteMockVoucher(id);
@@ -154,14 +154,14 @@ export const voucherService = {
         if (!success) {
             return {
                 success: false,
-                data: null as any,
+                data: null,
                 message: 'Không tìm thấy voucher',
             };
         }
 
         return {
             success: true,
-            data: undefined,
+            data: null,
             message: 'Xóa voucher thành công',
         };
     },

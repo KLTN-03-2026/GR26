@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Boxes, ClipboardCheck, FlaskConical, History, type LucideIcon } from 'lucide-react';
+import { Boxes, ClipboardCheck, Factory, FlaskConical, History, type LucideIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/components/ui/tabs';
 import { Button } from '@shared/components/ui/button';
 import { InventoryActionDialog } from '@modules/inventory/components/InventoryActionDialog';
@@ -12,10 +12,9 @@ import { InventorySummaryCards } from '@modules/inventory/components/InventorySu
 import { InventoryTable } from '@modules/inventory/components/InventoryTable';
 import { InventoryToolbar } from '@modules/inventory/components/InventoryToolbar';
 import { RecordProductionBatchDialog } from '@modules/inventory/components/RecordProductionBatchDialog';
+import { ProductionBatchHistory } from '@modules/inventory/components/ProductionBatchHistory';
 import { UpdateThresholdDialog } from '@modules/inventory/components/UpdateThresholdDialog';
 import { InventoryTransactionHistory } from '@modules/inventory/components/InventoryTransactionHistory';
-// import { InventoryStockCheck } from '@modules/inventory/components/InventoryStockCheck';
-// Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement
 import { InventoryCheckManagement } from '@modules/inventory/components/InventoryCheck/InventoryCheckManagement';
 import { CreateIngredientDialog } from '@modules/inventory/components/CreateIngredientDialog';
 import { useInventoryIngredientCatalogView } from '@modules/inventory/hooks/useInventoryIngredientCatalogView';
@@ -27,6 +26,7 @@ type InventoryTabValue =
   | 'ingredients'
   | 'ingredient-catalog'
   | 'semi-products'
+  | 'production-history'
   | 'history'
   | 'stockcheck';
 
@@ -52,7 +52,7 @@ export const InventoryManagementContent = () => {
     null,
   );
   const [activeTab, setActiveTab] = useState<
-    'ingredients' | 'ingredient-catalog' | 'semi-products' | 'history' | 'stockcheck'
+    'ingredients' | 'ingredient-catalog' | 'semi-products' | 'production-history' | 'history' | 'stockcheck'
   >(
     'ingredients',
   );
@@ -122,7 +122,6 @@ export const InventoryManagementContent = () => {
   } = useInventoryManagement(inventorySection);
   const {
     currentPage: ingredientCatalogCurrentPage,
-    ingredientsWithoutStockCount,
     isError: isIngredientCatalogError,
     isLoading: isIngredientCatalogLoading,
     onPageChange: onIngredientCatalogPageChange,
@@ -131,7 +130,6 @@ export const InventoryManagementContent = () => {
     pageSize: ingredientCatalogPageSize,
     paginatedRows: paginatedIngredientCatalogRows,
     search: ingredientCatalogSearch,
-    totalCatalogItems,
     totalFilteredItems: totalFilteredIngredientItems,
     totalPages: ingredientCatalogTotalPages,
   } = useInventoryIngredientCatalogView();
@@ -164,6 +162,13 @@ export const InventoryManagementContent = () => {
       label: 'Bán thành phẩm',
       mobileLabel: 'Bán TP',
       icon: Boxes,
+      visible: true,
+    },
+    {
+      value: 'production-history',
+      label: 'Lịch sử sản xuất',
+      mobileLabel: 'Sản xuất',
+      icon: Factory,
       visible: true,
     },
     {
@@ -278,9 +283,6 @@ export const InventoryManagementContent = () => {
             onOpenImport={() => {
               void onOpenImport();
             }}
-            onOpenAdjust={() => {
-              void onOpenAdjust();
-            }}
             onOpenWaste={() => {
               void onOpenWaste();
             }}
@@ -334,8 +336,6 @@ export const InventoryManagementContent = () => {
                   onSearchChange={onIngredientCatalogSearchChange}
                   canCreateItem={canManageCatalogItems}
                   onOpenCreateIngredient={() => setIsCreateIngredientOpen(true)}
-                  totalCatalogItems={totalCatalogItems}
-                  ingredientsWithoutStockCount={ingredientsWithoutStockCount}
                 />
 
                 <InventoryIngredientCatalogTable
@@ -361,8 +361,6 @@ export const InventoryManagementContent = () => {
         ) : null}
 
         <TabsContent value="semi-products" className="space-y-4">
-
-
           <InventoryToolbar
             search={filters.search}
             searchLabel={searchLabel}
@@ -393,9 +391,6 @@ export const InventoryManagementContent = () => {
             onOpenProduction={() => {
               void onOpenProduction();
             }}
-            onOpenAdjust={() => {
-              void onOpenAdjust();
-            }}
             onOpenWaste={() => {
               void onOpenWaste();
             }}
@@ -424,15 +419,19 @@ export const InventoryManagementContent = () => {
           />
         </TabsContent>
 
+        {/* Tab lịch sử mẻ sản xuất bán thành phẩm */}
+        <TabsContent value="production-history">
+          <ProductionBatchHistory />
+        </TabsContent>
+
         {/* Tab 3: Lịch sử giao dịch */}
         <TabsContent value="history">
           <InventoryTransactionHistory />
         </TabsContent>
 
-        {/* Tab 4: Kiểm kho (chỉ owner/admin mới thấy) Thiên: Thay thế InventoryStockCheck bằng InventoryCheckManagement*/}
+        {/* Tab kiểm kho chỉ hiển thị cho owner/admin có quyền điều chỉnh tồn kho */}
         {canAdjust && (
           <TabsContent value="stockcheck">
-            {/* <InventoryStockCheck /> */}
             <InventoryCheckManagement />
           </TabsContent>
         )}

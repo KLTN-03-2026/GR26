@@ -7,9 +7,6 @@ import {
   Eye,
   Power,
   PowerOff,
-  Circle,
-  Square,
-  Users,
 } from 'lucide-react';
 import type {
   TableDisplayItem,
@@ -33,8 +30,8 @@ interface TableCardProps {
 }
 
 /**
- * Màu bàn ưu tiên nhận biết nhanh:
- * bàn trống dùng xanh dương nhạt, bàn không trống dùng vàng, bàn bảo trì dùng xám.
+ * Màu thẻ ưu tiên nhận biết nhanh:
+ * thẻ sẵn sàng dùng xanh dương nhạt, thẻ đang giao khách dùng vàng, thẻ tạm ngưng dùng xám.
  */
 const getStatusConfig = (status: string, usageStatus: string) => {
   if (status === 'inactive') {
@@ -76,12 +73,13 @@ const getStatusConfig = (status: string, usageStatus: string) => {
   };
 };
 
-const ShapeMarker = ({ shape }: { shape: string }) =>
-  shape === 'square' ? (
-    <Square className="h-3.5 w-3.5 text-gray-400" />
-  ) : (
-    <Circle className="h-3.5 w-3.5 text-gray-400" />
-  );
+const getUsageLabel = (status: string, usageStatus: string) => {
+  if (status === 'inactive') return 'Tạm ngưng';
+  if (usageStatus === 'available') return 'Sẵn sàng';
+  if (usageStatus === 'unpaid') return 'Chờ thanh toán';
+  if (usageStatus === 'reserved') return 'Đã giữ';
+  return 'Đang giao khách';
+};
 
 export const TableCard = ({
   table,
@@ -94,9 +92,10 @@ export const TableCard = ({
   const statusConfig = getStatusConfig(table.status, table.usageStatus);
   const isInactive = table.status === 'inactive';
   const canDelete = table.usageStatus !== 'occupied' && table.usageStatus !== 'unpaid';
+  const usageLabel = getUsageLabel(table.status, table.usageStatus);
 
   const handleCardClick = () => {
-    // Bàn tạm ngưng không cho vào luồng order, giữ hành vi xem chi tiết để người dùng kiểm tra trạng thái.
+    // Thẻ tạm ngưng không cho vào luồng order, giữ hành vi xem chi tiết để người dùng kiểm tra trạng thái.
     if (isInactive) {
       onViewDetail(table.id);
       return;
@@ -124,8 +123,7 @@ export const TableCard = ({
 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm">
-              <Users className="h-3 w-3 text-gray-400" />
-              {table.capacity} chỗ
+              {usageLabel}
             </span>
             <div onClick={(event) => event.stopPropagation()}>
               <DropdownMenu>
@@ -166,7 +164,7 @@ export const TableCard = ({
                     disabled={!canDelete}
                   >
                     <Trash2 className="h-4 w-4" />
-                    Xóa bàn
+                    Xóa thẻ
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -188,11 +186,6 @@ export const TableCard = ({
             <div className="flex items-center gap-1.5">
               <Building2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
               <span className="truncate">{table.branchName}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <ShapeMarker shape={table.shape} />
-              <span>{table.shape === 'square' ? 'Vuông' : 'Tròn'}</span>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import com.smartfnb.shared.web.ApiResponse;
 import com.smartfnb.shift.application.command.*;
 import com.smartfnb.shift.application.query.*;
 import com.smartfnb.shift.web.dto.RegisterShiftRequest;
+import com.smartfnb.shift.web.dto.CheckInRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * REST Controller quản lý lịch ca làm việc (Shift Schedule) — S-16.
@@ -44,6 +47,8 @@ public class ShiftScheduleController {
     private final CheckInCommandHandler        checkInHandler;
     private final CheckOutCommandHandler       checkOutHandler;
     private final GetShiftScheduleQueryHandler getScheduleHandler;
+    private final UpdateShiftScheduleCommandHandler updateHandler;
+    private final DeleteShiftScheduleCommandHandler deleteHandler;
 
     /**
      * Lấy toàn bộ lịch ca của branch trong khoảng ngày.
@@ -103,17 +108,80 @@ public class ShiftScheduleController {
     }
 
     /**
+     * Cập nhật ca làm việc (Chỉ khi SCHEDULED).
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Cập nhật đăng ký ca làm việc")
+    public ResponseEntity<ApiResponse<Void>> updateShift(
+            @PathVariable UUID id,
+            @Valid @RequestBody RegisterShiftRequest request) {
+        // Kiểm tra role: STAFF chỉ sửa ca của mình
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isStaff = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF") ||
+                               a.getAuthority().equals("ROLE_WAITER") ||
+                               a.getAuthority().equals("ROLE_BARISTA") ||
+                               a.getAuthority().equals("ROLE_CASHIER"));
+        UpdateShiftScheduleCommand command = new UpdateShiftScheduleCommand(
+                TenantContext.getCurrentTenantId(),
+                TenantContext.getCurrentBranchId(),
+                TenantContext.getCurrentUserId(),
+                isStaff,
+                id,
+                request.userId(),
+                request.shiftTemplateId(),
+                request.date()
+        );
+        updateHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    /**
+     * Xoá ca làm việc (Chỉ khi SCHEDULED).
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Xoá đăng ký ca làm việc")
+    public ResponseEntity<ApiResponse<Void>> deleteShift(@PathVariable UUID id) {
+        Authentication authDel = SecurityContextHolder.getContext().getAuthentication();
+        boolean isStaffDel = authDel.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF") ||
+                               a.getAuthority().equals("ROLE_WAITER") ||
+                               a.getAuthority().equals("ROLE_BARISTA") ||
+                               a.getAuthority().equals("ROLE_CASHIER"));
+        DeleteShiftScheduleCommand command = new DeleteShiftScheduleCommand(
+                TenantContext.getCurrentTenantId(),
+                TenantContext.getCurrentBranchId(),
+                TenantContext.getCurrentUserId(),
+                isStaffDel,
+                id
+        );
+        deleteHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+
+
+    /**
      * Nhân viên check-in bắt đầu ca.
      * Chỉ nhân viên có ca mới được check-in.
      */
     @PostMapping("/{id}/checkin")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Check-in ca làm việc")
-    public ResponseEntity<ApiResponse<Void>> checkIn(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> checkIn(
+            @PathVariable UUID id,
+            @Valid @RequestBody(required = false) CheckInRequest request) {
+        Double latitude = request != null ? request.latitude() : null;
+        Double longitude = request != null ? request.longitude() : null;
+        
         CheckInCommand command = new CheckInCommand(
                 TenantContext.getCurrentTenantId(),
                 id,
-                TenantContext.getCurrentUserId()
+                TenantContext.getCurrentUserId(),
+                latitude,
+                longitude
         );
         checkInHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok());

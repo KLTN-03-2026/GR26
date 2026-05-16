@@ -19,7 +19,7 @@ const getTenantStatusLabel = (status: AdminTenantStatus): string => {
 };
 
 /**
- * Badge trạng thái tenant trong khu vực admin.
+ * Badge trạng thái khách hàng trong khu vực admin.
  */
 export const TenantStatusBadge = ({ status }: TenantStatusBadgeProps) => {
   return (

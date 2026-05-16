@@ -1,4 +1,4 @@
-import { X, Users, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff, Circle, Square } from 'lucide-react';
+import { X, MapPin, Building2, Calendar, Clock, Edit, Power, PowerOff } from 'lucide-react';
 import type {
   TableDisplayItem,
   TableStatus,
@@ -18,26 +18,19 @@ interface TableDetailDrawerProps {
 
 const getStatusBadge = (status: string, usageStatus: string) => {
   if (usageStatus === 'occupied') {
-    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">Đang phục vụ</span>;
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">Đang giao khách</span>;
   }
   if (usageStatus === 'reserved') {
-    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">Đã đặt trước</span>;
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">Đã giữ</span>;
   }
   if (usageStatus === 'unpaid') {
     return <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">Chưa thanh toán</span>;
   }
   if (status === 'inactive') {
-    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">Bảo trì</span>;
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">Tạm ngưng</span>;
   }
-  return <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Trống</span>;
+  return <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Sẵn sàng</span>;
 };
-
-const ShapeIcon = ({ shape }: { shape: TableDisplayItem['shape'] }) =>
-  shape === 'square' ? (
-    <Square className="h-5 w-5 text-gray-400" />
-  ) : (
-    <Circle className="h-5 w-5 text-gray-400" />
-  );
 
 export const TableDetailDrawer = ({
   table,
@@ -66,7 +59,7 @@ export const TableDetailDrawer = ({
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Chi tiết bàn</h2>
+          <h2 className="text-xl font-bold text-gray-800">Chi tiết thẻ gọi khách</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
@@ -77,12 +70,12 @@ export const TableDetailDrawer = ({
             <div className="flex min-h-[320px] items-center justify-center">
               <div className="text-center">
                 <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-                <p className="text-sm text-gray-500">Đang tải chi tiết bàn...</p>
+                <p className="text-sm text-gray-500">Đang tải chi tiết thẻ...</p>
               </div>
             </div>
           ) : isError ? (
             <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
-              <p className="text-sm font-medium text-red-600">Không thể tải chi tiết bàn</p>
+              <p className="text-sm font-medium text-red-600">Không thể tải chi tiết thẻ</p>
               {onRetry ? (
                 <Button variant="outline" className="mt-4" onClick={onRetry}>
                   Tải lại
@@ -91,7 +84,7 @@ export const TableDetailDrawer = ({
             </div>
           ) : !table ? (
             <div className="flex min-h-[320px] items-center justify-center text-center">
-              <p className="text-sm text-gray-500">Chưa có thông tin bàn để hiển thị</p>
+              <p className="text-sm text-gray-500">Chưa có thông tin thẻ để hiển thị</p>
             </div>
           ) : (
             <>
@@ -104,24 +97,8 @@ export const TableDetailDrawer = ({
             <div className="flex items-center gap-3 text-gray-600">
               <MapPin className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-400">Khu vực</p>
-                <p className="font-medium">{table.zoneName || 'Chưa có khu vực'}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 text-gray-600">
-              <Users className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-400">Sức chứa</p>
-                <p className="font-medium">{table.capacity} người</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 text-gray-600">
-              <ShapeIcon shape={table.shape} />
-              <div>
-                <p className="text-xs text-gray-400">Hình dạng</p>
-                <p className="font-medium">{table.shape === 'square' ? 'Bàn vuông' : 'Bàn tròn'}</p>
+                <p className="text-xs text-gray-400">Máy gọi thẻ</p>
+                <p className="font-medium">{table.zoneName || 'Chưa có máy gọi thẻ'}</p>
               </div>
             </div>
 

@@ -21,7 +21,7 @@ const AdminDashboardPage = () => {
     return (
       <AdminLoadingState
         title="Đang tải dashboard admin"
-        description="Hệ thống đang tổng hợp tenant, gói dịch vụ và hóa đơn cần xử lý."
+        description="Hệ thống đang tổng hợp khách hàng, gói dịch vụ và hóa đơn cần xử lý."
         className="min-h-[360px]"
       />
     );
@@ -45,7 +45,7 @@ const AdminDashboardPage = () => {
       <AdminEmptyState
         eyebrow="Chưa có dữ liệu SaaS"
         title="Dashboard admin đang chờ dữ liệu đầu tiên"
-        description="Khi hệ thống có tenant, gói dịch vụ hoặc hóa đơn subscription, các chỉ số tổng quan sẽ hiển thị tại đây."
+        description="Khi hệ thống có khách hàng, gói dịch vụ hoặc hóa đơn subscription, các chỉ số tổng quan sẽ hiển thị tại đây."
       />
     );
   }

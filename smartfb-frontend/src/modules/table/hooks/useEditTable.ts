@@ -5,8 +5,8 @@ import { tableService } from '../services/tableService';
 import type { UpdateTablePayload, TableItem } from '../types/table.types';
 
 /**
- * Hook cập nhật thông tin bàn.
- * Sau khi lưu sẽ refresh cả danh sách bàn lẫn cache chi tiết của bàn vừa chỉnh sửa.
+ * Hook cập nhật thông tin thẻ gọi khách.
+ * Sau khi lưu sẽ refresh cả danh sách thẻ lẫn cache chi tiết của thẻ vừa chỉnh sửa.
  */
 export const useEditTable = () => {
   const queryClient = useQueryClient();
@@ -21,13 +21,11 @@ export const useEditTable = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.list() });
       queryClient.invalidateQueries({ queryKey: queryKeys.tables.detail(table.id) });
-      success('Cập nhật bàn thành công', `Bàn ${table.name} đã được cập nhật`);
+      success('Cập nhật thẻ thành công', `Thẻ ${table.name} đã được cập nhật`);
     },
     onError: (err) => {
-      console.error('Update table failed', err);
-      // const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
-
-      error('Cập nhật bàn thất bại');
+      const message = err instanceof Error ? err.message : 'Vui lòng thử lại';
+      error('Cập nhật thẻ thất bại', message);
     },
   });
 };

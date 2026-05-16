@@ -25,12 +25,23 @@ export default defineConfig({
       { find: '@', replacement: path.resolve(__dirname, './src') }
     ],
   }, 
+  // Polyfill `global` cho sockjs-client (package dùng Node.js global, không có trong browser)
+  define: {
+    global: 'globalThis',
+  },
   server: {
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false
+      },
+      // Proxy WebSocket STOMP/SockJS endpoint sang BE
+      '/ws': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
       }
     }
   }

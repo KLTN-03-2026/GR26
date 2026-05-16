@@ -41,9 +41,9 @@ export const AdminSidebar = ({ onNavigate }: AdminSidebarProps) => {
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-admin-gray-900">Admin SaaS</p>
+            <p className="text-[18px] font-semibold text-admin-gray-900">Admin SaaS</p>
             <p className="mt-1 text-xs leading-5 text-admin-gray-500">
-              Quản trị tenant, gói dịch vụ và billing toàn hệ thống.
+              Quản trị khách hàng, gói dịch vụ và billing toàn hệ thống.
             </p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export const AdminSidebar = ({ onNavigate }: AdminSidebarProps) => {
                         )}
                       />
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold">{item.title}</span>
+                        <span className="block truncate text-[18px] font-semibold">{item.title}</span>
                         <span className="mt-0.5 block truncate text-xs font-normal text-admin-gray-500">
                           {item.description}
                         </span>

@@ -26,11 +26,9 @@ export const autoFixBranchId = () => {
       // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
       if (isUpdated) {
         localStorage.setItem(storageKey, JSON.stringify(storedObj));
-        console.log("Đã tự động set branchId thành công:", DEFAULT_BRANCH_ID);
       }
     }
-  } catch (error) {
-    // Người sửa: Đào Thu Thiên - Ngày: 09/04/2026
-    console.error("Lỗi khi tự động set branchId:", error);
+  } catch {
+    return;
   }
 };

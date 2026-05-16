@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -66,11 +66,6 @@ export const CreateIngredientDialog = ({ open: controlledOpen, onOpenChange, tri
   // Sync internal state khi controlled open thay đổi từ ngoài
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
-
-  useEffect(() => {
-    if (!isControlled) return;
-    setInternalOpen(controlledOpen);
-  }, [isControlled, controlledOpen]);
 
   const form = useForm<CreateIngredientFormValues>({
     resolver: zodResolver(createIngredientSchema),

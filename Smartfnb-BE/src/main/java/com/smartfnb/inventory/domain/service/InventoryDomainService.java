@@ -59,7 +59,7 @@ public class InventoryDomainService {
      * @param userId          người thực hiện (có thể null nếu là system)
      * @throws InsufficientStockException nếu tổng quantity_remaining < needed
      */
-    public void deductFifo(UUID tenantId, UUID branchId,
+    public BigDecimal deductFifo(UUID tenantId, UUID branchId,
                             UUID itemId, String itemName,
                             BigDecimal needed,
                             String transactionType,
@@ -84,6 +84,7 @@ public class InventoryDomainService {
 
         // 3. FIFO: consume từng batch cũ nhất trước
         BigDecimal remaining = needed;
+        BigDecimal totalCost = BigDecimal.ZERO;
         for (StockBatchJpaEntity batch : batches) {
             if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
 
@@ -100,6 +101,7 @@ public class InventoryDomainService {
             );
             inventoryTransactionJpaRepository.save(tx);
 
+            totalCost = totalCost.add(consumeFromBatch.multiply(batch.getCostPerUnit()));
             remaining = remaining.subtract(consumeFromBatch);
         }
 
@@ -126,7 +128,8 @@ public class InventoryDomainService {
             }
         }
 
-        log.info("FIFO deduct hoàn tất: item={}, needed={}", itemId, needed);
+        log.info("FIFO deduct hoàn tất: item={}, needed={}, totalCost={}", itemId, needed, totalCost);
+        return totalCost;
     }
 
     /**

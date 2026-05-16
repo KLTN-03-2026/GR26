@@ -19,7 +19,8 @@ export const useRecordProductionBatch = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.balances.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.transactions.all });
-      success('Ghi nhận sản xuất thành công', 'Tồn kho và lịch sử giao dịch đã được cập nhật.');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.inventory.productionBatches.all });
+      success('Ghi nhận sản xuất thành công', 'Tồn kho, lịch sử giao dịch và lịch sử sản xuất đã được cập nhật.');
     },
     onError: (err) => {
       if (isAxiosError<ApiResponse<unknown>>(err) && err.response) {

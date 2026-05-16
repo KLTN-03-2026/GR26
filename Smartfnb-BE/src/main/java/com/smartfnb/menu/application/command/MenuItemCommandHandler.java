@@ -8,6 +8,8 @@ import com.smartfnb.menu.domain.exception.MenuItemNotFoundException;
 import com.smartfnb.menu.infrastructure.persistence.BranchItemJpaRepository;
 import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
 import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository;
+import com.smartfnb.menu.infrastructure.persistence.RecipeJpaRepository;
+import com.smartfnb.menu.infrastructure.persistence.AddonJpaRepository;
 import com.smartfnb.shared.TenantContext;
 import com.smartfnb.shared.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class MenuItemCommandHandler {
     private final MenuItemJpaRepository menuItemJpaRepository;
     private final BranchItemJpaRepository branchItemJpaRepository;
     private final BranchJpaRepository branchJpaRepository;
+    private final RecipeJpaRepository recipeJpaRepository;
+    private final AddonJpaRepository addonJpaRepository;
     private final FileStorageService fileStorageService;
     private final SubscriptionService subscriptionService;
 
@@ -198,6 +202,21 @@ public class MenuItemCommandHandler {
         MenuItemJpaEntity entity = menuItemJpaRepository
                 .findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
                 .orElseThrow(() -> new MenuItemNotFoundException(itemId));
+
+        // Chặn xoá nếu nguyên liệu đang được dùng trong công thức hoặc Addon
+        if ("INGREDIENT".equalsIgnoreCase(entity.getType()) || "SUB_ASSEMBLY".equalsIgnoreCase(entity.getType())) {
+            if (recipeJpaRepository.existsByIngredientItemId(itemId)) {
+                throw new SmartFnbException("ITEM_IN_USE", "Không thể xoá nguyên liệu này vì đang được dùng trong công thức của món ăn khác.", 400);
+            }
+            if (addonJpaRepository.existsByItemId(itemId)) {
+                throw new SmartFnbException("ITEM_IN_USE", "Không thể xoá nguyên liệu này vì đang được cấu hình làm Addon.", 400);
+            }
+        }
+
+        // Chặn xoá nếu món ăn đang là target trong bất kỳ công thức nào (chóng orphan recipe)
+        if (recipeJpaRepository.existsByTargetItemId(itemId)) {
+            throw new SmartFnbException("ITEM_IN_USE", "Không thể xoá món ăn này vì đang có công thức chế biến gắn với nó. Hãy xoá công thức trước.", 400);
+        }
 
         entity.softDelete();
         menuItemJpaRepository.save(entity);

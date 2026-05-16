@@ -42,6 +42,16 @@ export const branchService = {
   },
 
   /**
+   * Vô hiệu hoá một chi nhánh.
+   * Backend dùng DELETE nhưng xử lý soft-delete bằng cách chuyển status sang INACTIVE.
+   * DELETE /api/v1/branches/:id
+   * @param id - ID chi nhánh cần vô hiệu hoá
+   */
+  disable: async (id: string): Promise<ApiResponse<void>> => {
+    return api.delete<ApiResponse<void>>(`/branches/${id}`).then(r => r.data);
+  },
+
+  /**
    * Gán nhân viên vào chi nhánh
    * POST /api/v1/branches/:id/users
    * @param id - ID chi nhánh

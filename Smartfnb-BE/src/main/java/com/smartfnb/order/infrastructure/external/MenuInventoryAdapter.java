@@ -1,6 +1,10 @@
 package com.smartfnb.order.infrastructure.external;
 
 import com.smartfnb.menu.domain.service.InventoryCheckService;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaEntity;
+import com.smartfnb.menu.infrastructure.persistence.MenuItemJpaRepository;
+import com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaEntity;
+import com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository;
 import com.smartfnb.order.domain.model.OrderItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +27,8 @@ import java.util.stream.Collectors;
 public class MenuInventoryAdapter {
 
     private final InventoryCheckService inventoryCheckService;
-    private final com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaRepository inventoryBalanceJpaRepository;
+    private final InventoryBalanceJpaRepository inventoryBalanceJpaRepository;
+    private final MenuItemJpaRepository menuItemJpaRepository;
 
     public void checkStock(UUID branchId, List<OrderItem> items) {
         log.info("Kiểm tra tồn kho qua MenuInventoryAdapter cho chi nhánh {}", branchId);
@@ -43,17 +48,46 @@ public class MenuInventoryAdapter {
         // Real StockProvider reading from Inventory
         InventoryCheckService.StockProvider stockProvider = (bId, ingredientId) -> {
             return inventoryBalanceJpaRepository.findByBranchIdAndItemId(bId, ingredientId)
-                    .map(com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaEntity::getQuantity)
+                    .map(InventoryBalanceJpaEntity::getQuantity)
                     .orElse(BigDecimal.ZERO);
         };
 
-        // Real IngredientNameProvider
-        InventoryCheckService.IngredientNameProvider nameProvider = (ingredientId) -> {
-            return inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, ingredientId)
-                    .map(com.smartfnb.inventory.infrastructure.persistence.InventoryBalanceJpaEntity::getItemName)
-                    .orElse("Nguyên liệu " + ingredientId.toString().substring(0, 5));
-        };
+        // Author: Hoàng
+        // Date: 2026-05-09
+        // Note: Tên/unit nguyên liệu phải lấy từ catalog items trước; tồn kho chỉ là snapshot theo chi nhánh.
+        // Note: Tên/unit nguyên liệu/món phải lấy từ catalog items trước; tồn kho chỉ là snapshot theo chi nhánh.
+        InventoryCheckService.ItemNameProvider nameProvider =
+                itemId -> resolveItemName(branchId, itemId);
+        InventoryCheckService.IngredientUnitProvider unitProvider =
+                ingredientId -> resolveIngredientUnit(branchId, ingredientId);
 
-        inventoryCheckService.assertSufficientStock(branchId, orderLines, stockProvider, nameProvider);
+        inventoryCheckService.assertSufficientStock(branchId, orderLines, stockProvider, nameProvider, unitProvider);
+    }
+
+    // Author: Hoàng
+    // Date: 2026-05-09
+    // Note: Resolve tên nguyên liệu từ items.name để lỗi thiếu tồn vẫn đúng khi branch chưa có inventory_balances.
+    // Note: Resolve tên từ items.name để lỗi thiếu tồn/thiếu công thức vẫn đúng khi branch chưa có inventory_balances.
+    private String resolveItemName(UUID branchId, UUID itemId) {
+        return menuItemJpaRepository.findById(itemId)
+                .map(MenuItemJpaEntity::getName)
+                .filter(name -> !name.isBlank())
+                .orElseGet(() -> inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, itemId)
+                        .map(InventoryBalanceJpaEntity::getItemName)
+                        .filter(name -> !name.isBlank())
+                        .orElse("Sản phẩm " + itemId.toString().substring(0, 5)));
+    }
+
+    // Author: Hoàng
+    // Date: 2026-05-09
+    // Note: Resolve đơn vị từ items.unit để message lỗi không còn khoảng trắng thừa khi tồn kho chưa có snapshot.
+    private String resolveIngredientUnit(UUID branchId, UUID ingredientId) {
+        return menuItemJpaRepository.findById(ingredientId)
+                .map(MenuItemJpaEntity::getUnit)
+                .filter(unit -> !unit.isBlank())
+                .orElseGet(() -> inventoryBalanceJpaRepository.findByBranchIdAndItemId(branchId, ingredientId)
+                        .map(InventoryBalanceJpaEntity::getUnit)
+                        .filter(unit -> !unit.isBlank())
+                        .orElse(""));
     }
 }

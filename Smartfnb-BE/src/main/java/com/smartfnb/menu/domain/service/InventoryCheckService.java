@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Domain Service kiểm tra tồn kho nguyên liệu trước khi đặt đơn hàng.
@@ -45,13 +46,15 @@ public class InventoryCheckService {
      * @param orderLines           Danh sách (itemId → số lượng) trong đơn
      * @param currentStockProvider Function: (branchId, ingredientId) → số lượng tồn kho
      * @param ingredientNameProvider Function: ingredientId → tên nguyên liệu
+     * @param ingredientUnitProvider Function: ingredientId → đơn vị nguyên liệu
      * @throws InsufficientStockException nếu bất kỳ nguyên liệu nào không đủ
      */
     public void assertSufficientStock(
             UUID branchId,
             Map<UUID, Integer> orderLines,
             StockProvider currentStockProvider,
-            IngredientNameProvider ingredientNameProvider) {
+            ItemNameProvider itemNameProvider,
+            IngredientUnitProvider ingredientUnitProvider) {
 
         if (orderLines == null || orderLines.isEmpty()) {
             return;
@@ -63,9 +66,17 @@ public class InventoryCheckService {
         List<UUID> itemIds = new ArrayList<>(orderLines.keySet());
         List<RecipeJpaEntity> allRecipes = recipeJpaRepository.findByTargetItemIdIn(itemIds);
 
-        if (allRecipes.isEmpty()) {
-            log.debug("Không có công thức nào — bỏ qua kiểm tra tồn kho");
-            return;
+        // Kiểm tra bắt buộc: Mọi món trong đơn hàng đều phải có công thức (Recipe)
+        Set<UUID> itemsWithRecipe = allRecipes.stream()
+                .map(RecipeJpaEntity::getTargetItemId)
+                .collect(Collectors.toSet());
+
+        for (UUID itemId : itemIds) {
+            if (!itemsWithRecipe.contains(itemId)) {
+                String itemName = itemNameProvider.getName(itemId);
+                log.warn("Món '{}' (ID: {}) chưa có công thức, từ chối tạo đơn hàng.", itemName, itemId);
+                throw new com.smartfnb.menu.domain.exception.MissingRecipeException(itemName, itemId);
+            }
         }
 
         // Tính tổng nguyên liệu cần dùng: ingredientId → tổng lượng cần
@@ -86,7 +97,11 @@ public class InventoryCheckService {
             BigDecimal available = currentStockProvider.getStock(branchId, ingredientId);
 
             if (available == null || available.compareTo(required) < 0) {
-                String ingredientName = ingredientNameProvider.getName(ingredientId);
+                String ingredientName = itemNameProvider.getName(ingredientId);
+                // Author: Hoàng
+                // Date: 2026-05-09
+                // Note: Truyền unit thật vào lỗi thiếu tồn để message không còn khoảng trắng thừa.
+                String ingredientUnit = ingredientUnitProvider.getUnit(ingredientId);
                 double availableVal = available != null ? available.doubleValue() : 0.0;
 
                 log.warn("Nguyên liệu '{}' không đủ — cần {}, còn {}",
@@ -96,7 +111,7 @@ public class InventoryCheckService {
                         ingredientName,
                         required.doubleValue(),
                         availableVal,
-                        ""    // unit sẽ được resolve từ recipe nếu cần
+                        ingredientUnit
                 );
             }
         }
@@ -121,16 +136,32 @@ public class InventoryCheckService {
     }
 
     /**
-     * Interface functional để lấy tên nguyên liệu cho error message.
+     * Interface functional để lấy tên món / nguyên liệu cho error message.
      */
     @FunctionalInterface
-    public interface IngredientNameProvider {
+    public interface ItemNameProvider {
         /**
-         * Lấy tên nguyên liệu theo ID.
+         * Lấy tên theo ID.
+         *
+         * @param itemId ID món hoặc nguyên liệu
+         * @return tên
+         */
+        String getName(UUID itemId);
+    }
+
+    /**
+     * Interface functional để lấy đơn vị nguyên liệu cho error message.
+     */
+    @FunctionalInterface
+    public interface IngredientUnitProvider {
+        /**
+         * Author: Hoàng
+         * Date: 2026-05-09
+         * Note: Unit được resolve ngoài domain service để giữ module Menu không phụ thuộc Inventory.
          *
          * @param ingredientId ID nguyên liệu
-         * @return tên nguyên liệu
+         * @return đơn vị nguyên liệu, hoặc chuỗi rỗng nếu chưa xác định
          */
-        String getName(UUID ingredientId);
+        String getUnit(UUID ingredientId);
     }
 }

@@ -4,52 +4,81 @@
  * còn staff sẽ dựa vào các mã này để mở route và thao tác tương ứng.
  */
 export const PERMISSIONS = {
-  STAFF_DASHBOARD_VIEW: 'STAFF_DASHBOARD_VIEW',
-  // Xem danh sách và chi tiết nhân viên trong tenant hoặc chi nhánh được phân quyền.
-  STAFF_VIEW: 'STAFF_VIEW',
-  // Tạo, cập nhật, vô hiệu hóa hoặc gán thông tin nhân viên.
-  STAFF_EDIT: 'STAFF_EDIT',
-  TABLE_VIEW: 'TABLE_VIEW',
-  TABLE_ASSIGN: 'TABLE_ASSIGN',
+  // Quyền order/POS
   ORDER_VIEW: 'ORDER_VIEW',
   ORDER_CREATE: 'ORDER_CREATE',
   ORDER_UPDATE: 'ORDER_UPDATE',
   ORDER_CANCEL: 'ORDER_CANCEL',
-  MENU_VIEW: 'MENU_VIEW',
-  MENU_EDIT: 'MENU_EDIT',
-  // Xem và chỉnh sửa cấu hình chi nhánh, gồm cấu hình cổng thanh toán PayOS.
-  BRANCH_EDIT: 'BRANCH_EDIT',
-  // Backend hiện đang phát PAYMENT_CREATE trong JWT; giữ thêm PAYMENT_PROCESS để tương thích token cũ.
+  // Quyền thanh toán và hóa đơn
   PAYMENT_VIEW: 'PAYMENT_VIEW',
   PAYMENT_CREATE: 'PAYMENT_CREATE',
-  PAYMENT_PROCESS: 'PAYMENT_PROCESS',
-  // Xem danh sách và chi tiết phiếu chi theo chi nhánh đang làm việc.
-  EXPENSE_VIEW: 'EXPENSE_VIEW',
-  // Tạo, sửa, xóa phiếu chi vận hành.
-  EXPENSE_MANAGE: 'EXPENSE_MANAGE',
-  KDS_VIEW: 'KDS_VIEW',
-  KDS_UPDATE: 'KDS_UPDATE',
+  PAYMENT_REFUND: 'PAYMENT_REFUND',
+  INVOICE_VIEW: 'INVOICE_VIEW',
+  INVOICE_PRINT: 'INVOICE_PRINT',
+  // Quyền menu và công thức
+  MENU_VIEW: 'MENU_VIEW',
+  MENU_EDIT: 'MENU_EDIT',
+  // Quyền thẻ gọi khách và máy gọi thẻ
+  TABLE_VIEW: 'TABLE_VIEW',
+  TABLE_EDIT: 'TABLE_EDIT',
+  // Quyền chi nhánh
+  BRANCH_VIEW: 'BRANCH_VIEW',
+  BRANCH_EDIT: 'BRANCH_EDIT',
+  // Quyền kho
   INVENTORY_VIEW: 'INVENTORY_VIEW',
   INVENTORY_IMPORT: 'INVENTORY_IMPORT',
   INVENTORY_ADJUST: 'INVENTORY_ADJUST',
   INVENTORY_WASTE: 'INVENTORY_WASTE',
-  // Xem danh sách role tenant để quản lý quyền theo vai trò.
+  INVENTORY_MANAGE: 'INVENTORY_MANAGE',
+  // Xem danh sách và chi tiết nhân viên trong tenant hoặc chi nhánh được phân quyền.
+  STAFF_VIEW: 'STAFF_VIEW',
+  // Tạo, cập nhật, vô hiệu hóa hoặc gán thông tin nhân viên.
+  STAFF_EDIT: 'STAFF_EDIT',
+  // Quyền role/permission matrix.
   ROLE_VIEW: 'ROLE_VIEW',
-  // Tạo hoặc chỉnh sửa role của tenant.
   ROLE_EDIT: 'ROLE_EDIT',
-  // Bật hoặc tắt permission bên trong một role.
   PERMISSION_EDIT: 'PERMISSION_EDIT',
-  SCHEDULE_VIEW: 'SCHEDULE_VIEW',
+  // Quyền ca làm việc.
   SHIFT_VIEW: 'SHIFT_VIEW',
+  SHIFT_REGISTER: 'SHIFT_REGISTER',
+  SHIFT_MANAGE: 'SHIFT_MANAGE',
+  // Xem danh sách và chi tiết phiếu chi theo chi nhánh đang làm việc.
+  EXPENSE_VIEW: 'EXPENSE_VIEW',
+  // Tạo, sửa, xóa phiếu chi vận hành.
+  EXPENSE_MANAGE: 'EXPENSE_MANAGE',
+  // Quyền khuyến mãi/voucher.
+  PROMOTION_VIEW: 'PROMOTION_VIEW',
+  PROMOTION_EDIT: 'PROMOTION_EDIT',
+  VOUCHER_APPLY: 'VOUCHER_APPLY',
+  // Quyền nhà cung cấp và đơn mua hàng.
+  SUPPLIER_VIEW: 'SUPPLIER_VIEW',
+  SUPPLIER_EDIT: 'SUPPLIER_EDIT',
+  PURCHASE_ORDER_EDIT: 'PURCHASE_ORDER_EDIT',
+  // Quyền báo cáo.
+  REPORT_REVENUE: 'REPORT_REVENUE',
+  REPORT_INVENTORY: 'REPORT_INVENTORY',
+  REPORT_HR: 'REPORT_HR',
+  REPORT_PROMOTION: 'REPORT_PROMOTION',
+  REPORT_EXPORT: 'REPORT_EXPORT',
+  // Quyền payroll.
+  PAYROLL_VIEW: 'PAYROLL_VIEW',
+  PAYROLL_EDIT: 'PAYROLL_EDIT',
+  PAYROLL_EXPORT: 'PAYROLL_EXPORT',
+  // Quyền admin SaaS.
+  TENANT_VIEW: 'TENANT_VIEW',
+  TENANT_MANAGE: 'TENANT_MANAGE',
+  BILLING_VIEW: 'BILLING_VIEW',
+  BILLING_MANAGE: 'BILLING_MANAGE',
 } as const;
 
 export type PermissionCode = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
-// Quyền mở luồng thanh toán cần hỗ trợ cả mã mới từ backend và mã FE cũ để tránh redirect sai route.
+// Quyền mở luồng thanh toán theo backend hiện tại.
 const PAYMENT_ROUTE_PERMISSIONS = [
   PERMISSIONS.PAYMENT_VIEW,
   PERMISSIONS.PAYMENT_CREATE,
-  PERMISSIONS.PAYMENT_PROCESS,
+  PERMISSIONS.INVOICE_VIEW,
+  PERMISSIONS.INVOICE_PRINT,
 ] as const;
 
 /**
@@ -58,12 +87,12 @@ const PAYMENT_ROUTE_PERMISSIONS = [
  * chưa phát đầy đủ mã quyền tổng quát như `INVENTORY_VIEW`.
  */
 export const STAFF_ROUTE_PERMISSIONS = {
-  DASHBOARD: [PERMISSIONS.STAFF_DASHBOARD_VIEW],
+  DASHBOARD: [],
   // Cho phép branch manager hoặc staff được phân quyền mở màn quản lý nhân viên.
   STAFF: [PERMISSIONS.STAFF_VIEW, PERMISSIONS.STAFF_EDIT],
   // Cho phép mở màn chức vụ và ma trận phân quyền.
   STAFF_POSITIONS: [PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_EDIT, PERMISSIONS.PERMISSION_EDIT],
-  TABLES: [PERMISSIONS.TABLE_VIEW, PERMISSIONS.TABLE_ASSIGN, PERMISSIONS.ORDER_CREATE],
+  TABLES: [PERMISSIONS.TABLE_VIEW],
   ORDERS: [
     PERMISSIONS.ORDER_VIEW,
     PERMISSIONS.ORDER_CREATE,
@@ -72,22 +101,28 @@ export const STAFF_ROUTE_PERMISSIONS = {
   ],
   PAYMENT: [...PAYMENT_ROUTE_PERMISSIONS],
   EXPENSES: [PERMISSIONS.EXPENSE_VIEW, PERMISSIONS.EXPENSE_MANAGE, ...PAYMENT_ROUTE_PERMISSIONS],
-  KDS: [PERMISSIONS.KDS_VIEW, PERMISSIONS.KDS_UPDATE],
   MENU: [PERMISSIONS.MENU_VIEW],
   RECIPES: [PERMISSIONS.MENU_VIEW],
+  SUPPLIERS: [
+    PERMISSIONS.SUPPLIER_VIEW,
+    PERMISSIONS.PURCHASE_ORDER_EDIT,
+    PERMISSIONS.INVENTORY_IMPORT,
+  ],
   INVENTORY: [
     PERMISSIONS.INVENTORY_VIEW,
     PERMISSIONS.INVENTORY_IMPORT,
     PERMISSIONS.INVENTORY_ADJUST,
     PERMISSIONS.INVENTORY_WASTE,
+    PERMISSIONS.INVENTORY_MANAGE,
   ],
-  MY_SHIFTS: [PERMISSIONS.SCHEDULE_VIEW, PERMISSIONS.SHIFT_VIEW],
+  MY_SHIFTS: [PERMISSIONS.SHIFT_VIEW, PERMISSIONS.SHIFT_REGISTER, PERMISSIONS.SHIFT_MANAGE],
   // Dùng lại quyền kho — xem dự báo AI là một dạng xem tồn kho nâng cao.
   AI_FORECAST: [
     PERMISSIONS.INVENTORY_VIEW,
     PERMISSIONS.INVENTORY_IMPORT,
     PERMISSIONS.INVENTORY_ADJUST,
     PERMISSIONS.INVENTORY_WASTE,
+    PERMISSIONS.INVENTORY_MANAGE,
   ],
   // Route tạo/chỉnh đơn chỉ dành cho user có quyền tạo đơn.
   POS_ORDER: [PERMISSIONS.ORDER_CREATE],

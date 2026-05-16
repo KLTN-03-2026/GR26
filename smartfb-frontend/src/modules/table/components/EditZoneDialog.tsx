@@ -21,13 +21,13 @@ const editZoneSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Tên khu vực phải có ít nhất 2 ký tự')
-    .max(100, 'Tên khu vực không quá 100 ký tự'),
+    .min(2, 'Tên máy gọi thẻ phải có ít nhất 2 ký tự')
+    .max(100, 'Tên máy gọi thẻ không quá 100 ký tự'),
   floorNumber: z
     .number()
-    .int('Số tầng phải là số nguyên')
-    .min(1, 'Số tầng tối thiểu là 1')
-    .max(99, 'Số tầng tối đa là 99'),
+    .int('Số máy phải là số nguyên')
+    .min(1, 'Số máy tối thiểu là 1')
+    .max(99, 'Số máy tối đa là 99'),
 });
 
 type EditZoneFormData = z.infer<typeof editZoneSchema>;
@@ -107,21 +107,21 @@ export const EditZoneDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa khu vực</DialogTitle>
+          <DialogTitle>Chỉnh sửa máy gọi thẻ</DialogTitle>
           <DialogDescription>
-            Cập nhật tên khu vực và số tầng để đồng bộ với sơ đồ bàn hiện tại.
+            Cập nhật tên máy gọi thẻ và số máy để đồng bộ danh sách thẻ hiện tại.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleEditZone)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="edit-zone-name">Tên khu vực</Label>
+            <Label htmlFor="edit-zone-name">Tên máy gọi thẻ</Label>
             <Input id="edit-zone-name" {...register('name')} />
             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="edit-floorNumber">Số tầng</Label>
+            <Label htmlFor="edit-floorNumber">Số máy</Label>
             <NumericInput
               id="edit-floorNumber"
               min={1}
