@@ -114,6 +114,15 @@ export type RegisterShiftPayload = {
 export type UpdateShiftSchedulePayload = RegisterShiftPayload;
 
 /**
+ * Payload gửi lên khi nhân viên check-in.
+ * Backend dùng tọa độ này để tính khoảng cách tới chi nhánh và chống gian lận chấm công.
+ */
+export interface CheckInShiftPayload {
+    latitude: number;
+    longitude: number;
+}
+
+/**
  * Filter cho danh sách ca mẫu
  */
 export type ShiftTemplateFilters = {

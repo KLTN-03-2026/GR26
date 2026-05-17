@@ -49,9 +49,9 @@ export const AdminInvoiceTable = ({
             <TableRow key={invoice.id} className="hover:bg-admin-gray-50">
               <TableCell>
                 <p className="font-semibold text-admin-gray-900">{invoice.invoiceNumber}</p>
-                <p className="mt-1 text-sm text-admin-gray-500">
+                {/* <p className="mt-1 text-sm text-admin-gray-500">
                   Tạo ngày {formatDate(invoice.createdAt)}
-                </p>
+                </p> */}
               </TableCell>
               <TableCell className="text-sm text-admin-gray-700">{invoice.tenantName}</TableCell>
               <TableCell className="text-sm text-admin-gray-700">{invoice.planName}</TableCell>

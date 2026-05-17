@@ -15,6 +15,9 @@ export interface Branch {
   code: string;
   address: string | null;
   phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  gpsCheckinRadiusMeters: number | null;
   status: BranchStatus;
   createdAt: string;
 }
@@ -73,6 +76,8 @@ export type Step1BasicInfoData = {
   code: string;
   address: string;
   phone: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 /**
@@ -87,6 +92,8 @@ export type EditBranchFormData = {
   code: string;
   address: string;
   phone: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 /**
@@ -98,6 +105,9 @@ export type CreateBranchPayload = {
   code: string;
   address: string;
   phone: string;
+  latitude: number | null;
+  longitude: number | null;
+  gpsCheckinRadiusMeters?: number | null;
 };
 
 /**
@@ -105,6 +115,51 @@ export type CreateBranchPayload = {
  * Backend dùng chung `BranchRequest` cho create và update nên FE phải gửi đủ field.
  */
 export type UpdateBranchPayload = CreateBranchPayload;
+
+/**
+ * Gợi ý địa chỉ đã chuẩn hóa từ Geoapify cho form chi nhánh.
+ * `latitude` và `longitude` được map từ `lat`/`lon` của Geoapify theo contract backend.
+ */
+export interface BranchAddressSuggestion {
+  id: string;
+  formatted: string;
+  addressLine1: string;
+  addressLine2: string;
+  latitude: number;
+  longitude: number;
+  city?: string;
+  state?: string;
+  postcode?: string;
+}
+
+export interface GeoapifyAutocompleteResponse {
+  type: 'FeatureCollection';
+  features: GeoapifyAutocompleteFeature[];
+}
+
+export interface GeoapifyAutocompleteFeature {
+  type: 'Feature';
+  properties: GeoapifyAddressProperties;
+  geometry: GeoapifyPointGeometry;
+  bbox?: number[];
+}
+
+export interface GeoapifyPointGeometry {
+  type: 'Point';
+  coordinates: number[];
+}
+
+export interface GeoapifyAddressProperties {
+  place_id?: string;
+  formatted?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  lat?: number;
+  lon?: number;
+}
 
 /**
  * Payload gán user vào chi nhánh

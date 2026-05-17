@@ -1,8 +1,7 @@
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { ROUTES } from '@shared/constants/routes';
 import { cn } from '@shared/utils/cn';
-import { Bell, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminHeaderProps {
@@ -32,18 +31,11 @@ export const AdminHeader = ({ pageTitle, onOpenMobileMenu }: AdminHeaderProps) =
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuthSession = useAuthStore((state) => state.clearAuthSession);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-  });
+
 
   const displayName = user?.fullName || user?.email || 'Admin';
   const initials = getInitials(displayName);
 
-  const handleToggleDarkMode = () => {
-    const nextMode = !isDarkMode;
-    setIsDarkMode(nextMode);
-    document.documentElement.classList.toggle('dark', nextMode);
-  };
 
   const handleLogout = () => {
     clearAuthSession();
@@ -63,9 +55,7 @@ export const AdminHeader = ({ pageTitle, onOpenMobileMenu }: AdminHeaderProps) =
         </button>
 
         <div className="min-w-0">
-          <p className="hidden text-xs font-medium uppercase tracking-wide text-admin-gray-500 sm:block">
-            SmartF&amp;B SaaS Admin
-          </p>
+
           <h1 className="truncate text-lg font-semibold text-admin-gray-900 md:text-xl">
             {pageTitle}
           </h1>
@@ -73,23 +63,7 @@ export const AdminHeader = ({ pageTitle, onOpenMobileMenu }: AdminHeaderProps) =
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
-        <label className="hidden h-11 w-[280px] items-center gap-2 rounded-lg border border-admin-gray-200 bg-admin-gray-50 px-3 text-admin-gray-500 transition-colors focus-within:border-admin-brand-500 focus-within:bg-white lg:flex">
-          <Search className="h-4 w-4 shrink-0" />
-          <input
-            type="search"
-            placeholder="Tìm khách hàng, gói, hóa đơn..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-admin-gray-900 outline-none placeholder:text-admin-gray-500"
-          />
-        </label>
 
-        <button
-          type="button"
-          onClick={handleToggleDarkMode}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-admin-gray-200 bg-white text-admin-gray-500 transition-colors hover:bg-admin-gray-50 hover:text-admin-gray-900"
-          aria-label={isDarkMode ? 'Tắt giao diện tối' : 'Bật giao diện tối'}
-        >
-          {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </button>
 
         <button
           type="button"

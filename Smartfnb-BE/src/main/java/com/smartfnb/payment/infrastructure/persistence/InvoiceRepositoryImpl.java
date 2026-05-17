@@ -40,6 +40,12 @@ public class InvoiceRepositoryImpl implements InvoiceRepository {
         return jpaRepository.findByOrderId(orderId).map(this::toDomainEntity);
     }
 
+    // author: Hoàng | date: 2026-05-16 | note: Dùng cho API hủy QR payment pending, không cho hủy payment đã có invoice.
+    @Override
+    public boolean existsByPaymentId(UUID paymentId) {
+        return jpaRepository.existsByPaymentId(paymentId);
+    }
+
     @Override
     public Optional<Invoice> findByInvoiceNumber(String invoiceNumber) {
         return jpaRepository.findByInvoiceNumber(invoiceNumber).map(this::toDomainEntity);

@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@shared/components/ui/select';
 
-// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ gọi khách không dùng thông tin này.
+// Backend table vẫn yêu cầu capacity, FE cố định 1 vì thẻ không dùng thông tin này.
 const DEFAULT_PAGER_CARD_CAPACITY = 1;
 
 const createBulkTablesSchema = z.object({
@@ -135,7 +135,7 @@ export const CreateBulkTablesDialog = ({
         <DialogHeader>
           <DialogTitle>Tạo thẻ hàng loạt</DialogTitle>
           <DialogDescription>
-            Sinh nhanh nhiều thẻ gọi khách theo máy gọi thẻ, tiền tố và số thứ tự.
+            Sinh nhanh nhiều thẻ theo máy gọi thẻ, tiền tố và số thứ tự.
           </DialogDescription>
         </DialogHeader>
 

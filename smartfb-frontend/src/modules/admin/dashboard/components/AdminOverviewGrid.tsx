@@ -36,7 +36,7 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
     {
       title: 'Tổng khách hàng',
       value: formatNumber(overview.totalTenants),
-      helper: `${formatNumber(overview.activeTenants)} khách hàng đang hoạt động`,
+      helper: `khách hàng`,
       icon: Building2,
       tone: 'brand' as const,
     },
@@ -50,7 +50,7 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
     {
       title: 'Khách hàng tạm khóa',
       value: formatNumber(overview.suspendedTenants),
-      helper: 'Cần theo dõi hoặc xử lý billing',
+      helper: 'Cần theo dõi ',
       icon: AlertTriangle,
       tone: 'warning' as const,
     },
@@ -92,20 +92,20 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
             <tbody className="divide-y divide-admin-gray-200">
               {overview.recentTenants.map((tenant) => (
                 <tr key={tenant.id}>
-                  <td className="px-5 py-4">
+                  <td className="px-3 py-4">
                     <p className="font-semibold text-admin-gray-900">{tenant.name}</p>
                     <p className="mt-1 text-sm text-admin-gray-500">{tenant.email}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm text-admin-gray-700">{tenant.planName}</td>
-                  <td className="px-5 py-4">
-                    <span className="inline-flex rounded-full bg-admin-brand-50 px-2.5 py-1 text-xs font-semibold text-admin-brand-600">
+                  <td className="px-3 py-4 text-sm text-admin-gray-700">{tenant.planName}</td>
+                  <td className="px-3 py-4">
+                    <span className="inline-flex rounded-full bg-admin-brand-50 px-2.5 py-1 text-xs text-nowrap font-semibold text-admin-brand-600">
                       {getTenantStatusLabel(tenant.status)}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-sm text-admin-gray-700">
+                  <td className="px-3 py-4 text-sm text-admin-gray-700">
                     {formatNumber(tenant.branchCount)}
                   </td>
-                  <td className="px-5 py-4 text-sm text-admin-gray-700">
+                  <td className="px-3 py-4 text-sm text-admin-gray-700">
                     {formatDate(tenant.createdAt)}
                   </td>
                 </tr>
@@ -118,7 +118,7 @@ export const AdminOverviewGrid = ({ overview }: AdminOverviewGridProps) => {
           <div className="rounded-lg border border-admin-gray-200 bg-white shadow-sm">
             <div className="border-b border-admin-gray-200 px-5 py-4">
               <h2 className="text-base font-semibold text-admin-gray-900">Hóa đơn cần xử lý</h2>
-              <p className="mt-1 text-sm text-admin-gray-500">Các invoice đang ở trạng thái UNPAID.</p>
+              <p className="mt-1 text-sm text-admin-gray-500">Các hoá đơn đang ở trạng thái chưa thanh toán.</p>
             </div>
             <div className="divide-y divide-admin-gray-200">
               {overview.pendingInvoices.length > 0 ? (

@@ -23,6 +23,16 @@ export const step1Schema = z.object({
     .string()
     .trim()
     .max(20, 'Số điện thoại không vượt quá 20 ký tự'),
+  latitude: z
+    .number()
+    .min(-90, 'Vĩ độ không hợp lệ')
+    .max(90, 'Vĩ độ không hợp lệ')
+    .nullable(),
+  longitude: z
+    .number()
+    .min(-180, 'Kinh độ không hợp lệ')
+    .max(180, 'Kinh độ không hợp lệ')
+    .nullable(),
 });
 
 export type Step1FormValues = z.infer<typeof step1Schema>;

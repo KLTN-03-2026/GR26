@@ -102,4 +102,19 @@ public class PositionController {
         updatePositionCommandHandler.handle(command);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
+    /**
+     * Vô hiệu hoá chức vụ (soft delete qua active = false).
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('OWNER')")
+    @Operation(summary = "Vô hiệu hoá chức vụ")
+    public ResponseEntity<ApiResponse<Void>> deletePosition(@PathVariable UUID id) {
+        UpdatePositionCommand command = new UpdatePositionCommand(
+                TenantContext.getCurrentTenantId(), id,
+                null, null, null, false
+        );
+        updatePositionCommandHandler.handle(command);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 }

@@ -4,7 +4,7 @@ import type { PaginationState, TableItem, TableFilters } from '../types/table.ty
 const PAGE_SIZE = 12;
 
 /**
- * Hook quản lý filter và phân trang cho danh sách thẻ gọi khách trong một chi nhánh.
+ * Hook quản lý filter và phân trang cho danh sách thẻ trong một chi nhánh.
  */
 export const useTableFilters = <T extends TableItem>(tables: T[]) => {
   const [filters, setFilters] = useState<TableFilters>({

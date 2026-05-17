@@ -15,9 +15,11 @@ import { Loader2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import type {
   AdminPlan,
+  AdminPlanFeatureKey,
   AdminPlanFeatureFlags,
   AdminPlanFormValues,
 } from '../types/adminPlan.types';
+import { normalizeAdminPlanFeatures } from '../utils/adminPlanFeatureUtils';
 
 interface AdminPlanFormDialogProps {
   open: boolean;
@@ -27,24 +29,26 @@ interface AdminPlanFormDialogProps {
   onSubmit: (values: AdminPlanFormValues) => void;
 }
 
+// Cấu hình feature mặc định khi SYSTEM_ADMIN tạo gói mới
 const DEFAULT_FEATURES: AdminPlanFeatureFlags = {
   POS: true,
   INVENTORY: true,
   PROMOTION: false,
-  REPORT: true,
   AI: false,
+  ADVANCED_REPORT: true,
 };
 
+// Danh sách feature admin được phép cấu hình cho từng gói dịch vụ
 const FEATURE_OPTIONS: Array<{
-  key: keyof AdminPlanFeatureFlags;
+  key: AdminPlanFeatureKey;
   label: string;
   description: string;
 }> = [
   { key: 'POS', label: 'POS', description: 'Bán hàng và quản lý đơn tại quầy' },
   { key: 'INVENTORY', label: 'Kho', description: 'Nhập, xuất, kiểm kho và cảnh báo tồn' },
   { key: 'PROMOTION', label: 'Voucher', description: 'Khuyến mãi và mã giảm giá' },
-  { key: 'REPORT', label: 'Báo cáo', description: 'Doanh thu, kho và nhân sự' },
   { key: 'AI', label: 'AI Forecast', description: 'Dự báo tồn kho bằng AI' },
+  { key: 'ADVANCED_REPORT', label: 'Báo cáo', description: 'Doanh thu, kho và nhân sự' },
 ];
 
 const getInitialFormValues = (plan?: AdminPlan | null): AdminPlanFormValues => {
@@ -68,10 +72,7 @@ const getInitialFormValues = (plan?: AdminPlan | null): AdminPlanFormValues => {
     maxBranches: plan.maxBranches ?? 0,
     maxStaff: plan.maxStaff ?? 0,
     maxMenuItems: plan.maxMenuItems ?? 0,
-    features: {
-      ...DEFAULT_FEATURES,
-      ...plan.features,
-    },
+    features: normalizeAdminPlanFeatures(plan.features),
     isActive: plan.isActive,
   };
 };
@@ -100,7 +101,7 @@ export const AdminPlanFormDialog = ({
     }));
   };
 
-  const updateFeature = (feature: keyof AdminPlanFeatureFlags, value: boolean) => {
+  const updateFeature = (feature: AdminPlanFeatureKey, value: boolean) => {
     setFormValues((currentValues) => ({
       ...currentValues,
       features: {

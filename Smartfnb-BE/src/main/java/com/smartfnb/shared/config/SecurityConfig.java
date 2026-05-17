@@ -65,6 +65,7 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/forgot-password",
+                    "/api/v1/auth/verify-otp", // Author:Hoàng | date:2026-05-15 | note: cho phép xác thực OTP quên mật khẩu không cần JWT
                     "/api/v1/auth/reset-password"
                 ).permitAll()
 

@@ -138,17 +138,6 @@ export const extractAuthClaimsFromAccessToken = (
 };
 
 /**
- * Đọc permissions từ access token để UI có thể dùng ngay cho RBAC
- * mà không cần gọi thêm profile endpoint.
- */
-export const extractPermissionsFromAccessToken = (
-  accessToken: string,
-  fallbackPermissions: string[]
-): string[] => {
-  return extractAuthClaimsFromAccessToken(accessToken)?.permissions ?? fallbackPermissions;
-};
-
-/**
  * Chuyển payload auth từ backend sang session chuẩn hóa của frontend.
  */
 export const buildAuthSession = (

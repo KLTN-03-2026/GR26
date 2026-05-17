@@ -5,6 +5,7 @@ import type {
   OrderAddonSelection,
   OrderDraftItem,
 } from "@modules/order/types/order.types";
+import { OrderQuantityInput } from "@modules/order/components/OrderQuantityInput";
 import { Button } from "@shared/components/ui/button";
 import {
   Dialog,
@@ -167,31 +168,15 @@ export const OrderItemDialog = ({
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 rounded-full border border-orange-100 bg-white px-3 py-2 shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuantity((currentQuantity) =>
-                          Math.max(1, currentQuantity - 1),
-                        )
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-orange-200 hover:text-orange-500"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="min-w-8 text-center text-xl font-black text-slate-900">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuantity((currentQuantity) => currentQuantity + 1)
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white transition-colors hover:bg-orange-600"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <OrderQuantityInput
+                    value={quantity}
+                    disabled={isSubmitting}
+                    containerClassName="border-orange-100 bg-white px-3 py-2 shadow-sm"
+                    inputClassName="h-10 w-16 text-xl"
+                    decreaseButtonClassName="h-10 w-10 border border-slate-200 bg-white hover:border-orange-200 hover:bg-white hover:text-orange-500"
+                    increaseButtonClassName="h-10 w-10 bg-orange-500 text-white hover:bg-orange-600 hover:text-white"
+                    onCommit={(nextQuantity) => setQuantity(Math.max(1, nextQuantity))}
+                  />
                 </div>
               </div>
             </div>

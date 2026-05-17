@@ -1,10 +1,10 @@
 package com.smartfnb.plan.application;
 
-import com.smartfnb.plan.domain.valueobject.FeatureFlag;
 import com.smartfnb.auth.infrastructure.persistence.PlanJpaEntity;
 import com.smartfnb.auth.infrastructure.persistence.PlanRepository;
 import com.smartfnb.plan.application.dto.PlanRequest;
 import com.smartfnb.plan.application.dto.PlanResponse;
+import com.smartfnb.plan.domain.valueobject.FeatureFlag;
 import com.smartfnb.shared.exception.SmartFnbException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +58,8 @@ public class PlanService {
                 .isActive(request.isActive())
                 .build();
 
-        // Convert Map to JSON using FeatureFlag record logic
-        String featuresJson = FeatureFlag.fromMap(request.features()).toJson();
-        newPlan.setFeatures(featuresJson);
+        // Author: Hoàng, date: 2026-05-16, note: Lưu Map để Hibernate bind đúng cột jsonb.
+        newPlan.setFeatures(FeatureFlag.fromMap(request.features()).toMap());
 
         newPlan = planRepository.save(newPlan);
         log.info("Đã tạo mới gói dịch vụ: {}", newPlan.getName());

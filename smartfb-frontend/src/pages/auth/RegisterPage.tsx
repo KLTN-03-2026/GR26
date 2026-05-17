@@ -36,7 +36,7 @@ export default function RegisterPage() {
     register: registerForm,
     handleSubmit,
     control,
-    formState: { errors, touchedFields },
+    formState: { errors },
   } = useForm<RegisterFormValues>({
     defaultValues: {
       ownerName: '',
@@ -52,6 +52,12 @@ export default function RegisterPage() {
     control,
     name: 'password',
   });
+
+  const ownerNameErrorMessage = errors.ownerName?.message;
+  const phoneErrorMessage = errors.phone?.message;
+  const emailErrorMessage = errors.email?.message;
+  const passwordErrorMessage = errors.password?.message;
+  const confirmPasswordErrorMessage = errors.confirmPassword?.message;
 
   const onSubmit = (data: RegisterFormValues) => {
     register({
@@ -85,7 +91,7 @@ export default function RegisterPage() {
 
           {/* Register Form */}
           <div className="rounded-card border border-border bg-card p-8 shadow-card">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
               {/* Thông tin chủ quán */}
               <div className="space-y-4">
                 <h3 className="border-b border-border pb-2 text-lg font-semibold text-text-primary">
@@ -105,9 +111,11 @@ export default function RegisterPage() {
                     id="ownerName"
                     type="text"
                     placeholder="Nhập tên của bạn"
+                    aria-invalid={Boolean(ownerNameErrorMessage)}
+                    aria-describedby={ownerNameErrorMessage ? 'register-owner-name-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 focus:border-primary',
-                      touchedFields.ownerName && errors.ownerName && 'border-red-500 focus:border-red-500'
+                      ownerNameErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('ownerName', {
                       required: 'Tên chủ quán không được để trống',
@@ -118,8 +126,10 @@ export default function RegisterPage() {
                     })}
                   />
                 </div>
-                {touchedFields.ownerName && errors.ownerName && (
-                  <p className="text-sm text-red-600">{errors.ownerName.message}</p>
+                {ownerNameErrorMessage && (
+                  <p id="register-owner-name-error" className="text-sm text-red-600">
+                    {ownerNameErrorMessage}
+                  </p>
                 )}
               </div>
 
@@ -136,9 +146,11 @@ export default function RegisterPage() {
                     id="phone"
                     type="tel"
                     placeholder="09xxxxxxxx"
+                    aria-invalid={Boolean(phoneErrorMessage)}
+                    aria-describedby={phoneErrorMessage ? 'register-phone-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 focus:border-primary',
-                      touchedFields.phone && errors.phone && 'border-red-500 focus:border-red-500'
+                      phoneErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('phone', {
                       pattern: {
@@ -148,8 +160,10 @@ export default function RegisterPage() {
                     })}
                   />
                 </div>
-                {touchedFields.phone && errors.phone && (
-                  <p className="text-sm text-red-600">{errors.phone.message}</p>
+                {phoneErrorMessage && (
+                  <p id="register-phone-error" className="text-sm text-red-600">
+                    {phoneErrorMessage}
+                  </p>
                 )}
               </div>
             </div>
@@ -173,9 +187,11 @@ export default function RegisterPage() {
                     id="email"
                     type="email"
                     placeholder="name@example.com"
+                    aria-invalid={Boolean(emailErrorMessage)}
+                    aria-describedby={emailErrorMessage ? 'register-email-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 focus:border-primary',
-                      touchedFields.email && errors.email && 'border-red-500 focus:border-red-500'
+                      emailErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('email', {
                       required: 'Email không được để trống',
@@ -186,8 +202,10 @@ export default function RegisterPage() {
                     })}
                   />
                 </div>
-                {touchedFields.email && errors.email && (
-                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                {emailErrorMessage && (
+                  <p id="register-email-error" className="text-sm text-red-600">
+                    {emailErrorMessage}
+                  </p>
                 )}
               </div>
 
@@ -204,9 +222,11 @@ export default function RegisterPage() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Ít nhất 8 ký tự"
+                    aria-invalid={Boolean(passwordErrorMessage)}
+                    aria-describedby={passwordErrorMessage ? 'register-password-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 pr-11 focus:border-primary',
-                      touchedFields.password && errors.password && 'border-red-500 focus:border-red-500'
+                      passwordErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('password', {
                       required: 'Mật khẩu không được để trống',
@@ -224,8 +244,10 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {touchedFields.password && errors.password && (
-                  <p className="text-sm text-red-600">{errors.password.message}</p>
+                {passwordErrorMessage && (
+                  <p id="register-password-error" className="text-sm text-red-600">
+                    {passwordErrorMessage}
+                  </p>
                 )}
               </div>
 
@@ -242,9 +264,11 @@ export default function RegisterPage() {
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Nhập lại mật khẩu"
+                    aria-invalid={Boolean(confirmPasswordErrorMessage)}
+                    aria-describedby={confirmPasswordErrorMessage ? 'register-confirm-password-error' : undefined}
                     className={cn(
                       'h-12 border-border pl-11 pr-11 focus:border-primary',
-                      touchedFields.confirmPassword && errors.confirmPassword && 'border-red-500 focus:border-red-500'
+                      confirmPasswordErrorMessage && 'border-red-500 focus:border-red-500'
                     )}
                     {...registerForm('confirmPassword', {
                       required: 'Xác nhận mật khẩu không được để trống',
@@ -259,8 +283,10 @@ export default function RegisterPage() {
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {touchedFields.confirmPassword && errors.confirmPassword && (
-                  <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+                {confirmPasswordErrorMessage && (
+                  <p id="register-confirm-password-error" className="text-sm text-red-600">
+                    {confirmPasswordErrorMessage}
+                  </p>
                 )}
               </div>
 

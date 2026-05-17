@@ -22,7 +22,7 @@ const buildBulkCreatePayloads = (payload: CreateBulkTablesPayload): CreateTableP
 };
 
 /**
- * Hook tạo nhiều thẻ gọi khách cùng lúc bằng cách gọi lại API table hiện có.
+ * Hook tạo nhiều thẻ cùng lúc bằng cách gọi lại API table hiện có.
  */
 export const useCreateBulkTables = () => {
   const queryClient = useQueryClient();

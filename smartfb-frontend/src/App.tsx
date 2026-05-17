@@ -1,5 +1,6 @@
 import { AdminLayout, AppLayout } from '@layouts';
 import { useAuthStore } from '@modules/auth/stores/authStore';
+import { SubscriptionGate } from '@modules/subscription/components/SubscriptionGate';
 import { ROLES } from '@shared/constants/roles';
 import { ROUTES } from '@shared/constants/routes';
 import { getRoleHomePage } from '@shared/utils/getRoleHomePage';
@@ -38,7 +39,9 @@ const renderProtectedRoutes = (
       layout === 'admin' ? (
         <AdminLayout pageTitle={pageTitle}>{withRouteSuspense(element)}</AdminLayout>
       ) : (
-        <AppLayout pageTitle={pageTitle}>{withRouteSuspense(element)}</AppLayout>
+        <SubscriptionGate>
+          <AppLayout pageTitle={pageTitle}>{withRouteSuspense(element)}</AppLayout>
+        </SubscriptionGate>
       );
 
     return (
@@ -59,7 +62,11 @@ const renderProtectedRoutes = (
 };
 
 const renderPosRouteElement = (route: RouteConfigItem) => {
-  return <AppLayout pageTitle={route.pageTitle}>{withRouteSuspense(route.element)}</AppLayout>;
+  return (
+    <SubscriptionGate>
+      <AppLayout pageTitle={route.pageTitle}>{withRouteSuspense(route.element)}</AppLayout>
+    </SubscriptionGate>
+  );
 };
 
 /**

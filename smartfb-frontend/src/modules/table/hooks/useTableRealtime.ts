@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { useAuthStore, selectCurrentBranchId } from '@modules/auth/stores/authStore';
-import { getStompClient } from '@lib/socket';
+import { getStompClient, onStompConnected } from '@lib/socket';
 import type { TableItem } from '../types/table.types';
 import type { StompSubscription } from '@stomp/stompjs';
 
@@ -36,7 +36,7 @@ const mapUsageStatus = (status: string): TableItem['usageStatus'] => {
 };
 
 /**
- * Hook subscribe WebSocket topic thẻ gọi khách của chi nhánh hiện tại.
+ * Hook subscribe WebSocket topic thẻ của chi nhánh hiện tại.
  * Khi BE broadcast trạng thái table mới (OCCUPIED / AVAILABLE),
  * hook cập nhật trực tiếp React Query cache — không refetch,
  * không có loading flicker.
@@ -109,8 +109,15 @@ export const useTableRealtime = () => {
       });
     };
 
-    if (client.connected) {
-      // Client đã connected — subscribe ngay
+    /**
+     * Subscribe topic và lưu subscription để cleanup.
+     * Được gọi cả khi connect lần đầu lẫn khi reconnect.
+     *
+     * FIX: Dùng onStompConnected registry thay vì ghi đè client.onConnect.
+     * Cùng pattern fix với useOrderRealtime và useOrderPageController.
+     */
+    const doSubscribe = () => {
+      subscription?.unsubscribe();
       subscription = client.subscribe(topic, (message) => {
         try {
           handleMessage(JSON.parse(message.body));
@@ -118,24 +125,20 @@ export const useTableRealtime = () => {
           console.error('[WS] useTableRealtime: parse lỗi', message.body);
         }
       });
-    } else {
-      // Client chưa connected — đợi connect xong rồi subscribe
-      const prevOnConnect = client.onConnect;
-      client.onConnect = (frame) => {
-        prevOnConnect?.(frame);
-        subscription = client.subscribe(topic, (message) => {
-          try {
-            handleMessage(JSON.parse(message.body));
-          } catch {
-            console.error('[WS] useTableRealtime: parse lỗi', message.body);
-          }
-        });
-      };
+    };
+
+    // Subscribe ngay nếu đã connected
+    if (client.connected) {
+      doSubscribe();
     }
 
+    // Đăng ký để (re)subscribe khi connect/reconnect thành công
+    const unregisterConnect = onStompConnected(doSubscribe);
+
     return () => {
-      // Cleanup: hủy subscribe khi unmount hoặc branchId thay đổi
+      // Cleanup: hủy subscribe + hủy đăng ký connect listener
       subscription?.unsubscribe();
+      unregisterConnect();
     };
   }, [branchId, queryClient]);
 };

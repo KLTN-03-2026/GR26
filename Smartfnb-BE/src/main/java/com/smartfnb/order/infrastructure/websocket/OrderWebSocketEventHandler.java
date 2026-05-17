@@ -12,15 +12,24 @@ import com.smartfnb.order.infrastructure.persistence.TableJpaRepository;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.event.TransactionPhase;
 
 import java.util.UUID;
 
 /**
  * Lắng nghe các Domain Events từ module Order và broadcast qua WebSocket.
  * Đảm bảo mọi broadcast đều mang đầy đủ dữ liệu đơn hàng bao gồm tên bàn và nhân viên.
+ *
+ * <p>FIX (2026-05-15): Chuyển từ @EventListener sang @TransactionalEventListener(AFTER_COMMIT).
+ * Vấn đề gốc: @EventListener + @Async chạy trên thread khác trước khi @Transactional commit
+ * → enrichAndBroadcast đọc DB thấy dữ liệu cũ hoặc lỗi → WebSocket không broadcast
+ * → User B không nhận được cập nhật giỏ hàng realtime.
+ * AFTER_COMMIT đảm bảo handler chỉ chạy SAU KHI transaction gốc commit thành công,
+ * nên DB read luôn thấy dữ liệu mới nhất.
+ * (Cùng pattern đã áp dụng thành công ở RevenueReportEventHandler.onPaymentCompleted)
  *
  * @author vutq
  * @since 2026-03-31
@@ -38,7 +47,7 @@ public class OrderWebSocketEventHandler {
     /**
      * Xử lý sự kiện đơn hàng mới được tạo.
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleOrderCreated(OrderCreatedEvent event) {
         log.info("Nhận sự kiện đơn hàng mới: {} tại chi nhánh {}", event.orderId(), event.branchId());
@@ -48,7 +57,7 @@ public class OrderWebSocketEventHandler {
     /**
      * Xử lý sự kiện trạng thái đơn hàng thay đổi.
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleOrderStatusChanged(OrderStatusChangedEvent event) {
         log.info("Nhận sự kiện thay đổi trạng thái đơn {} sang {}", event.orderId(), event.newStatus());
@@ -58,7 +67,7 @@ public class OrderWebSocketEventHandler {
     /**
      * Xử lý sự kiện đơn hàng hoàn tất.
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleOrderCompleted(OrderCompletedEvent event) {
         log.info("Nhận sự kiện đơn hàng hoàn tất: {}", event.orderNumber());
@@ -68,7 +77,7 @@ public class OrderWebSocketEventHandler {
     /**
      * Xử lý sự kiện đơn hàng bị hủy.
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleOrderCancelled(OrderCancelledEvent event) {
         log.info("Nhận sự kiện đơn hàng bị hủy: {}", event.orderId());
@@ -82,7 +91,7 @@ public class OrderWebSocketEventHandler {
      * Author: Hoàng | date: 2026-05-05 | note: fix thiếu broadcast khi update order — các client
      * khác cùng bàn không nhận được cập nhật món mới
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handleOrderUpdated(OrderUpdatedEvent event) {
         log.info("Nhận sự kiện cập nhật đơn hàng: {} tại chi nhánh {}", event.orderId(), event.branchId());
@@ -138,3 +147,4 @@ public class OrderWebSocketEventHandler {
         log.debug("Đã broadcast thông tin đầy đủ cho đơn {} tới WebSocket topic", order.getOrderNumber());
     }
 }
+

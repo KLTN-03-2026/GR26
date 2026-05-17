@@ -73,7 +73,6 @@ const AdminTenantsPage = () => {
 
   const tenants = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
-  const totalElements = data?.totalElements ?? 0;
   const activePlanOptions = activePlans ?? [];
   const isStatusActionPending = suspendTenantMutation.isPending || reactivateTenantMutation.isPending;
 
@@ -161,13 +160,7 @@ const AdminTenantsPage = () => {
       <AdminPageToolbar
         meta={(
           <div className="flex flex-col gap-1 text-left md:text-right">
-            <span>
-              Tổng cộng{' '}
-              <span className="font-semibold text-admin-gray-900">
-                {formatNumber(totalElements)}
-              </span>{' '}
-              khách hàng
-            </span>
+           
             <span>
               {isActivePlansLoading ? 'Đang tải danh sách gói...' : `${formatNumber(activePlanOptions.length)} gói active`}
             </span>

@@ -1,5 +1,6 @@
 import { axiosInstance as api } from '@lib/axios';
 import type {
+  CancelPaymentApiResponse,
   InvoiceApiResponse,
   InvoiceOrderSnapshotApiResponse,
   ProcessCashPaymentApiResponse,
@@ -35,6 +36,15 @@ export const paymentService = {
     payload: ProcessQRPaymentRequest
   ): Promise<ProcessQRPaymentApiResponse> => {
     const response = await api.post<ProcessQRPaymentApiResponse>('/payments/qr', payload);
+    return response.data;
+  },
+
+  /**
+   * Hủy thanh toán QR đang chờ xử lý để thu ngân quay lại sửa đơn.
+   * Không gửi lý do vì đây là thao tác kỹ thuật hủy QR cũ trước khi đổi món.
+   */
+  cancelPayment: async (paymentId: string): Promise<CancelPaymentApiResponse> => {
+    const response = await api.post<CancelPaymentApiResponse>(`/payments/${paymentId}/cancel`);
     return response.data;
   },
 

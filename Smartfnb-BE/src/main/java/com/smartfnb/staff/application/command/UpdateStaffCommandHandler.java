@@ -1,8 +1,10 @@
 package com.smartfnb.staff.application.command;
 
 import com.smartfnb.staff.domain.exception.DuplicatePhoneException;
+import com.smartfnb.staff.domain.exception.PositionInactiveException;
 import com.smartfnb.staff.domain.exception.PositionNotFoundException;
 import com.smartfnb.staff.domain.exception.StaffNotFoundException;
+import com.smartfnb.staff.infrastructure.persistence.PositionJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.PositionJpaRepository;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaEntity;
 import com.smartfnb.staff.infrastructure.persistence.StaffJpaRepository;
@@ -11,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 /**
  * Handler xử lý lệnh cập nhật thông tin nhân viên (S-15).
@@ -55,9 +59,13 @@ public class UpdateStaffCommandHandler {
         }
 
         // 3. Validate positionId nếu thay đổi
-        if (command.positionId() != null) {
-            positionJpaRepository.findByIdAndTenantId(command.positionId(), command.tenantId())
+        if (command.positionId() != null && !Objects.equals(command.positionId(), staff.getPositionId())) {
+            PositionJpaEntity position = positionJpaRepository
+                    .findByIdAndTenantId(command.positionId(), command.tenantId())
                     .orElseThrow(() -> new PositionNotFoundException(command.positionId()));
+            if (!position.isActive()) {
+                throw new PositionInactiveException(command.positionId());
+            }
             staff.setPositionId(command.positionId());
         }
 

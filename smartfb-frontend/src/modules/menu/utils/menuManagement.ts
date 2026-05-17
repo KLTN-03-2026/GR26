@@ -24,7 +24,7 @@ export const DEFAULT_MENU_FILTERS: MenuFilters = {
   search: '',
   categories: [],
   statuses: [],
-  sortBy: 'availability-az',
+  sortBy: 'newest',
 };
 
 /**
@@ -244,6 +244,21 @@ const compareMenuAvailabilityThenName = (left: MenuItem, right: MenuItem) => {
 };
 
 /**
+ * Sắp xếp món theo thời điểm cập nhật/tạo mới nhất để món vừa thêm hoặc vừa sửa nổi lên đầu danh sách.
+ */
+export const compareMenuNewestFirst = (left: MenuItem, right: MenuItem) => {
+  const leftTimeline = left.updatedAt ?? left.createdAt;
+  const rightTimeline = right.updatedAt ?? right.createdAt;
+  const timelineDiff = rightTimeline - leftTimeline;
+
+  if (timelineDiff !== 0) {
+    return timelineDiff;
+  }
+
+  return left.name.localeCompare(right.name, 'vi', { sensitivity: 'base' });
+};
+
+/**
  * Tất cả lọc và sort được gom vào util để hook chính chỉ còn orchestration state.
  */
 export const filterAndSortMenus = ({
@@ -268,7 +283,7 @@ export const filterAndSortMenus = ({
       result.sort(compareMenuAvailabilityThenName);
       break;
     case 'newest':
-      result.sort((left, right) => right.createdAt - left.createdAt);
+      result.sort(compareMenuNewestFirst);
       break;
     case 'price-asc':
       result.sort((left, right) => left.price - right.price);

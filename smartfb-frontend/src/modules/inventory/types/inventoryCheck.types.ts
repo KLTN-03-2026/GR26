@@ -144,35 +144,3 @@ export const isDeviationExceedThreshold = (detail: InventoryCheckDetail): boolea
     );
     return deviationPercent > DEVIATION_THRESHOLD_PERCENT;
 };
-
-/**
- * Kết quả tính toán lại phiếu kiểm
- */
-export interface RecalcResult {
-    totalDeviationValue: number;
-    hasExceededThreshold: boolean;
-    itemsExceedThreshold: InventoryCheckDetail[];
-}
-
-/**
- * Tính toán lại toàn bộ phiếu dựa trên details
- */
-export const recalcSession = (details: InventoryCheckDetail[]): RecalcResult => {
-    let totalDeviationValue = 0;
-    const itemsExceedThreshold: InventoryCheckDetail[] = [];
-
-    for (const detail of details) {
-        if (detail.deviationValue !== null) {
-            totalDeviationValue += detail.deviationValue;
-        }
-        if (isDeviationExceedThreshold(detail)) {
-            itemsExceedThreshold.push(detail);
-        }
-    }
-
-    return {
-        totalDeviationValue,
-        hasExceededThreshold: itemsExceedThreshold.length > 0,
-        itemsExceedThreshold,
-    };
-};

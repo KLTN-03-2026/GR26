@@ -11,6 +11,7 @@ import {
 import { formatNumber, formatVND } from '@shared/utils/formatCurrency';
 import { CheckCircle2, Edit3, Eye, EyeOff } from 'lucide-react';
 import type { AdminPlan } from '../types/adminPlan.types';
+import { getEnabledAdminPlanFeatureCount } from '../utils/adminPlanFeatureUtils';
 
 interface AdminPlanTableProps {
   plans: AdminPlan[];
@@ -19,8 +20,9 @@ interface AdminPlanTableProps {
   onDeactivatePlan: (plan: AdminPlan) => void;
 }
 
-const getEnabledFeatureCount = (plan: AdminPlan): number => {
-  return Object.values(plan.features ?? {}).filter(Boolean).length;
+const getLimitDisplay = (value: number | null): string => {
+  if (value === null) return 'Không giới hạn';
+  return formatNumber(value);
 };
 
 /**
@@ -56,12 +58,12 @@ export const AdminPlanTable = ({
                 {formatVND(plan.priceMonthly)}
               </TableCell>
               <TableCell className="text-sm text-admin-gray-600">
-                <p>{formatNumber(plan.maxBranches ?? 0)} chi nhánh</p>
-                <p>{formatNumber(plan.maxStaff ?? 0)} nhân viên</p>
-                <p>{formatNumber(plan.maxMenuItems ?? 0)} món</p>
+                <p>{getLimitDisplay(plan.maxBranches)} chi nhánh</p>
+                <p>{getLimitDisplay(plan.maxStaff)} nhân viên</p>
+                <p>{getLimitDisplay(plan.maxMenuItems)} món</p>
               </TableCell>
               <TableCell className="text-sm text-admin-gray-600">
-                {formatNumber(getEnabledFeatureCount(plan))} tính năng bật
+                {formatNumber(getEnabledAdminPlanFeatureCount(plan))} tính năng bật
               </TableCell>
               <TableCell>
                 <span className={plan.isActive

@@ -3,9 +3,93 @@ import { isAxiosError } from 'axios';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { queryKeys } from '@shared/constants/queryKeys';
 import { shiftService } from '../services/shiftService';
-import type { RegisterShiftPayload, UpdateShiftSchedulePayload } from '../types/shift.types';
+import type {
+    CheckInShiftPayload,
+    RegisterShiftPayload,
+    UpdateShiftSchedulePayload,
+} from '../types/shift.types';
 import { useToast } from '@shared/hooks/useToast';
 import type { ApiResponse } from '@shared/types/api.types';
+
+const getGeolocationErrorMessage = (error: GeolocationPositionError): string => {
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            return 'Vui lòng cấp quyền vị trí để check-in tại chi nhánh.';
+        case error.POSITION_UNAVAILABLE:
+            return 'Không thể xác định vị trí hiện tại. Vui lòng bật GPS hoặc thử lại.';
+        case error.TIMEOUT:
+            return 'Lấy vị trí quá thời gian chờ. Vui lòng kiểm tra GPS và thử lại.';
+        default:
+            return 'Không thể lấy vị trí hiện tại để check-in.';
+    }
+};
+
+/**
+ * Gọi navigator.geolocation.getCurrentPosition với options cho trước.
+ */
+const requestPosition = (options: PositionOptions): Promise<CheckInShiftPayload> =>
+    new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                });
+            },
+            reject,
+            options,
+        );
+    });
+
+/**
+ * Lấy tọa độ hiện tại trước khi check-in để backend kiểm tra khoảng cách tới chi nhánh.
+ *
+ * Chiến lược fallback:
+ *  1. Thử GPS chính xác cao (enableHighAccuracy: true, timeout 15s).
+ *  2. Nếu thất bại (desktop không có GPS, extension chặn, v.v.)
+ *     → fallback sang WiFi / IP-based (enableHighAccuracy: false, timeout 20s).
+ */
+const getCurrentCheckInLocation = async (): Promise<CheckInShiftPayload> => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        throw new Error(
+            'Trình duyệt không hỗ trợ lấy vị trí. Vui lòng dùng thiết bị có GPS để check-in.',
+        );
+    }
+
+    // Lần 1: high accuracy (GPS)
+    try {
+        console.log('[Check-in] Đang lấy vị trí high-accuracy (GPS)…');
+        const highAccResult = await requestPosition({
+            enableHighAccuracy: true,
+            timeout: 15_000,
+            maximumAge: 60_000, // chấp nhận cache ≤ 1 phút
+        });
+        console.log('[Check-in] ✅ High-accuracy OK:', highAccResult);
+        return highAccResult;
+    } catch (err) {
+        console.warn('[Check-in] ❌ High-accuracy failed:', err);
+        console.log('[Check-in] Thử fallback low-accuracy (WiFi/IP)…');
+    }
+
+    // Lần 2: low accuracy (WiFi / IP)
+    try {
+        const lowAccResult = await requestPosition({
+            enableHighAccuracy: false,
+            timeout: 20_000,
+            maximumAge: 120_000, // chấp nhận cache ≤ 2 phút
+        });
+        console.log('[Check-in] ✅ Low-accuracy OK:', lowAccResult);
+        return lowAccResult;
+    } catch (error) {
+        console.error('[Check-in] ❌ Low-accuracy cũng failed:', error);
+        const geoError = error as GeolocationPositionError;
+        throw new Error(
+            geoError?.code != null
+                ? getGeolocationErrorMessage(geoError)
+                : 'Không thể lấy vị trí hiện tại để check-in. Hãy thử tắt extension chặn vị trí hoặc dùng trình duyệt khác.',
+        );
+    }
+};
 
 const getShiftScheduleMutationErrorMessage = (error: unknown, fallbackMessage: string) => {
     if (isAxiosError<ApiResponse<unknown>>(error)) {
@@ -115,7 +199,8 @@ export const useShiftSchedules = () => {
     // Mutation: check-in
     const checkInMutation = useMutation({
         mutationFn: async (shiftScheduleId: string) => {
-            await shiftService.checkIn(shiftScheduleId);
+            const location = await getCurrentCheckInLocation();
+            await shiftService.checkIn(shiftScheduleId, location);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.shifts.schedules.all });

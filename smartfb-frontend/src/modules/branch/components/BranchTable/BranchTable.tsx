@@ -53,7 +53,7 @@ export const BranchTable = ({
             <TableRow className="hover:bg-cream border-b-0">
               <TableHead>CHI NHÁNH</TableHead>
               <TableHead>MÃ CHI NHÁNH</TableHead>
-              <TableHead>ĐỊA CHỈ</TableHead>
+              <TableHead className="w-[280px] max-w-[280px]">ĐỊA CHỈ</TableHead>
               <TableHead>ĐIỆN THOẠI</TableHead>
               <TableHead>TRẠNG THÁI</TableHead>
               <TableHead>NGÀY TẠO</TableHead>

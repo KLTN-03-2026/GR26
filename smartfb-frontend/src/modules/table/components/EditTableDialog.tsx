@@ -105,7 +105,7 @@ export const EditTableDialog = ({ open, onOpenChange, table, zones, onSuccess }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa thẻ gọi khách</DialogTitle>
+          <DialogTitle>Chỉnh sửa thẻ</DialogTitle>
           <DialogDescription>
             Cập nhật thông tin thẻ <strong>{table.name}</strong>
           </DialogDescription>

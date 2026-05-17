@@ -14,8 +14,8 @@ public record PaymentResponse(
     UUID id,
     UUID orderId,
     BigDecimal amount,
-    String method,         // CASH, VIETQR, MOMO, ZALOPAY
-    String status,         // PENDING, COMPLETED, FAILED, REFUNDED
+    String method,         // CASH, VIETQR, MOMO, ZALOPAY, PAYOS
+    String status,         // PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
     String transactionId,
     Instant paidAt,
     Instant createdAt
