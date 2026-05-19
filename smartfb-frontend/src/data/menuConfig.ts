@@ -47,13 +47,13 @@ export const menuConfig: MenuSection[] = [
         roles: [ROLES.OWNER, ROLES.STAFF],
         children: [
           { title: 'Dashboard', icon: LayoutDashboard, path: ROUTES.OWNER.DASHBOARD, roles: [ROLES.OWNER] },
-          {
-            title: 'Dashboard',
-            icon: LayoutDashboard,
-            path: ROUTES.STAFF.DASHBOARD,
-            roles: [ROLES.STAFF],
-            requiredPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD,
-          },
+          // {
+          //   title: 'Dashboard',
+          //   icon: LayoutDashboard,
+          //   path: ROUTES.STAFF.DASHBOARD,
+          //   roles: [ROLES.STAFF],
+          //   requiredPermissions: STAFF_ROUTE_PERMISSIONS.DASHBOARD,
+          // },
         ],
       },
     ],

@@ -118,15 +118,6 @@ export const TemporaryInvoiceDialog = ({
                     </span>
                   </div>
 
-                  {Array.isArray(item.addons) && item.addons.length > 0 && (
-                    <p className="pl-2 text-xs italic text-slate-500">
-                      +{' '}
-                      {item.addons
-                        .map((addon) => `${addon.addonName} x${addon.quantity}`)
-                        .join(', ')}
-                    </p>
-                  )}
-
                   {item.notes && (
                     <p className="pl-2 text-xs italic text-amber-600">/ {item.notes}</p>
                   )}

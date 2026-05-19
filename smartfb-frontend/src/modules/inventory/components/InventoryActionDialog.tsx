@@ -21,6 +21,15 @@ import { NumericInput } from '@shared/components/common/NumericInput';
 import { Label } from '@shared/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@shared/components/ui/radio-group';
 import { Textarea } from '@shared/components/ui/textarea';
+import {
+  calculatePackagingConversion,
+  formatComputedCurrency,
+  formatComputedNumber,
+  resolvePackageLabelSuggestions,
+  resolvePackagingUnitOptions,
+  resolvePackagingUnitSelection,
+  type PackagingPriceMode,
+} from '@modules/inventory/utils/unitConversion';
 import type {
   AdjustStockPayload,
   InventoryCatalogItemType,
@@ -33,64 +42,6 @@ const inventoryUuidMessage = 'ID nguyên liệu phải đúng định dạng UUI
 
 type InventoryActionMode = 'import' | 'adjust' | 'waste';
 type ImportInputMode = 'standard' | 'packaging';
-type PackagingPriceMode = 'total' | 'per-package';
-
-interface PackagingUnitOption {
-  value: string;
-  label: string;
-  factorToStandard: number;
-  keywords?: string[];
-}
-
-const COMMON_PACKAGE_LABELS = ['thùng', 'hộp', 'chai', 'can', 'bao', 'gói', 'bịch', 'túi', 'dây', 'vỉ'] as const;
-const VOLUME_PACKAGE_LABEL_SET = new Set(['thùng', 'hộp', 'chai', 'can', 'bịch']);
-const WEIGHT_PACKAGE_LABEL_SET = new Set(['bao', 'gói', 'hộp', 'túi', 'can']);
-const COUNT_PACKAGE_LABEL_SET = new Set(['dây', 'gói', 'thùng', 'hộp', 'túi']);
-
-interface UnitFamilyOption {
-  normalizedValue: string;
-  label: string;
-  factorToBase: number;
-  aliases: string[];
-}
-
-// Nhóm đơn vị thể tích có quy đổi cố định về cùng hệ.
-const VOLUME_UNIT_OPTIONS: UnitFamilyOption[] = [
-  { normalizedValue: 'ml', label: 'ml', factorToBase: 1, aliases: ['ml', 'mililit', 'millilit', 'milliliter'] },
-  { normalizedValue: 'l', label: 'L', factorToBase: 1000, aliases: ['l', 'lit', 'liter', 'litre'] },
-];
-
-// Nhóm đơn vị khối lượng có quy đổi cố định về cùng hệ.
-const WEIGHT_UNIT_OPTIONS: UnitFamilyOption[] = [
-  { normalizedValue: 'g', label: 'g', factorToBase: 1, aliases: ['g', 'gr', 'gram', 'gam'] },
-  { normalizedValue: 'kg', label: 'kg', factorToBase: 1000, aliases: ['kg', 'kilogram', 'kilo', 'ky', 'ki'] },
-];
-
-// Các đơn vị đếm chỉ quy đổi 1:1 với chính đơn vị chuẩn đang lưu trong DB.
-const COUNT_UNIT_OPTIONS: UnitFamilyOption[] = [
-  { normalizedValue: 'cai', label: 'cái', factorToBase: 1, aliases: ['cai', 'chiec'] },
-  { normalizedValue: 'qua', label: 'quả', factorToBase: 1, aliases: ['qua', 'trai'] },
-  { normalizedValue: 'chai', label: 'chai', factorToBase: 1, aliases: ['chai'] },
-  { normalizedValue: 'lon', label: 'lon', factorToBase: 1, aliases: ['lon'] },
-  { normalizedValue: 'ly', label: 'ly', factorToBase: 1, aliases: ['ly', 'coc', 'cup'] },
-  { normalizedValue: 'ong', label: 'ống', factorToBase: 1, aliases: ['ong'] },
-  { normalizedValue: 'nap', label: 'nắp', factorToBase: 1, aliases: ['nap'] },
-  { normalizedValue: 'muong', label: 'muỗng', factorToBase: 1, aliases: ['muong', 'thia'] },
-  { normalizedValue: 'hop', label: 'hộp', factorToBase: 1, aliases: ['hop'] },
-  { normalizedValue: 'goi', label: 'gói', factorToBase: 1, aliases: ['goi'] },
-  { normalizedValue: 'tui', label: 'túi', factorToBase: 1, aliases: ['tui'] },
-  { normalizedValue: 'bich', label: 'bịch', factorToBase: 1, aliases: ['bich'] },
-  { normalizedValue: 'vi', label: 'vỉ', factorToBase: 1, aliases: ['vi'] },
-  { normalizedValue: 'bao', label: 'bao', factorToBase: 1, aliases: ['bao'] },
-  { normalizedValue: 'can', label: 'can', factorToBase: 1, aliases: ['can'] },
-  { normalizedValue: 'binh', label: 'bình', factorToBase: 1, aliases: ['binh'] },
-  { normalizedValue: 'khay', label: 'khay', factorToBase: 1, aliases: ['khay'] },
-  { normalizedValue: 'me', label: 'mẻ', factorToBase: 1, aliases: ['me'] },
-  { normalizedValue: 'ca', label: 'ca', factorToBase: 1, aliases: ['ca'] },
-  { normalizedValue: 'day', label: 'dây', factorToBase: 1, aliases: ['day'] },
-  { normalizedValue: 'bo', label: 'bó', factorToBase: 1, aliases: ['bo'] },
-  { normalizedValue: 'xap', label: 'xấp', factorToBase: 1, aliases: ['xap'] },
-];
 
 const importStockSchema = z
   .object({
@@ -195,130 +146,7 @@ interface InventoryActionDialogProps {
   onWasteSubmit?: (payload: WasteRecordPayload) => void;
 }
 
-const roundInventoryNumber = (value: number) => Number(value.toFixed(4));
-
-const formatComputedNumber = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 }).format(value);
-
-const formatComputedCurrency = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value);
-
-const normalizeUnitValue = (unit: string | null | undefined) =>
-  unit
-    ?.normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .trim()
-    .toLowerCase() ?? '';
-
 const capitalizeLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-
-const buildUnitKeywords = (keywords: Array<string | null | undefined>) =>
-  Array.from(
-    new Set(
-      keywords
-        .map((keyword) => keyword?.trim())
-        .filter((keyword): keyword is string => Boolean(keyword)),
-    ),
-  );
-
-const buildPackagingUnitOption = (
-  value: string,
-  label: string,
-  factorToStandard: number,
-  keywords: Array<string | null | undefined> = [],
-): PackagingUnitOption => ({
-  value,
-  label,
-  factorToStandard,
-  keywords: buildUnitKeywords([value, label, ...keywords]),
-});
-
-const dedupePackagingUnitOptions = (options: PackagingUnitOption[]) => {
-  const seenValues = new Set<string>();
-
-  return options.filter((option) => {
-    const normalizedValue = normalizeUnitValue(option.value);
-
-    if (!normalizedValue || seenValues.has(normalizedValue)) {
-      return false;
-    }
-
-    seenValues.add(normalizedValue);
-    return true;
-  });
-};
-
-const filterCommonPackageLabels = (allowedLabels: ReadonlySet<string>) =>
-  COMMON_PACKAGE_LABELS.filter((packageLabel) => allowedLabels.has(packageLabel));
-
-const findUnitFamilyOption = (options: UnitFamilyOption[], normalizedUnit: string) =>
-  options.find(
-    (option) =>
-      option.normalizedValue === normalizedUnit || option.aliases.includes(normalizedUnit),
-  );
-
-const isVolumeUnit = (normalizedUnit: string) =>
-  Boolean(findUnitFamilyOption(VOLUME_UNIT_OPTIONS, normalizedUnit));
-
-const isWeightUnit = (normalizedUnit: string) =>
-  Boolean(findUnitFamilyOption(WEIGHT_UNIT_OPTIONS, normalizedUnit));
-
-const isCountUnit = (normalizedUnit: string) =>
-  Boolean(findUnitFamilyOption(COUNT_UNIT_OPTIONS, normalizedUnit));
-
-const buildConvertiblePackagingUnitOptions = (
-  standardUnit: string | null | undefined,
-  options: UnitFamilyOption[],
-): PackagingUnitOption[] | null => {
-  const standardUnitLabel = standardUnit?.trim();
-  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
-  const matchedStandardUnit = findUnitFamilyOption(options, normalizedStandardUnit);
-
-  if (!standardUnitLabel || !matchedStandardUnit) {
-    return null;
-  }
-
-  const standardOption = buildPackagingUnitOption(
-    standardUnitLabel,
-    standardUnitLabel,
-    1,
-    [matchedStandardUnit.label, ...matchedStandardUnit.aliases],
-  );
-
-  const alternateOptions = options
-    .filter((option) => option.normalizedValue !== matchedStandardUnit.normalizedValue)
-    .map((option) =>
-      buildPackagingUnitOption(
-        option.label,
-        option.label,
-        option.factorToBase / matchedStandardUnit.factorToBase,
-        option.aliases,
-      ),
-    );
-
-  return dedupePackagingUnitOptions([standardOption, ...alternateOptions]);
-};
-
-const resolveCountUnitOptions = (standardUnit: string | null | undefined): PackagingUnitOption[] | null => {
-  const standardUnitLabel = standardUnit?.trim();
-  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
-  const matchedStandardUnit = findUnitFamilyOption(COUNT_UNIT_OPTIONS, normalizedStandardUnit);
-
-  if (!standardUnitLabel || !matchedStandardUnit) {
-    return null;
-  }
-
-  return [
-    buildPackagingUnitOption(
-      standardUnitLabel,
-      standardUnitLabel,
-      1,
-      [matchedStandardUnit.label, ...matchedStandardUnit.aliases],
-    ),
-  ];
-};
 
 const buildInventoryActionCopy = (
   mode: InventoryActionMode,
@@ -358,78 +186,6 @@ const resolveItemLabel = (itemOptions: InventoryItemOption[], itemId: string) =>
   }
 
   return matchedItem.unit ? `${matchedItem.itemName} (${matchedItem.unit})` : matchedItem.itemName;
-};
-
-// Danh sách đơn vị gợi ý đầy đủ khi item chưa được gán đơn vị chuẩn.
-const FALLBACK_UNIT_OPTIONS: PackagingUnitOption[] = [
-  ...VOLUME_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
-  ...WEIGHT_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
-  ...COUNT_UNIT_OPTIONS.map((u) => buildPackagingUnitOption(u.label, u.label, 1, u.aliases)),
-];
-
-/**
- * FE quy đổi đơn vị nhập thực tế về Đơn vị mà backend đang lưu kho.
- * Ví dụ: item chuẩn là `ml`, user nhập `10 hộp x 1 L` thì FE sẽ gửi `10000 ml`.
- * Nếu item chưa có đơn vị chuẩn, trả về toàn bộ đơn vị phổ biến để user tự chọn.
- */
-const resolvePackagingUnitOptions = (standardUnit: string | null | undefined): PackagingUnitOption[] => {
-  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
-
-  if (isVolumeUnit(normalizedStandardUnit)) {
-    return buildConvertiblePackagingUnitOptions(standardUnit, VOLUME_UNIT_OPTIONS) ?? [];
-  }
-
-  if (isWeightUnit(normalizedStandardUnit)) {
-    return buildConvertiblePackagingUnitOptions(standardUnit, WEIGHT_UNIT_OPTIONS) ?? [];
-  }
-
-  if (isCountUnit(normalizedStandardUnit)) {
-    return resolveCountUnitOptions(standardUnit) ?? [];
-  }
-
-  // Item chưa có đơn vị chuẩn hoặc đơn vị không nhận dạng được →
-  // hiển thị toàn bộ đơn vị phổ biến để user chọn phù hợp với thực tế.
-  return FALLBACK_UNIT_OPTIONS;
-};
-
-/**
- * Chỉ chấp nhận custom value nếu map được về đơn vị chuẩn của item hoặc cùng hệ quy đổi hợp lệ.
- */
-const resolvePackagingUnitSelection = (inputValue: string, standardUnit: string | null | undefined) => {
-  const normalizedInputValue = normalizeUnitValue(inputValue);
-
-  if (!normalizedInputValue) {
-    return null;
-  }
-
-  return (
-    resolvePackagingUnitOptions(standardUnit).find((option) =>
-      [option.value, option.label, ...(option.keywords ?? [])].some(
-        (candidate) => normalizeUnitValue(candidate) === normalizedInputValue,
-      ),
-    ) ?? null
-  );
-};
-
-/**
- * Gợi ý đơn vị đóng gói thường gặp theo loại nguyên liệu trong quán.
- */
-const resolvePackageLabelSuggestions = (standardUnit: string | null | undefined) => {
-  const normalizedStandardUnit = normalizeUnitValue(standardUnit);
-
-  if (isVolumeUnit(normalizedStandardUnit)) {
-    return filterCommonPackageLabels(VOLUME_PACKAGE_LABEL_SET);
-  }
-
-  if (isWeightUnit(normalizedStandardUnit)) {
-    return filterCommonPackageLabels(WEIGHT_PACKAGE_LABEL_SET);
-  }
-
-  if (isCountUnit(normalizedStandardUnit)) {
-    return filterCommonPackageLabels(COUNT_PACKAGE_LABEL_SET);
-  }
-
-  return COMMON_PACKAGE_LABELS;
 };
 
 /**
@@ -598,19 +354,19 @@ export const InventoryActionDialog = ({
     importForm.clearErrors('contentUnit');
   }, [importForm, packagingUnitOptions]);
 
-  const selectedPackagingUnitOption = packagingUnitOptions.find((option) => option.value === watchedContentUnit);
-  const selectedPackagingUnitLabel = selectedPackagingUnitOption?.label ?? standardUnitLabel;
-  const derivedPackagingQuantity = roundInventoryNumber(
-    watchedPackageCount * watchedContentPerPackage * (selectedPackagingUnitOption?.factorToStandard ?? 1),
-  );
-  const derivedPackagingTotalCost =
-    watchedPackagingPriceMode === 'per-package'
-      ? roundInventoryNumber(watchedPackageCount * watchedCostPerPackage)
-      : roundInventoryNumber(watchedTotalCost);
-  const derivedPackagingCostPerUnit =
-    derivedPackagingQuantity > 0
-      ? roundInventoryNumber(derivedPackagingTotalCost / derivedPackagingQuantity)
-      : 0;
+  const packagingConversion = calculatePackagingConversion({
+    packageCount: watchedPackageCount,
+    contentPerPackage: watchedContentPerPackage,
+    contentUnit: watchedContentUnit,
+    standardUnit: selectedImportItem?.unit,
+    packagingPriceMode: watchedPackagingPriceMode,
+    totalCost: watchedTotalCost,
+    costPerPackage: watchedCostPerPackage,
+  });
+  const selectedPackagingUnitLabel = packagingConversion.contentUnitLabel || standardUnitLabel;
+  const derivedPackagingQuantity = packagingConversion.quantity;
+  const derivedPackagingTotalCost = packagingConversion.totalCost;
+  const derivedPackagingCostPerUnit = packagingConversion.unitPrice;
 
   const selectedItemLabel = useMemo(() => {
     const selectedItemId =

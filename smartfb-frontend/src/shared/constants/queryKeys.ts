@@ -49,6 +49,8 @@ export const queryKeys = {
   // Staff
   staff: {
     all: ['staff'] as const,
+    // Prefix danh sach nhan vien, dung de refresh list ma khong refetch detail da bi xoa.
+    lists: ['staff', 'list'] as const,
     list: (filters?: Record<string, unknown>) => ['staff', 'list', filters] as const,
     detail: (id: string) => ['staff', 'detail', id] as const,
   },
@@ -133,6 +135,7 @@ export const queryKeys = {
   subscriptions: {
     all: ['subscriptions'] as const,
     current: ['subscriptions', 'current'] as const,
+    usage: ['subscriptions', 'usage'] as const,
     plans: ['subscriptions', 'plans'] as const,
     invoices: (filters?: Record<string, unknown>) => ['subscriptions', 'invoices', filters] as const,
   },

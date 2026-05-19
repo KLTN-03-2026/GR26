@@ -74,7 +74,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
       },
       {
         onSuccess: () => {
-          toast.success('Đã lưu cài đặt — AI đang retrain trong nền');
+          toast.success('Đã lưu cài đặt. AI đang retrain trong nền, vui lòng chờ khoảng 5 phút để xem kết quả mới.');
           handleOpenChange(false);
         },
         onError: () => {
@@ -119,10 +119,10 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto ">
             {/* ── Dữ liệu huấn luyện ─────────────────────────── */}
             {config && (
-              <div className="px-5 py-5 border-b border-border">
+              <div className="px-5 py-5 border-b  border-border">
                 <div className="flex items-center gap-2 mb-1">
                   <Database className="h-4 w-4 text-text-secondary" />
                   <p className="text-sm font-semibold text-text-primary">Dữ liệu huấn luyện</p>
@@ -255,7 +255,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
             </div>
 
 
-            {/* ── Pattern cuối tuần ──────────────────────────── */}
+            {/* ── Pattern cuối tuần ────────────────────────────
             <div className="px-5 py-5 border-b border-border">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-2">
@@ -269,10 +269,10 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
                 </div>
                 <Switch checked={weeklySeasonality} onCheckedChange={setDraftWeeklySeasonality} />
               </div>
-            </div>
+            </div> */}
 
             {/* ── Thông tin hệ thống (readonly) ──────────────── */}
-            {config && (
+            {/* {config && (
               <div className="px-5 py-5 border-b border-border">
                 <div className="flex items-center gap-2 mb-3">
                   <Database className="h-4 w-4 text-text-secondary" />
@@ -308,7 +308,7 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* ── Nút lưu ───────────────────────────────────── */}
             <div className="px-5 py-5">
@@ -329,9 +329,9 @@ export const ForecastConfigSheet = ({ branchId }: ForecastConfigSheetProps) => {
                   </>
                 )}
               </Button>
-              <p className="mt-2 text-center text-[10px] text-text-secondary">
+              {/* <p className="mt-2 text-center text-[10px] text-text-secondary">
                 Model sẽ được retrain tự động trong nền sau khi lưu
-              </p>
+              </p> */}
             </div>
           </div>
         )}

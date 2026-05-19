@@ -20,7 +20,7 @@ export const createCategorySchema = z.object({
     .number()
     .int('Thứ tự hiển thị phải là số nguyên')
     .min(0, 'Thứ tự hiển thị không được âm'),
-});
+}).strict();
 
 /**
  * Type inference cho form tạo danh mục.

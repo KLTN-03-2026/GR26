@@ -5,7 +5,6 @@ import { usePermission } from '@shared/hooks/usePermission';
 import { useDebounce } from '@shared/hooks/useDebounce';
 import { PERMISSIONS } from '@shared/constants/permissions';
 import { DEFAULT_PAGE_SIZE } from '../constants/menu.constants';
-import { useAddons } from './useAddons';
 import { useBranchMenuItems } from './useBranchMenuItems';
 import { useCategories } from './useCategories';
 import { useDeleteMenu } from './useDeleteMenu';
@@ -64,13 +63,6 @@ export const useMenuManagement = () => {
 
   const { data, isLoading, isError, refetch, isFetching } = useMenus(menuQueryParams);
   const {
-    data: addonResponse,
-    isLoading: isAddonLoading,
-    isError: isAddonError,
-    isFetching: isAddonFetching,
-    refetch: refetchAddons,
-  } = useAddons();
-  const {
     data: categoryResponse,
     isLoading: isCategoryLoading,
     isError: isCategoryError,
@@ -83,7 +75,6 @@ export const useMenuManagement = () => {
   const { mutate: updateBranchMenuItem, isPending: isUpdatingBranchMenuItem } = useUpdateBranchMenuItem();
 
   const rawMenuItems = useMemo(() => data?.data ?? [], [data?.data]);
-  const rawAddons = useMemo(() => addonResponse?.data ?? [], [addonResponse?.data]);
   const rawCategories = useMemo(() => categoryResponse?.data ?? [], [categoryResponse?.data]);
 
   const {
@@ -287,9 +278,6 @@ export const useMenuManagement = () => {
     editingMenu,
     filteredMenuCount: filteredAndSortedMenus.length,
     filters,
-    isAddonError,
-    isAddonFetching,
-    isAddonLoading,
     isBranchConfigError,
     isBranchConfigFetching,
     isBranchConfigLoading,
@@ -305,7 +293,6 @@ export const useMenuManagement = () => {
     isUpdatingBranchMenuItem,
     nextCategoryDisplayOrder,
     paginatedMenus,
-    rawAddons,
     selectedBranchId,
     selectedBranchName,
     showFilter,
@@ -330,9 +317,6 @@ export const useMenuManagement = () => {
     },
     onRefetchMenus: () => {
       void refetch();
-    },
-    onRetryAddons: () => {
-      void refetchAddons();
     },
     onSubmitBranchConfig: handleSubmitBranchConfig,
     onToggleMenu: handleToggleMenu,

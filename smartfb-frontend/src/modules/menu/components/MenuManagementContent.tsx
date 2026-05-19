@@ -1,6 +1,5 @@
 import { PanelLeftClose, PanelLeftOpen, SlidersHorizontal } from 'lucide-react';
 import { AddMenuDialog } from '@modules/menu/components/AddMenuDialog/AddMenuDialog';
-import { AddonManagementDialog } from '@modules/menu/components/AddonManagementDialog/AddonManagementDialog';
 import { BranchMenuConfigDialog } from '@modules/menu/components/BranchMenuConfigDialog/BranchMenuConfigDialog';
 import { CategoryManagementDialog } from '@modules/menu/components/CategoryManagementDialog/CategoryManagementDialog';
 import { MenuCard } from '@modules/menu/components/MenuCard/MenuCard';
@@ -38,9 +37,6 @@ export const MenuManagementContent = () => {
     editingMenu,
     filteredMenuCount,
     filters,
-    isAddonError,
-    isAddonFetching,
-    isAddonLoading,
     isBranchConfigFetching,
     isBranchConfigLoading,
     isBranchMode,
@@ -65,13 +61,11 @@ export const MenuManagementContent = () => {
     onPageChange,
     onRefetchCategories,
     onRefetchMenus,
-    onRetryAddons,
     onSubmitBranchConfig,
     onToggleMenu,
     onUpdateBranchConfigOpen,
     onUpdateEditingMenuOpen,
     paginatedMenus,
-    rawAddons,
     selectedBranchId,
     selectedBranchName,
     setIsFilterSheetOpen,
@@ -132,8 +126,8 @@ export const MenuManagementContent = () => {
                       ? ``
                       : ``
                     : canManageMenu
-                      ? 'Quản lý món ăn, danh mục và topping của hệ thống.'
-                      : 'Xem danh sách món ăn, danh mục và topping hiện có.'}
+                      ? 'Quản lý món ăn và danh mục của hệ thống.'
+                      : 'Xem danh sách món ăn và danh mục hiện có.'}
               </p>
             </div>
 
@@ -195,14 +189,6 @@ export const MenuManagementContent = () => {
                     nextDisplayOrder={nextCategoryDisplayOrder}
                     triggerClassName="w-full sm:w-auto"
                     onRetry={onRefetchCategories}
-                  />
-                  <AddonManagementDialog
-                    addons={rawAddons}
-                    isLoading={isAddonLoading}
-                    isError={isAddonError}
-                    isFetching={isAddonFetching}
-                    triggerClassName="w-full sm:w-auto"
-                    onRetry={onRetryAddons}
                   />
                   <AddMenuDialog
                     categories={categoryManagementItems}

@@ -313,17 +313,6 @@ export default function OrderDetailPage() {
                         <p className="truncate text-lg font-black text-slate-900">{item.itemName}</p>
                       </div>
 
-                      {Array.isArray(item.addons) && item.addons.length > 0 && (
-                        <div className="mt-3 rounded-2xl bg-white px-3 py-2 text-sm text-slate-500">
-                          <p className="font-semibold text-slate-700">Addon</p>
-                          <p className="mt-1">
-                            {item.addons
-                              .map((addon) => `${addon.addonName} x${addon.quantity}`)
-                              .join(', ')}
-                          </p>
-                        </div>
-                      )}
-
                       {item.notes && (
                         <p className="mt-3 rounded-2xl bg-orange-50 px-3 py-2 text-sm text-orange-600">
                           Ghi chú: {item.notes}

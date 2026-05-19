@@ -15,7 +15,6 @@ export default function OrderPage() {
   const [showCart, setShowCart] = useState(true);
   const [isCartSheetOpen, setIsCartSheetOpen] = useState(false);
   const {
-    addons,
     cart,
     categories,
     checkoutButtonLabel,
@@ -92,7 +91,7 @@ export default function OrderPage() {
         <div className="max-w-md text-center">
           <p className="text-lg font-bold text-slate-800">Không thể tải dữ liệu order</p>
           <p className="mt-2 text-sm text-slate-500">
-            Kiểm tra lại API menu, category, addon hoặc dữ liệu order của thẻ trước khi thao tác.
+            Kiểm tra lại API menu, category hoặc dữ liệu order của thẻ trước khi thao tác.
           </p>
         </div>
       </div>
@@ -160,7 +159,6 @@ export default function OrderPage() {
         open={Boolean(dialogMenuItem)}
         menuItem={dialogMenuItem}
         initialItem={editingCartItem}
-        addons={addons}
         isSubmitting={isSyncingDraft}
         onOpenChange={(open) => {
           if (!open) {

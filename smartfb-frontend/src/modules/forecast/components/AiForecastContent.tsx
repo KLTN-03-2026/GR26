@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { BrainCircuit, RefreshCw, CheckCircle2, XCircle, Loader2, Clock, History } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button } from '@shared/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@shared/components/ui/tabs';
@@ -117,10 +118,12 @@ const IngredientCard = ({ ingredient }: IngredientCardProps) => {
         <p className={ingredient.stockout_date ? 'text-red-600' : 'text-green-700'}>
           {stockoutLabel}
         </p>
-        <p>
-          <span className="font-medium text-text-primary">Gợi ý: </span>
-          {orderLabel}
-        </p>
+       {ingredient.suggested_order_qty > 0 && (
+          <p>
+            <span className="font-medium text-text-primary">Gợi ý: </span>
+            {orderLabel}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -279,6 +282,25 @@ export const AiForecastContent = () => {
     ? format(parseISO(data.generated_at), "dd/MM/yyyy HH:mm", { locale: vi })
     : null;
 
+  const handleTriggerPredict = () => {
+    toast.loading('Đang cập nhật dự báo, xin chờ giây lát...', {
+      id: 'ai-forecast-predict',
+    });
+
+    triggerPredict.mutate(undefined, {
+      onSuccess: () => {
+        toast.success('Đã gửi yêu cầu cập nhật dự báo. Xin chờ giây lát để hệ thống tải kết quả mới.', {
+          id: 'ai-forecast-predict',
+        });
+      },
+      onError: () => {
+        toast.error('Không thể cập nhật dự báo. Vui lòng thử lại.', {
+          id: 'ai-forecast-predict',
+        });
+      },
+    });
+  };
+
   return (
     <div className="space-y-6 pb-8">
       {/* Header */}
@@ -303,7 +325,7 @@ export const AiForecastContent = () => {
               variant="outline"
               size="sm"
               disabled={triggerPredict.isPending}
-              onClick={() => triggerPredict.mutate()}
+              onClick={handleTriggerPredict}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${triggerPredict.isPending ? 'animate-spin' : ''}`} />
               {triggerPredict.isPending ? 'Đang cập nhật...' : 'Cập nhật dự báo'}

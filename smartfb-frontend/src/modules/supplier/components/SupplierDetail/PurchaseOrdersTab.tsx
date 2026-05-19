@@ -1,3 +1,4 @@
+import { Edit3, XCircle } from 'lucide-react';
 import type { SupplierOrder } from '../../types/supplier.types';
 import {
   Table,
@@ -16,10 +17,14 @@ interface PurchaseOrdersTabProps {
   orders: SupplierOrder[];
   canSendOrder?: boolean;
   canReceiveOrder?: boolean;
+  canEditOrder?: boolean;
+  canCancelOrder?: boolean;
   isActionPending?: boolean;
   onViewOrder?: (order: SupplierOrder) => void;
+  onEditOrder?: (order: SupplierOrder) => void;
   onSendOrder?: (order: SupplierOrder) => void;
   onReceiveOrder?: (order: SupplierOrder) => void;
+  onCancelOrder?: (order: SupplierOrder) => void;
 }
 
 const getStatusLabel = (status: SupplierOrder['status']): string => {
@@ -69,10 +74,14 @@ export const PurchaseOrdersTab = ({
   orders,
   canSendOrder = false,
   canReceiveOrder = false,
+  canEditOrder = false,
+  canCancelOrder = false,
   isActionPending = false,
   onViewOrder,
+  onEditOrder,
   onSendOrder,
   onReceiveOrder,
+  onCancelOrder,
 }: PurchaseOrdersTabProps) => {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -113,6 +122,17 @@ export const PurchaseOrdersTab = ({
                         Xem
                       </Button>
                     ) : null}
+                    {order.status === 'draft' && canEditOrder && onEditOrder ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isActionPending}
+                        onClick={() => onEditOrder(order)}
+                      >
+                        <Edit3 className="mr-2 h-4 w-4" />
+                        Sửa
+                      </Button>
+                    ) : null}
                     {order.status === 'draft' && canSendOrder && onSendOrder ? (
                       <Button
                         size="sm"
@@ -130,6 +150,17 @@ export const PurchaseOrdersTab = ({
                         onClick={() => onReceiveOrder(order)}
                       >
                         Xác nhận nhận hàng
+                      </Button>
+                    ) : null}
+                    {(order.status === 'draft' || order.status === 'sent') && canCancelOrder && onCancelOrder ? (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={isActionPending}
+                        onClick={() => onCancelOrder(order)}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Hủy
                       </Button>
                     ) : null}
                   </div>

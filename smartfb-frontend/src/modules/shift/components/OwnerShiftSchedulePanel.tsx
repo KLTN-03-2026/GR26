@@ -7,6 +7,8 @@ import { useStaffList } from '@modules/staff/hooks/useStaffList';
 import type { ShiftSchedule, ShiftTemplate } from '@modules/shift/types/shift.types';
 import { OwnerWeeklyShiftRoster } from '@modules/shift/components/OwnerWeeklyShiftRoster';
 import { RegisterShiftDialog } from '@modules/shift/components/RegisterShiftDialog';
+import { getTodayShiftDate, isPastShiftDate } from '@modules/shift/utils/shiftDateGuard';
+import { useToast } from '@shared/hooks/useToast';
 
 interface OwnerShiftSchedulePanelProps {
   templates: ShiftTemplate[];
@@ -49,6 +51,7 @@ export const OwnerShiftSchedulePanel = ({
   templates,
   isTemplatesLoading,
 }: OwnerShiftSchedulePanelProps) => {
+  const { error } = useToast();
   const [weekStartDate, setWeekStartDate] = useState(getCurrentWeekStart);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
   const [registerDefaults, setRegisterDefaults] = useState<RegisterDialogDefaults>({
@@ -57,6 +60,9 @@ export const OwnerShiftSchedulePanel = ({
 
   const startDate = format(weekStartDate, 'yyyy-MM-dd');
   const endDate = format(addDays(weekStartDate, 6), 'yyyy-MM-dd');
+  const today = getTodayShiftDate();
+  const defaultRegisterDate = isPastShiftDate(startDate, today) ? today : startDate;
+  const isWholeWeekPast = isPastShiftDate(endDate, today);
 
   const {
     useBranchSchedule,
@@ -78,7 +84,12 @@ export const OwnerShiftSchedulePanel = ({
   const checkedInCount = schedules.filter((schedule) => schedule.status === 'CHECKED_IN').length;
   const completedCount = schedules.filter((schedule) => schedule.status === 'COMPLETED').length;
 
-  const openRegisterDialog = (date = startDate, shiftTemplateId?: string) => {
+  const openRegisterDialog = (date = defaultRegisterDate, shiftTemplateId?: string) => {
+    if (isPastShiftDate(date, today)) {
+      error('Không thể thao tác lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+      return;
+    }
+
     setRegisterDefaults({ date, shiftTemplateId });
     setIsRegisterDialogOpen(true);
   };
@@ -115,7 +126,7 @@ export const OwnerShiftSchedulePanel = ({
             <RefreshCw className="mr-2 h-4 w-4" />
             Làm mới
           </Button>
-          <Button type="button" onClick={() => openRegisterDialog()}>Gán ca</Button>
+          <Button type="button" onClick={() => openRegisterDialog()} disabled={isWholeWeekPast}>Gán ca</Button>
         </div>
       </div>
 
@@ -160,9 +171,24 @@ export const OwnerShiftSchedulePanel = ({
           templates={templates}
           schedules={schedules}
           staffList={staffList}
+          today={today}
           onAssignShift={openRegisterDialog}
-          onUpdateShift={(scheduleId, payload) => updateShift({ id: scheduleId, payload })}
-          onDeleteShift={deleteShift}
+          onUpdateShift={(scheduleId, payload) => {
+            if (isPastShiftDate(payload.date, today)) {
+              error('Không thể sửa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+              return Promise.resolve();
+            }
+
+            return updateShift({ id: scheduleId, payload });
+          }}
+          onDeleteShift={(scheduleId, scheduleDate) => {
+            if (isPastShiftDate(scheduleDate, today)) {
+              error('Không thể xóa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+              return Promise.resolve();
+            }
+
+            return deleteShift(scheduleId);
+          }}
           isUpdating={isUpdating}
           isDeleting={isDeleting}
         />
