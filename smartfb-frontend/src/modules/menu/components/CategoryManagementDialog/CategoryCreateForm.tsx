@@ -116,16 +116,7 @@ export const CategoryCreateForm = ({
         <h3 className="text-base font-semibold text-gray-900">
           {isEditing ? 'Sửa danh mục' : 'Tạo danh mục mới'}
         </h3>
-        <p
-          className={cn(
-            'text-sm',
-            isEditing ? 'text-sky-700' : 'text-gray-500'
-          )}
-        >
-          {isEditing
-            ? 'Bạn đang chỉnh sửa danh mục đã chọn. Lưu xong sẽ quay lại chế độ tạo mới.'
-            : 'Điền thông tin danh mục để nhóm món ăn rõ ràng hơn trong trang menu.'}
-        </p>
+       
       </div>
 
       <CategoryForm

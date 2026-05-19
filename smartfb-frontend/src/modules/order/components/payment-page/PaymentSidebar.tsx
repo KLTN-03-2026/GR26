@@ -94,7 +94,6 @@ const formatCountdown = (seconds: number): string => {
 export const PaymentSidebar = ({
   selectedMethod,
   amountReceived,
-  orderNumber,
   totalAmount,
   subtotal,
   vatAmount,

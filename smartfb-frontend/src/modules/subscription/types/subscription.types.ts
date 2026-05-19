@@ -34,6 +34,21 @@ export interface CurrentSubscription {
   expiresAt?: string | null;
 }
 
+export interface TenantPackageUsage {
+  branches: number;
+  staff: number;
+  menuItems: number;
+}
+
+export type PlanLimitResource = 'branches' | 'staff' | 'menuItems';
+
+export interface PlanLimitViolation {
+  resource: PlanLimitResource;
+  current: number;
+  limit: number;
+  label: string;
+}
+
 export type TenantInvoiceStatus = 'UNPAID' | 'PAID' | 'CANCELLED' | string;
 
 export interface TenantInvoice {

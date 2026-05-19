@@ -6,11 +6,21 @@ import type {
   GeneratePlanPaymentQRPayload,
   PlanQRPayment,
   SubscriptionPlan,
+  TenantPackageUsage,
   TenantInvoice,
   TenantInvoiceListParams,
   TenantInvoicePageResponse,
   TenantRenewPayload,
 } from '../types/subscription.types';
+
+interface BackendPageResponse {
+  totalElements: number;
+}
+
+type PackageUsageMenuItemType = 'SELLABLE' | 'INGREDIENT' | 'SUB_ASSEMBLY';
+
+// Các loại item backend tính vào quota món của gói dịch vụ.
+const PACKAGE_USAGE_MENU_ITEM_TYPES: PackageUsageMenuItemType[] = ['SELLABLE', 'INGREDIENT', 'SUB_ASSEMBLY'];
 
 /**
  * Service thao tác với API gói dịch vụ của tenant hiện tại.
@@ -25,6 +35,34 @@ export const subscriptionService = {
   getPlans: async (): Promise<SubscriptionPlan[]> => {
     const response = await api.get<ApiResponse<SubscriptionPlan[]>>('/plans');
     return response.data.data;
+  },
+
+  /**
+   * Lấy số lượng dữ liệu hiện tại của tenant để FE so sánh với limit của gói.
+   * Dùng các endpoint sẵn có vì backend chưa có API usage tổng hợp.
+   */
+  getTenantPackageUsage: async (): Promise<TenantPackageUsage> => {
+    const [branchesResponse, activeStaffResponse, menuItemCounts] = await Promise.all([
+      api.get<ApiResponse<unknown[]>>('/branches'),
+      api.get<ApiResponse<BackendPageResponse>>('/staff', {
+        params: { status: 'ACTIVE', page: 0, size: 1 },
+      }),
+      Promise.all(
+        PACKAGE_USAGE_MENU_ITEM_TYPES.map(async (type) => {
+          const response = await api.get<ApiResponse<BackendPageResponse>>('/menu/items', {
+            params: { type, page: 0, size: 1 },
+          });
+
+          return response.data.data.totalElements;
+        })
+      ),
+    ]);
+
+    return {
+      branches: branchesResponse.data.data.length,
+      staff: activeStaffResponse.data.data.totalElements,
+      menuItems: menuItemCounts.reduce((total, count) => total + count, 0),
+    };
   },
 
   getMyInvoices: async (

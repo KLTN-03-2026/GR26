@@ -189,7 +189,7 @@ export const RevenueReportDashboard = () => {
         }}
       />
 
-      <div className="flex items-center gap-3">
+      {/* <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-text-secondary">Nhóm theo:</span>
         <Select value={groupBy} onValueChange={(v) => { setGroupBy(v as RevenueReportGroupBy); }}>
           <SelectTrigger className="h-9 w-36">
@@ -201,7 +201,7 @@ export const RevenueReportDashboard = () => {
             <SelectItem value="monthly">Theo tháng</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </div> */}
 
       {revenueReportQuery.isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

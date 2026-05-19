@@ -66,7 +66,7 @@ export const PositionFormDialog = ({
       name: values.name.trim(),
       description: values.description.trim() || undefined,
     };
-    console.log('Submitting position form with values:', payload);
+
     if (position) {
       updatePosition(
         {

@@ -172,7 +172,7 @@ export const ReportsOverviewDashboard = () => {
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <ReportMetricCard
-          label="Lợi nhuận gộp"
+          label="Lợi nhuận"
           value={formatVND(revenueQuery.data?.totalGrossProfit ?? 0)}
           helper="Doanh thu trừ chi phí nguyên liệu trong ngày."
           icon={<PiggyBank className="h-5 w-5" />}

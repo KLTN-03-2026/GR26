@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --import tsx --test src/modules/*/__tests__/*.test.ts",
+    "test:coverage": "node --experimental-test-coverage --import tsx --test src/modules/*/__tests__/*.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -61,7 +63,7 @@
     "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.4", 
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",

@@ -5,11 +5,9 @@ import toast from 'react-hot-toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useBranches } from '@modules/branch/hooks/useBranches';
-import { useAddons } from '@modules/menu/hooks/useAddons';
 import { useActiveMenus } from '@modules/menu/hooks/useActiveMenus';
 import { useCategories } from '@modules/menu/hooks/useCategories';
 import type {
-  MenuAddonInfo,
   MenuCategoryInfo,
   MenuItem,
 } from '@modules/menu/types/menu.types';
@@ -32,7 +30,6 @@ import { useOrderStore } from '@modules/order/stores/orderStore';
 import { getStompClient, onStompConnected } from '@lib/socket';
 import type {
   DraftOrderMeta,
-  OrderAddonSelection,
   OrderDraftItem,
   OrderResponse,
   OrderTableContext,
@@ -47,11 +44,9 @@ import { useOrderPricing } from './useOrderPricing';
 interface OrderDialogSubmitPayload {
   quantity: number;
   notes: string;
-  addons: OrderAddonSelection[];
 }
 
 interface UseOrderPageControllerResult {
-  addons: MenuAddonInfo[];
   cart: OrderDraftItem[];
   categories: MenuCategoryInfo[];
   currentUserName: string;
@@ -113,7 +108,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
   const { data: zones = [] } = useZones();
   const menuQuery = useActiveMenus(currentBranchId);
   const categoriesQuery = useCategories();
-  const addonsQuery = useAddons();
 
   const {
     cart,
@@ -198,10 +192,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     return (categoriesQuery.data?.data ?? []).filter((category) => category.isActive !== false);
   }, [categoriesQuery.data?.data]);
 
-  const addons = useMemo(() => {
-    return (addonsQuery.data?.data ?? []).filter((addon) => addon.isActive !== false);
-  }, [addonsQuery.data?.data]);
-
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -252,9 +242,8 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     taxRate: ORDER_TAX_RATE,
   });
 
-  const hasLoadingState =
-    menuQuery.isLoading || categoriesQuery.isLoading || addonsQuery.isLoading;
-  const hasErrorState = menuQuery.isError || categoriesQuery.isError || addonsQuery.isError;
+  const hasLoadingState = menuQuery.isLoading || categoriesQuery.isLoading;
+  const hasErrorState = menuQuery.isError || categoriesQuery.isError;
   const hasPlacedOrder = Boolean(draftOrder.orderId);
   const isPlacedOrderFinalized = false;
 
@@ -532,7 +521,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     const submittedDraftItem = toDraftItem(
       targetMenuItem,
       payload.quantity,
-      payload.addons,
+      [],
       payload.notes,
       editingCartItem?.draftItemId,
       editingCartItem?.orderItemId
@@ -542,7 +531,7 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
     // trước khi component kịp re-render (race condition giữa WS callback và user click)
     const latestCart = useOrderStore.getState().cart;
 
-    // Khi không ở chế độ edit, cùng món + cùng topping + cùng ghi chú sẽ được gộp số lượng trong cart local.
+    // Khi không ở chế độ edit, cùng món + cùng ghi chú sẽ được gộp số lượng trong cart local.
     const matchedCartItem =
       editingCartItem ??
       latestCart.find((cartItem) => isSameCartLine(cartItem, submittedDraftItem)) ??
@@ -646,7 +635,6 @@ export const useOrderPageController = (): UseOrderPageControllerResult => {
       : 'Thêm món để tạo đơn';
 
   return {
-    addons,
     cart,
     categories,
     checkoutButtonLabel,
