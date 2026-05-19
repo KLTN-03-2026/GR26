@@ -9,6 +9,8 @@ import { usePermission } from '@shared/hooks/usePermission';
 import { useSupplierDetail } from '@modules/supplier/hooks/useSupplierDetail';
 import { useSuppliers } from '@modules/supplier/hooks/useSuppliers';
 import {
+  useCancelPurchaseOrder,
+  usePurchaseOrderDetail,
   useReceivePurchaseOrder,
   useSendPurchaseOrder,
 } from '@modules/supplier/hooks/usePurchaseOrders';
@@ -16,6 +18,7 @@ import { ProfileTab } from '@modules/supplier/components/SupplierDetail/ProfileT
 import { PurchaseOrdersTab } from '@modules/supplier/components/SupplierDetail/PurchaseOrdersTab';
 import { PurchaseOrderDetailDialog } from '@modules/supplier/components/SupplierDetail/PurchaseOrderDetailDialog';
 import { CreatePurchaseOrderDialog } from '@modules/supplier/components/SupplierDetail/CreatePurchaseOrderDialog';
+import { CancelPurchaseOrderDialog } from '@modules/supplier/components/SupplierDetail/CancelPurchaseOrderDialog';
 import { DeleteSupplierDialog } from '@modules/supplier/components/DeleteSupplierDialog';
 import { SupplierFormDialog } from '@modules/supplier/components/SupplierFormDialog';
 import type { CreateSupplierPayload, SupplierOrder } from '@modules/supplier/types/supplier.types';
@@ -28,16 +31,24 @@ export default function SupplierDetailPage() {
   const [isCreatePurchaseOrderOpen, setIsCreatePurchaseOrderOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [viewingOrder, setViewingOrder] = useState<SupplierOrder | null>(null);
+  const [editingOrder, setEditingOrder] = useState<SupplierOrder | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState<SupplierOrder | null>(null);
 
   const { supplier, orders, isLoading } = useSupplierDetail(id);
   const { updateSupplier, deleteSupplier, isUpdating, isDeleting } = useSuppliers();
   const sendPurchaseOrder = useSendPurchaseOrder();
   const receivePurchaseOrder = useReceivePurchaseOrder();
+  const cancelPurchaseOrder = useCancelPurchaseOrder();
+  const { data: editingOrderDetail, isLoading: isEditingOrderLoading } = usePurchaseOrderDetail(editingOrder?.id);
   const supplierListPath = isOwner ? ROUTES.OWNER.SUPPLIERS : ROUTES.STAFF.SUPPLIERS;
   const canManageSupplierProfile = isOwner;
   const canCreatePurchaseOrder = can(PERMISSIONS.PURCHASE_ORDER_EDIT);
+  const canEditPurchaseOrder = canCreatePurchaseOrder;
+  const canCancelPurchaseOrder = isOwner;
   const canSendPurchaseOrder = isOwner;
   const canReceivePurchaseOrder = can(PERMISSIONS.INVENTORY_IMPORT);
+  const isPurchaseOrderActionPending =
+    sendPurchaseOrder.isPending || receivePurchaseOrder.isPending || cancelPurchaseOrder.isPending;
 
   const handleEdit = () => {
     setIsFormOpen(true);
@@ -56,6 +67,31 @@ export default function SupplierDetailPage() {
       await updateSupplier({ id, payload, currentActive: supplier.isActive });
       setIsFormOpen(false);
     }
+  };
+
+  const handleOpenPurchaseOrderDialog = (open: boolean) => {
+    if (!open) {
+      setIsCreatePurchaseOrderOpen(false);
+      setEditingOrder(null);
+      return;
+    }
+
+    setIsCreatePurchaseOrderOpen(true);
+  };
+
+  const handleConfirmCancelOrder = () => {
+    if (!supplier || !cancellingOrder) {
+      return;
+    }
+
+    cancelPurchaseOrder.mutate(
+      { id: cancellingOrder.id, supplierId: supplier.id },
+      {
+        onSuccess: () => {
+          setCancellingOrder(null);
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -95,7 +131,10 @@ export default function SupplierDetailPage() {
           {canCreatePurchaseOrder && (
             <Button
               size="sm"
-              onClick={() => setIsCreatePurchaseOrderOpen(true)}
+              onClick={() => {
+                setEditingOrder(null);
+                setIsCreatePurchaseOrderOpen(true);
+              }}
               className="flex-1 md:flex-none"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -160,14 +199,18 @@ export default function SupplierDetailPage() {
             orders={orders}
             canSendOrder={canSendPurchaseOrder}
             canReceiveOrder={canReceivePurchaseOrder}
-            isActionPending={sendPurchaseOrder.isPending || receivePurchaseOrder.isPending}
+            canEditOrder={canEditPurchaseOrder}
+            canCancelOrder={canCancelPurchaseOrder}
+            isActionPending={isPurchaseOrderActionPending}
             onViewOrder={setViewingOrder}
+            onEditOrder={setEditingOrder}
             onSendOrder={(order) =>
               sendPurchaseOrder.mutate({ id: order.id, supplierId: supplier.id })
             }
             onReceiveOrder={(order) =>
               receivePurchaseOrder.mutate({ id: order.id, supplierId: supplier.id })
             }
+            onCancelOrder={setCancellingOrder}
           />
         </TabsContent>
       </Tabs>
@@ -182,10 +225,20 @@ export default function SupplierDetailPage() {
         isLoading={isUpdating}
       />
       <CreatePurchaseOrderDialog
-        open={canCreatePurchaseOrder && isCreatePurchaseOrderOpen}
-        onOpenChange={setIsCreatePurchaseOrderOpen}
+        key={
+          editingOrder
+            ? editingOrderDetail
+              ? `edit-${editingOrderDetail.id}`
+              : `edit-loading-${editingOrder.id}`
+            : 'create-purchase-order'
+        }
+        open={canCreatePurchaseOrder && (isCreatePurchaseOrderOpen || Boolean(editingOrder))}
+        onOpenChange={handleOpenPurchaseOrderDialog}
         supplierId={supplier.id}
         supplierName={supplier.name}
+        purchaseOrderId={editingOrder?.id}
+        initialOrder={editingOrderDetail ?? undefined}
+        isLoadingOrder={Boolean(editingOrder) && isEditingOrderLoading}
       />
       <DeleteSupplierDialog
         open={canManageSupplierProfile && isDeleteDialogOpen}
@@ -202,6 +255,17 @@ export default function SupplierDetailPage() {
           }
         }}
         orderId={viewingOrder?.id}
+      />
+      <CancelPurchaseOrderDialog
+        open={Boolean(cancellingOrder)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancellingOrder(null);
+          }
+        }}
+        order={cancellingOrder}
+        isPending={cancelPurchaseOrder.isPending}
+        onConfirm={handleConfirmCancelOrder}
       />
     </div>
   );

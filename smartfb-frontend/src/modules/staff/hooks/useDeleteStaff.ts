@@ -18,13 +18,12 @@ export const useDeleteStaff = () => {
       await staffService.deactivate(id, deleteReason);
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
-      queryClient.invalidateQueries({ queryKey: ['staff'] });
+    onSuccess: (deletedStaffId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.staff.detail(deletedStaffId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.staff.lists });
       success('Vô hiệu hoá nhân viên thành công');
     },
     onError: (err: unknown) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
       error('Không thể vô hiệu hoá nhân viên', getStaffMutationErrorMessage(err));
     },
   });

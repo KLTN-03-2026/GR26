@@ -122,7 +122,7 @@ const createAddonIdentityKey = (addons: OrderAddonSelection[]): string => {
 
 /**
  * So sánh 2 dòng món để biết có thể gộp vào cùng một dòng trong cart hay không.
- * Chỉ gộp khi cùng món, cùng giá, cùng topping và cùng ghi chú.
+ * Chỉ gộp khi cùng món, cùng giá, cùng ghi chú và cùng dữ liệu addon legacy nếu có.
  */
 export const isSameCartLine = (
   leftItem: Pick<OrderDraftItem, 'menuItemId' | 'unitPrice' | 'addons' | 'notes'>,
@@ -216,15 +216,7 @@ export const parseAddonPayload = (
 };
 
 export const getCartItemSummary = (item: OrderDraftItem): string => {
-  const addonSummary = getSafeAddons(item)
-    .map((addon) => `${addon.addonName} x${addon.quantity}`)
-    .join(', ');
-
-  if (item.notes && addonSummary) {
-    return `${addonSummary} • ${item.notes}`;
-  }
-
-  return item.notes || addonSummary || 'Không có ghi chú thêm';
+  return item.notes || 'Không có ghi chú thêm';
 };
 
 export const toDialogMenuItem = (item: OrderDraftItem): MenuItem => {

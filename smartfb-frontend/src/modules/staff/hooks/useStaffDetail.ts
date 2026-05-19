@@ -7,8 +7,9 @@ import type { StaffDetail } from '../types/staff.types';
  * Hook lấy chi tiết một nhân viên theo `staffId`.
  *
  * @param staffId - ID nhân viên cần xem chi tiết
+ * @param enabled - Chỉ bật query khi màn hình hoặc dialog thật sự cần dữ liệu chi tiết
  */
-export const useStaffDetail = (staffId: string) => {
+export const useStaffDetail = (staffId: string, enabled = true) => {
   return useQuery({
     queryKey: queryKeys.staff.detail(staffId),
     queryFn: async (): Promise<StaffDetail> => {
@@ -16,6 +17,6 @@ export const useStaffDetail = (staffId: string) => {
       return staff;
     },
     staleTime: 0,
-    enabled: !!staffId,
+    enabled: !!staffId && enabled,
   });
 };

@@ -145,9 +145,7 @@ export const DateTimePicker = ({
         <div className="border-b border-border bg-gradient-to-br from-amber-50/80 via-white to-orange-50/60 p-3">
           <div className="mb-3">
             <p className="text-sm font-semibold text-text-primary">Chọn hạn sử dụng</p>
-            <p className="text-xs text-text-secondary text-wrap">
-              Chọn ngày, giờ và phút trước khi xác nhận.
-            </p>
+           
           </div>
 
           <div className="rounded-xl  border-border/70 bg-white/80 ">

@@ -6,6 +6,8 @@ import type { StaffSummary } from '@modules/staff/types/staff.types';
 import type { LocalTime, ShiftSchedule, ShiftTemplate } from '@modules/shift/types/shift.types';
 import { OwnerShiftCellDetailDialog } from '@modules/shift/components/OwnerShiftCellDetailDialog';
 import { RegisterShiftDialog } from '@modules/shift/components/RegisterShiftDialog';
+import { isPastShiftDate } from '@modules/shift/utils/shiftDateGuard';
+import { useToast } from '@shared/hooks/useToast';
 import { cn } from '@shared/utils/cn';
 
 interface OwnerWeeklyShiftRosterProps {
@@ -13,9 +15,10 @@ interface OwnerWeeklyShiftRosterProps {
   templates: ShiftTemplate[];
   schedules: ShiftSchedule[];
   staffList: StaffSummary[];
+  today: string;
   onAssignShift: (date: string, shiftTemplateId: string) => void;
   onUpdateShift: (scheduleId: string, payload: { userId: string; shiftTemplateId: string; date: string }) => Promise<unknown>;
-  onDeleteShift: (scheduleId: string) => Promise<unknown>;
+  onDeleteShift: (scheduleId: string, scheduleDate: string) => Promise<unknown>;
   isUpdating: boolean;
   isDeleting: boolean;
 }
@@ -106,6 +109,7 @@ const getShiftStatusLabel = (status: ShiftSchedule['status']) => {
 };
 
 interface SelectedCell {
+  dateValue: string;
   dateLabel: string;
   template: ShiftTemplate;
   schedules: ShiftSchedule[];
@@ -119,12 +123,14 @@ export const OwnerWeeklyShiftRoster = ({
   templates,
   schedules,
   staffList,
+  today,
   onAssignShift,
   onUpdateShift,
   onDeleteShift,
   isUpdating,
   isDeleting,
 }: OwnerWeeklyShiftRosterProps) => {
+  const { error } = useToast();
   const normalizedWeekStart = startOfWeek(weekStartDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = addDays(normalizedWeekStart, index);
@@ -144,12 +150,22 @@ export const OwnerWeeklyShiftRoster = ({
   const [editingSchedule, setEditingSchedule] = useState<ShiftSchedule | null>(null);
 
   const handleEditSchedule = (schedule: ShiftSchedule) => {
+    if (isPastShiftDate(schedule.date, today)) {
+      error('Không thể sửa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+      return;
+    }
+
     setSelectedCell(null);
     setEditingSchedule(schedule);
   };
 
   const handleDeleteSchedule = async (schedule: ShiftSchedule) => {
-    await onDeleteShift(schedule.id);
+    if (isPastShiftDate(schedule.date, today)) {
+      error('Không thể xóa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+      return;
+    }
+
+    await onDeleteShift(schedule.id, schedule.date);
     setSelectedCell(null);
   };
 
@@ -199,6 +215,7 @@ export const OwnerWeeklyShiftRoster = ({
             {weekDays.map((day) => {
               const cellSchedules = scheduleMap.get(`${day.value}:${template.id}`) ?? [];
               const cellStatus = getCellStatus(cellSchedules.length, template);
+              const isPastDay = isPastShiftDate(day.value, today);
 
               return (
                 <div
@@ -206,6 +223,7 @@ export const OwnerWeeklyShiftRoster = ({
                   role="button"
                   tabIndex={0}
                   onClick={() => setSelectedCell({
+                    dateValue: day.value,
                     dateLabel: `${day.dayLabel} ${day.dateLabel}`,
                     template,
                     schedules: cellSchedules,
@@ -214,6 +232,7 @@ export const OwnerWeeklyShiftRoster = ({
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       setSelectedCell({
+                        dateValue: day.value,
                         dateLabel: `${day.dayLabel} ${day.dateLabel}`,
                         template,
                         schedules: cellSchedules,
@@ -275,18 +294,27 @@ export const OwnerWeeklyShiftRoster = ({
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
+                        if (isPastDay) {
+                          return;
+                        }
+
                         if (cellSchedules.length === 0) {
                           onAssignShift(day.value, template.id);
                           return;
                         }
 
                         setSelectedCell({
+                          dateValue: day.value,
                           dateLabel: `${day.dayLabel} ${day.dateLabel}`,
                           template,
                           schedules: cellSchedules,
                         });
                       }}
-                      className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
+                      disabled={isPastDay}
+                      className={cn(
+                        'flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700',
+                        isPastDay && 'cursor-not-allowed text-text-secondary hover:text-text-secondary',
+                      )}
                     >
                       {cellSchedules.length === 0 ? (
                         <>
@@ -302,7 +330,7 @@ export const OwnerWeeklyShiftRoster = ({
                       )}
                     </button>
 
-                    {cellSchedules.length > 0 && (
+                    {cellSchedules.length > 0 && !isPastDay && (
                       <button
                         type="button"
                         onClick={(event) => {
@@ -335,6 +363,7 @@ export const OwnerWeeklyShiftRoster = ({
           template={selectedCell.template}
           schedules={selectedCell.schedules}
           staffMap={staffMap}
+          isPastDate={isPastShiftDate(selectedCell.dateValue, today)}
           onEditSchedule={handleEditSchedule}
           onDeleteSchedule={(schedule) => void handleDeleteSchedule(schedule)}
           isDeleting={isDeleting}
@@ -360,6 +389,11 @@ export const OwnerWeeklyShiftRoster = ({
           submitLabel="Lưu thay đổi"
           pendingLabel="Đang lưu..."
           onSubmit={async (payload) => {
+            if (isPastShiftDate(payload.date, today)) {
+              error('Không thể sửa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+              return;
+            }
+
             await onUpdateShift(editingSchedule.id, payload);
             setEditingSchedule(null);
           }}

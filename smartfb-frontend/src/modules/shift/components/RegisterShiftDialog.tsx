@@ -18,6 +18,7 @@ import {
 } from '@shared/components/ui/select';
 import type { StaffSummary } from '@modules/staff/types/staff.types';
 import type { RegisterShiftPayload, ShiftTemplate } from '@modules/shift/types/shift.types';
+import { getTodayShiftDate, isPastShiftDate } from '@modules/shift/utils/shiftDateGuard';
 
 interface RegisterShiftDialogProps {
   open: boolean;
@@ -75,7 +76,9 @@ export const RegisterShiftDialog = ({
     [staffList],
   );
 
-  const canSubmit = Boolean(values.userId && values.shiftTemplateId && values.date);
+  const today = getTodayShiftDate();
+  const isPastSelectedDate = isPastShiftDate(values.date, today);
+  const canSubmit = Boolean(values.userId && values.shiftTemplateId && values.date && !isPastSelectedDate);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -93,7 +96,11 @@ export const RegisterShiftDialog = ({
 
   const handleSubmit = async () => {
     if (!canSubmit) {
-      setFormError('Vui lòng chọn nhân viên, ca mẫu và ngày làm việc.');
+      setFormError(
+        isPastSelectedDate
+          ? 'Lịch đã qua ngày chỉ được xem, không thể thêm hoặc sửa.'
+          : 'Vui lòng chọn nhân viên, ca mẫu và ngày làm việc.',
+      );
       return;
     }
 
@@ -122,7 +129,7 @@ export const RegisterShiftDialog = ({
               <SelectContent>
                 {activeStaffList.map((staff) => (
                   <SelectItem key={staff.id} value={staff.id}>
-                    {staff.fullName} · {staff.employeeCode || staff.phone}
+                    {staff.fullName} 
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -161,6 +168,9 @@ export const RegisterShiftDialog = ({
           </div>
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
+          {isPastSelectedDate && (
+            <p className="text-sm text-warning-text">Lịch đã qua ngày chỉ được xem, không thể thêm hoặc sửa.</p>
+          )}
           {activeTemplates.length === 0 && (
             <p className="text-sm text-warning-text">Chưa có ca mẫu đang hoạt động để gán lịch.</p>
           )}

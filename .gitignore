@@ -42,16 +42,19 @@ ai-service/venv/
 docker-compose_bk.yml
 # Local tool metadata
 **/.claude/
-docs
+
 images
 reports
 
 # Internal docs you do not want to push
-smartfb-frontend/src/docs/architecture
+
 smartfb-frontend/src/docs/dev-notes
 smartfb-frontend/src/docs/plans
 smartfb-frontend/src/docs/reports
-smartfb-frontend/src/docs/skills
+smartfb-frontend/src/docs/report
+smartfb-frontend/src/docs/sprint
+smartfb-frontend/src/docs/task
+smartfb-frontend/src/docs/import-samples
 smartfb-frontend/scripts
 
 # Smartfnb-BE - Build and log files
@@ -71,7 +74,5 @@ Smartfnb-BE/.agents/
 Smartfnb-BE/tests_api/
 Smartfnb-BE/uploads/
 
-AI_PROJECT_STRUCTURE.md
-CLAUDE_CODE_PROMPT.md
 scripts/**.dump
 *.txt

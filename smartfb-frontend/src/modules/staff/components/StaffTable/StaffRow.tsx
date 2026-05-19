@@ -9,10 +9,10 @@ import {
 } from '@shared/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@shared/constants/routes';
-import type { StaffSummary } from '../../types/staff.types';
-import { DeleteStaffDialog } from '../DeleteStaffDialog';
-import { EditStaffDialog } from '../EditStaffDialog';
-import { useStaffDetail } from '../../hooks/useStaffDetail';
+import { DeleteStaffDialog } from '@modules/staff/components/DeleteStaffDialog';
+import { EditStaffDialog } from '@modules/staff/components/EditStaffDialog';
+import { useStaffDetail } from '@modules/staff/hooks/useStaffDetail';
+import type { StaffSummary } from '@modules/staff/types/staff.types';
 
 interface StaffRowProps {
   staff: StaffSummary;
@@ -25,7 +25,7 @@ export const StaffRow = ({ staff, onRefresh }: StaffRowProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   
-  const { data: staffDetail } = useStaffDetail(staff.id);
+  const { data: staffDetail } = useStaffDetail(staff.id, showEditDialog);
 
   const handleRowClick = () => {
     navigate(ROUTES.OWNER.STAFF_DETAIL.replace(':id', staff.id));

@@ -58,17 +58,14 @@ const getCurrentCheckInLocation = async (): Promise<CheckInShiftPayload> => {
 
     // Lần 1: high accuracy (GPS)
     try {
-        console.log('[Check-in] Đang lấy vị trí high-accuracy (GPS)…');
         const highAccResult = await requestPosition({
             enableHighAccuracy: true,
             timeout: 15_000,
             maximumAge: 60_000, // chấp nhận cache ≤ 1 phút
         });
-        console.log('[Check-in] ✅ High-accuracy OK:', highAccResult);
         return highAccResult;
     } catch (err) {
         console.warn('[Check-in] ❌ High-accuracy failed:', err);
-        console.log('[Check-in] Thử fallback low-accuracy (WiFi/IP)…');
     }
 
     // Lần 2: low accuracy (WiFi / IP)
@@ -78,7 +75,6 @@ const getCurrentCheckInLocation = async (): Promise<CheckInShiftPayload> => {
             timeout: 20_000,
             maximumAge: 120_000, // chấp nhận cache ≤ 2 phút
         });
-        console.log('[Check-in] ✅ Low-accuracy OK:', lowAccResult);
         return lowAccResult;
     } catch (error) {
         console.error('[Check-in] ❌ Low-accuracy cũng failed:', error);

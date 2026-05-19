@@ -90,11 +90,6 @@ export const PaymentOrderSummary = ({
                 <p className="text-sm text-slate-500">
                   {item.quantity} x {formatVND(item.unitPrice)}
                 </p>
-                {Array.isArray(item.addons) && item.addons.length > 0 && (
-                  <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-                    {item.addons.map((addon) => `${addon.addonName} x${addon.quantity}`).join(', ')}
-                  </p>
-                )}
                 {item.notes && (
                   <p className="mt-1 line-clamp-1 text-xs italic text-orange-500">{item.notes}</p>
                 )}

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
@@ -18,6 +18,12 @@ import { useAuthStore } from '@modules/auth/stores/authStore';
 import { useShiftSchedules } from '@modules/shift/hooks/useShiftSchedules';
 import { useShiftTemplates } from '@modules/shift/hooks/useShiftTemplates';
 import type { LocalTime, RegisterShiftPayload, ShiftSchedule, ShiftTemplate, ShiftStatus } from '@modules/shift/types/shift.types';
+import {
+  getShiftCheckInOpenAt,
+  getTodayShiftDate,
+  isPastShiftDate,
+  isShiftCheckInOpen,
+} from '@modules/shift/utils/shiftDateGuard';
 import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
@@ -38,6 +44,7 @@ import {
 } from '@shared/components/ui/select';
 import { formatDate, formatDateTime } from '@shared/utils/formatDate';
 import { cn } from '@shared/utils/cn';
+import { useToast } from '@shared/hooks/useToast';
 
 interface StatCardProps {
   icon: ReactNode;
@@ -50,6 +57,7 @@ interface StaffShiftCardProps {
   schedule: ShiftSchedule;
   template?: ShiftTemplate;
   today: string;
+  now: Date;
   isCheckingIn: boolean;
   isCheckingOut: boolean;
   isDeleting: boolean;
@@ -121,6 +129,10 @@ const formatLocalTime = (time?: LocalTime | null): string => {
   return `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}`;
 };
 
+const formatClockTime = (date: Date): string => {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
 const buildTemplateMap = (templates: ShiftTemplate[]) => {
   return new Map(templates.map((template) => [template.id, template]));
 };
@@ -150,6 +162,7 @@ const StaffShiftCard = ({
   schedule,
   template,
   today,
+  now,
   isCheckingIn,
   isCheckingOut,
   isDeleting,
@@ -158,14 +171,22 @@ const StaffShiftCard = ({
   onEdit,
   onDelete,
 }: StaffShiftCardProps) => {
-  const canCheckIn = schedule.status === 'REGISTERED' && schedule.date === today;
-  const canCheckOut = schedule.status === 'CHECKED_IN';
-  const canEditSchedule = schedule.status === 'REGISTERED';
-  const hasAction = canCheckIn || canCheckOut || canEditSchedule;
+  const isPastSchedule = isPastShiftDate(schedule.date, today);
+  const isTodayRegisteredSchedule = schedule.status === 'REGISTERED' && schedule.date === today;
+  const checkInOpenAt = template ? getShiftCheckInOpenAt(schedule.date, template.startTime) : null;
+  const canCheckIn =
+    isTodayRegisteredSchedule && isShiftCheckInOpen(schedule.date, template?.startTime, now);
+  const shouldShowLockedCheckIn = isTodayRegisteredSchedule && !canCheckIn;
+  const canCheckOut = schedule.status === 'CHECKED_IN' && !isPastSchedule;
+  const canEditSchedule = schedule.status === 'REGISTERED' && !isPastSchedule;
+  const hasAction = canCheckIn || shouldShowLockedCheckIn || canCheckOut || canEditSchedule;
   const templateName = template?.name ?? 'Ca chưa rõ';
   const timeRange = template
     ? `${formatLocalTime(template.startTime)} - ${formatLocalTime(template.endTime)}`
     : 'Chưa có khung giờ';
+  const lockedCheckInMessage = checkInOpenAt
+    ? `Check-in mở lúc ${formatClockTime(checkInOpenAt)}`
+    : 'Chưa có khung giờ check-in';
 
   return (
     <article className="rounded-card border border-border bg-card p-4 shadow-sm">
@@ -203,6 +224,12 @@ const StaffShiftCard = ({
             >
               <LogIn className="mr-2 h-4 w-4" />
               Check-in
+            </Button>
+          )}
+          {shouldShowLockedCheckIn && (
+            <Button type="button" variant="outline" disabled className="h-10" title={lockedCheckInMessage}>
+              <LogIn className="mr-2 h-4 w-4" />
+              {lockedCheckInMessage}
             </Button>
           )}
           {canCheckOut && (
@@ -252,13 +279,16 @@ const StaffShiftCard = ({
 };
 
 export const StaffMyShiftPanel = () => {
-  const today = toDateInputValue(new Date());
+  const { error } = useToast();
+  const [now, setNow] = useState(() => new Date());
+  const today = getTodayShiftDate(now);
   const currentUser = useAuthStore((state) => state.user);
   const initialRange = useMemo(() => getWeekRange(), []);
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
   const [registerDate, setRegisterDate] = useState(today);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ShiftSchedule | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<ShiftSchedule | null>(null);
 
@@ -287,9 +317,17 @@ export const StaffMyShiftPanel = () => {
   const completedCount = schedules.filter((schedule) => schedule.status === 'COMPLETED').length;
   const isLoading = scheduleQuery.isLoading || isTemplatesLoading;
   const isError = scheduleQuery.isError || Boolean(templateError);
-  const canRegister = Boolean(currentUser?.id && selectedTemplateId && registerDate);
+  const isPastRegisterDate = isPastShiftDate(registerDate, today);
+  const canRegister = Boolean(currentUser?.id && selectedTemplateId && registerDate && !isPastRegisterDate);
   const isSavingSchedule = isRegistering || isUpdating;
   const isEditingSchedule = Boolean(editingSchedule);
+
+  useEffect(() => {
+    // Cập nhật mốc thời gian để nút check-in tự mở khi đến đúng cửa sổ 30 phút.
+    const intervalId = window.setInterval(() => setNow(new Date()), 30_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const shiftWeek = (dayCount: number) => {
     setStartDate((current) => addDays(current, dayCount));
@@ -308,7 +346,15 @@ export const StaffMyShiftPanel = () => {
   };
 
   const handleRegister = async () => {
-    if (!currentUser?.id || !selectedTemplateId || !registerDate) return;
+    if (isPastShiftDate(registerDate, today)) {
+      setFormError('Lịch đã qua ngày chỉ được xem, không thể đăng ký hoặc sửa.');
+      return;
+    }
+
+    if (!currentUser?.id || !selectedTemplateId || !registerDate) {
+      setFormError('Vui lòng chọn ngày làm việc và ca mẫu.');
+      return;
+    }
 
     const payload: RegisterShiftPayload = {
       userId: currentUser.id,
@@ -325,23 +371,37 @@ export const StaffMyShiftPanel = () => {
 
     setSelectedTemplateId('');
     setRegisterDate(today);
+    setFormError(null);
     void scheduleQuery.refetch();
   };
 
   const handleStartEdit = (schedule: ShiftSchedule) => {
+    if (isPastShiftDate(schedule.date, today)) {
+      error('Không thể sửa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+      return;
+    }
+
     setEditingSchedule(schedule);
     setRegisterDate(schedule.date);
     setSelectedTemplateId(schedule.shiftTemplateId);
+    setFormError(null);
   };
 
   const handleCancelEdit = () => {
     setEditingSchedule(null);
     setRegisterDate(today);
     setSelectedTemplateId('');
+    setFormError(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteCandidate) {
+      return;
+    }
+
+    if (isPastShiftDate(deleteCandidate.date, today)) {
+      error('Không thể xóa lịch đã qua ngày', 'Bạn chỉ được xem lịch làm của các ngày trong quá khứ.');
+      setDeleteCandidate(null);
       return;
     }
 
@@ -473,6 +533,7 @@ export const StaffMyShiftPanel = () => {
                   schedule={schedule}
                   template={templateMap.get(schedule.shiftTemplateId)}
                   today={today}
+                  now={now}
                   isCheckingIn={isCheckingIn}
                   isCheckingOut={isCheckingOut}
                   isDeleting={isDeleting}
@@ -511,13 +572,23 @@ export const StaffMyShiftPanel = () => {
                 <Input
                   id="staff-register-date"
                   type="date"
+                  min={today}
                   value={registerDate}
-                  onChange={(event) => setRegisterDate(event.target.value)}
+                  onChange={(event) => {
+                    setRegisterDate(event.target.value);
+                    setFormError(null);
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Ca mẫu</Label>
-                <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <Select
+                  value={selectedTemplateId}
+                  onValueChange={(value) => {
+                    setSelectedTemplateId(value);
+                    setFormError(null);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn ca muốn đăng ký" />
                   </SelectTrigger>
@@ -547,6 +618,11 @@ export const StaffMyShiftPanel = () => {
                     ? 'Lưu thay đổi'
                     : 'Đăng ký ca'}
               </Button>
+              {(formError || isPastRegisterDate) && (
+                <p className="text-sm text-warning-text">
+                  {formError ?? 'Lịch đã qua ngày chỉ được xem, không thể đăng ký hoặc sửa.'}
+                </p>
+              )}
               {activeTemplates.length === 0 && (
                 <p className="text-sm text-warning-text">Chi nhánh chưa có ca mẫu đang hoạt động.</p>
               )}
@@ -584,7 +660,7 @@ export const StaffMyShiftPanel = () => {
           <DialogHeader>
             <DialogTitle>Xóa ca đã đăng ký</DialogTitle>
             <DialogDescription className="leading-6">
-              Bạn có chắc chắn muốn xóa ca này không? Chỉ ca chưa check-in mới có thể xóa.
+              Bạn có chắc chắn muốn xóa ca này không? Chỉ ca chưa check-in và chưa quá ngày mới có thể xóa.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="border-t pt-4">

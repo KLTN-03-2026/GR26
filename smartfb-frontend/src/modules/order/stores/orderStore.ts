@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
+import { isValidOrderStatusTransition } from '@modules/order/utils/orderStatus';
 import { orderService } from '../services/orderService';
 import type {
   DraftOrderMeta,
@@ -78,7 +79,7 @@ const isSameTableContext = (
  * Store giữ state runtime của order/cart giữa màn tạo đơn và thanh toán.
  * Không persist xuống localStorage vì source of truth của đơn hàng đã chuyển sang API.
  */
-export const useOrderStore = create<OrderState>()((set) => ({
+export const useOrderStore = create<OrderState>()((set, get) => ({
   cart: [],
   orders: [],
   tableContext: null,
@@ -171,6 +172,13 @@ export const useOrderStore = create<OrderState>()((set) => ({
 
   updateOrderStatus: async (orderId, status, reason) => {
     try {
+      const currentOrder = get().orders.find((order) => order.id === orderId);
+
+      if (currentOrder && !isValidOrderStatusTransition(currentOrder.status, status)) {
+        toast.error('Không thể chuyển trạng thái đơn hàng theo luồng hiện tại');
+        return;
+      }
+
       const response =
         status === 'CANCELLED'
           ? await orderService.cancelOrder(orderId, { reason })

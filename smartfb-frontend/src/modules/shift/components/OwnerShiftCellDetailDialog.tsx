@@ -20,6 +20,7 @@ interface OwnerShiftCellDetailDialogProps {
   template: ShiftTemplate;
   schedules: ShiftSchedule[];
   staffMap: Map<string, StaffSummary>;
+  isPastDate: boolean;
   onEditSchedule: (schedule: ShiftSchedule) => void;
   onDeleteSchedule: (schedule: ShiftSchedule) => void;
   isDeleting: boolean;
@@ -72,6 +73,7 @@ export const OwnerShiftCellDetailDialog = ({
   template,
   schedules,
   staffMap,
+  isPastDate,
   onEditSchedule,
   onDeleteSchedule,
   isDeleting,
@@ -90,7 +92,7 @@ export const OwnerShiftCellDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>{template.name} · {dateLabel}</DialogTitle>
         </DialogHeader>
@@ -100,8 +102,7 @@ export const OwnerShiftCellDetailDialog = ({
             <span className="font-medium text-text-primary">
               {formatLocalTime(template.startTime)} - {formatLocalTime(template.endTime)}
             </span>
-            {' · '}
-            {schedules.length}/{template.minStaff}-{template.maxStaff} nhân viên
+            
           </div>
 
           {schedules.length === 0 ? (
@@ -113,12 +114,12 @@ export const OwnerShiftCellDetailDialog = ({
               <table className="w-full text-sm">
                 <thead className="bg-cream/70 text-text-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium">Nhân viên</th>
-                    <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
-                    <th className="px-4 py-3 text-left font-medium">Check-in</th>
-                    <th className="px-4 py-3 text-left font-medium">Check-out</th>
-                    <th className="px-4 py-3 text-left font-medium">Tăng ca</th>
-                    <th className="px-4 py-3 text-right font-medium">Thao tác</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-left font-medium">Nhân viên</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-left font-medium">Trạng thái</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-left font-medium">Check-in</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-left font-medium">Check-out</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-left font-medium">Tăng ca</th>
+                    <th className="px-4 py-3 sm:text-nowrap text-right font-medium">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,12 +132,10 @@ export const OwnerShiftCellDetailDialog = ({
                           <div className="font-medium text-text-primary">
                             {staff?.fullName ?? 'Chưa rõ nhân viên'}
                           </div>
-                          {/* {staff?.employeeCode && (
-                            <div className="text-xs text-text-secondary">{staff.employeeCode}</div>
-                          )} */}
+                        
                         </td>
                         <td className="px-4 py-3">
-                          <span className={cn('badge', getShiftStatusClassName(schedule.status))}>
+                          <span className={cn('badge text-nowrap', getShiftStatusClassName(schedule.status))}>
                             {getShiftStatusLabel(schedule.status)}
                           </span>
                         </td>
@@ -144,7 +143,7 @@ export const OwnerShiftCellDetailDialog = ({
                         <td className="px-4 py-3">{formatLocalTime(schedule.actualEndTime)}</td>
                         <td
                           className={cn(
-                            'px-4 py-3',
+                            'px-4 py-3 text-nowrap',
                             schedule.overtimeMinutes > 0 && 'text-success-text',
                             schedule.overtimeMinutes < 0 && 'text-warning-text',
                           )}
@@ -152,7 +151,7 @@ export const OwnerShiftCellDetailDialog = ({
                           {schedule.overtimeMinutes} phút
                         </td>
                         <td className="px-4 py-3">
-                          {schedule.status === 'REGISTERED' ? (
+                          {schedule.status === 'REGISTERED' && !isPastDate ? (
                             <div className="flex justify-end gap-2">
                               <Button
                                 type="button"
@@ -176,7 +175,9 @@ export const OwnerShiftCellDetailDialog = ({
                               </Button>
                             </div>
                           ) : (
-                            <span className="block text-right text-xs text-text-secondary">Không khả dụng</span>
+                            <span className="block text-right text-xs text-text-secondary sm:text-nowrap">
+                              {isPastDate ? 'Chỉ xem' : 'Không khả dụng'}
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -198,7 +199,7 @@ export const OwnerShiftCellDetailDialog = ({
               <span className="font-semibold text-text-primary">
                 {deleteCandidateStaff?.fullName ?? 'nhân viên này'}
               </span>{' '}
-              không? Chỉ ca chưa check-in mới có thể xóa.
+              không? Chỉ ca chưa check-in và chưa quá ngày mới có thể xóa.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="border-t pt-4">

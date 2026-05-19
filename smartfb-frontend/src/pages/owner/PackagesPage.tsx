@@ -19,14 +19,21 @@ import { useCurrentSubscription } from '@modules/subscription/hooks/useCurrentSu
 import { useGeneratePlanPaymentQR } from '@modules/subscription/hooks/useGeneratePlanPaymentQR';
 import { useSubscriptionPlans } from '@modules/subscription/hooks/useSubscriptionPlans';
 import { useSyncPlanPaymentStatus } from '@modules/subscription/hooks/useSyncPlanPaymentStatus';
+import { useTenantPackageUsage } from '@modules/subscription/hooks/useTenantPackageUsage';
 import { useTenantInvoices } from '@modules/subscription/hooks/useTenantInvoices';
 import type {
   PlanPaymentMethod,
   PlanQRPayment,
   SubscriptionPlan,
   TenantInvoice,
+  TenantPackageUsage,
 } from '@modules/subscription/types/subscription.types';
 import { PAYMENT_METHOD_LABELS } from '@modules/subscription/types/subscription.types';
+import {
+  getPlanLimitViolationMessage,
+  getPlanLimitViolations,
+  PLAN_LIMIT_DEFINITIONS,
+} from '@modules/subscription/utils/planLimitUtils';
 import { Button } from '@shared/components/ui/button';
 import {
   Dialog,
@@ -62,6 +69,17 @@ interface PaymentMethodOption {
   disabledReason?: string;
 }
 
+interface PlanUsageComparisonProps {
+  plan: SubscriptionPlan;
+  usage: TenantPackageUsage;
+}
+
+interface UsageCheckNoticeProps {
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+}
+
 const MONTH_OPTIONS = [1, 3, 6, 12, 24];
 const PAYOS_PAYMENT_POLL_INTERVAL_MS = 5000;
 const DEFAULT_PLAN_PAYMENT_METHOD: PlanPaymentMethod = 'PAYOS';
@@ -75,7 +93,7 @@ const PAYMENT_METHOD_OPTIONS: PaymentMethodOption[] = [
 
 const getLimitDisplay = (value: number | null): string => {
   if (value === null) {
-    return 'Không giới hạn';
+    return '∞';
   }
 
   return String(value);
@@ -157,6 +175,59 @@ const PlanLimitCard = ({ icon, label, value }: PlanLimitCardProps) => (
   </div>
 );
 
+const PlanUsageComparison = ({ plan, usage }: PlanUsageComparisonProps) => (
+  <div className="grid gap-3 sm:grid-cols-3">
+    {PLAN_LIMIT_DEFINITIONS.map((definition) => {
+      const current = definition.getCurrent(usage);
+      const limit = definition.getLimit(plan);
+      const isExceeded = limit !== null && current > limit;
+
+      return (
+        <div
+          key={definition.resource}
+          className={cn(
+            'rounded-card border bg-background px-4 py-3',
+            isExceeded ? 'border-warning bg-warning-light' : 'border-border'
+          )}
+        >
+          <p className="text-xs font-semibold uppercase text-text-secondary">{definition.label}</p>
+          <p className={cn('mt-1 text-lg font-bold', isExceeded ? 'text-warning-text' : 'text-text-primary')}>
+            {current} / {getLimitDisplay(limit)}
+          </p>
+          {isExceeded ? (
+            <p className="mt-1 text-xs font-medium text-warning-text">Vượt giới hạn</p>
+          ) : (
+            <p className="mt-1 text-xs text-text-secondary">Hợp lệ</p>
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
+const UsageCheckNotice = ({ isLoading, isError, onRetry }: UsageCheckNoticeProps) => {
+  if (isLoading) {
+    return (
+      <div className="rounded-card border border-border bg-muted px-4 py-3 text-sm text-text-secondary">
+        Đang kiểm tra số lượng chi nhánh, nhân viên và món hiện tại...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col gap-3 rounded-card border border-warning bg-warning-light px-4 py-3 text-sm text-warning-text sm:flex-row sm:items-center sm:justify-between">
+        <span>Không thể kiểm tra số lượng hiện tại. Tạm khóa chọn gói để tránh tạo hóa đơn sai giới hạn.</span>
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 /**
  * Trang gói dịch vụ của owner.
  * Cho phép xem gói hiện tại, chọn gói mới/gia hạn, tạo invoice và sinh QR thanh toán.
@@ -187,6 +258,12 @@ export default function PackagesPage() {
     isLoading: isInvoicesLoading,
     refetch: refetchInvoices,
   } = useTenantInvoices({ page: 0, size: 5 });
+  const {
+    data: packageUsage,
+    isLoading: isUsageLoading,
+    isError: isUsageError,
+    refetch: refetchUsage,
+  } = useTenantPackageUsage();
 
   const createInvoiceMutation = useCreateTenantRenewalInvoice();
   const generateQRMutation = useGeneratePlanPaymentQR();
@@ -210,7 +287,9 @@ export default function PackagesPage() {
   const isCancelDialogOpen = Boolean(invoiceToCancel);
   const isPaymentConfirmDialogOpen = Boolean(planToConfirm);
   const confirmPlanFeatures = planToConfirm ? getEnabledFeatures(planToConfirm) : [];
+  const confirmPlanViolations = planToConfirm ? getPlanLimitViolations(planToConfirm, packageUsage) : [];
   const confirmEstimatedAmount = planToConfirm ? planToConfirm.priceMonthly * selectedMonths : 0;
+  const isConfirmBlockedByUsage = isUsageLoading || isUsageError || confirmPlanViolations.length > 0;
   const confirmActionLabel = !planToConfirm
     ? 'Xác nhận gói'
     : !currentPlan
@@ -223,7 +302,8 @@ export default function PackagesPage() {
     void refetchSubscription();
     void refetchPlans();
     void refetchInvoices();
-  }, [refetchInvoices, refetchPlans, refetchSubscription]);
+    void refetchUsage();
+  }, [refetchInvoices, refetchPlans, refetchSubscription, refetchUsage]);
 
   /** Kiểm tra thanh toán thông minh: PAYOS → gọi sync API, còn lại → refetch */
   const handleCheckPayment = useCallback(() => {
@@ -296,6 +376,12 @@ export default function PackagesPage() {
 
   /** Mở dialog xác nhận để owner chọn số tháng và phương thức trước khi tạo invoice. */
   const handleOpenPaymentConfirmDialog = (plan: SubscriptionPlan) => {
+    const violations = getPlanLimitViolations(plan, packageUsage);
+
+    if (!packageUsage || isUsageLoading || isUsageError || violations.length > 0) {
+      return;
+    }
+
     setSelectedMonths(3);
     setPaymentMethod(DEFAULT_PLAN_PAYMENT_METHOD);
     setNote('');
@@ -311,6 +397,7 @@ export default function PackagesPage() {
   /** Xác nhận lựa chọn trong modal rồi mới tạo hóa đơn và QR thanh toán. */
   const handleConfirmCreatePayment = async () => {
     if (!planToConfirm) return;
+    if (isConfirmBlockedByUsage) return;
 
     await handleCreatePayment(planToConfirm);
     setPlanToConfirm(null);
@@ -450,6 +537,18 @@ export default function PackagesPage() {
           </div>
 
           <div className="mt-6">
+            <h3 className="text-sm font-semibold text-text-primary">Số lượng đang sử dụng</h3>
+            <div className="mt-3">
+              <UsageCheckNotice
+                isLoading={isUsageLoading}
+                isError={isUsageError}
+                onRetry={() => void refetchUsage()}
+              />
+              {packageUsage ? <PlanUsageComparison plan={currentPlan} usage={packageUsage} /> : null}
+            </div>
+          </div>
+
+          <div className="mt-6">
             <h3 className="text-sm font-semibold text-text-primary">Tính năng đang bật</h3>
             {enabledFeatures.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -522,11 +621,22 @@ export default function PackagesPage() {
           </div>
         ) : null}
 
+        <div className="mt-5">
+          <UsageCheckNotice
+            isLoading={isUsageLoading}
+            isError={isUsageError}
+            onRetry={() => void refetchUsage()}
+          />
+        </div>
+
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           {activePlans.length > 0 ? (
             activePlans.map((plan) => {
               const isCurrentPlan = currentPlan?.id === plan.id;
               const features = getEnabledFeatures(plan);
+              const limitViolations = getPlanLimitViolations(plan, packageUsage);
+              const isBlockedByUsage = isUsageLoading || isUsageError || limitViolations.length > 0;
+              const limitViolationMessage = getPlanLimitViolationMessage(limitViolations);
               const planActionLabel = !currentPlan
                 ? 'Đăng ký gói này'
                 : isCurrentPlan
@@ -555,6 +665,16 @@ export default function PackagesPage() {
                       <p>Nhân viên: {getLimitDisplay(plan.maxStaff)}</p>
                       <p>Món: {getLimitDisplay(plan.maxMenuItems)}</p>
                     </div>
+                    {packageUsage ? (
+                      <div className="mt-4">
+                        <PlanUsageComparison plan={plan} usage={packageUsage} />
+                      </div>
+                    ) : null}
+                    {limitViolations.length > 0 ? (
+                      <div className="mt-4 rounded-card border border-warning bg-warning-light px-3 py-2 text-xs font-medium text-warning-text">
+                       Vui lòng chọn gói cao hơn.
+                      </div>
+                    ) : null}
   
                     <div className="mt-4 min-h-16">
                       {features.length > 0 ? (
@@ -580,7 +700,7 @@ export default function PackagesPage() {
                     className="mt-4 w-full"
                     variant={isCurrentPlan ? 'outline' : 'default'}
                     onClick={() => handleOpenPaymentConfirmDialog(plan)}
-                    disabled={isActionPending || Boolean(unpaidInvoice)}
+                    disabled={isActionPending || Boolean(unpaidInvoice) || isBlockedByUsage}
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
                     {planActionLabel}
@@ -802,6 +922,21 @@ export default function PackagesPage() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-text-primary">Đối chiếu số lượng hiện tại</p>
+                <UsageCheckNotice
+                  isLoading={isUsageLoading}
+                  isError={isUsageError}
+                  onRetry={() => void refetchUsage()}
+                />
+                {packageUsage ? <PlanUsageComparison plan={planToConfirm} usage={packageUsage} /> : null}
+                {confirmPlanViolations.length > 0 ? (
+                  <div className="rounded-card border border-warning bg-warning-light px-3 py-2 text-sm font-medium text-warning-text">
+                    Gói này không đủ giới hạn: {getPlanLimitViolationMessage(confirmPlanViolations)}. Vui lòng chọn gói cao hơn.
+                  </div>
+                ) : null}
+              </div>
+
               {/* Features */}
               {confirmPlanFeatures.length > 0 && (
                 <div>
@@ -909,7 +1044,7 @@ export default function PackagesPage() {
             <Button
               type="button"
               onClick={() => void handleConfirmCreatePayment()}
-              disabled={createInvoiceMutation.isPending || generateQRMutation.isPending}
+              disabled={createInvoiceMutation.isPending || generateQRMutation.isPending || isConfirmBlockedByUsage}
               className="gap-2"
             >
               <QrCode className="h-4 w-4" />

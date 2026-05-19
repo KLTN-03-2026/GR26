@@ -261,8 +261,8 @@ export const RecipeLineDialog = ({
                   }));
                   setFormError('');
                 }}
-                placeholder="gram, ml, cái..."
-                disabled={isPending}
+                placeholder="Tự động theo thành phần"
+                disabled
               />
             </div>
           </div>

@@ -1,12 +1,17 @@
 import { z } from 'zod';
 import { menuImageUploadConstraints } from '@modules/menu/utils/menuImageUpload';
 
+const hasAtMostTwoDecimalPlaces = (value: number): boolean => {
+  return Number.isInteger(value * 100);
+};
+
 /**
  * Schema cho việc tạo mới món ăn
  */
 export const createMenuSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, 'Tên món ăn không được để trống')
     .max(255, 'Tên món ăn không được vượt quá 255 ký tự'),
 
@@ -15,7 +20,8 @@ export const createMenuSchema = z.object({
   price: z
     .number()
     .min(0, 'Giá bán không được âm')
-    .max(100000000, 'Giá bán không được vượt quá 100.000.000đ'),
+    .max(100000000, 'Giá bán không được vượt quá 100.000.000đ')
+    .refine(hasAtMostTwoDecimalPlaces, 'Giá bán chỉ được có tối đa 2 chữ số thập phân'),
 
   unit: z
     .string()
@@ -38,7 +44,7 @@ export const createMenuSchema = z.object({
     .optional(),
 
   isSyncDelivery: z.boolean().optional(),
-});
+}).strict();
 
 /**
  * Type inference

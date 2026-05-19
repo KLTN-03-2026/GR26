@@ -58,7 +58,6 @@ export const InvoiceDetailDialog = ({
 }: InvoiceDetailDialogProps) => {
   const { data, isLoading, isError, refetch } = useInvoiceDetail(invoiceId, open);
   const totalItemQuantity = data?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
-  const hasItemAddons = data?.items.some((item) => item.addons && item.addons.length > 0) ?? false;
   const orderInfo = data?.order;
 
   return (
@@ -183,7 +182,6 @@ export const InvoiceDetailDialog = ({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Món</TableHead>
-                    {hasItemAddons ? <TableHead>Topping</TableHead> : null}
                     <TableHead>Số lượng</TableHead>
                     <TableHead>Đơn giá</TableHead>
                     <TableHead className="text-right">Thành tiền</TableHead>
@@ -193,24 +191,6 @@ export const InvoiceDetailDialog = ({
                   {data.items.map((item) => (
                     <TableRow key={`${item.itemName}-${item.unitPrice}-${item.quantity}`}>
                       <TableCell className="font-semibold text-text-primary">{item.itemName}</TableCell>
-                      {hasItemAddons ? (
-                        <TableCell>
-                          {item.addons && item.addons.length > 0 ? (
-                            <div className="space-y-1 text-sm text-text-secondary">
-                              {item.addons.map((addon) => (
-                                <p key={`${addon.addonId}-${addon.quantity}`}>
-                                  {addon.addonName} x{addon.quantity}
-                                  <span className="ml-1 text-xs">
-                                    (+{formatVND(addon.extraPrice)})
-                                  </span>
-                                </p>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-text-secondary">—</span>
-                          )}
-                        </TableCell>
-                      ) : null}
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell>{formatVND(item.unitPrice)}</TableCell>
                       <TableCell className="text-right font-semibold text-text-primary">

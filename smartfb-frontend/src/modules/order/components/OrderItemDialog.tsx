@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
-import { Check, Minus, Plus, Trash2 } from "lucide-react";
-import type { MenuAddonInfo, MenuItem } from "@modules/menu/types/menu.types";
-import type {
-  OrderAddonSelection,
-  OrderDraftItem,
-} from "@modules/order/types/order.types";
+import { Trash2 } from "lucide-react";
+import type { MenuItem } from "@modules/menu/types/menu.types";
+import type { OrderDraftItem } from "@modules/order/types/order.types";
 import { OrderQuantityInput } from "@modules/order/components/OrderQuantityInput";
 import { Button } from "@shared/components/ui/button";
 import {
@@ -14,20 +11,17 @@ import {
   DialogTitle,
 } from "@shared/components/ui/dialog";
 import { Textarea } from "@shared/components/ui/textarea";
-import { cn } from "@shared/utils/cn";
 import { formatVND } from "@shared/utils/formatCurrency";
 
 interface OrderItemDialogProps {
   open: boolean;
   menuItem: MenuItem | null;
   initialItem?: OrderDraftItem | null;
-  addons: MenuAddonInfo[];
   isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (payload: {
     quantity: number;
     notes: string;
-    addons: OrderAddonSelection[];
   }) => Promise<void> | void;
 }
 
@@ -42,76 +36,20 @@ export const OrderItemDialog = ({
   open,
   menuItem,
   initialItem,
-  addons,
   isSubmitting = false,
   onOpenChange,
   onSubmit,
 }: OrderItemDialogProps) => {
   const [quantity, setQuantity] = useState(initialItem?.quantity ?? 1);
   const [notes, setNotes] = useState(initialItem?.notes ?? "");
-  const [selectedAddons, setSelectedAddons] = useState<OrderAddonSelection[]>(
-    initialItem?.addons ?? [],
-  );
-
-  const addonPerUnitTotal = useMemo(() => {
-    return selectedAddons.reduce(
-      (sum, addon) => sum + addon.extraPrice * addon.quantity,
-      0,
-    );
-  }, [selectedAddons]);
 
   const lineTotal = useMemo(() => {
     if (!menuItem) {
       return 0;
     }
 
-    return (menuItem.price + addonPerUnitTotal) * quantity;
-  }, [addonPerUnitTotal, menuItem, quantity]);
-
-  const selectedAddonCount = useMemo(() => {
-    return selectedAddons.reduce((sum, addon) => sum + addon.quantity, 0);
-  }, [selectedAddons]);
-
-  const updateAddonQuantity = (addon: MenuAddonInfo, delta: number) => {
-    setSelectedAddons((currentAddons) => {
-      const existingAddon = currentAddons.find(
-        (selectedAddon) => selectedAddon.addonId === addon.id,
-      );
-
-      if (!existingAddon && delta < 0) {
-        return currentAddons;
-      }
-
-      if (!existingAddon) {
-        return [
-          ...currentAddons,
-          {
-            addonId: addon.id,
-            addonName: addon.name,
-            extraPrice: addon.extraPrice,
-            quantity: 1,
-          },
-        ];
-      }
-
-      const nextQuantity = existingAddon.quantity + delta;
-
-      if (nextQuantity <= 0) {
-        return currentAddons.filter(
-          (selectedAddon) => selectedAddon.addonId !== addon.id,
-        );
-      }
-
-      return currentAddons.map((selectedAddon) =>
-        selectedAddon.addonId === addon.id
-          ? {
-              ...selectedAddon,
-              quantity: nextQuantity,
-            }
-          : selectedAddon,
-      );
-    });
-  };
+    return menuItem.price * quantity;
+  }, [menuItem, quantity]);
 
   const handleSubmit = async () => {
     if (!menuItem) {
@@ -121,7 +59,6 @@ export const OrderItemDialog = ({
     await onSubmit({
       quantity,
       notes: notes.trim(),
-      addons: selectedAddons,
     });
   };
 
@@ -134,7 +71,7 @@ export const OrderItemDialog = ({
       <DialogContent className="max-w-[780px] rounded-2xl border-none p-0 shadow-2xl">
         <DialogTitle className="sr-only">{menuItem.name}</DialogTitle>
         <DialogDescription className="sr-only">
-          Chọn số lượng, topping và ghi chú cho món.
+          Chọn số lượng và ghi chú cho món.
         </DialogDescription>
 
         <div className="flex flex-col overflow-hidden rounded-xl bg-white">
@@ -183,103 +120,6 @@ export const OrderItemDialog = ({
           </div>
 
           <div className="flex max-h-[52vh] flex-col gap-5 overflow-y-auto p-6">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                    Topping thêm
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {selectedAddonCount > 0
-                      ? `Đã chọn ${selectedAddonCount} topping cho mỗi phần`
-                      : "Chưa chọn topping"}
-                  </p>
-                </div>
-                {selectedAddonCount > 0 && (
-                  <div className="rounded-full bg-orange-50 px-3 py-1 text-sm font-bold text-orange-500">
-                    {selectedAddonCount} đã chọn
-                  </div>
-                )}
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                {addons.length === 0 ? (
-                  <div className="px-4 py-6 text-sm text-slate-400">
-                    Món này hiện chưa có topping áp dụng.
-                  </div>
-                ) : (
-                  addons.map((addon, index) => {
-                    const selectedAddon = selectedAddons.find(
-                      (item) => item.addonId === addon.id,
-                    );
-
-                    return (
-                      <div
-                        key={addon.id}
-                        className={cn(
-                          "flex items-center justify-between gap-4 px-4 py-4",
-                          index !== addons.length - 1 &&
-                            "border-b border-slate-100",
-                          selectedAddon && "bg-orange-50/50",
-                        )}
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div
-                            className={cn(
-                              "flex h-6 w-6 items-center justify-center rounded-full border",
-                              selectedAddon
-                                ? "border-orange-500 bg-orange-500 text-white"
-                                : "border-slate-200 text-transparent",
-                            )}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-slate-800">
-                              {addon.name}
-                            </p>
-                            <p className="text-sm font-medium text-orange-500">
-                              +{formatVND(addon.extraPrice)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {selectedAddon ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => updateAddonQuantity(addon, -1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-orange-200 hover:text-orange-500"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="min-w-5 text-center text-sm font-black text-slate-800">
-                              {selectedAddon.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => updateAddonQuantity(addon, 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-500 bg-orange-500 text-white transition-colors hover:bg-orange-600"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => updateAddonQuantity(addon, 1)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white transition-colors hover:bg-orange-500"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
             <div className="space-y-3">
               <label
                 htmlFor="order-item-note"
